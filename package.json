@@ -1,0 +1,25 @@
+{
+  "name": "social-osu-app",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "bun --cwd apps/api prisma generate",
+    "db:migrate": "bun --cwd apps/api prisma migrate dev",
+    "db:push": "bun --cwd apps/api prisma db push"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.10"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "packageManager": "bun@1.2.22"
+}
+
