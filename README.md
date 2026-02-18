@@ -3,7 +3,7 @@
 Initial setup with:
 
 - Monorepo: Turborepo
-- Frontend: React (with Vite), Tailwind CSS, shadcn/ui
+- Frontend: React (with Vite), TanStack Router, Tailwind CSS, shadcn/ui
 - Backend: Express, Prisma ORM, PostgreSQL
 - Runtime: Bun
 - CI/CD: GitHub Actions
@@ -42,6 +42,7 @@ bun run dev
 - Turborepo: https://turbo.build/repo/docs
 - Bun: https://bun.sh/docs
 - React: https://react.dev
+- TanStack Router: https://tanstack.com/router/latest/docs
 - Vite: https://vite.dev/guide
 - Tailwind CSS: https://tailwindcss.com/docs
 - shadcn/ui: https://ui.shadcn.com/docs
