@@ -4,7 +4,7 @@ Initial setup with:
 
 - Monorepo: Turborepo
 - Frontend: React (with Vite), TanStack Router, Tailwind CSS, shadcn/ui
-- Backend: Express, Prisma ORM, PostgreSQL
+- Backend: Hono, Prisma ORM, PostgreSQL
 - Runtime: Bun
 - CI/CD: GitHub Actions
 
@@ -46,6 +46,6 @@ bun run dev
 - Vite: https://vite.dev/guide
 - Tailwind CSS: https://tailwindcss.com/docs
 - shadcn/ui: https://ui.shadcn.com/docs
-- Express: https://expressjs.com
+- Hono: https://hono.dev/docs
 - Prisma ORM: https://www.prisma.io/docs
 - PostgreSQL: https://www.postgresql.org/docs

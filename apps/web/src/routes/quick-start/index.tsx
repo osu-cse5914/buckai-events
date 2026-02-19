@@ -11,7 +11,7 @@ function QuickStartPage() {
     "",
   );
   const healthEndpoint = configuredApiBaseUrl
-    ? `${configuredApiBaseUrl}/health`
+    ? `${configuredApiBaseUrl}/api/health`
     : "/api/health";
 
   return (
