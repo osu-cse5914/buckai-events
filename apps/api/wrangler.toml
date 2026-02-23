@@ -1,0 +1,10 @@
+name = "social-osu-api"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+
+[vars]
+# CORS_ORIGIN = "https://social-osu-web.workers.dev"
+
+# DATABASE_URL is stored as an encrypted secret, not a plain var.
+# Set it once after login:
+#   wrangler secret put DATABASE_URL

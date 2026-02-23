@@ -12,7 +12,8 @@
     "typecheck": "turbo run typecheck",
     "db:generate": "bun --cwd apps/api prisma generate",
     "db:migrate": "bun --cwd apps/api prisma migrate dev",
-    "db:push": "bun --cwd apps/api prisma db push"
+    "db:push": "bun --cwd apps/api prisma db push",
+    "deploy": "turbo run deploy"
   },
   "devDependencies": {
     "turbo": "^2.8.10"

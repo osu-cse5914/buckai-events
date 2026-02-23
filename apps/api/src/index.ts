@@ -2,14 +2,20 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { getPrismaClient } from "./lib/prisma";
 
-const app = new Hono();
-const port = Number(process.env.PORT ?? 3001);
+type Bindings = {
+  DATABASE_URL: string;
+  CORS_ORIGIN?: string;
+};
 
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",")
-  : ["http://localhost:5173"];
+const app = new Hono<{ Bindings: Bindings }>();
 
-app.use("*", cors({ origin: allowedOrigins }));
+app.use("*", async (c, next) => {
+  const origin = c.env?.CORS_ORIGIN ?? process.env.CORS_ORIGIN;
+  const allowedOrigins = origin
+    ? origin.split(",")
+    : ["http://localhost:5173"];
+  return cors({ origin: allowedOrigins })(c, next);
+});
 
 app.get("/api/health", (c) => {
   return c.json({
@@ -25,7 +31,8 @@ app.get("/api/ping", (c) => {
 
 app.get("/api/db-check", async (c) => {
   try {
-    const prisma = getPrismaClient();
+    const connectionString = c.env?.DATABASE_URL ?? process.env.DATABASE_URL;
+    const prisma = getPrismaClient(connectionString);
     await prisma.$queryRaw`SELECT 1`;
     return c.json({ database: "connected" });
   } catch (error) {
@@ -34,25 +41,8 @@ app.get("/api/db-check", async (c) => {
   }
 });
 
-const server = Bun.serve({
-  port,
+// Compatible with both Bun (reads `port`) and CF Workers (ignores `port`, uses `fetch`)
+export default {
+  port: Number(process.env.PORT ?? 3001),
   fetch: app.fetch
-});
-
-console.log(`API server listening on http://localhost:${server.port}`);
-
-function shutdown() {
-  console.log("Shutting down...");
-  server.stop().then(async () => {
-    try {
-      const prisma = getPrismaClient();
-      await prisma.$disconnect();
-    } catch {
-      // client may not have been initialized
-    }
-    process.exit(0);
-  });
-}
-
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+};
