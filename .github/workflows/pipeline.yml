@@ -1,55 +1,89 @@
-name: Preview
+name: Pipeline
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   pull-requests: write
-  actions: read
 
 jobs:
-  deploy-preview:
+  checks:
     runs-on: ubuntu-latest
-    if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request'
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/social_osu_app?schema=public
 
     steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile
+      - run: bun run db:generate
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run build
 
-      - name: Generate Prisma client
-        run: bun run db:generate
-
-      - name: Get PR number
-        id: pr
-        run: |
-          PR_NUMBER=$(gh api "repos/${{ github.repository }}/commits/${{ github.event.workflow_run.head_sha }}/pulls" --jq '.[0].number')
-          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Download web build artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: web-dist
           path: apps/web/dist
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
+          retention-days: 1
+
+  deploy-production:
+    needs: checks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run db:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/social_osu_app?schema=public
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+
+      - run: bun --cwd apps/api wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  deploy-preview:
+    needs: checks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/social_osu_app?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+      - run: bun run db:generate
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
 
       - name: Upload preview version
         id: deploy
@@ -66,7 +100,7 @@ jobs:
         with:
           script: |
             const url = '${{ steps.deploy.outputs.url }}';
-            const prNumber = ${{ steps.pr.outputs.number }};
+            const prNumber = context.payload.pull_request.number;
             const marker = '<!-- cf-preview -->';
             const body = `${marker}\n### Preview Deployment\n\n🚀 ${url}`;
 

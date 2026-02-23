@@ -39,13 +39,13 @@ bun run dev
 
 ## CI/CD Pipeline
 
-Three GitHub Actions workflows:
+Workflow (`pipeline.yml`) with three jobs:
 
-| Workflow | Trigger | Action |
+| Job | Trigger | Action |
 |---|---|---|
-| `ci.yml` | PR opened/updated, push to `main` | Lint, typecheck, build |
-| `preview.yml` | CI passes on a PR | Upload preview version to CF, comment URL on PR |
-| `deploy.yml` | CI passes on `main` push | Deploy to production |
+| `checks` | PR opened/updated, push to `main` | Lint, typecheck, build, upload artifact |
+| `deploy-preview` | `checks` passes on a PR | Upload preview version to CF, comment URL on PR |
+| `deploy-production` | `checks` passes on `main` push | Deploy to production |
 
 ## Deploy to Cloudflare Workers
 
