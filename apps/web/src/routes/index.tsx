@@ -53,7 +53,7 @@ function IndexPage() {
         social-osu-app
       </p>
       <h1 className="text-4xl font-bold tracking-tight">
-        React + Vite + Tailwind + shadcn/ui
+        CI/CD Preview Smoke Test (This PR will be closed after the test)
       </h1>
       <p className="max-w-2xl text-base text-muted-foreground">
         Frontend and backend are now wired in a Bun + Turbo monorepo.
