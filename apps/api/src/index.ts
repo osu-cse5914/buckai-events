@@ -26,7 +26,7 @@ app.get("/api/ping", (c) => {
 
 app.get("/api/db-check", async (c) => {
   try {
-    const connectionString = c.env?.DATABASE_URL ?? process.env.DATABASE_URL;
+    const connectionString = c.env?.DATABASE_URL ?? (typeof process !== "undefined" ? process.env.DATABASE_URL : undefined);
     const prisma = getPrismaClient(connectionString);
     await prisma.$queryRaw`SELECT 1`;
     return c.json({ database: "connected" });
@@ -38,6 +38,6 @@ app.get("/api/db-check", async (c) => {
 
 // Compatible with both Bun (reads `port`) and CF Workers (ignores `port`, uses `fetch`)
 export default {
-  port: Number(process.env.PORT ?? 3001),
+  port: typeof process !== "undefined" ? Number(process.env.PORT ?? 3001) : 3001,
   fetch: app.fetch
 };
