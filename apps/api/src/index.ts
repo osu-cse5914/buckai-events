@@ -4,18 +4,13 @@ import { getPrismaClient } from "./lib/prisma";
 
 type Bindings = {
   DATABASE_URL: string;
-  CORS_ORIGIN?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.use("*", async (c, next) => {
-  const origin = c.env?.CORS_ORIGIN ?? process.env.CORS_ORIGIN;
-  const allowedOrigins = origin
-    ? origin.split(",")
-    : ["http://localhost:5173"];
-  return cors({ origin: allowedOrigins })(c, next);
-});
+// CORS only needed for local dev (FE at :5173, BE at :3001).
+// In production both are served from the same CF Worker origin.
+app.use("/api/*", cors({ origin: "http://localhost:5173" }));
 
 app.get("/api/health", (c) => {
   return c.json({

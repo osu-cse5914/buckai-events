@@ -7,7 +7,7 @@
     "dev": "bun --watch src/index.ts",
     "dev:worker": "wrangler dev",
     "build": "bun build src/index.ts --outdir dist --target bun",
-    "deploy": "wrangler deploy",
+    "deploy": "bun --cwd ../web run build && wrangler deploy",
     "start": "bun run dist/index.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

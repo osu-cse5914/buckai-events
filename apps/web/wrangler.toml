@@ -1,5 +1,0 @@
-name = "social-osu-web"
-compatibility_date = "2025-03-01"
-
-[assets]
-directory = "./dist"

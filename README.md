@@ -39,6 +39,9 @@ bun run dev
 
 ## Deploy to Cloudflare Workers
 
+The frontend and backend are deployed as a **single Cloudflare Worker** (`social-osu`).
+Static assets (React app) are served directly by CF; API routes (`/api/*`) are handled by Hono.
+
 ### Prerequisites
 
 1. Install Wrangler and log in:
@@ -46,34 +49,29 @@ bun run dev
    bunx wrangler login
    ```
 
-2. Set the API database secret (one time):
+2. Set the database secret (one time):
    ```bash
    cd apps/api && wrangler secret put DATABASE_URL
    ```
 
-3. After the first `wrangler deploy`, update `CORS_ORIGIN` in
-   `apps/api/wrangler.toml` with the deployed web Worker URL, then redeploy.
-
-### Deploy both apps
+### Deploy
 
 ```bash
 bun run deploy
 ```
 
-Or deploy individually:
+This builds the React app then deploys the unified worker. Or from the api package directly:
 
 ```bash
-# API Worker
-cd apps/api && wrangler deploy
-
-# Web (builds first, then deploys static assets)
-cd apps/web && bun run deploy
+cd apps/api && bun run deploy
 ```
 
 ### Local CF Workers simulation
 
+Build the frontend first, then run wrangler dev:
+
 ```bash
-# Create apps/api/.dev.vars with DATABASE_URL=...
+bun --cwd apps/web run build
 cd apps/api && wrangler dev
 ```
 

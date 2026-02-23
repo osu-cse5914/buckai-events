@@ -1,9 +1,10 @@
-name = "social-osu-api"
+name = "social-osu"
 main = "src/index.ts"
 compatibility_date = "2025-03-01"
 
-[vars]
-# CORS_ORIGIN = "https://social-osu-web.workers.dev"
+[assets]
+directory = "../web/dist"
+not_found_handling = "single-page-application"
 
 # DATABASE_URL is stored as an encrypted secret, not a plain var.
 # Set it once after login:
