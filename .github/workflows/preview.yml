@@ -7,6 +7,7 @@ on:
 
 permissions:
   pull-requests: write
+  actions: read
 
 jobs:
   deploy-preview:
@@ -42,10 +43,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Download web build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
       - name: Upload preview version
         id: deploy
         run: |
-          bun --cwd apps/web run build
           OUTPUT=$(bun --cwd apps/api wrangler versions upload 2>&1)
           echo "$OUTPUT"
           URL=$(echo "$OUTPUT" | grep -o 'https://[^ ]*\.workers\.dev' | tail -1)
