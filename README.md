@@ -37,33 +37,37 @@ bun run dev
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3001`
 
+## CI/CD Pipeline
+
+Three GitHub Actions workflows:
+
+| Workflow | Trigger | Action |
+|---|---|---|
+| `ci.yml` | PR opened/updated, push to `main` | Lint, typecheck, build |
+| `preview.yml` | CI passes on a PR | Upload preview version to CF, comment URL on PR |
+| `deploy.yml` | CI passes on `main` push | Deploy to production |
+
 ## Deploy to Cloudflare Workers
 
-The frontend and backend are deployed as a **single Cloudflare Worker** (`social-osu`).
-Static assets (React app) are served directly by CF; API routes (`/api/*`) are handled by Hono.
+Frontend and backend are served from a single Cloudflare Worker (`social-osu`).
+Static assets (React app) are served directly; API routes (`/api/*`) are handled by Hono.
 
-### Prerequisites
+### First-time setup
 
 1. Install Wrangler and log in:
    ```bash
    bunx wrangler login
    ```
 
-2. Set the database secret (one time):
+2. Set the database secret:
    ```bash
    cd apps/api && wrangler secret put DATABASE_URL
    ```
 
-### Deploy
+### Manual deploy
 
 ```bash
 bun run deploy
-```
-
-This builds the React app then deploys the unified worker. Or from the api package directly:
-
-```bash
-cd apps/api && bun run deploy
 ```
 
 ### Local CF Workers simulation
