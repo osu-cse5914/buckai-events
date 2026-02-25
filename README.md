@@ -45,8 +45,8 @@ Workflow (`pipeline.yml`) with four jobs:
 |---|---|---|
 | `checks` | PR opened/updated, push to `main` | Lint, typecheck, build, upload artifact |
 | `secret-scan` | PR opened/updated, push to `main` | Scan for secrets within the repo |
-| `deploy-preview` | `checks` passes on a PR | Upload preview version to CF, comment URL on PR |
-| `deploy-production` | `checks` passes on `main` push | Deploy to production |
+| `deploy-preview` | `checks` and `secret-scan` pass on a PR | Upload preview version to CF, comment URL on PR |
+| `deploy-production` | `checks` and `secret-scan` pass on `main` push | Deploy to production |
 
 ## Deploy to Cloudflare Workers
 
