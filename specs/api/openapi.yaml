@@ -1,0 +1,1690 @@
+openapi: 3.0.3
+info:
+  title: Social OSU API
+  version: 1.0.0
+  description: |
+    REST API for Social OSU, an AI-powered campus discovery platform for Ohio State University students.
+    Aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers
+    personalized recommendations, and provides an agentic LLM chatbot for event discovery.
+
+    Authentication is handled via Clerk (restricted to @osu.edu and @buckeyemail.osu.edu).
+    All endpoints require a valid Clerk JWT in the Authorization header.
+
+servers:
+  - url: https://social-osu.workers.dev/api/v1
+    description: Production
+  - url: http://localhost:3001/api/v1
+    description: Local development
+
+tags:
+  - name: Users
+    description: User profile management and public profiles
+  - name: Social
+    description: Follow relationships and social event feed
+  - name: Events
+    description: Event and gig CRUD, listing, and filtering
+  - name: Applications
+    description: Gig application lifecycle
+  - name: Collections
+    description: Save/bookmark events into named collections
+  - name: Interactions
+    description: Implicit user signal tracking for recommendations
+  - name: Recommendations
+    description: Personalized event/gig feed
+  - name: Conversations
+    description: Chatbot conversation and message history
+  - name: Notifications
+    description: In-app notification system
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ──────────────────────────────────────────────
+  # Users
+  # ──────────────────────────────────────────────
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get authenticated user's profile
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      tags: [Users]
+      summary: Update profile fields
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get public profile of a user
+      operationId: getPublicProfile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Public profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_PublicProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/follow:
+    post:
+      tags: [Social]
+      summary: Follow a user
+      operationId: followUser
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '201':
+          description: Follow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Follow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    delete:
+      tags: [Social]
+      summary: Unfollow a user
+      operationId: unfollowUser
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: Unfollowed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/followers:
+    get:
+      tags: [Social]
+      summary: List a user's followers
+      operationId: listFollowers
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated follower list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_PublicProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/following:
+    get:
+      tags: [Social]
+      summary: List users that a user follows
+      operationId: listFollowing
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated following list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_PublicProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # Social Feed
+  # ──────────────────────────────────────────────
+  /social/feed:
+    get:
+      tags: [Social]
+      summary: Get events from followed users
+      operationId: getSocialFeed
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated social feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_SocialFeedItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ──────────────────────────────────────────────
+  # Events
+  # ──────────────────────────────────────────────
+  /events:
+    get:
+      tags: [Events]
+      summary: List events with filters
+      operationId: listEvents
+      parameters:
+        - in: query
+          name: type
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: source
+          schema:
+            $ref: '#/components/schemas/EventSource'
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/EventStatus'
+        - in: query
+          name: search
+          description: Full-text search on title and description
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated event list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Events]
+      summary: Create an event or gig
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{eventId}:
+    get:
+      tags: [Events]
+      summary: Get single event with full detail
+      operationId: getEvent
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: Event detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Events]
+      summary: Update event (owner only; forbidden for external events)
+      operationId: updateEvent
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Events]
+      summary: Delete event (owner only; forbidden for external events)
+      operationId: deleteEvent
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '204':
+          description: Event deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # Gig Applications
+  # ──────────────────────────────────────────────
+  /gigs/{gigId}/applications:
+    post:
+      tags: [Applications]
+      summary: Apply to a gig
+      description: |
+        gigId is an Event ID. The system validates that the event has type = GIG.
+        Returns 400 if the event is not a gig. Returns 403 if the user owns the gig.
+      operationId: createApplication
+      parameters:
+        - $ref: '#/components/parameters/GigId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicationRequest'
+      responses:
+        '201':
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Application'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    get:
+      tags: [Applications]
+      summary: List applications for a gig
+      description: Gig owner sees all applications. Applicant sees only their own.
+      operationId: listApplications
+      parameters:
+        - $ref: '#/components/parameters/GigId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated application list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Application'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /gigs/{gigId}/applications/{appId}:
+    patch:
+      tags: [Applications]
+      summary: Update application status (gig owner only)
+      operationId: updateApplication
+      parameters:
+        - $ref: '#/components/parameters/GigId'
+        - $ref: '#/components/parameters/AppId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationRequest'
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Application'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # Collections
+  # ──────────────────────────────────────────────
+  /collections:
+    get:
+      tags: [Collections]
+      summary: List authenticated user's collections
+      operationId: listCollections
+      responses:
+        '200':
+          description: User's collections ordered by updatedAt descending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_CollectionArray'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Collections]
+      summary: Create a collection
+      operationId: createCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCollectionRequest'
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Collection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /collections/{collectionId}:
+    get:
+      tags: [Collections]
+      summary: Get collection with items (respects visibility)
+      operationId: getCollection
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      responses:
+        '200':
+          description: Collection with items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_CollectionWithItems'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Collections]
+      summary: Update collection (owner only)
+      operationId: updateCollection
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCollectionRequest'
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Collection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Collections]
+      summary: Delete collection and all items (owner only)
+      operationId: deleteCollection
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      responses:
+        '204':
+          description: Collection deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /collections/{collectionId}/items:
+    get:
+      tags: [Collections]
+      summary: List events in a collection
+      operationId: listCollectionItems
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated events in collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Collections]
+      summary: Add event to collection
+      operationId: addCollectionItem
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventId]
+              properties:
+                eventId:
+                  type: string
+      responses:
+        '201':
+          description: Event added to collection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_CollectionItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /collections/{collectionId}/items/{eventId}:
+    delete:
+      tags: [Collections]
+      summary: Remove event from collection
+      operationId: removeCollectionItem
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '204':
+          description: Event removed from collection
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # Interactions
+  # ──────────────────────────────────────────────
+  /interactions:
+    post:
+      tags: [Interactions]
+      summary: Record a user interaction
+      operationId: createInteraction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInteractionRequest'
+      responses:
+        '201':
+          description: Interaction recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Interaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # Recommendations
+  # ──────────────────────────────────────────────
+  /recommendations:
+    get:
+      tags: [Recommendations]
+      summary: Get personalized event/gig feed
+      operationId: getRecommendations
+      parameters:
+        - in: query
+          name: type
+          description: Filter by EVENT or GIG. Omit for blended feed.
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Personalized feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ──────────────────────────────────────────────
+  # Conversations
+  # ──────────────────────────────────────────────
+  /conversations:
+    get:
+      tags: [Conversations]
+      summary: List user's conversations
+      operationId: listConversations
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Conversations ordered by updatedAt descending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Conversation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Conversations]
+      summary: Create a new conversation
+      operationId: createConversation
+      responses:
+        '201':
+          description: Conversation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Conversation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /conversations/{conversationId}/messages:
+    get:
+      tags: [Conversations]
+      summary: Get message history
+      operationId: listMessages
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Messages ordered by createdAt ascending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Conversations]
+      summary: Send a message; returns streamed LLM response
+      description: |
+        Sends a user message and returns the chatbot's response via SSE streaming.
+        The Content-Type of the response is text/event-stream.
+      operationId: sendMessage
+      parameters:
+        - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Streamed SSE response
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ──────────────────────────────────────────────
+  # Notifications
+  # ──────────────────────────────────────────────
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      operationId: listNotifications
+      parameters:
+        - in: query
+          name: unread
+          description: Filter to unread only
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Notifications ordered by createdAt descending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Notification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get unread notification count
+      operationId: getUnreadCount
+      responses:
+        '200':
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [count]
+                    properties:
+                      count:
+                        type: integer
+                        minimum: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /notifications/mark-all-read:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      operationId: markAllRead
+      responses:
+        '204':
+          description: All notifications marked as read
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /notifications/{notificationId}:
+    patch:
+      tags: [Notifications]
+      summary: Mark notification as read
+      operationId: updateNotification
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [read]
+              properties:
+                read:
+                  type: boolean
+      responses:
+        '200':
+          description: Notification updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Notification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ════════════════════════════════════════════════
+# Components
+# ════════════════════════════════════════════════
+components:
+  # ── Parameters ────────────────────────────────
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    GigId:
+      name: gigId
+      in: path
+      required: true
+      description: An Event ID. System validates the event has type = GIG.
+      schema:
+        type: string
+
+    AppId:
+      name: appId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    CollectionId:
+      name: collectionId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    ConversationId:
+      name: conversationId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    NotificationId:
+      name: notificationId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+  # ── Schemas ───────────────────────────────────
+  schemas:
+    # ── Enums ──
+    EventType:
+      type: string
+      enum: [EVENT, GIG]
+
+    EventSource:
+      type: string
+      enum: [OSU_API, TICKETMASTER, USER]
+
+    EventStatus:
+      type: string
+      enum: [OPEN, IN_PROGRESS, COMPLETED, CANCELLED]
+
+    AppStatus:
+      type: string
+      enum: [PENDING, ACCEPTED, REJECTED]
+
+    InteractionType:
+      type: string
+      enum: [VIEW, SAVE, CLICK, APPLY, DISMISS]
+
+    MessageRole:
+      type: string
+      enum: [USER, ASSISTANT, SYSTEM]
+
+    CollectionVisibility:
+      type: string
+      enum: [PRIVATE, PUBLIC]
+
+    CompensationType:
+      type: string
+      enum: [FIXED, HOURLY]
+
+    NotificationType:
+      type: string
+      enum: [APPLICATION_RECEIVED, APPLICATION_ACCEPTED, APPLICATION_REJECTED, GIG_COMPLETED, EVENT_REMINDER, NEW_FOLLOWER]
+
+    ReferenceType:
+      type: string
+      enum: [EVENT, APPLICATION, USER]
+
+    # ── Value Objects ──
+    Location:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 500
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    Compensation:
+      type: object
+      required: [amount, type]
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+          default: USD
+        type:
+          $ref: '#/components/schemas/CompensationType'
+
+    # ── Pagination Meta ──
+    PaginationMeta:
+      type: object
+      required: [total, limit, offset]
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    # ── Entity Schemas ──
+    User:
+      type: object
+      required: [id, clerkId, email, interests, followerCount, followingCount, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          maxLength: 100
+          nullable: true
+        major:
+          type: string
+          maxLength: 100
+          nullable: true
+        gradYear:
+          type: integer
+          minimum: 2000
+          maximum: 2100
+          nullable: true
+        interests:
+          type: array
+          items:
+            type: string
+        followerCount:
+          type: integer
+          minimum: 0
+        followingCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PublicProfile:
+      type: object
+      required: [id, interests, followerCount, followingCount, isFollowing, createdAt]
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        major:
+          type: string
+          nullable: true
+        gradYear:
+          type: integer
+          nullable: true
+        interests:
+          type: array
+          items:
+            type: string
+        followerCount:
+          type: integer
+        followingCount:
+          type: integer
+        isFollowing:
+          type: boolean
+          description: Whether the authenticated user follows this user
+        createdEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+          description: User's OPEN and IN_PROGRESS events
+        createdAt:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      required: [id, title, description, type, source, location, startAt, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        summary:
+          type: string
+          maxLength: 500
+          nullable: true
+        type:
+          $ref: '#/components/schemas/EventType'
+        source:
+          $ref: '#/components/schemas/EventSource'
+        externalId:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 20
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        ticketUrl:
+          type: string
+          format: uri
+          nullable: true
+        location:
+          $ref: '#/components/schemas/Location'
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+          nullable: true
+        compensation:
+          allOf:
+            - $ref: '#/components/schemas/Compensation'
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        creatorId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Application:
+      type: object
+      required: [id, gigId, applicantId, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        gigId:
+          type: string
+        applicantId:
+          type: string
+        message:
+          type: string
+          maxLength: 1000
+          nullable: true
+        status:
+          $ref: '#/components/schemas/AppStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Collection:
+      type: object
+      required: [id, userId, name, visibility, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+          maxLength: 100
+        visibility:
+          $ref: '#/components/schemas/CollectionVisibility'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CollectionWithItems:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Event'
+
+    CollectionItem:
+      type: object
+      required: [id, collectionId, eventId, createdAt]
+      properties:
+        id:
+          type: string
+        collectionId:
+          type: string
+        eventId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Interaction:
+      type: object
+      required: [id, userId, eventId, action, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        eventId:
+          type: string
+        action:
+          $ref: '#/components/schemas/InteractionType'
+        createdAt:
+          type: string
+          format: date-time
+
+    Conversation:
+      type: object
+      required: [id, userId, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+          maxLength: 200
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      required: [id, conversationId, role, content, createdAt]
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        role:
+          $ref: '#/components/schemas/MessageRole'
+        content:
+          type: string
+          maxLength: 10000
+        createdAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      required: [id, userId, type, title, body, read, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        title:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 1000
+        referenceId:
+          type: string
+          nullable: true
+        referenceType:
+          allOf:
+            - $ref: '#/components/schemas/ReferenceType'
+          nullable: true
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Follow:
+      type: object
+      required: [id, followerId, followeeId, createdAt]
+      properties:
+        id:
+          type: string
+        followerId:
+          type: string
+        followeeId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    SocialFeedItem:
+      type: object
+      required: [event, action, actor, actionAt]
+      properties:
+        event:
+          $ref: '#/components/schemas/Event'
+        action:
+          type: string
+          enum: [created, saved]
+        actor:
+          type: object
+          required: [id, displayName]
+          properties:
+            id:
+              type: string
+            displayName:
+              type: string
+              nullable: true
+        actionAt:
+          type: string
+          format: date-time
+
+    # ── Request Schemas ──
+    UpdateUserRequest:
+      type: object
+      minProperties: 1
+      properties:
+        displayName:
+          type: string
+          maxLength: 100
+        major:
+          type: string
+          maxLength: 100
+        gradYear:
+          type: integer
+          minimum: 2000
+          maximum: 2100
+        interests:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+
+    CreateEventRequest:
+      type: object
+      required: [title, description, type, location, startAt]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        type:
+          $ref: '#/components/schemas/EventType'
+        location:
+          $ref: '#/components/schemas/Location'
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        compensation:
+          $ref: '#/components/schemas/Compensation'
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 20
+        imageUrl:
+          type: string
+          format: uri
+      additionalProperties: false
+
+    UpdateEventRequest:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        location:
+          $ref: '#/components/schemas/Location'
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        compensation:
+          $ref: '#/components/schemas/Compensation'
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        imageUrl:
+          type: string
+          format: uri
+        status:
+          $ref: '#/components/schemas/EventStatus'
+      additionalProperties: false
+
+    CreateApplicationRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+      additionalProperties: false
+
+    UpdateApplicationRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ACCEPTED, REJECTED]
+      additionalProperties: false
+
+    CreateCollectionRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        visibility:
+          $ref: '#/components/schemas/CollectionVisibility'
+      additionalProperties: false
+
+    UpdateCollectionRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        visibility:
+          $ref: '#/components/schemas/CollectionVisibility'
+      additionalProperties: false
+
+    CreateInteractionRequest:
+      type: object
+      required: [eventId, action]
+      properties:
+        eventId:
+          type: string
+        action:
+          $ref: '#/components/schemas/InteractionType'
+      additionalProperties: false
+
+    SendMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          maxLength: 10000
+      additionalProperties: false
+
+    # ── Response Wrappers ──
+    SuccessResponse_User:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+
+    SuccessResponse_PublicProfile:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PublicProfile'
+
+    SuccessResponse_Event:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Event'
+
+    SuccessResponse_Application:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Application'
+
+    SuccessResponse_Collection:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Collection'
+
+    SuccessResponse_CollectionWithItems:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/CollectionWithItems'
+
+    SuccessResponse_CollectionArray:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection'
+
+    SuccessResponse_CollectionItem:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/CollectionItem'
+
+    SuccessResponse_Interaction:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Interaction'
+
+    SuccessResponse_Conversation:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Conversation'
+
+    SuccessResponse_Follow:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Follow'
+
+    SuccessResponse_Notification:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Notification'
+
+    PaginatedResponse_Event:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedResponse_Application:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedResponse_PublicProfile:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicProfile'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedResponse_SocialFeedItem:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialFeedItem'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedResponse_Conversation:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedResponse_Message:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedResponse_Notification:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # ── Error ──
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+  # ── Responses ─────────────────────────────────
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Not allowed to perform this action
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Conflict:
+      description: Duplicate resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Security ──────────────────────────────────
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk-issued JWT. Restricted to @osu.edu and @buckeyemail.osu.edu accounts.

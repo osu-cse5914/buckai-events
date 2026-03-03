@@ -1,20 +1,44 @@
-# social-osu-app
+# Social OSU
 
-Initial setup with:
+Social OSU is an AI-powered campus discovery platform for The Ohio State University students. It aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers personalized recommendations, and provides an agentic LLM chatbot for natural-language event discovery.
 
-- Monorepo: Turborepo
-- Frontend: React (with Vite), TanStack Router, Tailwind CSS, shadcn/ui
-- Backend: Hono, Prisma ORM, PostgreSQL (Neon)
-- Runtime: Bun (local dev) / Cloudflare Workers (production)
+## Source of Truth
+
+Product and API behavior are defined in [`specs/`](specs/). Read the relevant spec before changing implementation.
+
+- Spec index: [`specs/index.md`](specs/index.md)
+- REST endpoint catalog: [`specs/api/endpoints.md`](specs/api/endpoints.md)
+- OpenAPI contract: [`specs/api/openapi.yaml`](specs/api/openapi.yaml)
+
+All REST endpoints are prefixed with `/api/v1`.
+
+## Tech Stack
+
+- Monorepo: Turborepo + Bun
+- Frontend: React + Vite + TanStack Router/Query + Tailwind CSS + shadcn/ui
+- Backend: Hono on Cloudflare Workers
+- Database: Neon PostgreSQL via Prisma ORM
+- Auth: Clerk (OSU email restricted)
+- AI: Google Gemini via Vercel AI SDK
 - CI/CD: GitHub Actions
 
-## Install
+## Project Structure
+
+```text
+apps/web/   React frontend (Vite, default local port 5173)
+apps/api/   Hono API backend (default local port 3001)
+specs/      Behavior specs and API contracts
+```
+
+## Setup
+
+Install dependencies:
 
 ```bash
 bun install
 ```
 
-## Configure Database
+Create the API env file:
 
 ```bash
 cp apps/api/.env.example apps/api/.env
@@ -22,13 +46,15 @@ cp apps/api/.env.example apps/api/.env
 
 Set `DATABASE_URL` in `apps/api/.env` to your Neon connection string.
 
-## Generate Prisma Client
+Generate the Prisma client:
 
 ```bash
 bun run db:generate
 ```
 
-## Run Development
+## Development
+
+Start both apps:
 
 ```bash
 bun run dev
@@ -36,44 +62,43 @@ bun run dev
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3001`
+- API base path: `http://localhost:3001/api/v1`
 
-## CI/CD Pipeline
+## Common Commands
 
-Workflow (`pipeline.yml`) with four jobs:
+| Command | Description |
+|---|---|
+| `bun run dev` | Start frontend and backend |
+| `bun run build` | Build all apps |
+| `bun run lint` | Lint all apps |
+| `bun run typecheck` | Typecheck all apps |
+| `bun run db:generate` | Generate Prisma client |
+| `bun run db:migrate` | Run Prisma migrations |
+| `bun run db:push` | Push Prisma schema to the database |
+| `bun run deploy` | Build and deploy via the app deploy scripts |
 
-| Job | Trigger | Action |
-|---|---|---|
-| `checks` | PR opened/updated, push to `main` | Lint, typecheck, build, upload artifact |
-| `secret-scan` | PR opened/updated, push to `main` | Scan for secrets within the repo |
-| `deploy-preview` | `checks` and `secret-scan` pass on a PR | Upload preview version to CF, comment URL on PR |
-| `deploy-production` | `checks` and `secret-scan` pass on `main` push | Deploy to production |
+## Deployment
 
-## Deploy to Cloudflare Workers
+Frontend and backend are served from a single Cloudflare Worker (`social-osu`). Static assets are served by the worker, and API routes are handled by Hono.
 
-Frontend and backend are served from a single Cloudflare Worker (`social-osu`).
-Static assets (React app) are served directly; API routes (`/api/*`) are handled by Hono.
+First-time Cloudflare setup:
 
-### First-time setup
-
-1. Install Wrangler and log in:
+1. Log in to Wrangler.
    ```bash
    bunx wrangler login
    ```
-
-2. Set the database secret:
+2. Set the production database secret.
    ```bash
    cd apps/api && wrangler secret put DATABASE_URL
    ```
 
-### Manual deploy
+Manual deploy:
 
 ```bash
 bun run deploy
 ```
 
-### Local CF Workers simulation
-
-Build the frontend first, then run wrangler dev:
+Local Cloudflare simulation:
 
 ```bash
 bun --cwd apps/web run build
