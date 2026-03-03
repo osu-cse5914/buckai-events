@@ -6,7 +6,7 @@ Every user has a public-facing personal page that other authenticated users can 
 
 ## Endpoint
 
-`GET /api/users/:id` returns the public profile of user :id.
+`GET /api/v1/users/:id` returns the public profile of user :id.
 
 ## Visible Fields
 
@@ -21,7 +21,7 @@ Every user has a public-facing personal page that other authenticated users can 
 | followingCount | Public |
 | createdEvents | Public (paginated) |
 | isFollowing | Public (whether the authenticated user follows this user) |
-| email | Private (only visible to the user themselves via /users/me) |
+| email | Private (only visible to the user themselves via /api/v1/users/me) |
 
 ## Behaviors
 
@@ -44,7 +44,7 @@ If the user ID does not exist, the API responds with 404.
 ```
 GIVEN user B exists with displayName "Brutus", major "CS", interests ["sports"]
 AND user B has 10 followers and follows 5 users
-WHEN user A sends GET /api/users/B
+WHEN user A sends GET /api/v1/users/B
 THEN the response contains displayName "Brutus", major "CS", interests ["sports"], followerCount 10, followingCount 5
 AND isFollowing indicates whether user A follows user B
 ```
@@ -53,7 +53,7 @@ AND isFollowing indicates whether user A follows user B
 
 ```
 GIVEN user B exists with email "brutus@osu.edu"
-WHEN user A sends GET /api/users/B
+WHEN user A sends GET /api/v1/users/B
 THEN the response does not contain the email field
 ```
 
@@ -61,7 +61,7 @@ THEN the response does not contain the email field
 
 ```
 GIVEN user B created 3 events (2 OPEN, 1 CANCELLED)
-WHEN user A sends GET /api/users/B
+WHEN user A sends GET /api/v1/users/B
 THEN the response includes 2 events (the OPEN ones)
 AND the CANCELLED event is not included
 ```
@@ -70,7 +70,7 @@ AND the CANCELLED event is not included
 
 ```
 GIVEN user A follows user B
-WHEN user A sends GET /api/users/B
+WHEN user A sends GET /api/v1/users/B
 THEN isFollowing is true
 ```
 
@@ -78,7 +78,7 @@ THEN isFollowing is true
 
 ```
 GIVEN user A does not follow user B
-WHEN user A sends GET /api/users/B
+WHEN user A sends GET /api/v1/users/B
 THEN isFollowing is false
 ```
 
@@ -86,6 +86,6 @@ THEN isFollowing is false
 
 ```
 GIVEN no user exists with id "nonexistent"
-WHEN user A sends GET /api/users/nonexistent
+WHEN user A sends GET /api/v1/users/nonexistent
 THEN the API responds with 404 Not Found
 ```

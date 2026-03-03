@@ -21,7 +21,7 @@ Feed items are ordered by the action timestamp (when the followed user created o
 
 ### Pagination
 
-`GET /social/feed` accepts `limit` and `offset` for pagination.
+`GET /api/v1/social/feed` accepts `limit` and `offset` for pagination.
 
 ### Empty Feed
 
@@ -29,7 +29,7 @@ If the user follows nobody, the feed is empty. The frontend suggests users to fo
 
 ## Endpoint
 
-`GET /api/social/feed`
+`GET /api/v1/social/feed`
 
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -54,7 +54,7 @@ If the user follows nobody, the feed is empty. The frontend suggests users to fo
 ```
 GIVEN user A follows user B
 AND user B created event E
-WHEN user A sends GET /api/social/feed
+WHEN user A sends GET /api/v1/social/feed
 THEN the feed contains event E with action "created" and actor = user B
 ```
 
@@ -63,7 +63,7 @@ THEN the feed contains event E with action "created" and actor = user B
 ```
 GIVEN user A follows user B
 AND user B saved event E to a PUBLIC collection
-WHEN user A sends GET /api/social/feed
+WHEN user A sends GET /api/v1/social/feed
 THEN the feed contains event E with action "saved" and actor = user B
 ```
 
@@ -72,7 +72,7 @@ THEN the feed contains event E with action "saved" and actor = user B
 ```
 GIVEN user A follows user B
 AND user B saved event E to a PRIVATE collection
-WHEN user A sends GET /api/social/feed
+WHEN user A sends GET /api/v1/social/feed
 THEN event E does not appear in user A's feed (from user B's save)
 ```
 
@@ -82,7 +82,7 @@ THEN event E does not appear in user A's feed (from user B's save)
 GIVEN user A follows user B and user C
 AND user B created event E1 at T1
 AND user C saved event E2 at T2 (T2 > T1)
-WHEN user A sends GET /api/social/feed
+WHEN user A sends GET /api/v1/social/feed
 THEN E2 appears before E1
 ```
 
@@ -90,7 +90,7 @@ THEN E2 appears before E1
 
 ```
 GIVEN user A follows nobody
-WHEN user A sends GET /api/social/feed
+WHEN user A sends GET /api/v1/social/feed
 THEN the response contains an empty data array
 ```
 
@@ -98,7 +98,7 @@ THEN the response contains an empty data array
 
 ```
 GIVEN user A's social feed has 50 items
-WHEN user A sends GET /api/social/feed?limit=10&offset=10
+WHEN user A sends GET /api/v1/social/feed?limit=10&offset=10
 THEN the response contains items 11-20
 AND meta.total is 50
 ```
@@ -117,7 +117,7 @@ THEN user B's events no longer appear in user A's social feed
 GIVEN user A follows user B
 AND user B created event E
 AND user B also saved event E to a PUBLIC collection
-WHEN user A sends GET /api/social/feed
+WHEN user A sends GET /api/v1/social/feed
 THEN event E appears once with action "created" (creation takes precedence)
 ```
 
@@ -126,7 +126,7 @@ THEN event E appears once with action "created" (creation takes precedence)
 ```
 GIVEN user A follows user B
 AND user B saved event E to PUBLIC collection C1 and PUBLIC collection C2
-WHEN user A sends GET /api/social/feed
+WHEN user A sends GET /api/v1/social/feed
 THEN event E appears once (deduplicated by event ID per actor)
-AND actionAt is the earliest save timestamp
+AND actionAt is the most recent save timestamp
 ```
