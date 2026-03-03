@@ -27,6 +27,13 @@ See `AGENTS.md` for the full development workflow. It applies to all agents work
 
 Tests are behavior-driven: they test what the system does, not how it does it.
 
+## Commit Messages
+
+- Use Conventional Commits for all commits.
+- Format commit messages as `type(scope): summary` when a scope is useful, or `type: summary` when it is not.
+- Common types in this repo include `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, and `revert`.
+- Keep the summary concise and imperative.
+
 ## Tech Stack
 
 - **Monorepo**: Turborepo + Bun
