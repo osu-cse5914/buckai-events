@@ -9,6 +9,8 @@ info:
 
     Authentication is handled via Clerk (restricted to @osu.edu and @buckeyemail.osu.edu).
     All endpoints require a valid Clerk JWT in the Authorization header.
+    Successful responses return resources directly. Paginated responses return `{ items, meta }`.
+    Error responses use RFC 7807 Problem Details (`application/problem+json`).
 
 servers:
   - url: https://social-osu.workers.dev/api/v1
@@ -779,15 +781,11 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [data]
+                required: [count]
                 properties:
-                  data:
-                    type: object
-                    required: [count]
-                    properties:
-                      count:
-                        type: integer
-                        minimum: 0
+                  count:
+                    type: integer
+                    minimum: 0
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -1466,98 +1464,61 @@ components:
           maxLength: 10000
       additionalProperties: false
 
-    # ── Response Wrappers ──
+    # ── Response Shapes ──
     SuccessResponse_User:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/User'
+      allOf:
+        - $ref: '#/components/schemas/User'
 
     SuccessResponse_PublicProfile:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/PublicProfile'
+      allOf:
+        - $ref: '#/components/schemas/PublicProfile'
 
     SuccessResponse_Event:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/Event'
+      allOf:
+        - $ref: '#/components/schemas/Event'
 
     SuccessResponse_Application:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/Application'
+      allOf:
+        - $ref: '#/components/schemas/Application'
 
     SuccessResponse_Collection:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/Collection'
+      allOf:
+        - $ref: '#/components/schemas/Collection'
 
     SuccessResponse_CollectionWithItems:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/CollectionWithItems'
+      allOf:
+        - $ref: '#/components/schemas/CollectionWithItems'
 
     SuccessResponse_CollectionArray:
-      type: object
-      required: [data]
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Collection'
+      type: array
+      items:
+        $ref: '#/components/schemas/Collection'
 
     SuccessResponse_CollectionItem:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/CollectionItem'
+      allOf:
+        - $ref: '#/components/schemas/CollectionItem'
 
     SuccessResponse_Interaction:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/Interaction'
+      allOf:
+        - $ref: '#/components/schemas/Interaction'
 
     SuccessResponse_Conversation:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/Conversation'
+      allOf:
+        - $ref: '#/components/schemas/Conversation'
 
     SuccessResponse_Follow:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/Follow'
+      allOf:
+        - $ref: '#/components/schemas/Follow'
 
     SuccessResponse_Notification:
-      type: object
-      required: [data]
-      properties:
-        data:
-          $ref: '#/components/schemas/Notification'
+      allOf:
+        - $ref: '#/components/schemas/Notification'
 
     PaginatedResponse_Event:
       type: object
-      required: [data, meta]
+      required: [items, meta]
       properties:
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Event'
@@ -1566,9 +1527,9 @@ components:
 
     PaginatedResponse_Application:
       type: object
-      required: [data, meta]
+      required: [items, meta]
       properties:
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Application'
@@ -1577,9 +1538,9 @@ components:
 
     PaginatedResponse_PublicProfile:
       type: object
-      required: [data, meta]
+      required: [items, meta]
       properties:
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/PublicProfile'
@@ -1588,9 +1549,9 @@ components:
 
     PaginatedResponse_SocialFeedItem:
       type: object
-      required: [data, meta]
+      required: [items, meta]
       properties:
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/SocialFeedItem'
@@ -1599,9 +1560,9 @@ components:
 
     PaginatedResponse_Conversation:
       type: object
-      required: [data, meta]
+      required: [items, meta]
       properties:
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Conversation'
@@ -1610,9 +1571,9 @@ components:
 
     PaginatedResponse_Message:
       type: object
-      required: [data, meta]
+      required: [items, meta]
       properties:
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Message'
@@ -1621,63 +1582,70 @@ components:
 
     PaginatedResponse_Notification:
       type: object
-      required: [data, meta]
+      required: [items, meta]
       properties:
-        data:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Notification'
         meta:
           $ref: '#/components/schemas/PaginationMeta'
 
-    # ── Error ──
+    # ── Error (RFC 7807 Problem Details) ──
     ErrorResponse:
       type: object
-      required: [error]
+      required: [type, title, status, detail]
       properties:
-        error:
-          type: object
-          required: [code, message]
-          properties:
-            code:
-              type: string
-            message:
-              type: string
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+      additionalProperties: true
 
   # ── Responses ─────────────────────────────────
   responses:
     BadRequest:
       description: Invalid request
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
     Unauthorized:
       description: Missing or invalid JWT
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
     Forbidden:
       description: Not allowed to perform this action
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
     NotFound:
       description: Resource not found
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
     Conflict:
       description: Duplicate resource
       content:
-        application/json:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 

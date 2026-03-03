@@ -2,19 +2,36 @@
 
 ## Overview
 
-All endpoints are prefixed with `/api/v1`. All endpoints require a valid Clerk JWT in the `Authorization: Bearer <token>` header. Responses use a consistent envelope:
+All endpoints are prefixed with `/api/v1`. All endpoints require a valid Clerk JWT in the `Authorization: Bearer <token>` header.
+
+Successful responses return the resource directly:
 
 ```json
 {
-  "data": <payload>,
-  "meta": { "total": 100, "limit": 20, "offset": 0 },
-  "error": { "code": "NOT_FOUND", "message": "Event not found" }
+  "id": "user_123",
+  "displayName": "Carmen"
 }
 ```
 
-- `data` is present on success.
-- `meta` is present on paginated responses.
-- `error` is present on failure (with appropriate HTTP status code).
+Paginated responses return a list plus pagination metadata:
+
+```json
+{
+  "items": [{ "id": "evt_123", "title": "Hack Night" }],
+  "meta": { "total": 100, "limit": 20, "offset": 0 }
+}
+```
+
+Error responses use RFC 7807 Problem Details with the appropriate HTTP status code:
+
+```json
+{
+  "type": "https://social-osu.app/problems/not-found",
+  "title": "Resource not found",
+  "status": 404,
+  "detail": "Event evt_123 was not found"
+}
+```
 
 All paginated endpoints use `limit` (default 20, max 100) and `offset` (default 0). All timestamps are UTC (ISO 8601).
 

@@ -18,7 +18,7 @@ The recommendation feed is the primary discovery surface. It presents a blended 
 
 ### Response
 
-Returns an array of Event objects ranked by recommendation score, wrapped in the standard envelope `{ data, meta }`. The `meta` object includes `total`, `limit`, `offset`.
+Returns a paginated response shaped as `{ items, meta }`, where `items` is an array of Event objects ranked by recommendation score. The `meta` object includes `total`, `limit`, `offset`.
 
 ## Behaviors
 
