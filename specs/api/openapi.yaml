@@ -3,7 +3,7 @@ info:
   title: Social OSU API
   version: 1.0.0
   description: |
-    REST API for Social OSU, an AI-powered campus discovery platform for Ohio State University students.
+    REST API for Social OSU, an AI-powered campus discovery platform for The Ohio State University students.
     Aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers
     personalized recommendations, and provides an agentic LLM chatbot for event discovery.
 

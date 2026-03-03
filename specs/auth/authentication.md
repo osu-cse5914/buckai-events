@@ -2,7 +2,7 @@
 
 ## Overview
 
-Authentication is handled by Clerk, restricted to Ohio State University email domains. The backend verifies Clerk-issued JWTs on every API request.
+Authentication is handled by Clerk, restricted to The Ohio State University email domains. The backend verifies Clerk-issued JWTs on every API request.
 
 ## Behaviors
 
