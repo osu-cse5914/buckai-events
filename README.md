@@ -2,6 +2,10 @@
 
 Social OSU is an AI-powered campus discovery platform for The Ohio State University students. It aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers personalized recommendations, and provides an agentic LLM chatbot for natural-language event discovery.
 
+## Docs
+
+Browse the specs and interactive API reference at [social-osu-docs.pages.dev](https://social-osu-docs.pages.dev).
+
 ## Source of Truth
 
 Product and API behavior are defined in [`specs/`](specs/). Read the relevant spec before changing implementation.

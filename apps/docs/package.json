@@ -1,0 +1,22 @@
+{
+  "name": "@social-osu/docs",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "sync-specs": "node scripts/sync-specs.mjs",
+    "dev": "node scripts/sync-specs.mjs && astro dev",
+    "build": "node scripts/sync-specs.mjs && astro build",
+    "preview": "astro preview",
+    "deploy": "node scripts/sync-specs.mjs && astro build && wrangler pages deploy dist --project-name social-osu-docs"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.34.0",
+    "ajv": "^8.18.0",
+    "astro": "^5.7.0",
+    "starlight-openapi": "^0.9.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.14.0"
+  }
+}
