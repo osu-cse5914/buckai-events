@@ -11,3 +11,5 @@ apps/api/generated
 apps/web/src/**/*.js
 apps/web/src/routeTree.gen.ts
 apps/web/vite.config.js
+.astro
+apps/docs/src/content/docs/specs
