@@ -114,6 +114,17 @@ export default defineConfig({
             { label: "Endpoints", link: "/specs/api/endpoints/" },
           ],
         },
+        {
+          label: "Plans",
+          items: [
+            { label: "Roadmap", link: "/plans/roadmap/" },
+            { label: "Project Management", link: "/plans/project-management/" },
+            {
+              label: "PM Alternatives",
+              link: "/plans/decisions/project-management-alternatives/",
+            },
+          ],
+        },
         ...openAPISidebarGroups,
       ],
       customCss: [],
