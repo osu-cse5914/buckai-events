@@ -15,7 +15,6 @@ Event ──< Application       (gig applications)
 User ──< Collection ──< CollectionItem ──> Event
 User ──< Interaction ──> Event
 User ──< Conversation ──< Message
-User ──< Notification
 User ──< Follow ──> User    (follower → followee)
 Event ──< EventEmbedding    (1:1, vector search)
 ```
@@ -128,20 +127,6 @@ Event ──< EventEmbedding    (1:1, vector search)
 | content | String | required, max 10000 chars | |
 | createdAt | DateTime | default now | |
 
-### Notification
-
-| Field | Type | Constraints | Notes |
-|-------|------|-------------|-------|
-| id | String | PK, cuid | |
-| userId | String | FK → User, ON DELETE CASCADE | Recipient |
-| type | NotificationType | enum | |
-| title | String | required, max 200 chars | |
-| body | String | required, max 1000 chars | |
-| referenceId | String? | | ID of related entity |
-| referenceType | ReferenceType? | enum | Type of related entity |
-| read | Boolean | default false | |
-| createdAt | DateTime | default now | |
-
 ### Follow
 
 | Field | Type | Constraints | Notes |
@@ -197,8 +182,6 @@ AppStatus:            PENDING | ACCEPTED | REJECTED
 InteractionType:      VIEW | SAVE | CLICK | APPLY | DISMISS
 MessageRole:          USER | ASSISTANT | SYSTEM
 CollectionVisibility: PRIVATE | PUBLIC
-NotificationType:     APPLICATION_RECEIVED | APPLICATION_ACCEPTED | APPLICATION_REJECTED | GIG_COMPLETED | EVENT_REMINDER | NEW_FOLLOWER
-ReferenceType:        EVENT | APPLICATION | USER
 CompensationType:     FIXED | HOURLY
 ```
 
@@ -216,7 +199,7 @@ Users select interests from this list. Events are tagged with a category from th
 
 | Parent Deleted | Child Behavior |
 |----------------|---------------|
-| User deleted | Events: creatorId set to NULL (events persist). Applications, Collections, Interactions, Conversations, Notifications, Follows: CASCADE deleted |
+| User deleted | Events: creatorId set to NULL (events persist). Applications, Collections, Interactions, Conversations, Follows: CASCADE deleted |
 | Event deleted | Applications, CollectionItems, Interactions, EventEmbedding: CASCADE deleted |
 | Collection deleted | CollectionItems: CASCADE deleted |
 | Conversation deleted | Messages: CASCADE deleted |

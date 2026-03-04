@@ -20,7 +20,6 @@ Authorization is ownership-based. There are no admin roles. Users can only modif
 | Collection | Update | Owner only |
 | Collection | Delete | Owner only |
 | Conversation | All | Owner only |
-| Notification | Read/update | Recipient only |
 
 ## Scenarios
 

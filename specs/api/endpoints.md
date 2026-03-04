@@ -107,15 +107,6 @@ All paginated endpoints use `limit` (default 20, max 100) and `offset` (default 
 | GET | `/api/v1/conversations/:id/messages` | Get message history. Params: `limit`, `offset` |
 | POST | `/api/v1/conversations/:id/messages` | Send message; returns streamed SSE response |
 
-## Notifications
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/v1/notifications` | List notifications. Params: `unread`, `limit`, `offset` |
-| GET | `/api/v1/notifications/unread-count` | Get unread notification count |
-| PATCH | `/api/v1/notifications/:id` | Update notification (mark as read) |
-| POST | `/api/v1/notifications/mark-all-read` | Mark all notifications as read |
-
 ## Error Codes
 
 | HTTP Status | Code | When |

@@ -36,10 +36,6 @@ The gig owner can list all applications for their gig. Each application shows th
 
 The gig owner can accept or reject any PENDING application. Accepting one application does not affect other applications — the owner can accept multiple applicants. The gig remains OPEN until the owner manually changes its status.
 
-### Notifications
-
-When an application status changes, the applicant receives an in-app notification.
-
 ## Scenarios
 
 ### S-APP-1: Apply to a gig
@@ -74,7 +70,6 @@ THEN the API responds with 409 Conflict
 GIVEN gig G has a PENDING application from user B
 WHEN the gig owner sends PATCH /gigs/G/applications/app1 with { status: "ACCEPTED" }
 THEN the application status is ACCEPTED
-AND user B receives a notification of type APPLICATION_ACCEPTED
 ```
 
 ### S-APP-5: Reject an application
@@ -83,7 +78,6 @@ AND user B receives a notification of type APPLICATION_ACCEPTED
 GIVEN gig G has a PENDING application from user B
 WHEN the gig owner sends PATCH /gigs/G/applications/app1 with { status: "REJECTED" }
 THEN the application status is REJECTED
-AND user B receives a notification of type APPLICATION_REJECTED
 ```
 
 ### S-APP-6: Accept multiple applicants
@@ -122,11 +116,3 @@ THEN the API responds with 400 Bad Request
 AND the application status remains ACCEPTED
 ```
 
-### S-APP-10: Application received notification to gig owner
-
-```
-GIVEN user B applies to gig G owned by user A
-THEN user A receives a notification with type APPLICATION_RECEIVED
-AND referenceId = the application ID
-AND referenceType = APPLICATION
-```

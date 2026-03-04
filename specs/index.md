@@ -55,10 +55,6 @@ Social OSU is an AI-powered campus discovery platform for The Ohio State Univers
 - [Chatbot](chat/chatbot.md) — agentic LLM chatbot, tool use, confirmation flow
 - [Conversations](chat/conversations.md) — conversation persistence, message history
 
-### Notifications
-
-- [In-App](notifications/in-app.md) — notification types, delivery, read state
-
 ### API
 
 - [Endpoints](api/endpoints.md) — REST API resource catalog, request/response shapes

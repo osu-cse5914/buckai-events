@@ -102,12 +102,7 @@ export default defineConfig({
             { label: "Conversations", link: "/specs/chat/conversations/" },
           ],
         },
-        {
-          label: "Notifications",
-          items: [
-            { label: "In-App", link: "/specs/notifications/in-app/" },
-          ],
-        },
+
         {
           label: "API",
           items: [
