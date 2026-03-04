@@ -1,0 +1,35 @@
+name: Infrastructure
+description: CI/CD, tooling, deployment, or configuration changes.
+title: "[Infra] "
+labels: ["type:infra"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "What infrastructure change is needed and why?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: "Concrete, testable criteria for completion."
+      value: |
+        - [ ] Change deployed and verified
+        - [ ] No regressions in CI/CD pipeline
+        - [ ] No lint or typecheck errors
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - API
+        - Web
+        - Full-stack
+    validations:
+      required: true

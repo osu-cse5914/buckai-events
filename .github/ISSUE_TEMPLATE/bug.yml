@@ -1,0 +1,57 @@
+name: Bug Fix
+description: Report a bug and track the fix.
+title: "[Fix] "
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: "What is happening? What did you expect instead?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: "How can we reproduce this bug?"
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: input
+    id: spec
+    attributes:
+      label: Spec File
+      description: "Path to the relevant spec, if applicable (e.g., specs/system/data-model.md)"
+      placeholder: "specs/system/data-model.md"
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: "Concrete, testable criteria for the fix."
+      value: |
+        - [ ] Root cause identified
+        - [ ] Fix matches spec behavior
+        - [ ] Regression test written and passing
+        - [ ] No lint or typecheck errors
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - API
+        - Web
+        - Full-stack
+    validations:
+      required: true
