@@ -32,6 +32,23 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 - Do not add code that is not covered by a spec behavior.
 - When a spec changes, update the corresponding tests first, then update the implementation.
 
+## Project Management
+
+- The project roadmap lives in `plans/roadmap.md`. It defines phases, task breakdowns, and dependencies.
+- Individual tasks are tracked as GitHub Issues, organized by Milestones (one per phase).
+- Before starting work, check for a GitHub Issue. If one exists, read the linked spec first.
+- One issue = one PR. Keep scope small and focused.
+- Agents do not merge PRs. Only humans merge.
+- Agents do not modify specs. If behavior is unclear, ask or leave a comment on the issue.
+- Label your issue `agent:in-progress` when you start and `agent:review` when you open the PR.
+
+### Labels
+
+- `phase:0-foundation` through `phase:6-notifications` — which phase
+- `scope:api`, `scope:web`, `scope:full-stack` — what part of the stack
+- `type:feature`, `type:test`, `type:infra`, `type:bug` — what kind of work
+- `agent:ready`, `agent:in-progress`, `agent:review` — agent workflow state
+
 ## Commit Messages
 
 - Use Conventional Commits for all commits.
@@ -67,4 +84,5 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 apps/web/          → React frontend (port 5173)
 apps/api/          → Hono API backend (port 3001)
 specs/             → Behavior specs (source of truth)
+plans/             → Project roadmap and management docs
 ```

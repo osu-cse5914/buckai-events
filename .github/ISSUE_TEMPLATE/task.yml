@@ -1,0 +1,53 @@
+name: Task
+description: A development task from the project roadmap.
+title: "[Task] "
+labels: ["type:feature"]
+body:
+  - type: input
+    id: roadmap-ref
+    attributes:
+      label: Roadmap Reference
+      description: "Task number from plans/roadmap.md (e.g., 0.1.1)"
+      placeholder: "0.1.1"
+    validations:
+      required: true
+
+  - type: input
+    id: spec
+    attributes:
+      label: Spec File
+      description: "Path to the relevant spec (e.g., specs/system/data-model.md)"
+      placeholder: "specs/system/data-model.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "What needs to be done. Reference specific spec sections."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: "Concrete, testable criteria for completion."
+      value: |
+        - [ ] Implementation matches spec behavior
+        - [ ] Tests written and passing (TDD red-green)
+        - [ ] No lint or typecheck errors
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - API
+        - Web
+        - Full-stack
+    validations:
+      required: true

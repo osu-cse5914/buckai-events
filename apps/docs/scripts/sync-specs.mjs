@@ -11,7 +11,9 @@ import { readdir, readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { join, relative, dirname } from "node:path";
 
 const SPECS_DIR = join(import.meta.dirname, "../../../specs");
-const OUT_DIR = join(import.meta.dirname, "../src/content/docs/specs");
+const PLANS_DIR = join(import.meta.dirname, "../../../plans");
+const SPECS_OUT_DIR = join(import.meta.dirname, "../src/content/docs/specs");
+const PLANS_OUT_DIR = join(import.meta.dirname, "../src/content/docs/plans");
 
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -42,15 +44,14 @@ function injectFrontmatter(content, title) {
   return frontmatter + withoutH1;
 }
 
-async function main() {
-  // Clean output directory
-  await rm(OUT_DIR, { recursive: true, force: true });
+async function syncDir(srcDir, outDir, label) {
+  await rm(outDir, { recursive: true, force: true });
 
-  const files = await walk(SPECS_DIR);
+  const files = await walk(srcDir);
 
   for (const file of files) {
-    const rel = relative(SPECS_DIR, file);
-    const outPath = join(OUT_DIR, rel);
+    const rel = relative(srcDir, file);
+    const outPath = join(outDir, rel);
 
     await mkdir(dirname(outPath), { recursive: true });
 
@@ -72,7 +73,12 @@ async function main() {
     }
   }
 
-  console.log(`Synced ${files.length} spec files to ${OUT_DIR}`);
+  console.log(`Synced ${files.length} ${label} files to ${outDir}`);
+}
+
+async function main() {
+  await syncDir(SPECS_DIR, SPECS_OUT_DIR, "spec");
+  await syncDir(PLANS_DIR, PLANS_OUT_DIR, "plan");
 }
 
 main();

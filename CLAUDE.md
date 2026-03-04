@@ -9,6 +9,13 @@ Before implementing any feature, read the relevant spec. If a spec is missing or
 
 See `AGENTS.md` for the full development workflow. It applies to all agents working on this codebase.
 
+## Project Management
+
+- Roadmap and phase breakdown: `plans/roadmap.md`
+- Tasks are tracked as GitHub Issues with Milestones per phase.
+- Check GitHub Issues before starting work. Read the linked spec in every issue.
+- See `plans/project-management.md` for the full workflow, labels, and collaboration rules.
+
 ## Development Workflow
 
 ### Specs-Driven Development
@@ -62,4 +69,5 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 apps/web/          → React frontend (port 5173)
 apps/api/          → Hono API backend (port 3001)
 specs/             → Behavior specs (source of truth)
+plans/             → Project roadmap and management docs
 ```

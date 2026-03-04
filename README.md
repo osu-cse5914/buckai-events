@@ -16,6 +16,24 @@ Product and API behavior are defined in [`specs/`](specs/). Read the relevant sp
 
 All REST endpoints are prefixed with `/api/v1`.
 
+## Project Management
+
+Development is organized into 7 phases tracked via GitHub Issues and Milestones:
+
+| Phase | Focus |
+|-------|-------|
+| 0 | Foundation (schema, auth, tooling) |
+| 1 | Users & Events (core CRUD) |
+| 2 | Marketplace (gigs, collections) |
+| 3 | Social (follows, feed) |
+| 4 | AI & External Data (embeddings, ingestion, recommendations) |
+| 5 | Chatbot (conversations, LLM tool use) |
+| 6 | Notifications & Polish |
+
+- Roadmap: [`plans/roadmap.md`](plans/roadmap.md)
+- Workflow & labels: [`plans/project-management.md`](plans/project-management.md)
+- Issues: [GitHub Issues](https://github.com/osu-cse5914/social-osu-app/issues)
+
 ## Tech Stack
 
 - Monorepo: Turborepo + Bun
@@ -32,6 +50,7 @@ All REST endpoints are prefixed with `/api/v1`.
 apps/web/   React frontend (Vite, default local port 5173)
 apps/api/   Hono API backend (default local port 3001)
 specs/      Behavior specs and API contracts
+plans/      Project roadmap and management docs
 ```
 
 ## Setup
