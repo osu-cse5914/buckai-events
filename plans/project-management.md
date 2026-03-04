@@ -41,7 +41,7 @@ phase:2-marketplace
 phase:3-social
 phase:4-ai
 phase:5-chatbot
-phase:6-notifications
+phase:6-polish
 
 # Scope labels
 scope:api

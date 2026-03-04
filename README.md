@@ -28,7 +28,7 @@ Development is organized into 7 phases tracked via GitHub Issues and Milestones:
 | 3 | Social (follows, feed) |
 | 4 | AI & External Data (embeddings, ingestion, recommendations) |
 | 5 | Chatbot (conversations, LLM tool use) |
-| 6 | Notifications & Polish |
+| 6 | Polish & Integration |
 
 - Roadmap: [`plans/roadmap.md`](plans/roadmap.md)
 - Workflow & labels: [`plans/project-management.md`](plans/project-management.md)

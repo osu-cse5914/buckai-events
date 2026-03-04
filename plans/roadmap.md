@@ -26,7 +26,7 @@ The codebase has infrastructure scaffolding only:
 
 | # | Task | Spec | Scope |
 |---|------|------|-------|
-| 0.1.1 | Define all enums (EventType, EventSource, EventStatus, AppStatus, InteractionType, MessageRole, CollectionVisibility, NotificationType, ReferenceType, CompensationType) | `data-model` | API |
+| 0.1.1 | Define all enums (EventType, EventSource, EventStatus, AppStatus, InteractionType, MessageRole, CollectionVisibility, CompensationType) | `data-model` | API |
 | 0.1.2 | Expand User model (clerkId, email, displayName, major, gradYear, interests, followerCount, followingCount) | `data-model` | API |
 | 0.1.3 | Create Event model with embedded Location and Compensation | `data-model` | API |
 | 0.1.4 | Create Application model with unique (gigId, applicantId) constraint | `data-model` | API |
@@ -34,9 +34,8 @@ The codebase has infrastructure scaffolding only:
 | 0.1.6 | Create Collection, CollectionItem models | `data-model` | API |
 | 0.1.7 | Create Interaction model (append-only) | `data-model` | API |
 | 0.1.8 | Create Conversation, Message models | `data-model` | API |
-| 0.1.9 | Create Notification model | `data-model` | API |
-| 0.1.10 | Create EventEmbedding model with pgvector vector(768) | `data-model` | API |
-| 0.1.11 | Run initial migration, verify all relationships and cascades | `data-model` | API |
+| 0.1.9 | Create EventEmbedding model with pgvector vector(768) | `data-model` | API |
+| 0.1.10 | Run initial migration, verify all relationships and cascades | `data-model` | API |
 
 ### 0.2 Auth
 
@@ -300,31 +299,7 @@ The codebase has infrastructure scaffolding only:
 
 ---
 
-## Phase 6 — Notifications & Polish
-
-**Goal**: In-app notifications, event reminders, and end-to-end polish.
-
-### 6.1 Notifications API
-
-| # | Task | Spec | Scope |
-|---|------|------|-------|
-| 6.1.1 | Notification creation service (called from application, follow, gig-complete flows) | `in-app` | API |
-| 6.1.2 | `GET /api/v1/notifications` — list (unread filter, pagination) | `in-app` | API |
-| 6.1.3 | `GET /api/v1/notifications/unread-count` — count of unread | `in-app` | API |
-| 6.1.4 | `PATCH /api/v1/notifications/:id` — mark as read | `in-app` | API |
-| 6.1.5 | `POST /api/v1/notifications/mark-all-read` — mark all as read | `in-app` | API |
-| 6.1.6 | Wire notification triggers into existing flows (applications, follows, gig completion) | `in-app` | API |
-| 6.1.7 | Event reminder cron: hourly, events in collections starting within 24h | `in-app` | API |
-| 6.1.8 | Write tests for all notification types + dedup | `in-app` | API |
-
-### 6.2 Notifications UI
-
-| # | Task | Spec | Scope |
-|---|------|------|-------|
-| 6.2.1 | Notification bell icon in header with unread badge (poll every 60s) | `in-app` | Web |
-| 6.2.2 | Notification dropdown/page — list, mark as read, navigate to reference | `in-app` | Web |
-
-### 6.3 Polish & Integration
+## Phase 6 — Polish & Integration
 
 | # | Task | Spec | Scope |
 |---|------|------|-------|
@@ -333,7 +308,7 @@ The codebase has infrastructure scaffolding only:
 | 6.3.3 | Responsive design pass | — | Web |
 | 6.3.4 | End-to-end smoke tests (key user flows) | — | Full-stack |
 
-**Depends on**: Phase 2 (applications), Phase 3 (follows) — for notification triggers
+**Depends on**: Phase 5
 **Blocks**: Nothing (final phase)
 
 ---
@@ -353,13 +328,13 @@ Phase 0 (Foundation)
    │               │
    │               └──► Phase 5 (Chatbot)
    │
-   └──► Phase 6 (Notifications) ◄── after Phases 2 + 3
+   └──► Phase 6 (Polish) ◄── after Phase 5
 ```
 
 **Parallelization opportunities**:
 - Phase 2 and Phase 3 can run in parallel (different developers)
 - Phase 4.4 (External Ingestion) can start as soon as Phase 1.3 (Event CRUD) is done
-- Phase 6 can begin notification API work alongside Phase 4/5, wiring triggers later
+- Phase 6 (Polish) can begin once core features are stable
 
 ---
 
@@ -367,14 +342,14 @@ Phase 0 (Foundation)
 
 | Phase | API Tasks | Web Tasks | Total |
 |-------|-----------|-----------|-------|
-| 0 — Foundation | 15 | 1 | 16 |
+| 0 — Foundation | 14 | 1 | 15 |
 | 1 — Users & Events | 12 | 7 | 19 |
 | 2 — Marketplace | 14 | 6 | 20 |
 | 3 — Social | 6 | 3 | 9 |
 | 4 — AI & External Data | 17 | 1 | 18 |
 | 5 — Chatbot | 11 | 4 | 15 |
-| 6 — Notifications & Polish | 12 | 2 | 14 |
-| **Total** | **87** | **24** | **111** |
+| 6 — Polish & Integration | 2 | 2 | 4 |
+| **Total** | **75** | **22** | **97** |
 
 ---
 

@@ -87,9 +87,3 @@ WHEN any authenticated user sends GET /users/A/following
 THEN the response contains 5 user profiles
 ```
 
-### S-FOL-8: Follow notification
-
-```
-GIVEN user A follows user B
-THEN user B receives a notification of type NEW_FOLLOWER
-```
