@@ -341,6 +341,7 @@ paths:
   # ──────────────────────────────────────────────
   # Gig Applications
   # ──────────────────────────────────────────────
+  #needs further functionality to get a specific gig application, and also more functionality for submitting an application to a gig such as adding relevant fields
   /gigs/{gigId}/applications:
     post:
       tags: [Applications]
