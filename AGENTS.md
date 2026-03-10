@@ -44,10 +44,11 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 
 ### Labels
 
-- `phase:0-foundation` through `phase:6-polish` — which phase
 - `scope:api`, `scope:web`, `scope:full-stack` — what part of the stack
 - `agent:in-progress`, `agent:review` — agent workflow state
 - `timebox:N` — which timebox/sprint the issue belongs to
+
+Phase tracking uses GitHub Milestones (one per phase), not labels.
 
 Issue types (Feature, Task, Bug) are set via GitHub's native issue type field, not labels.
 

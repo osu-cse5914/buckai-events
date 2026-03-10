@@ -26,7 +26,7 @@ The project management approach needs to support both humans coordinating and ag
 1. **Already on GitHub** — no context switching, no extra tool
 2. **Agent-friendly** — Claude Code can read/create/update issues via `gh` CLI
 3. **Free for public repos** — GitHub Projects boards are included
-4. **Labels + Milestones** — map directly to phases and scopes
+4. **Labels + Milestones** — labels for scope/workflow, milestones for phases
 5. **Issue types** — GitHub's native issue types (Feature, Task, Bug) replace type labels
 6. **Issue templates** — standardize task creation for agents and humans
 
@@ -35,15 +35,6 @@ The project management approach needs to support both humans coordinating and ag
 #### Labels
 
 ```
-# Phase labels (milestones work too, but labels are more visible)
-phase:0-foundation
-phase:1-core-crud
-phase:2-marketplace
-phase:3-social
-phase:4-ai
-phase:5-chatbot
-phase:6-polish
-
 # Scope labels
 scope:api
 scope:web
@@ -56,7 +47,7 @@ agent:review      # Agent finished, needs human review
 
 #### Milestones
 
-One GitHub Milestone per phase. This gives you a progress bar and burndown.
+One GitHub Milestone per phase (e.g., "Phase 0 — Foundation"). This gives you a progress bar, burndown, and serves as the single source of truth for which phase an issue belongs to.
 
 #### GitHub Projects Board
 
