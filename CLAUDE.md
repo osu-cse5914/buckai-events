@@ -16,6 +16,27 @@ See `AGENTS.md` for the full development workflow. It applies to all agents work
 - Check GitHub Issues before starting work. Read the linked spec in every issue.
 - See `plans/project-management.md` for the full workflow, labels, and collaboration rules.
 
+### Issue Blocking Relationships
+
+When creating GitHub Issues, always set blocking relationships using the GitHub GraphQL API. This keeps the dependency graph visible in the GitHub UI "Relationships" section.
+
+```bash
+# Mark issue as "blocked by" another issue
+gh api graphql -f query='
+  mutation {
+    addBlockedBy(input: {issueId: "<BLOCKED_ISSUE_NODE_ID>", blockingIssueId: "<BLOCKER_ISSUE_NODE_ID>"}) {
+      clientMutationId
+    }
+  }'
+```
+
+To get a node ID from an issue number:
+```bash
+gh issue list --json number,id --jq '.[] | select(.number == 42) | .id'
+```
+
+Every new issue must have its blocking relationships set at creation time. Check `plans/roadmap.md` for the dependency graph between tasks.
+
 ## Development Workflow
 
 ### Specs-Driven Development

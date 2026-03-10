@@ -48,6 +48,31 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 - `scope:api`, `scope:web`, `scope:full-stack` — what part of the stack
 - `type:feature`, `type:test`, `type:infra`, `type:bug` — what kind of work
 - `agent:ready`, `agent:in-progress`, `agent:review` — agent workflow state
+- `timebox:N` — which timebox/sprint the issue belongs to
+
+### Issue Blocking Relationships
+
+When creating GitHub Issues, always set blocking relationships using the GitHub GraphQL API. This uses GitHub's native "Blocked by" / "Blocking" relationship (visible in the Relationships section of each issue), not comments or sub-issues.
+
+```bash
+# Mark issue as "blocked by" another issue
+gh api graphql -f query='
+  mutation {
+    addBlockedBy(input: {issueId: "<BLOCKED_ISSUE_NODE_ID>", blockingIssueId: "<BLOCKER_ISSUE_NODE_ID>"}) {
+      clientMutationId
+    }
+  }'
+```
+
+To get a node ID from an issue number:
+```bash
+gh issue list --json number,id --jq '.[] | select(.number == 42) | .id'
+```
+
+Rules:
+- Every new issue must have its blocking relationships set at creation time.
+- Check `plans/roadmap.md` for the dependency graph between tasks.
+- Only set direct dependencies, not transitive ones (if A blocks B blocks C, do not mark A as blocking C).
 
 ## Commit Messages
 
