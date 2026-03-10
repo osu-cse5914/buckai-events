@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { UserButton } from "@clerk/clerk-react";
+import { useAuth, UserButton } from "@clerk/clerk-react";
+import { api, setTokenGetter } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: ({ context }) => {
@@ -11,6 +13,17 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    setTokenGetter(getToken);
+
+    // Trigger user provisioning on first authenticated load
+    api.api.v1.auth.me.$get().catch(() => {
+      // Provisioning errors are non-fatal for the UI
+    });
+  }, [getToken]);
+
   return (
     <>
       <header className="border-b border-border">
