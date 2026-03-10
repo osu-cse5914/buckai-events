@@ -1,17 +1,178 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
 }
 
+// ─── User ───────────────────────────────────────────────────────────────────────
+
 model User {
+  id             String   @id @default(cuid())
+  clerkId        String   @unique
+  email          String   @unique
+  displayName    String?  @db.VarChar(100)
+  major          String?  @db.VarChar(100)
+  gradYear       Int?
+  interests      String[]
+  followerCount  Int      @default(0)
+  followingCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  events        Event[]
+  applications  Application[]
+  collections   Collection[]
+  interactions  Interaction[]
+  conversations Conversation[]
+  followers     Follow[]       @relation("followee")
+  following     Follow[]       @relation("follower")
+}
+
+// ─── Event ──────────────────────────────────────────────────────────────────────
+
+model Event {
+  id                 String       @id @default(cuid())
+  title              String       @db.VarChar(200)
+  description        String       @db.VarChar(5000)
+  summary            String?      @db.VarChar(500)
+  type               EventType
+  source             EventSource
+  externalId         String?      @unique
+  category           String?
+  tags               String[]
+  imageUrl           String?
+  ticketUrl          String?
+  locationName       String       @db.VarChar(500)
+  locationLatitude   Float?
+  locationLongitude  Float?
+  startAt            DateTime
+  endAt              DateTime?
+  compensationAmount Float?
+  compensationCurrency String?    @default("USD")
+  compensationType   CompensationType?
+  status             EventStatus  @default(OPEN)
+  creatorId          String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  creator         User?            @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  applications    Application[]
+  collectionItems CollectionItem[]
+  interactions    Interaction[]
+  embedding       EventEmbedding?
+}
+
+// ─── Application ────────────────────────────────────────────────────────────────
+
+model Application {
+  id          String    @id @default(cuid())
+  gigId       String
+  applicantId String
+  message     String?   @db.VarChar(1000)
+  status      AppStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  gig       Event @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  applicant User  @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@unique([gigId, applicantId])
+}
+
+// ─── Follow ─────────────────────────────────────────────────────────────────────
+
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  followeeId String
+  createdAt  DateTime @default(now())
+
+  follower User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee User @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followeeId])
+}
+
+// ─── Collection ─────────────────────────────────────────────────────────────────
+
+model Collection {
+  id         String               @id @default(cuid())
+  userId     String
+  name       String               @db.VarChar(100)
+  visibility CollectionVisibility @default(PRIVATE)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CollectionItem[]
+}
+
+model CollectionItem {
+  id           String   @id @default(cuid())
+  collectionId String
+  eventId      String
+  createdAt    DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, eventId])
+}
+
+// ─── Interaction ────────────────────────────────────────────────────────────────
+
+model Interaction {
+  id        String          @id @default(cuid())
+  userId    String
+  eventId   String
+  action    InteractionType
+  createdAt DateTime        @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// ─── Conversation & Message ─────────────────────────────────────────────────────
+
+model Conversation {
   id        String   @id @default(cuid())
-  username  String   @unique
+  userId    String
+  title     String?  @db.VarChar(200)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
 }
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String      @db.VarChar(10000)
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+// ─── EventEmbedding ─────────────────────────────────────────────────────────────
+
+model EventEmbedding {
+  id        String                       @id @default(cuid())
+  eventId   String                       @unique
+  embedding Unsupported("vector(768)")
+  textHash  String
+  createdAt DateTime                     @default(now())
+  updatedAt DateTime                     @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────────
 
 enum EventType {
   EVENT
@@ -54,21 +215,6 @@ enum MessageRole {
 enum CollectionVisibility {
   PRIVATE
   PUBLIC
-}
-
-enum NotificationType {
-  APPLICATION_RECEIVED
-  APPLICATION_ACCEPTED
-  APPLICATION_REJECTED
-  GIG_COMPLETED
-  EVENT_REMINDER
-  NEW_FOLLOWER
-}
-
-enum ReferenceType {
-  EVENT
-  APPLICATION
-  USER
 }
 
 enum CompensationType {
