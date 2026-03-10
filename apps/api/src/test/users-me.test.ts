@@ -212,4 +212,54 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
 
     expect(res.status).toBe(401);
   });
+
+  it("TC-USER-008: returns 400 for null JSON payload", async () => {
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/me", {
+        method: "PATCH",
+        body: JSON.stringify(null),
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data).toMatchObject({
+      type: expect.stringContaining("invalid-body"),
+      title: "Invalid request body",
+      status: 400,
+    });
+  });
+
+  it("TC-USER-008: returns 400 for numeric JSON payload", async () => {
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/me", {
+        method: "PATCH",
+        body: JSON.stringify(42),
+      })
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("TC-USER-008: returns 400 for string JSON payload", async () => {
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/me", {
+        method: "PATCH",
+        body: JSON.stringify("hello"),
+      })
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("TC-USER-008: returns 400 for array JSON payload", async () => {
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/me", {
+        method: "PATCH",
+        body: JSON.stringify([1, 2, 3]),
+      })
+    );
+
+    expect(res.status).toBe(400);
+  });
 });

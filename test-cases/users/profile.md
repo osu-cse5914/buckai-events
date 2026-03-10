@@ -54,6 +54,16 @@ Spec: [`profile`](../../specs/users/profile.md)
 - **When**: User A sends `PATCH /users/me` with `{ "email": "new@osu.edu" }`
 - **Then**: The email field is ignored; user A's email is unchanged
 
+## TC-USER-008: PATCH /users/me rejects non-object JSON payloads
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 1
+- **Regression**: Always
+- **Given**: User A is authenticated
+- **When**: User A sends `PATCH /users/me` with a non-object JSON payload (e.g., `null`, `42`, `"string"`)
+- **Then**: The API responds with 400 Bad Request using RFC 7807 Problem Details format
+
 ## TC-USER-006: Profile edit form — UI
 
 - **Spec scenario**: —

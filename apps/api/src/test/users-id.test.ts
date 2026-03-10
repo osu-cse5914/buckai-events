@@ -233,4 +233,45 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
       expect.objectContaining({ take: 100 })
     );
   });
+
+  it("TC-PUB-008: returns 400 for non-numeric limit", async () => {
+    const res = await app.request(
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=abc`)
+    );
+
+    expect(res.status).toBe(400);
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data).toMatchObject({
+      type: expect.stringContaining("invalid-query"),
+      title: "Invalid query parameter",
+      status: 400,
+    });
+  });
+
+  it("TC-PUB-008: returns 400 for non-numeric offset", async () => {
+    const res = await app.request(
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?offset=xyz`)
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("TC-PUB-008: returns 400 when both limit and offset are non-numeric", async () => {
+    const res = await app.request(
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=abc&offset=xyz`)
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("uses defaults when limit and offset are omitted", async () => {
+    const res = await app.request(
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 20, skip: 0 })
+    );
+  });
 });

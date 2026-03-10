@@ -69,6 +69,12 @@ export const app = base
   .patch("/api/v1/users/me", async (c) => {
     const { id } = c.get("user");
     const body = await c.req.json();
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return c.json(
+        { type: "https://social-osu.app/problems/invalid-body", title: "Invalid request body", status: 400, detail: "Request body must be a JSON object" },
+        400
+      );
+    }
     const allowedFields = ["displayName", "major", "gradYear", "interests"] as const;
     const data: Record<string, unknown> = {};
     for (const field of allowedFields) {
@@ -99,8 +105,18 @@ export const app = base
       );
     }
 
-    const limit = Math.min(Number(c.req.query("limit") ?? 20), 100);
-    const offset = Number(c.req.query("offset") ?? 0);
+    const rawLimit = c.req.query("limit");
+    const rawOffset = c.req.query("offset");
+    const parsedLimit = rawLimit !== undefined ? Number(rawLimit) : 20;
+    const parsedOffset = rawOffset !== undefined ? Number(rawOffset) : 0;
+    if (Number.isNaN(parsedLimit) || Number.isNaN(parsedOffset)) {
+      return c.json(
+        { type: "https://social-osu.app/problems/invalid-query", title: "Invalid query parameter", status: 400, detail: "limit and offset must be numeric" },
+        400
+      );
+    }
+    const limit = Math.min(parsedLimit, 100);
+    const offset = parsedOffset;
 
     const [events, eventCount, follow] = await Promise.all([
       prisma.event.findMany({
