@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { clerkMiddleware } from "@hono/clerk-auth";
 import { getPrismaClient } from "./lib/prisma";
 import { requireAuth } from "./middleware/auth";
+import { events } from "./routes/events";
 
 type AppEnv = {
   Bindings: {
@@ -50,7 +51,8 @@ export const app = base
   .get("/api/v1/auth/me", (c) => {
     const user = c.get("user");
     return c.json(user);
-  });
+  })
+  .route("/api/v1/events", events);
 
 export type AppType = typeof app;
 
