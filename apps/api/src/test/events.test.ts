@@ -227,6 +227,31 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       expect(res.status).toBe(400);
       expect(mockPrisma.event.create).not.toHaveBeenCalled();
     });
+
+    it("TC-EVT-021: rejects invalid create payload dates and compensation type", async () => {
+      const invalidBodies = [
+        {
+          ...validEvent,
+          startAt: "not-a-date",
+        },
+        {
+          ...validEvent,
+          endAt: "not-a-date",
+        },
+        {
+          ...validEvent,
+          type: "GIG",
+          compensation: { amount: 25, currency: "USD", type: "INVALID" },
+        },
+      ];
+
+      for (const body of invalidBodies) {
+        const res = await postEvent(createTestApp(), body);
+
+        expect(res.status).toBe(400);
+        expect(mockPrisma.event.create).not.toHaveBeenCalled();
+      }
+    });
   });
 
   // =====================================================================
@@ -350,6 +375,24 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
 
       const body = (await res.json()) as Record<string, unknown>;
       expect((body.pagination as Record<string, unknown>).limit).toBe(100);
+    });
+
+    it("TC-EVT-023: rejects invalid enum and date filters", async () => {
+      const invalidQueries = [
+        "/events?type=INVALID",
+        "/events?source=INVALID",
+        "/events?status=INVALID",
+        "/events?startDate=not-a-date",
+        "/events?endDate=not-a-date",
+      ];
+
+      for (const path of invalidQueries) {
+        const res = await createTestApp().request(path);
+
+        expect(res.status).toBe(400);
+        expect(mockPrisma.event.findMany).not.toHaveBeenCalled();
+        expect(mockPrisma.event.count).not.toHaveBeenCalled();
+      }
     });
   });
 
@@ -504,6 +547,23 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("TC-EVT-022: rejects invalid update payload dates and compensation type", async () => {
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeEvent() as never);
+
+      const invalidBodies = [
+        { startAt: "not-a-date" },
+        { endAt: "not-a-date" },
+        { compensation: { type: "INVALID" } },
+      ];
+
+      for (const body of invalidBodies) {
+        const res = await patchEvent(createTestApp(USER_A), "evt_1", body);
+
+        expect(res.status).toBe(400);
+        expect(mockPrisma.event.update).not.toHaveBeenCalled();
+      }
     });
   });
 

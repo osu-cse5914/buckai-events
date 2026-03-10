@@ -34,6 +34,23 @@ function getPrisma(c: Context<EventsEnv>) {
 }
 
 const CREATOR_SELECT = { id: true, displayName: true, email: true } as const;
+const EVENT_TYPES = ["EVENT", "GIG"] as const;
+const EVENT_SOURCES = ["OSU_API", "TICKETMASTER", "USER"] as const;
+const EVENT_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as const;
+const COMPENSATION_TYPES = ["FIXED", "HOURLY"] as const;
+
+function isAllowedValue<T extends string>(value: string, allowed: readonly T[]): value is T {
+  return allowed.includes(value as T);
+}
+
+function parseDateValue(value: unknown): Date | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 // --- Routes ---
 
@@ -52,8 +69,29 @@ export const events = new Hono<EventsEnv>()
       );
     }
 
-    if (type !== "EVENT" && type !== "GIG") {
+    if (!isAllowedValue(type, EVENT_TYPES)) {
       return c.json({ error: "type must be EVENT or GIG" }, 400);
+    }
+
+    const parsedStartAt = parseDateValue(startAt);
+    if (!parsedStartAt) {
+      return c.json({ error: "startAt must be a valid date" }, 400);
+    }
+
+    let parsedEndAt: Date | null = null;
+    if (endAt !== undefined && endAt !== null) {
+      parsedEndAt = parseDateValue(endAt);
+      if (!parsedEndAt) {
+        return c.json({ error: "endAt must be a valid date" }, 400);
+      }
+    }
+
+    if (
+      compensation?.type !== undefined &&
+      compensation?.type !== null &&
+      !isAllowedValue(compensation.type, COMPENSATION_TYPES)
+    ) {
+      return c.json({ error: "compensation.type must be FIXED or HOURLY" }, 400);
     }
 
     const prisma = getPrisma(c);
@@ -67,8 +105,8 @@ export const events = new Hono<EventsEnv>()
         locationName: location.name,
         locationLatitude: location.latitude ?? null,
         locationLongitude: location.longitude ?? null,
-        startAt: new Date(startAt),
-        endAt: endAt ? new Date(endAt) : null,
+        startAt: parsedStartAt,
+        endAt: parsedEndAt,
         compensationAmount: compensation?.amount ?? null,
         compensationCurrency: compensation?.currency ?? "USD",
         compensationType: compensation?.type ?? null,
@@ -100,15 +138,42 @@ export const events = new Hono<EventsEnv>()
 
     const where: Record<string, unknown> = {};
 
-    if (type) where.type = type;
+    if (type) {
+      if (!isAllowedValue(type, EVENT_TYPES)) {
+        return c.json({ error: "type must be EVENT or GIG" }, 400);
+      }
+      where.type = type;
+    }
     if (category) where.category = category;
-    if (source) where.source = source;
-    if (status) where.status = status;
+    if (source) {
+      if (!isAllowedValue(source, EVENT_SOURCES)) {
+        return c.json({ error: "source must be OSU_API, TICKETMASTER, or USER" }, 400);
+      }
+      where.source = source;
+    }
+    if (status) {
+      if (!isAllowedValue(status, EVENT_STATUSES)) {
+        return c.json({ error: "status must be OPEN, IN_PROGRESS, COMPLETED, or CANCELLED" }, 400);
+      }
+      where.status = status;
+    }
 
     if (startDate || endDate) {
       const startAtFilter: Record<string, unknown> = {};
-      if (startDate) startAtFilter.gte = new Date(startDate);
-      if (endDate) startAtFilter.lte = new Date(endDate);
+      if (startDate) {
+        const parsedStartDate = parseDateValue(startDate);
+        if (!parsedStartDate) {
+          return c.json({ error: "startDate must be a valid date" }, 400);
+        }
+        startAtFilter.gte = parsedStartDate;
+      }
+      if (endDate) {
+        const parsedEndDate = parseDateValue(endDate);
+        if (!parsedEndDate) {
+          return c.json({ error: "endDate must be a valid date" }, 400);
+        }
+        startAtFilter.lte = parsedEndDate;
+      }
       where.startAt = startAtFilter;
     }
 
@@ -183,14 +248,38 @@ export const events = new Hono<EventsEnv>()
       }
     }
 
+    if (body.startAt !== undefined) {
+      const parsedStartAt = parseDateValue(body.startAt);
+      if (!parsedStartAt) {
+        return c.json({ error: "startAt must be a valid date" }, 400);
+      }
+      body.startAt = parsedStartAt;
+    }
+
+    if (body.endAt !== undefined && body.endAt !== null) {
+      const parsedEndAt = parseDateValue(body.endAt);
+      if (!parsedEndAt) {
+        return c.json({ error: "endAt must be a valid date" }, 400);
+      }
+      body.endAt = parsedEndAt;
+    }
+
+    if (
+      body.compensation?.type !== undefined &&
+      body.compensation?.type !== null &&
+      !isAllowedValue(body.compensation.type, COMPENSATION_TYPES)
+    ) {
+      return c.json({ error: "compensation.type must be FIXED or HOURLY" }, 400);
+    }
+
     const data: Record<string, unknown> = {};
     if (body.title !== undefined) data.title = body.title;
     if (body.description !== undefined) data.description = body.description;
     if (body.location?.name !== undefined) data.locationName = body.location.name;
     if (body.location?.latitude !== undefined) data.locationLatitude = body.location.latitude;
     if (body.location?.longitude !== undefined) data.locationLongitude = body.location.longitude;
-    if (body.startAt !== undefined) data.startAt = new Date(body.startAt);
-    if (body.endAt !== undefined) data.endAt = body.endAt ? new Date(body.endAt) : null;
+    if (body.startAt !== undefined) data.startAt = body.startAt;
+    if (body.endAt !== undefined) data.endAt = body.endAt ?? null;
     if (body.status !== undefined) data.status = body.status;
     if (body.compensation !== undefined) {
       if (body.compensation.amount !== undefined) data.compensationAmount = body.compensation.amount;
