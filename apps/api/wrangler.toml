@@ -7,6 +7,10 @@ compatibility_date = "2025-03-01"
 directory = "../web/dist"
 not_found_handling = "single-page-application"
 
-# DATABASE_URL is stored as an encrypted secret, not a plain var.
-# Set it once after login:
+# DATABASE_URL and CLERK_SECRET_KEY are stored as encrypted secrets.
+# Set them once after login:
 #   wrangler secret put DATABASE_URL
+#   wrangler secret put CLERK_SECRET_KEY
+
+[vars]
+CLERK_PUBLISHABLE_KEY = "pk_test_ZHJpdmVuLWVhZ2xlLTI2LmNsZXJrLmFjY291bnRzLmRldiQ"

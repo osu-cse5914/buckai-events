@@ -4,7 +4,7 @@ import { InferResponseType } from "hono/client";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   component: IndexPage,
 });
 

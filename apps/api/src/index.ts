@@ -1,16 +1,29 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { clerkMiddleware } from "@hono/clerk-auth";
 import { getPrismaClient } from "./lib/prisma";
+import { requireAuth } from "./middleware/auth";
 
-type Bindings = {
-  DATABASE_URL: string;
+type AppEnv = {
+  Bindings: {
+    DATABASE_URL: string;
+    CLERK_SECRET_KEY: string;
+    CLERK_PUBLISHABLE_KEY: string;
+  };
+  Variables: {
+    user: { id: string; clerkId: string; email: string };
+  };
 };
 
-const base = new Hono<{ Bindings: Bindings }>();
+const base = new Hono<AppEnv>();
 
 // CORS only needed for local dev (FE at :5173, BE at :3001).
 // In production both are served from the same CF Worker origin.
 base.use("/api/*", cors({ origin: "http://localhost:5173" }));
+
+// Clerk JWT verification + user auto-provisioning for /api/v1/*
+base.use("/api/v1/*", clerkMiddleware());
+base.use("/api/v1/*", requireAuth);
 
 export const app = base
   .get("/api/health", (c) => {
@@ -33,6 +46,10 @@ export const app = base
       const message = error instanceof Error ? error.message : "disconnected";
       return c.json({ database: "disconnected", error: message }, 500);
     }
+  })
+  .get("/api/v1/auth/me", (c) => {
+    const user = c.get("user");
+    return c.json(user);
   });
 
 export type AppType = typeof app;

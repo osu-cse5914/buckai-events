@@ -12,6 +12,7 @@
     "typecheck": "tsr generate && tsc --noEmit --pretty false"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.3",
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/react-router": "^1.161.1",
     "class-variance-authority": "^0.7.1",
