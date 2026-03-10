@@ -12,10 +12,19 @@ type HealthResponse = {
   timestamp: string;
 };
 
+type DbCheckResponse = {
+  database: string;
+  error?: string;
+};
+
 function IndexPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+
+  const [dbStatus, setDbStatus] = useState<DbCheckResponse | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
+  const [isCheckingDb, setIsCheckingDb] = useState(false);
 
   const configuredApiBaseUrl = import.meta.env.VITE_API_URL?.replace(
     /\/$/,
@@ -24,6 +33,30 @@ function IndexPage() {
   const healthEndpoint = configuredApiBaseUrl
     ? `${configuredApiBaseUrl}/api/health`
     : "/api/health";
+  const dbCheckEndpoint = configuredApiBaseUrl
+    ? `${configuredApiBaseUrl}/api/db-check`
+    : "/api/db-check";
+
+  const handleCheckDb = async () => {
+    setIsCheckingDb(true);
+    setDbError(null);
+
+    try {
+      const response = await fetch(dbCheckEndpoint);
+      const data = (await response.json()) as DbCheckResponse;
+      setDbStatus(data);
+      if (!response.ok) {
+        setDbError(data.error ?? "Database check failed");
+      }
+    } catch (error) {
+      setDbStatus(null);
+      setDbError(
+        error instanceof Error ? error.message : "Database check failed",
+      );
+    } finally {
+      setIsCheckingDb(false);
+    }
+  };
 
   const handleViewApiHealth = async () => {
     setIsCheckingHealth(true);
@@ -69,6 +102,13 @@ function IndexPage() {
         >
           {isCheckingHealth ? "Checking..." : "View API Health"}
         </Button>
+        <Button
+          variant="outline"
+          onClick={handleCheckDb}
+          disabled={isCheckingDb}
+        >
+          {isCheckingDb ? "Checking..." : "Check DB Connection"}
+        </Button>
       </div>
 
       {(health || healthError) && (
@@ -88,6 +128,22 @@ function IndexPage() {
                 {health?.timestamp}
               </p>
             </div>
+          )}
+        </div>
+      )}
+
+      {(dbStatus || dbError) && (
+        <div className="rounded-md border border-border bg-card p-4 text-sm">
+          {dbError ? (
+            <div className="space-y-1">
+              <p className="text-destructive font-semibold">Database: disconnected</p>
+              <p className="text-destructive">{dbError}</p>
+            </div>
+          ) : (
+            <p>
+              <span className="font-semibold">Database:</span>{" "}
+              <span className="text-green-600">{dbStatus?.database}</span>
+            </p>
           )}
         </div>
       )}
