@@ -19,10 +19,15 @@ import { getPrismaClient } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
 import { requireAuth } from "../middleware/auth";
 
+type TestEnv = {
+  Variables: { user: { id: string; clerkId: string; email: string } };
+};
+
 function createTestApp() {
-  const app = new Hono();
+  const app = new Hono<TestEnv>();
   app.use("/*", async (c, next) => {
-    c.set("clerk", { users: { getUser: mockClerkGetUser } } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c as any).set("clerk", { users: { getUser: mockClerkGetUser } });
     await next();
   });
   app.use("/*", requireAuth);
