@@ -32,5 +32,21 @@ export function createMockPrisma(): PrismaClient {
       delete: vi.fn(),
       count: vi.fn(),
     },
+    event: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    application: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
   } as unknown as PrismaClient;
 }
