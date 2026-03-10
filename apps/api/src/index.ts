@@ -52,6 +52,105 @@ export const app = base
     const user = c.get("user");
     return c.json(user);
   })
+  .get("/api/v1/users/me", async (c) => {
+    const { id } = c.get("user");
+    const connectionString =
+      c.env?.DATABASE_URL ??
+      (typeof process !== "undefined" ? process.env.DATABASE_URL : undefined);
+    const prisma = getPrismaClient(connectionString);
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return c.json(
+        { type: "https://social-osu.app/problems/not-found", title: "Resource not found", status: 404, detail: "User not found" },
+        404
+      );
+    }
+    return c.json(user);
+  })
+  .patch("/api/v1/users/me", async (c) => {
+    const { id } = c.get("user");
+    const body = await c.req.json();
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return c.json(
+        { type: "https://social-osu.app/problems/invalid-body", title: "Invalid request body", status: 400, detail: "Request body must be a JSON object" },
+        400
+      );
+    }
+    const allowedFields = ["displayName", "major", "gradYear", "interests"] as const;
+    const data: Record<string, unknown> = {};
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        data[field] = body[field];
+      }
+    }
+    const connectionString =
+      c.env?.DATABASE_URL ??
+      (typeof process !== "undefined" ? process.env.DATABASE_URL : undefined);
+    const prisma = getPrismaClient(connectionString);
+    const updated = await prisma.user.update({ where: { id }, data });
+    return c.json(updated);
+  })
+  .get("/api/v1/users/:id", async (c) => {
+    const { id: authUserId } = c.get("user");
+    const targetId = c.req.param("id");
+    const connectionString =
+      c.env?.DATABASE_URL ??
+      (typeof process !== "undefined" ? process.env.DATABASE_URL : undefined);
+    const prisma = getPrismaClient(connectionString);
+
+    const user = await prisma.user.findUnique({ where: { id: targetId } });
+    if (!user) {
+      return c.json(
+        { type: "https://social-osu.app/problems/not-found", title: "Resource not found", status: 404, detail: `User ${targetId} was not found` },
+        404
+      );
+    }
+
+    const rawLimit = c.req.query("limit");
+    const rawOffset = c.req.query("offset");
+    const parsedLimit = rawLimit !== undefined ? Number(rawLimit) : 20;
+    const parsedOffset = rawOffset !== undefined ? Number(rawOffset) : 0;
+    if (Number.isNaN(parsedLimit) || Number.isNaN(parsedOffset)) {
+      return c.json(
+        { type: "https://social-osu.app/problems/invalid-query", title: "Invalid query parameter", status: 400, detail: "limit and offset must be numeric" },
+        400
+      );
+    }
+    const limit = Math.min(parsedLimit, 100);
+    const offset = parsedOffset;
+
+    const [events, eventCount, follow] = await Promise.all([
+      prisma.event.findMany({
+        where: { creatorId: targetId, status: { in: ["OPEN", "IN_PROGRESS"] } },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.event.count({
+        where: { creatorId: targetId, status: { in: ["OPEN", "IN_PROGRESS"] } },
+      }),
+      prisma.follow.findUnique({
+        where: {
+          followerId_followeeId: { followerId: authUserId, followeeId: targetId },
+        },
+      }),
+    ]);
+
+    return c.json({
+      id: user.id,
+      displayName: user.displayName,
+      major: user.major,
+      gradYear: user.gradYear,
+      interests: user.interests,
+      followerCount: user.followerCount,
+      followingCount: user.followingCount,
+      createdAt: user.createdAt,
+      isFollowing: !!follow,
+      createdEvents: {
+        items: events,
+        meta: { total: eventCount, limit, offset },
+      },
+    });
+  })
   .route("/api/v1/events", events);
 
 export type AppType = typeof app;

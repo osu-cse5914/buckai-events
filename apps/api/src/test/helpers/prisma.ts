@@ -48,5 +48,9 @@ export function createMockPrisma(): PrismaClient {
       delete: vi.fn(),
       count: vi.fn(),
     },
+    follow: {
+      findUnique: vi.fn(),
+      count: vi.fn(),
+    },
   } as unknown as PrismaClient;
 }

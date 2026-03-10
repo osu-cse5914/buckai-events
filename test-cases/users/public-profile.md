@@ -64,6 +64,16 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 - **When**: User A sends `GET /api/v1/users/nonexistent`
 - **Then**: The API responds with 404 Not Found
 
+## TC-PUB-008: Non-numeric pagination params return 400
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 1
+- **Regression**: Always
+- **Given**: User B exists
+- **When**: User A sends `GET /api/v1/users/B?limit=abc&offset=xyz`
+- **Then**: The API responds with 400 Bad Request using RFC 7807 Problem Details format
+
 ## TC-PUB-007: Public profile page renders correctly — UI
 
 - **Spec scenario**: —
