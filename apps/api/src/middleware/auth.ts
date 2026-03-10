@@ -1,5 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { getAuth } from "@hono/clerk-auth";
+import { Prisma } from "@prisma/client";
 import { getPrismaClient } from "../lib/prisma";
 
 type AuthUser = {
@@ -43,11 +44,15 @@ export const requireAuth = createMiddleware<AuthEnv>(async (c, next) => {
       return c.json({ error: "No email associated with account" }, 400);
     }
 
-    user = await prisma.user.upsert({
-      where: { clerkId },
-      create: { clerkId, email },
-      update: {},
-    });
+    try {
+      user = await prisma.user.create({ data: { clerkId, email } });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        user = await prisma.user.findUniqueOrThrow({ where: { clerkId } });
+      } else {
+        throw e;
+      }
+    }
   }
 
   c.set("user", { id: user.id, clerkId: user.clerkId, email: user.email });

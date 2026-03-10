@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import { Prisma } from "@prisma/client";
 
 const mockClerkGetUser = vi.fn();
 
@@ -83,7 +84,7 @@ describe("requireAuth middleware", () => {
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { clerkId: "clerk_abc123" },
       });
-      expect(mockPrisma.user.upsert).not.toHaveBeenCalled();
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
     });
   });
 
@@ -104,15 +105,13 @@ describe("requireAuth middleware", () => {
           { id: "email_1", emailAddress: "newstudent@osu.edu" },
         ],
       });
-      vi.mocked(mockPrisma.user.upsert).mockResolvedValue(createdUser as never);
+      vi.mocked(mockPrisma.user.create).mockResolvedValue(createdUser as never);
 
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(200);
-      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
-        where: { clerkId: "clerk_new_user" },
-        create: { clerkId: "clerk_new_user", email: "newstudent@osu.edu" },
-        update: {},
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: { clerkId: "clerk_new_user", email: "newstudent@osu.edu" },
       });
       expect(await res.json()).toEqual({ user: createdUser });
     });
@@ -127,7 +126,7 @@ describe("requireAuth middleware", () => {
           { id: "email_2", emailAddress: "primary@buckeyemail.osu.edu" },
         ],
       });
-      vi.mocked(mockPrisma.user.upsert).mockResolvedValue({
+      vi.mocked(mockPrisma.user.create).mockResolvedValue({
         id: "cuid_multi",
         clerkId: "clerk_multi",
         email: "primary@buckeyemail.osu.edu",
@@ -136,11 +135,36 @@ describe("requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(200);
-      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
-        where: { clerkId: "clerk_multi" },
-        create: { clerkId: "clerk_multi", email: "primary@buckeyemail.osu.edu" },
-        update: {},
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: { clerkId: "clerk_multi", email: "primary@buckeyemail.osu.edu" },
       });
+    });
+
+    it("recovers from concurrent create race (P2002)", async () => {
+      const existingUser = {
+        id: "cuid_race",
+        clerkId: "clerk_racer",
+        email: "racer@osu.edu",
+      };
+
+      vi.mocked(getAuth).mockReturnValue({ userId: "clerk_racer" } as never);
+      vi.mocked(mockPrisma.user.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(mockPrisma.user.findUniqueOrThrow).mockResolvedValue(existingUser as never);
+      mockClerkGetUser.mockResolvedValue({
+        primaryEmailAddressId: "email_1",
+        emailAddresses: [{ id: "email_1", emailAddress: "racer@osu.edu" }],
+      });
+      vi.mocked(mockPrisma.user.create).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          clientVersion: "7.4.0",
+        })
+      );
+
+      const res = await createTestApp().request("/test");
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ user: existingUser });
     });
 
     it("returns 400 when Clerk user has no email", async () => {

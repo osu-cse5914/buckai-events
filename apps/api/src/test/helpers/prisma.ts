@@ -24,6 +24,7 @@ export function createMockPrisma(): PrismaClient {
     $disconnect: vi.fn().mockResolvedValue(undefined),
     user: {
       findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
