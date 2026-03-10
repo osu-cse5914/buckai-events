@@ -130,3 +130,7 @@ WHEN user A sends GET /api/v1/social/feed
 THEN event E appears once (deduplicated by event ID per actor)
 AND actionAt is the most recent save timestamp
 ```
+
+## Test Cases
+
+See [`test-cases/social/feed.md`](../../test-cases/social/feed.md) for the full test case registry (TC-SFEED-001 through TC-SFEED-010), including automated dedup/ordering tests and manual feed page verification.

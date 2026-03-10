@@ -67,3 +67,7 @@ GIVEN no event exists with id "nonexistent"
 WHEN user A sends POST /interactions with { eventId: "nonexistent", action: "VIEW" }
 THEN the API responds with 404 Not Found
 ```
+
+## Test Cases
+
+See [`test-cases/interactions/tracking.md`](../../test-cases/interactions/tracking.md) for the full test case registry (TC-INT-001 through TC-INT-004).

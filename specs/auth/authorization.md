@@ -103,3 +103,7 @@ GIVEN user A has a collection with visibility PRIVATE
 WHEN user B sends GET /collections/:id
 THEN the API responds with 404 Not Found
 ```
+
+## Test Cases
+
+See [`test-cases/auth/authorization.md`](../../test-cases/auth/authorization.md) for the full test case registry (TC-AUTHZ-001 through TC-AUTHZ-012), covering ownership checks across events, applications, collections, and conversations.

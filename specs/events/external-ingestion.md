@@ -195,3 +195,7 @@ WHEN the ingestion cron runs
 THEN only events with campus "columbus" are ingested
 AND events with other campus values are ignored
 ```
+
+## Test Cases
+
+See [`test-cases/events/external-ingestion.md`](../../test-cases/events/external-ingestion.md) for the full test case registry (TC-ING-001 through TC-ING-011), including automated ingestion/dedup tests and manual UI verification.

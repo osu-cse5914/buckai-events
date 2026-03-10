@@ -23,14 +23,47 @@ Before implementing any feature, read the relevant spec. If a spec is missing or
 
 Tests are behavior-driven: they test what the system does, not how it does it.
 
+## Test Case Registry
+
+All test cases — automated and manual — are tracked in `/test-cases`. Each spec file links to its corresponding test case file.
+
+### Tagging Convention
+
+All automated tests must use phase tags in `describe()` blocks so they can be filtered for regression runs:
+
+```typescript
+describe('[phase:N] [regression:always] Feature Name', () => {
+  it('TC-XXX-001: behavior description', () => { ... });
+});
+```
+
+- `[phase:N]` — the phase where this test was introduced (0–6)
+- `[regression:always]` — included in all regression runs from this phase onward
+
+### When Writing Tests
+
+1. Check the test case registry (`/test-cases/<area>/<feature>.md`) for the TC-ID corresponding to the spec scenario.
+2. Use the TC-ID in the `it()` description (e.g., `it('TC-AUTH-005: returns 401 when JWT is missing', ...)`).
+3. Tag the `describe()` block with the correct phase.
+4. If a test case does not yet exist in the registry for new behavior, add it to the registry first.
+
+### Regression Testing
+
+Regression suites are defined in `/test-cases/regression/phase-N.md`. Each phase's suite is cumulative — it includes all prior phases.
+
+- **Automated**: Runs via `bun run test:regression:phase-N` (filters by phase tags).
+- **Manual**: A GitHub Issue is auto-created with the manual test checklist when a milestone closes.
+- On milestone close, the `regression.yml` GitHub Actions workflow runs both.
+
 ## Workflow Rules
 
 - Read the spec before writing any code.
+- Check the test case registry (`/test-cases`) for existing TC-IDs before writing tests.
 - Write the test before writing the implementation.
 - One behavior at a time: red → green → refactor → next behavior.
 - Do not skip the red step. If the test already passes, the test is not testing new behavior.
 - Do not add code that is not covered by a spec behavior.
-- When a spec changes, update the corresponding tests first, then update the implementation.
+- When a spec changes, update the corresponding tests and test case registry first, then update the implementation.
 
 ## Project Management
 
@@ -101,6 +134,8 @@ Rules:
 | `bun run build` | Build all apps |
 | `bun run lint` | Lint all apps |
 | `bun run typecheck` | Typecheck all apps |
+| `bun run test` | Run all tests |
+| `bun run test:regression:phase-N` | Run cumulative regression for phase 0–N |
 | `bun run db:generate` | Generate Prisma client |
 | `bun run db:migrate` | Run Prisma migrations |
 | `bun run db:push` | Push schema to database |
@@ -111,5 +146,6 @@ Rules:
 apps/web/          → React frontend (port 5173)
 apps/api/          → Hono API backend (port 3001)
 specs/             → Behavior specs (source of truth)
+test-cases/        → Test case registry (automated + manual)
 plans/             → Project roadmap and management docs
 ```

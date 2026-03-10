@@ -87,3 +87,7 @@ WHEN any authenticated user sends GET /users/A/following
 THEN the response contains 5 user profiles
 ```
 
+## Test Cases
+
+See [`test-cases/social/follows.md`](../../test-cases/social/follows.md) for the full test case registry (TC-FOL-001 through TC-FOL-009), including automated API tests and manual UI cases for follow/unfollow and list rendering.
+

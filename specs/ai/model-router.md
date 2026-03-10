@@ -163,3 +163,7 @@ GIVEN task "embedding" is configured with modelId "text-embed"
 WHEN the embedding feature sends text "Jazz Night at the Union"
 THEN the router returns a vector of the configured dimensions
 ```
+
+## Test Cases
+
+See [`test-cases/ai/model-router.md`](../../test-cases/ai/model-router.md) for the full test case registry (TC-AI-001 through TC-AI-005).

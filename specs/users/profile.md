@@ -62,3 +62,7 @@ WHEN user A sends PATCH /users/me with { "email": "new@osu.edu" }
 THEN the email field is ignored
 AND user A's email is unchanged
 ```
+
+## Test Cases
+
+See [`test-cases/users/profile.md`](../../test-cases/users/profile.md) for the full test case registry (TC-USER-001 through TC-USER-007), including automated API tests and manual UI verification cases.

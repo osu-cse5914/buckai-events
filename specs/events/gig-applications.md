@@ -116,3 +116,7 @@ THEN the API responds with 400 Bad Request
 AND the application status remains ACCEPTED
 ```
 
+## Test Cases
+
+See [`test-cases/events/gig-applications.md`](../../test-cases/events/gig-applications.md) for the full test case registry (TC-APP-001 through TC-APP-012), including automated API tests and manual UI cases for the apply, manage, and review flows.
+

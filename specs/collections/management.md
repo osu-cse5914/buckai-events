@@ -111,3 +111,7 @@ THEN collection C is deleted
 AND all 5 CollectionItems are deleted
 AND the referenced events are not affected
 ```
+
+## Test Cases
+
+See [`test-cases/collections/management.md`](../../test-cases/collections/management.md) for the full test case registry (TC-COL-001 through TC-COL-012), including automated API tests and manual UI cases for save, browse, and manage flows.

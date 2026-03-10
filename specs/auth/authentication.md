@@ -71,3 +71,7 @@ WHEN the user makes their first API request
 THEN the system creates a User record with clerkId "clerk_new_user" and the email from the JWT
 AND the request proceeds normally
 ```
+
+## Test Cases
+
+See [`test-cases/auth/authentication.md`](../../test-cases/auth/authentication.md) for the full test case registry (TC-AUTH-001 through TC-AUTH-009), including automated API tests and manual UI verification cases.

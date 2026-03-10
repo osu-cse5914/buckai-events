@@ -175,3 +175,7 @@ WHEN user A sends PATCH /events/G with { compensation: { amount: 25, type: "HOUR
 THEN gig G's compensation amount is updated to 25
 AND existing applications are not affected
 ```
+
+## Test Cases
+
+See [`test-cases/events/lifecycle.md`](../../test-cases/events/lifecycle.md) for the full test case registry (TC-EVT-001 through TC-EVT-020), including automated API tests, cron verification, and manual UI cases for creation, listing, detail, and edit forms.

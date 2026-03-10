@@ -44,9 +44,9 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
   });
 
-  // S-AUTH-5: Missing or invalid JWT
+  // S-AUTH-5 → TC-AUTH-005: Missing or invalid JWT returns 401
   describe("missing or invalid JWT", () => {
-    it("returns 401 when userId is null", async () => {
+    it("TC-AUTH-005: returns 401 when userId is null", async () => {
       vi.mocked(getAuth).mockReturnValue({ userId: null } as never);
 
       const res = await createTestApp().request("/test");
@@ -55,7 +55,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       expect(await res.json()).toEqual({ error: "Unauthorized" });
     });
 
-    it("returns 401 when auth is undefined", async () => {
+    it("TC-AUTH-005: returns 401 when auth is undefined", async () => {
       vi.mocked(getAuth).mockReturnValue(undefined as never);
 
       const res = await createTestApp().request("/test");
@@ -65,9 +65,9 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
     });
   });
 
-  // S-AUTH-4: Valid JWT — returning user
+  // S-AUTH-4 → TC-AUTH-004: Valid JWT on API request
   describe("returning user", () => {
-    it("attaches existing user to context and proceeds", async () => {
+    it("TC-AUTH-004: attaches existing user to context and proceeds", async () => {
       const existingUser = {
         id: "cuid_123",
         clerkId: "clerk_abc123",
@@ -88,9 +88,9 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
     });
   });
 
-  // S-AUTH-6: First-time user provisioning
+  // S-AUTH-6 → TC-AUTH-006: First-time user provisioning
   describe("first-time user provisioning", () => {
-    it("creates a User row on first authentication", async () => {
+    it("TC-AUTH-006: creates a User row on first authentication", async () => {
       const createdUser = {
         id: "cuid_new",
         clerkId: "clerk_new_user",
@@ -116,7 +116,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       expect(await res.json()).toEqual({ user: createdUser });
     });
 
-    it("uses primary email address from Clerk", async () => {
+    it("TC-AUTH-002: uses primary email address from Clerk (BuckeyeMail)", async () => {
       vi.mocked(getAuth).mockReturnValue({ userId: "clerk_multi" } as never);
       vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(null);
       mockClerkGetUser.mockResolvedValue({
@@ -140,7 +140,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       });
     });
 
-    it("recovers from concurrent create race (P2002)", async () => {
+    it("TC-AUTH-009: recovers from concurrent create race (P2002)", async () => {
       const existingUser = {
         id: "cuid_race",
         clerkId: "clerk_racer",
@@ -167,7 +167,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       expect(await res.json()).toEqual({ user: existingUser });
     });
 
-    it("returns 400 when Clerk user has no email", async () => {
+    it("TC-AUTH-006: returns 400 when Clerk user has no email", async () => {
       vi.mocked(getAuth).mockReturnValue({ userId: "clerk_no_email" } as never);
       vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(null);
       mockClerkGetUser.mockResolvedValue({

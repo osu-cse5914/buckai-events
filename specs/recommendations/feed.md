@@ -93,3 +93,7 @@ WHEN user A records a new interaction
 THEN the cache is invalidated
 AND the next GET /recommendations recomputes the ranking
 ```
+
+## Test Cases
+
+See [`test-cases/recommendations/feed.md`](../../test-cases/recommendations/feed.md) for the full test case registry (TC-FEED-001 through TC-FEED-006), including automated pagination/filter tests and manual UI verification.

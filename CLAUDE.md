@@ -80,6 +80,8 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 | `bun run build` | Build all apps |
 | `bun run lint` | Lint all apps |
 | `bun run typecheck` | Typecheck all apps |
+| `bun run test` | Run all tests |
+| `bun run test:regression:phase-N` | Run cumulative regression for phase 0–N |
 | `bun run db:generate` | Generate Prisma client |
 | `bun run db:migrate` | Run Prisma migrations |
 | `bun run db:push` | Push schema to database |
@@ -90,5 +92,6 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 apps/web/          → React frontend (port 5173)
 apps/api/          → Hono API backend (port 3001)
 specs/             → Behavior specs (source of truth)
+test-cases/        → Test case registry (automated + manual)
 plans/             → Project roadmap and management docs
 ```

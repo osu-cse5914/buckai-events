@@ -97,3 +97,7 @@ GIVEN conversation C has title "Free weekend events" (generated from the first m
 WHEN user A sends a second message about "tutoring gigs"
 THEN conversation C's title remains "Free weekend events"
 ```
+
+## Test Cases
+
+See [`test-cases/chat/conversations.md`](../../test-cases/chat/conversations.md) for the full test case registry (TC-CONV-001 through TC-CONV-009), including automated CRUD/ownership tests and manual sidebar UI verification.

@@ -179,3 +179,7 @@ GIVEN event E has an EventEmbedding row
 WHEN event E is deleted
 THEN the EventEmbedding row is also deleted (ON DELETE CASCADE)
 ```
+
+## Test Cases
+
+See [`test-cases/ai/embeddings.md`](../../test-cases/ai/embeddings.md) for the full test case registry (TC-EMBED-001 through TC-EMBED-009), including automated generation/search tests and manual semantic search verification.

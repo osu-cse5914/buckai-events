@@ -89,3 +89,7 @@ GIVEN no user exists with id "nonexistent"
 WHEN user A sends GET /api/v1/users/nonexistent
 THEN the API responds with 404 Not Found
 ```
+
+## Test Cases
+
+See [`test-cases/users/public-profile.md`](../../test-cases/users/public-profile.md) for the full test case registry (TC-PUB-001 through TC-PUB-007), including automated API tests and manual UI verification cases.

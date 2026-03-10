@@ -175,3 +175,7 @@ WHEN the chatbot calls searchEvents and gets zero results
 THEN it responds honestly that no matching events were found
 AND does not fabricate events
 ```
+
+## Test Cases
+
+See [`test-cases/chat/chatbot.md`](../../test-cases/chat/chatbot.md) for the full test case registry (TC-CHAT-001 through TC-CHAT-012), including automated tool invocation tests and manual UI cases for streaming, confirmation dialogs, and conversation flow.

@@ -94,3 +94,7 @@ GIVEN user A has no interests and no interactions
 WHEN user A sends GET /recommendations
 THEN events are sorted by popularity (interaction count) then recency
 ```
+
+## Test Cases
+
+See [`test-cases/recommendations/model.md`](../../test-cases/recommendations/model.md) for the full test case registry (TC-REC-MODEL-001 through TC-REC-MODEL-006).

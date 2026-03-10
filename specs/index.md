@@ -4,6 +4,8 @@ Social OSU is an AI-powered campus discovery platform for The Ohio State Univers
 
 **Not in scope**: ticket sales, payment processing, financial transactions.
 
+**Test Cases**: Each spec links to a corresponding test case file in [`/test-cases`](../test-cases/index.md). Test cases include both automated (Vitest) and manual cases, organized for cumulative regression testing per milestone.
+
 ## Modules
 
 ### System

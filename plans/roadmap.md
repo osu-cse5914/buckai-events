@@ -353,8 +353,31 @@ Phase 0 (Foundation)
 
 ---
 
+## Regression Testing
+
+Each phase has a cumulative regression suite defined in [`test-cases/regression/`](../test-cases/regression/). When a phase milestone closes:
+
+1. **Automated**: The `regression.yml` GitHub Actions workflow runs `bun run test:regression:phase-N`, which executes all automated test cases from phase 0 through N.
+2. **Manual**: A GitHub Issue is auto-created with the manual test checklist for that phase.
+
+Test cases are tracked in [`test-cases/`](../test-cases/) alongside specs. Each spec file links to its corresponding test case file. See [`test-cases/index.md`](../test-cases/index.md) for the full registry and tagging conventions.
+
+### Automated test tagging
+
+All Vitest tests use `[phase:N]` tags in `describe()` blocks, enabling selective regression runs per phase.
+
+### Regression commands
+
+| Command | Scope |
+|---------|-------|
+| `bun run test` | All tests |
+| `bun run test:regression:phase-0` | Phase 0 only |
+| `bun run test:regression:phase-1` | Phase 0 + 1 |
+| `bun run test:regression:phase-N` | Phase 0 through N |
+| `bun run test:regression:phase-6` | Full regression |
+
 ## Notes
 
-- Every task should follow the TDD workflow: spec → failing test → implementation → refactor.
+- Every task should follow the TDD workflow: spec → test case registry → failing test → implementation → refactor.
 - AI-dependent features (tagging, embeddings, chatbot) should always fail gracefully.
 - External API integrations (Clerk, Gemini, OSU API, Ticketmaster) need env vars and secrets configured before development.
