@@ -34,40 +34,25 @@ jobs:
       - name: Run automated regression suite
         run: bun run test:regression:phase-${{ steps.phase.outputs.number }}
 
-      - name: Create manual test checklist issue
+      - name: Generate manual test issue body
+        id: manual
+        run: |
+          BODY=$(bun scripts/generate-regression-issue.ts ${{ steps.phase.outputs.number }} "${{ github.event.milestone.title }}")
+          # Write to file to avoid shell escaping issues
+          echo "$BODY" > /tmp/regression-body.md
+
+      - name: Create manual test issue
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const phase = '${{ steps.phase.outputs.number }}';
+            const body = fs.readFileSync('/tmp/regression-body.md', 'utf8');
             const milestoneTitle = '${{ github.event.milestone.title }}';
-
-            let checklist = '';
-            try {
-              const content = fs.readFileSync(
-                `test-cases/regression/phase-${phase}.md`, 'utf8'
-              );
-              const manualSection = content.split('## Manual checklist')[1];
-              if (manualSection) {
-                checklist = manualSection.trim();
-              }
-            } catch (e) {
-              checklist = 'No regression checklist found for this phase.';
-            }
 
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `Manual Regression Testing: ${milestoneTitle}`,
-              body: [
-                `## Manual Regression — ${milestoneTitle}`,
-                '',
-                `Automated regression passed. Complete the manual checklist below.`,
-                '',
-                checklist,
-                '',
-                '---',
-                `Generated automatically on milestone close.`,
-              ].join('\n'),
+              body,
               labels: ['regression', 'manual-testing'],
             });

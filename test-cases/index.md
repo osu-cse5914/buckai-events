@@ -77,6 +77,22 @@ See [`regression/`](regression/) for per-phase suite definitions.
 | `bun run test:regression:phase-4` | Phase 0–4 regression |
 | `bun run test:regression:phase-5` | Phase 0–5 regression |
 | `bun run test:regression:phase-6` | Full regression |
+| `bun run test:manual-checklist -- N` | Generate manual test checklist for phase N |
+
+### Manual Test Checklist Generation
+
+The script `scripts/generate-regression-issue.ts` reads the regression suite for a given phase, resolves all manual TC-IDs from the test case registry, and outputs a fully expanded markdown document with:
+
+- Grouped test cases by feature area
+- Numbered steps for each test case
+- Expected behavior for each test case
+- Pass/Fail checkboxes and notes placeholders
+
+This runs automatically in CI when a milestone closes (`regression.yml`), generating a GitHub Issue with the full manual testing runbook. You can also run it locally to preview:
+
+```sh
+bun scripts/generate-regression-issue.ts 1 "Phase 1 — Users & Events"
+```
 
 ## Tagging Convention
 

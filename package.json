@@ -18,6 +18,7 @@
     "test:regression:phase-4": "turbo run test -- --reporter=verbose -t '\\[phase:[0-4]\\]'",
     "test:regression:phase-5": "turbo run test -- --reporter=verbose -t '\\[phase:[0-5]\\]'",
     "test:regression:phase-6": "turbo run test -- --reporter=verbose",
+    "test:manual-checklist": "bun scripts/generate-regression-issue.ts",
     "db:generate": "bun --cwd apps/api prisma generate",
     "db:migrate": "bun --cwd apps/api prisma migrate dev",
     "db:push": "bun --cwd apps/api prisma db push",
