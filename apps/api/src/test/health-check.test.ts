@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { app } from "../index";
 
-describe("GET /api/health", () => {
+describe("[phase:0] [regression:always] GET /api/health", () => {
   it("returns 200 with status ok", async () => {
     const res = await app.request("/api/health");
     expect(res.status).toBe(200);
@@ -17,7 +17,7 @@ describe("GET /api/health", () => {
   });
 });
 
-describe("GET /api/ping", () => {
+describe("[phase:0] [regression:always] GET /api/ping", () => {
   it("returns 200 with pong message", async () => {
     const res = await app.request("/api/ping");
     expect(res.status).toBe(200);

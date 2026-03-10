@@ -16,6 +16,9 @@
     },
     "lint": {},
     "typecheck": {},
+    "test": {
+      "cache": false
+    },
     "deploy": {
       "dependsOn": ["build"],
       "cache": false

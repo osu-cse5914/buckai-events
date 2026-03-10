@@ -36,7 +36,7 @@ function createTestApp() {
   return app;
 }
 
-describe("requireAuth middleware", () => {
+describe("[phase:0] [regression:always] requireAuth middleware", () => {
   const mockPrisma = createMockPrisma();
 
   beforeEach(() => {
