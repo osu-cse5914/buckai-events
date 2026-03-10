@@ -84,7 +84,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data).toMatchObject({
       id: TARGET_USER.id,
       displayName: TARGET_USER.displayName,
@@ -104,7 +104,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data).not.toHaveProperty("email");
   });
 
@@ -114,8 +114,9 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.createdEvents.items).toHaveLength(2);
+    const data = (await res.json()) as Record<string, unknown>;
+    const createdEvents = data.createdEvents as { items: unknown[]; meta: Record<string, unknown> };
+    expect(createdEvents.items).toHaveLength(2);
     expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
@@ -139,7 +140,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data.isFollowing).toBe(true);
   });
 
@@ -151,7 +152,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data.isFollowing).toBe(false);
   });
 

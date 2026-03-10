@@ -49,7 +49,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
     const res = await app.request(makeAuthRequest("/api/v1/users/me"));
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data).toMatchObject({
       id: FULL_USER.id,
       email: FULL_USER.email,
@@ -88,7 +88,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data.displayName).toBe("New Brutus");
     expect(data).toHaveProperty("updatedAt");
   });
@@ -106,7 +106,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data.interests).toEqual(newInterests);
   });
 
@@ -122,7 +122,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data.major).toBe("ECE");
     expect(data.displayName).toBe(FULL_USER.displayName);
     // Verify only major was sent to prisma update
@@ -147,7 +147,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as Record<string, unknown>;
     expect(data.email).toBe(FULL_USER.email);
     // Verify email was NOT passed to prisma update
     if (vi.mocked(mockPrisma.user.update).mock.calls.length > 0) {
