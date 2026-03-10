@@ -212,3 +212,33 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: Event E has status COMPLETED
 - **When**: User A sends `PATCH /events/E` with `{ status: "OPEN" }`
 - **Then**: The API responds with 400 Bad Request
+
+## TC-EVT-021: Invalid create payload rejected
+
+- **Spec scenario**: S-EVT-1, S-EVT-2
+- **Type**: Automated
+- **Phase introduced**: 1
+- **Regression**: Always
+- **Given**: User A is authenticated
+- **When**: User A sends `POST /events` with an invalid date field or invalid `compensation.type`
+- **Then**: The API responds with 400 Bad Request and no Event is created
+
+## TC-EVT-022: Invalid update payload rejected
+
+- **Spec scenario**: S-EVT-5, S-EVT-16
+- **Type**: Automated
+- **Phase introduced**: 1
+- **Regression**: Always
+- **Given**: User A created event E
+- **When**: User A sends `PATCH /events/E` with an invalid date field or invalid `compensation.type`
+- **Then**: The API responds with 400 Bad Request and event E is not updated
+
+## TC-EVT-023: Invalid list filters rejected
+
+- **Spec scenario**: S-EVT-4, S-EVT-15
+- **Type**: Automated
+- **Phase introduced**: 1
+- **Regression**: Always
+- **Given**: Events exist in the system
+- **When**: A user sends `GET /events` with an invalid enum filter or invalid date filter
+- **Then**: The API responds with 400 Bad Request and does not execute the query
