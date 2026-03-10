@@ -8,6 +8,8 @@ build
 .env.*.local
 apps/api/generated
 *.tsbuildinfo
+coverage
+.nyc_output
 apps/web/src/**/*.js
 apps/web/src/routeTree.gen.ts
 apps/web/vite.config.js

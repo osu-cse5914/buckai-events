@@ -11,6 +11,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:coverage": "turbo run test -- --coverage",
     "test:regression:phase-0": "turbo run test -- --reporter=verbose -t '\\[phase:0\\]'",
     "test:regression:phase-1": "turbo run test -- --reporter=verbose -t '\\[phase:[01]\\]'",
     "test:regression:phase-2": "turbo run test -- --reporter=verbose -t '\\[phase:[0-2]\\]'",
