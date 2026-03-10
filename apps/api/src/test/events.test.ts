@@ -15,7 +15,8 @@ const USER_B = { id: "user_b", clerkId: "clerk_b", email: "userb@osu.edu" };
 function createTestApp(user = USER_A) {
   const app = new Hono();
   app.use("/*", async (c, next) => {
-    c.set("user", user);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c as any).set("user", user);
     await next();
   });
   app.route("/events", events);
@@ -137,7 +138,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       const res = await postEvent(createTestApp(), validEvent);
 
       expect(res.status).toBe(201);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.id).toBe("evt_1");
       expect(body.status).toBe("OPEN");
       expect(body.source).toBe("USER");
@@ -242,7 +243,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       const res = await createTestApp().request("/events/evt_1");
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.id).toBe("evt_1");
       expect(body.title).toBe("Hackathon");
       expect(body.creator).toEqual({
@@ -262,7 +263,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       const res = await createTestApp().request("/events/nonexistent");
 
       expect(res.status).toBe(404);
-      expect(await res.json()).toEqual({ error: "Event not found" });
+      expect((await res.json()) as Record<string, unknown>).toEqual({ error: "Event not found" });
     });
   });
 
@@ -281,7 +282,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       );
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.data).toHaveLength(1);
       expect(body.pagination).toEqual({ total: 1, limit: 10, offset: 0 });
       expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
@@ -319,7 +320,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       const res = await createTestApp().request("/events");
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.pagination).toEqual({ total: 0, limit: 20, offset: 0 });
     });
 
@@ -347,8 +348,8 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
 
       const res = await createTestApp().request("/events?limit=999");
 
-      const body = await res.json();
-      expect(body.pagination.limit).toBe(100);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect((body.pagination as Record<string, unknown>).limit).toBe(100);
     });
   });
 
@@ -368,7 +369,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.title).toBe("Mega Hackathon");
       expect(mockPrisma.event.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -457,7 +458,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       });
 
       expect(res.status).toBe(400);
-      const body = await res.json();
+      const body = (await res.json()) as Record<string, unknown>;
       expect(body.error).toContain("Invalid status transition");
       expect(mockPrisma.event.update).not.toHaveBeenCalled();
     });
