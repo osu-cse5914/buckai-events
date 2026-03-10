@@ -26,8 +26,9 @@ The project management approach needs to support both humans coordinating and ag
 1. **Already on GitHub** — no context switching, no extra tool
 2. **Agent-friendly** — Claude Code can read/create/update issues via `gh` CLI
 3. **Free for public repos** — GitHub Projects boards are included
-4. **Labels + Milestones** — map directly to phases and task types
-5. **Issue templates** — standardize task creation for agents and humans
+4. **Labels + Milestones** — map directly to phases and scopes
+5. **Issue types** — GitHub's native issue types (Feature, Task, Bug) replace type labels
+6. **Issue templates** — standardize task creation for agents and humans
 
 ### Setup
 
@@ -48,14 +49,7 @@ scope:api
 scope:web
 scope:full-stack
 
-# Type labels
-type:feature
-type:test
-type:infra
-type:bug
-
 # Agent labels
-agent:ready       # Task is specced and ready for an agent to pick up
 agent:in-progress # Agent is actively working on this
 agent:review      # Agent finished, needs human review
 ```
@@ -68,7 +62,6 @@ One GitHub Milestone per phase. This gives you a progress bar and burndown.
 
 A single board with columns:
 - **Backlog** — created but not started
-- **Ready for Agent** — specced, unblocked, agent can pick it up
 - **In Progress** — human or agent is working on it
 - **In Review** — PR open, awaiting review
 - **Done** — merged to main
@@ -82,7 +75,7 @@ A single board with columns:
 ```
 1. Human creates issue from roadmap
         ↓
-2. Human assigns it (to self or labels "agent:ready")
+2. Human assigns it (to self or to an agent)
         ↓
 3. Agent (or human) reads the linked spec
         ↓

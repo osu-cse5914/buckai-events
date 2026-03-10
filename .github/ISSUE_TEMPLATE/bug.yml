@@ -1,7 +1,8 @@
 name: Bug Fix
 description: Report a bug and track the fix.
 title: "[Fix] "
-labels: ["type:bug"]
+labels: []
+type: "Bug"
 body:
   - type: textarea
     id: description

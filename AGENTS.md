@@ -46,9 +46,10 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 
 - `phase:0-foundation` through `phase:6-polish` — which phase
 - `scope:api`, `scope:web`, `scope:full-stack` — what part of the stack
-- `type:feature`, `type:test`, `type:infra`, `type:bug` — what kind of work
-- `agent:ready`, `agent:in-progress`, `agent:review` — agent workflow state
+- `agent:in-progress`, `agent:review` — agent workflow state
 - `timebox:N` — which timebox/sprint the issue belongs to
+
+Issue types (Feature, Task, Bug) are set via GitHub's native issue type field, not labels.
 
 ### Issue Blocking Relationships
 

@@ -1,7 +1,8 @@
 name: Task
 description: A development task from the project roadmap.
 title: "[Task] "
-labels: ["type:feature"]
+labels: []
+type: "Feature"
 body:
   - type: input
     id: roadmap-ref
