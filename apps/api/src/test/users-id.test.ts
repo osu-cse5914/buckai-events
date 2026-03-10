@@ -171,4 +171,66 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
 
     expect(res.status).toBe(404);
   });
+
+  it("TC-PUB-006: 404 response uses RFC 7807 Problem Details format", async () => {
+    vi.mocked(mockPrisma.user.findUnique).mockImplementation(
+      ((args: { where: { clerkId?: string; id?: string } }) => {
+        if (args?.where?.clerkId === AUTH_USER.clerkId)
+          return Promise.resolve(AUTH_USER);
+        return Promise.resolve(null);
+      }) as never
+    );
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/nonexistent")
+    );
+
+    expect(res.status).toBe(404);
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data).toMatchObject({
+      type: expect.stringContaining("not-found"),
+      title: "Resource not found",
+      status: 404,
+    });
+    expect(data).toHaveProperty("detail");
+  });
+
+  it("excludes clerkId and updatedAt from public profile", async () => {
+    const res = await app.request(
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data).not.toHaveProperty("clerkId");
+    expect(data).not.toHaveProperty("updatedAt");
+  });
+
+  it("respects pagination query params for createdEvents", async () => {
+    const res = await app.request(
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=5&offset=10`)
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 5,
+        skip: 10,
+      })
+    );
+    const data = (await res.json()) as Record<string, unknown>;
+    const createdEvents = data.createdEvents as { items: unknown[]; meta: Record<string, unknown> };
+    expect(createdEvents.meta).toMatchObject({ limit: 5, offset: 10 });
+  });
+
+  it("caps limit at 100", async () => {
+    const res = await app.request(
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=999`)
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 100 })
+    );
+  });
 });

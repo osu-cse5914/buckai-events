@@ -61,6 +61,25 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
     expect(data).toHaveProperty("createdAt");
     expect(data).toHaveProperty("updatedAt");
   });
+
+  it("returns 401 when unauthenticated", async () => {
+    vi.mocked(getAuth).mockReturnValue({ userId: null } as never);
+
+    const res = await app.request(makeAuthRequest("/api/v1/users/me"));
+
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 404 when user no longer exists in database", async () => {
+    // Auth middleware finds user, but a second lookup by id returns null
+    vi.mocked(mockPrisma.user.findUnique)
+      .mockResolvedValueOnce(FULL_USER as never) // auth middleware
+      .mockResolvedValueOnce(null);              // route handler
+
+    const res = await app.request(makeAuthRequest("/api/v1/users/me"));
+
+    expect(res.status).toBe(404);
+  });
 });
 
 describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
@@ -154,5 +173,43 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<string, unknown>;
       expect(updateCall.data).not.toHaveProperty("email");
     }
+  });
+
+  it("strips immutable fields (id, clerkId) when mixed with valid fields", async () => {
+    const updatedUser = { ...FULL_USER, displayName: "Updated" };
+    vi.mocked(mockPrisma.user.update).mockResolvedValue(updatedUser as never);
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/me", {
+        method: "PATCH",
+        body: JSON.stringify({
+          displayName: "Updated",
+          id: "hacked_id",
+          clerkId: "hacked_clerk",
+          email: "hacked@osu.edu",
+        }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<string, unknown>;
+    const updateData = updateCall.data as Record<string, unknown>;
+    expect(updateData).toEqual({ displayName: "Updated" });
+    expect(updateData).not.toHaveProperty("id");
+    expect(updateData).not.toHaveProperty("clerkId");
+    expect(updateData).not.toHaveProperty("email");
+  });
+
+  it("returns 401 when unauthenticated", async () => {
+    vi.mocked(getAuth).mockReturnValue({ userId: null } as never);
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/me", {
+        method: "PATCH",
+        body: JSON.stringify({ displayName: "X" }),
+      })
+    );
+
+    expect(res.status).toBe(401);
   });
 });
