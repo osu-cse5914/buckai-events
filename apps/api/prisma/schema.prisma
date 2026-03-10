@@ -12,3 +12,66 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum EventType {
+  EVENT
+  GIG
+}
+
+enum EventSource {
+  OSU_API
+  TICKETMASTER
+  USER
+}
+
+enum EventStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AppStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum InteractionType {
+  VIEW
+  SAVE
+  CLICK
+  APPLY
+  DISMISS
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum CollectionVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum NotificationType {
+  APPLICATION_RECEIVED
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  GIG_COMPLETED
+  EVENT_REMINDER
+  NEW_FOLLOWER
+}
+
+enum ReferenceType {
+  EVENT
+  APPLICATION
+  USER
+}
+
+enum CompensationType {
+  FIXED
+  HOURLY
+}
