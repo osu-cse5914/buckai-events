@@ -40,7 +40,6 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
   const mockPrisma = createMockPrisma();
 
   beforeEach(() => {
-    vi.resetAllMocks();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
   });
 

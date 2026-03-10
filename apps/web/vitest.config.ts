@@ -8,6 +8,15 @@ export default defineConfig({
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./setupTests.ts"],
+    coverage: {
+      provider: "istanbul",
+      reporter: ["text", "lcov"],
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/routeTree.gen.ts"],
+      thresholds: {
+        statements: 5,
+      },
+    },
   },
   resolve: {
     alias: {

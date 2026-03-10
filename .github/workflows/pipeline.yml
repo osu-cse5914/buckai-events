@@ -40,7 +40,7 @@ jobs:
       - run: bun run db:generate
       - run: bun run lint
       - run: bun run typecheck
-      - run: bun run test
+      - run: bun run test:coverage
       - run: bun run build
 
       - uses: actions/upload-artifact@v4

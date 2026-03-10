@@ -6,5 +6,15 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    setupFiles: ["./setupTests.ts"],
+    coverage: {
+      provider: "istanbul",
+      reporter: ["text", "lcov"],
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.test.ts", "src/test/**"],
+      thresholds: {
+        statements: 60,
+      },
+    },
   },
 });
