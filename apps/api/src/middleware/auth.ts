@@ -43,7 +43,11 @@ export const requireAuth = createMiddleware<AuthEnv>(async (c, next) => {
       return c.json({ error: "No email associated with account" }, 400);
     }
 
-    user = await prisma.user.create({ data: { clerkId, email } });
+    user = await prisma.user.upsert({
+      where: { clerkId },
+      create: { clerkId, email },
+      update: {},
+    });
   }
 
   c.set("user", { id: user.id, clerkId: user.clerkId, email: user.email });

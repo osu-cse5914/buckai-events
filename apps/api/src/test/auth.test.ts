@@ -83,7 +83,7 @@ describe("requireAuth middleware", () => {
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { clerkId: "clerk_abc123" },
       });
-      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.upsert).not.toHaveBeenCalled();
     });
   });
 
@@ -104,13 +104,15 @@ describe("requireAuth middleware", () => {
           { id: "email_1", emailAddress: "newstudent@osu.edu" },
         ],
       });
-      vi.mocked(mockPrisma.user.create).mockResolvedValue(createdUser as never);
+      vi.mocked(mockPrisma.user.upsert).mockResolvedValue(createdUser as never);
 
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(200);
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: { clerkId: "clerk_new_user", email: "newstudent@osu.edu" },
+      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
+        where: { clerkId: "clerk_new_user" },
+        create: { clerkId: "clerk_new_user", email: "newstudent@osu.edu" },
+        update: {},
       });
       expect(await res.json()).toEqual({ user: createdUser });
     });
@@ -125,7 +127,7 @@ describe("requireAuth middleware", () => {
           { id: "email_2", emailAddress: "primary@buckeyemail.osu.edu" },
         ],
       });
-      vi.mocked(mockPrisma.user.create).mockResolvedValue({
+      vi.mocked(mockPrisma.user.upsert).mockResolvedValue({
         id: "cuid_multi",
         clerkId: "clerk_multi",
         email: "primary@buckeyemail.osu.edu",
@@ -134,8 +136,10 @@ describe("requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(200);
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: { clerkId: "clerk_multi", email: "primary@buckeyemail.osu.edu" },
+      expect(mockPrisma.user.upsert).toHaveBeenCalledWith({
+        where: { clerkId: "clerk_multi" },
+        create: { clerkId: "clerk_multi", email: "primary@buckeyemail.osu.edu" },
+        update: {},
       });
     });
 
