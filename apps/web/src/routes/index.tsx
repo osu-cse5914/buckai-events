@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { InferResponseType } from "hono/client";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   component: IndexPage,
 });
 
-type HealthResponse = {
-  status: string;
-  service: string;
-  timestamp: string;
-};
+type HealthResponse = InferResponseType<typeof api.api.health.$get>;
 
-type DbCheckResponse = {
-  database: string;
-  error?: string;
-};
+// Manual type: InferResponseType can't use bracket notation in TSR's parser
+type DbCheckResponse = { database: string; error?: string };
 
 function IndexPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -26,26 +22,15 @@ function IndexPage() {
   const [dbError, setDbError] = useState<string | null>(null);
   const [isCheckingDb, setIsCheckingDb] = useState(false);
 
-  const configuredApiBaseUrl = import.meta.env.VITE_API_URL?.replace(
-    /\/$/,
-    "",
-  );
-  const healthEndpoint = configuredApiBaseUrl
-    ? `${configuredApiBaseUrl}/api/health`
-    : "/api/health";
-  const dbCheckEndpoint = configuredApiBaseUrl
-    ? `${configuredApiBaseUrl}/api/db-check`
-    : "/api/db-check";
-
   const handleCheckDb = async () => {
     setIsCheckingDb(true);
     setDbError(null);
 
     try {
-      const response = await fetch(dbCheckEndpoint);
-      const data = (await response.json()) as DbCheckResponse;
+      const res = await api.api["db-check"].$get();
+      const data = await res.json() as DbCheckResponse;
       setDbStatus(data);
-      if (!response.ok) {
+      if (!res.ok) {
         setDbError(data.error ?? "Database check failed");
       }
     } catch (error) {
@@ -63,12 +48,11 @@ function IndexPage() {
     setHealthError(null);
 
     try {
-      const response = await fetch(healthEndpoint);
-      if (!response.ok) {
-        throw new Error(`Health check failed with status ${response.status}`);
+      const res = await api.api.health.$get();
+      if (!res.ok) {
+        throw new Error(`Health check failed with status ${res.status}`);
       }
-
-      const data = (await response.json()) as HealthResponse;
+      const data = await res.json();
       setHealth(data);
     } catch (error) {
       setHealth(null);
