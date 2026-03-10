@@ -30,3 +30,9 @@ done
 
 echo "done — installing dependencies"
 cd "$WORKTREE_ROOT" && bun install
+
+echo "generating prisma client"
+bun run db:generate
+
+echo "starting dev server"
+bun run dev
