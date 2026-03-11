@@ -109,3 +109,14 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 - **Given**: Two simultaneous first-time requests for the same clerkId
 - **When**: Both requests attempt to create a User record
 - **Then**: One succeeds, the other recovers via P2002 unique constraint error and fetches the existing user
+
+## TC-AUTH-010: Clerk sign-up UI renders
+
+- **Spec scenario**: S-AUTH-1, S-AUTH-2
+- **Type**: E2E
+- **Automated in**: `e2e/navigation.spec.ts`
+- **Phase introduced**: 0
+- **Regression**: Always
+- **Given**: An unauthenticated user
+- **When**: They navigate to `/sign-up`
+- **Then**: The Clerk sign-up widget is visible (no 404)

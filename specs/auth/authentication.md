@@ -104,4 +104,4 @@ This prevents non-OSU users from creating accounts at the Clerk identity layer. 
 
 ## Test Cases
 
-See [`test-cases/auth/authentication.md`](../../test-cases/auth/authentication.md) for the full test case registry (TC-AUTH-001 through TC-AUTH-009), including automated API tests and manual UI verification cases.
+See [`test-cases/auth/authentication.md`](../../test-cases/auth/authentication.md) for the full test case registry (TC-AUTH-001 through TC-AUTH-010), including automated API tests, E2E tests, and manual UI verification cases.

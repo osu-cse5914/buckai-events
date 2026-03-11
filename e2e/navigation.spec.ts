@@ -17,6 +17,15 @@ test.describe("Navigation and auth redirect", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
+  test("sign-up page renders Clerk widget", async ({ page }) => {
+    await page.goto("/sign-up");
+
+    // Clerk mounts its sign-up component into the page
+    await expect(
+      page.locator(".cl-signUp-root, .cl-rootBox, [data-clerk]").first(),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
   test("unauthenticated user visiting /events is redirected to /sign-in", async ({
     page,
   }) => {
