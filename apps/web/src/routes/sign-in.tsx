@@ -8,7 +8,7 @@ export const Route = createFileRoute("/sign-in")({
 function SignInPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <SignIn />
+      <SignIn routing="hash" />
     </div>
   );
 }
