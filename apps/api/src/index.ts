@@ -29,5 +29,21 @@ export type AppType = typeof app;
 // Compatible with both Bun (reads `port`) and CF Workers (ignores `port`, uses `fetch`)
 export default {
   port: typeof process !== "undefined" ? Number(process.env.PORT ?? 3001) : 3001,
-  fetch: app.fetch
+  fetch(request: Request, env: Record<string, unknown>, ctx: never) {
+    const url = new URL(request.url);
+
+    // API routes handled by Hono
+    if (url.pathname.startsWith("/api")) {
+      return app.fetch(request, env, ctx);
+    }
+
+    // CF Workers: serve static assets with SPA fallback
+    if ("ASSETS" in env) {
+      const assets = env.ASSETS as { fetch(req: Request): Promise<Response> };
+      return assets.fetch(request);
+    }
+
+    // Local dev: Hono handles everything (Vite proxies /api to here)
+    return app.fetch(request, env, ctx);
+  },
 };
