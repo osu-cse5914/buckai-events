@@ -7,6 +7,7 @@ import { health } from "./routes/health";
 import { auth } from "./routes/auth";
 import { users } from "./routes/users";
 import { events } from "./routes/events";
+import { gigs } from "./routes/gigs";
 
 const base = new Hono<AppEnv>();
 
@@ -22,7 +23,8 @@ export const app = base
   .route("/api", health)
   .route("/api/v1/auth", auth)
   .route("/api/v1/users", users)
-  .route("/api/v1/events", events);
+  .route("/api/v1/events", events)
+  .route("/api/v1/gigs", gigs);
 
 export type AppType = typeof app;
 
