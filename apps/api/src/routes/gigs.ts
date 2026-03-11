@@ -10,6 +10,116 @@ const APPLICANT_SELECT = {
 
 export const gigs = new Hono<AppEnv>()
 
+  // POST /:gigId/applications — Apply to a gig
+  .post("/:gigId/applications", async (c) => {
+    const { id: userId } = c.get("user");
+    const gigId = c.req.param("gigId");
+    const prisma = getPrisma(c);
+
+    const gig = await prisma.event.findUnique({
+      where: { id: gigId },
+    });
+
+    if (!gig) {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/not-found",
+          title: "Resource not found",
+          status: 404,
+          detail: "Gig not found",
+        },
+        404,
+      );
+    }
+
+    if (gig.type !== "GIG") {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/invalid-request",
+          title: "Invalid request",
+          status: 400,
+          detail: "Event is not a gig",
+        },
+        400,
+      );
+    }
+
+    if (gig.status === "CANCELLED") {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/invalid-request",
+          title: "Invalid request",
+          status: 400,
+          detail: "Cannot apply to a cancelled gig",
+        },
+        400,
+      );
+    }
+
+    if (gig.creatorId === userId) {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/forbidden",
+          title: "Forbidden",
+          status: 403,
+          detail: "Cannot apply to your own gig",
+        },
+        403,
+      );
+    }
+
+    // Check for duplicate application
+    const existing = await prisma.application.findUnique({
+      where: { gigId_applicantId: { gigId, applicantId: userId } },
+    });
+
+    if (existing) {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/conflict",
+          title: "Conflict",
+          status: 409,
+          detail: "You have already applied to this gig",
+        },
+        409,
+      );
+    }
+
+    // Parse optional message from body
+    let message: string | null = null;
+    try {
+      const body = await c.req.json();
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        typeof body.message === "string"
+      ) {
+        message = body.message;
+      }
+    } catch {
+      // No body or invalid JSON — message stays null
+    }
+
+    const application = await prisma.application.create({
+      data: {
+        gigId,
+        applicantId: userId,
+        message,
+        status: "PENDING",
+      },
+    });
+
+    await prisma.interaction.create({
+      data: {
+        userId,
+        eventId: gigId,
+        action: "APPLY",
+      },
+    });
+
+    return c.json(application, 201);
+  })
+
   // PATCH /:gigId/applications/:appId — Accept or reject a gig application
   .patch("/:gigId/applications/:appId", async (c) => {
     const { id: userId } = c.get("user");
