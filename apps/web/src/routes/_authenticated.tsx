@@ -19,6 +19,7 @@ import { api, setTokenGetter } from "@/lib/api";
 
 export const navLinks = [
   { to: "/events", label: "Events" },
+  { to: "/applications", label: "My Applications" },
   { to: "/profile", label: "Profile" },
   { to: "/debug", label: "Debug" },
 ] as const;

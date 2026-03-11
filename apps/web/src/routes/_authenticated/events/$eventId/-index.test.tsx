@@ -7,6 +7,8 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 const mockEventGet = vi.fn();
 const mockEventPatch = vi.fn();
 const mockEventDelete = vi.fn();
+const mockGigApplicationsGet = vi.fn();
+const mockGigApplicationsPost = vi.fn();
 const mockUserGet = vi.fn();
 
 vi.mock("@/lib/api", () => ({
@@ -18,6 +20,14 @@ vi.mock("@/lib/api", () => ({
             $get: (...args: unknown[]) => mockEventGet(...args),
             $patch: (...args: unknown[]) => mockEventPatch(...args),
             $delete: (...args: unknown[]) => mockEventDelete(...args),
+          },
+        },
+        gigs: {
+          ":gigId": {
+            applications: {
+              $get: (...args: unknown[]) => mockGigApplicationsGet(...args),
+              $post: (...args: unknown[]) => mockGigApplicationsPost(...args),
+            },
           },
         },
         users: {
@@ -55,7 +65,15 @@ vi.mock("@tanstack/react-router", () => ({
   }) => {
     let href = to;
     if (params?.id) href = `/users/${params.id}`;
-    if (params?.eventId) href = `/events/${params.eventId}/edit`;
+    if (params?.eventId && to === "/events/$eventId/edit") {
+      href = `/events/${params.eventId}/edit`;
+    }
+    if (params?.eventId && to === "/events/$eventId/applications") {
+      href = `/events/${params.eventId}/applications`;
+    }
+    if (params?.eventId && to === "/events/$eventId") {
+      href = `/events/${params.eventId}`;
+    }
     return (
       <a href={href} {...props}>
         {children}
@@ -205,6 +223,9 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
   it("TC-EVT-019: non-creators do not see creator actions", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent({ creatorId: "user_1" })));
     mockUserGet.mockResolvedValue(okJson(mockOtherUser));
+    mockGigApplicationsGet.mockResolvedValue(
+      okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
+    );
 
     await renderPage();
 

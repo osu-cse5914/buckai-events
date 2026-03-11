@@ -20,6 +20,19 @@ export const TYPE_STYLES: Record<string, string> = {
   GIG: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
 };
 
+export const APPLICATION_STATUS_STYLES: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  ACCEPTED:
+    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  REJECTED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+};
+
+export const APPLICATION_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  ACCEPTED: "Accepted",
+  REJECTED: "Rejected",
+};
+
 export function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",

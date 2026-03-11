@@ -3,6 +3,56 @@ import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
 
 export const users = new Hono<AppEnv>()
+  .get("/me/applications", async (c) => {
+    const { id } = c.get("user");
+    const prisma = getPrisma(c);
+
+    const limitParam = c.req.query("limit");
+    const offsetParam = c.req.query("offset");
+
+    const parsedLimit = Number(limitParam);
+    const limit = Math.min(
+      Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1),
+      100,
+    );
+
+    const parsedOffset = Number(offsetParam);
+    const offset = Math.max(
+      Number.isFinite(parsedOffset) ? parsedOffset : 0,
+      0,
+    );
+
+    const where = { applicantId: id };
+    const [data, total] = await Promise.all([
+      prisma.application.findMany({
+        where,
+        include: {
+          gig: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              startAt: true,
+              locationName: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.application.count({ where }),
+    ]);
+
+    return c.json({
+      data,
+      pagination: {
+        total,
+        limit,
+        offset,
+      },
+    });
+  })
   .get("/me", async (c) => {
     const { id } = c.get("user");
     const prisma = getPrisma(c);

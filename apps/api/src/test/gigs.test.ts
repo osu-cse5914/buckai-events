@@ -141,6 +141,38 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
       });
     });
 
+    it("TC-APP-013: still creates the application when APPLY interaction persistence fails", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const gig = makeGig();
+      const application = makeApplication();
+
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(gig as never);
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
+        null as never,
+      );
+      vi.mocked(mockPrisma.application.create).mockResolvedValue(
+        application as never,
+      );
+      vi.mocked(mockPrisma.interaction.create).mockRejectedValue(
+        new Error("interaction write failed"),
+      );
+
+      const res = await postApplication(createTestApp(APPLICANT_A), "gig_1", {
+        message: "I'm interested",
+      });
+
+      expect(res.status).toBe(201);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.id).toBe("app_1");
+      expect(body.status).toBe("PENDING");
+      expect(mockPrisma.application.create).toHaveBeenCalled();
+      expect(mockPrisma.interaction.create).toHaveBeenCalled();
+
+      consoleError.mockRestore();
+    });
+
     it("returns 404 when gig does not exist", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
 

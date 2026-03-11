@@ -131,3 +131,23 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
   3. Accept one applicant, reject another
   4. Verify status updates are reflected immediately
 - **Expected**: Statuses update in real-time; remaining applications are still actionable
+
+## TC-APP-013: Application succeeds when APPLY interaction recording fails
+
+- **Spec scenario**: S-APP-1
+- **Type**: Automated
+- **Phase introduced**: 2
+- **Regression**: Always
+- **Given**: User B is authenticated, gig G exists owned by user A, and interaction persistence fails
+- **When**: User B sends `POST /gigs/G/applications` with `{ message: "I'm interested" }`
+- **Then**: The API still responds with 201 Created and the application is created with status PENDING
+
+## TC-APP-014: Current user can list their applications across gigs
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 2
+- **Regression**: Always
+- **Given**: The authenticated user has applied to multiple gigs
+- **When**: The client requests the current user's application list
+- **Then**: The API returns the user's applications with gig summaries, ordered newest first

@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import {
+  APPLICATION_STATUS_LABELS,
+  APPLICATION_STATUS_STYLES,
   STATUS_STYLES,
   STATUS_LABELS,
   TYPE_STYLES,
@@ -18,6 +20,7 @@ import {
 } from "@/lib/event-utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -27,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +42,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/events/$eventId/")({
   component: EventDetailPage,
@@ -48,6 +61,21 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   IN_PROGRESS: ["COMPLETED"],
   COMPLETED: [],
   CANCELLED: [],
+};
+
+type ApplicationSummary = {
+  id: string;
+  message: string | null;
+  status: string;
+};
+
+type GigApplicationsResponse = {
+  data: ApplicationSummary[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
 };
 
 function useEvent(eventId: string) {
@@ -75,6 +103,20 @@ function useCurrentUser() {
   });
 }
 
+function useGigApplications(gigId: string, enabled: boolean) {
+  return useQuery<GigApplicationsResponse>({
+    queryKey: ["gig", gigId, "applications", "me"],
+    enabled,
+    queryFn: async () => {
+      const res = await api.api.v1.gigs[":gigId"].applications.$get({
+        param: { gigId },
+      });
+      if (!res.ok) throw new Error("Failed to load application status");
+      return res.json() as Promise<GigApplicationsResponse>;
+    },
+  });
+}
+
 function EventDetailPage() {
   const { eventId } = Route.useParams();
   const navigate = useNavigate();
@@ -89,6 +131,24 @@ function EventDetailPage() {
     currentUser.id === event.creatorId &&
     event.source === "USER"
   );
+  const showGigApplication = !!(
+    event &&
+    currentUser &&
+    event.type === "GIG" &&
+    currentUser.id !== event.creatorId
+  );
+  const applicationsQuery = useGigApplications(eventId, showGigApplication);
+  const [statusValue, setStatusValue] = useState<string>("");
+  const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
+  const [applyMessage, setApplyMessage] = useState("");
+  const [applyErrorMessage, setApplyErrorMessage] = useState<string | null>(
+    null,
+  );
+  const [applySuccessMessage, setApplySuccessMessage] = useState<string | null>(
+    null,
+  );
+  const [submittedApplication, setSubmittedApplication] =
+    useState<ApplicationSummary | null>(null);
 
   const statusMutation = useMutation({
     mutationFn: async (status: string) => {
@@ -115,14 +175,62 @@ function EventDetailPage() {
       navigate({ to: "/events" });
     },
   });
+  const applyMutation = useMutation({
+    mutationFn: async (message: string) => {
+      const postApplication = api.api.v1.gigs[":gigId"].applications.$post as (
+        args: {
+          param: { gigId: string };
+          json: { message: string };
+        },
+      ) => Promise<Response>;
+      const res = await postApplication({
+        param: { gigId: eventId },
+        json: { message },
+      });
 
-  const [statusValue, setStatusValue] = useState<string>("");
+      if (!res.ok) {
+        let detail = "Failed to submit application";
+        try {
+          const body = (await res.json()) as { detail?: string };
+          if (body.detail) detail = body.detail;
+        } catch {
+          // Keep fallback message.
+        }
+        throw new Error(detail);
+      }
+
+      return res.json() as Promise<ApplicationSummary>;
+    },
+    onSuccess: (application) => {
+      setSubmittedApplication(application);
+      setApplyMessage("");
+      setApplyErrorMessage(null);
+      setApplySuccessMessage("Application submitted.");
+      setIsApplyDialogOpen(false);
+      queryClient.invalidateQueries({
+        queryKey: ["gig", eventId, "applications", "me"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["my-applications"] });
+    },
+    onError: (error) => {
+      setApplyErrorMessage(
+        error instanceof Error ? error.message : "Failed to submit application",
+      );
+    },
+  });
 
   function handleStatusChange(newStatus: string) {
     if (newStatus) {
       statusMutation.mutate(newStatus);
       setStatusValue("");
     }
+  }
+
+  function handleApplySubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setApplyErrorMessage(null);
+    setApplySuccessMessage(null);
+    applyMutation.mutate(applyMessage);
   }
 
   if (isLoading) {
@@ -162,6 +270,9 @@ function EventDetailPage() {
   }
 
   const validTransitions = VALID_TRANSITIONS[event.status] || [];
+  const currentApplication =
+    submittedApplication ?? applicationsQuery.data?.data[0] ?? null;
+  const hasApplied = !!currentApplication;
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-10">
@@ -259,6 +370,100 @@ function EventDetailPage() {
         </p>
       </div>
 
+      {showGigApplication && (
+        <>
+          <Separator className="my-6" />
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Application</h2>
+                <p className="text-sm text-muted-foreground">
+                  Send a short message to the gig owner.
+                </p>
+              </div>
+              <Dialog
+                open={isApplyDialogOpen}
+                onOpenChange={setIsApplyDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    disabled={
+                      hasApplied ||
+                      applyMutation.isPending ||
+                      applicationsQuery.isLoading
+                    }
+                  >
+                    {hasApplied ? "Applied" : "Apply"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Apply to this gig</DialogTitle>
+                    <DialogDescription>
+                      Include any context that helps the owner evaluate your
+                      application.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form className="space-y-4" onSubmit={handleApplySubmit}>
+                    <div className="space-y-2">
+                      <Label htmlFor="application-message">
+                        Message (optional)
+                      </Label>
+                      <Textarea
+                        id="application-message"
+                        value={applyMessage}
+                        onChange={(e) => setApplyMessage(e.target.value)}
+                        placeholder="Share relevant experience or availability"
+                      />
+                    </div>
+                    {applyErrorMessage && (
+                      <p className="text-sm text-destructive">
+                        {applyErrorMessage}
+                      </p>
+                    )}
+                    <DialogFooter>
+                      <Button
+                        type="submit"
+                        disabled={applyMutation.isPending}
+                      >
+                        {applyMutation.isPending
+                          ? "Submitting..."
+                          : "Submit application"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {currentApplication && (
+              <div className="flex items-center gap-2 text-sm">
+                <Badge
+                  variant="secondary"
+                  className={APPLICATION_STATUS_STYLES[currentApplication.status]}
+                >
+                  {APPLICATION_STATUS_LABELS[currentApplication.status] ??
+                    currentApplication.status}
+                </Badge>
+                <span className="text-muted-foreground">
+                  You have already applied to this gig.
+                </span>
+              </div>
+            )}
+            {applySuccessMessage && (
+              <p className="text-sm text-emerald-700">{applySuccessMessage}</p>
+            )}
+            {applicationsQuery.error && !applyErrorMessage && (
+              <p className="text-sm text-destructive">
+                {applicationsQuery.error instanceof Error
+                  ? applicationsQuery.error.message
+                  : "Failed to load application status"}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
       {event.tags.length > 0 && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold">Tags</h2>
@@ -287,6 +492,17 @@ function EventDetailPage() {
                   Edit
                 </Link>
               </Button>
+
+              {event.type === "GIG" && (
+                <Button asChild variant="outline" size="sm">
+                  <Link
+                    to="/events/$eventId/applications"
+                    params={{ eventId: event.id }}
+                  >
+                    Manage Applications
+                  </Link>
+                </Button>
+              )}
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
