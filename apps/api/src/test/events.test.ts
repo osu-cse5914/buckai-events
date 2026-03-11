@@ -3,7 +3,7 @@ import { Hono } from "hono";
 
 vi.mock("../lib/prisma");
 
-import { getPrismaClient } from "../lib/prisma";
+import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
 import { events, isValidStatusTransition } from "../routes/events";
 
@@ -75,6 +75,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
 
   beforeEach(() => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
   });
 
   // =====================================================================

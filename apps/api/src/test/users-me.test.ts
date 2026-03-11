@@ -17,7 +17,7 @@ vi.mock("@hono/clerk-auth", () => ({
 vi.mock("../lib/prisma");
 
 import { getAuth } from "@hono/clerk-auth";
-import { getPrismaClient } from "../lib/prisma";
+import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
 import { app } from "../index";
 import { makeAuthRequest } from "./helpers/context";
@@ -41,6 +41,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
 
   beforeEach(() => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
   });
@@ -87,6 +88,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
 
   beforeEach(() => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
   });
