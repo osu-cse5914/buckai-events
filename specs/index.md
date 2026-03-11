@@ -12,6 +12,7 @@ Social OSU is an AI-powered campus discovery platform for The Ohio State Univers
 
 - [Architecture](system/architecture.md) — high-level system architecture, deployment, infrastructure
 - [Data Model](system/data-model.md) — entities, relationships, enums
+- [Debug Page](system/debug-page.md) — developer debug page with diagnostic tools
 
 ### Auth
 
