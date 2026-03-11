@@ -8,6 +8,8 @@ import { auth } from "./routes/auth";
 import { users } from "./routes/users";
 import { events } from "./routes/events";
 import { gigs } from "./routes/gigs";
+import { autoCompleteEvents } from "./scheduled/auto-complete";
+import { getPrismaClient } from "./lib/prisma";
 
 const base = new Hono<AppEnv>();
 
@@ -47,5 +49,15 @@ export default {
 
     // Local dev: Hono handles everything (Vite proxies /api to here)
     return app.fetch(request, env, ctx);
+  },
+
+  // Cloudflare Workers cron trigger — auto-complete past events every 15 minutes
+  async scheduled(
+    _event: { scheduledTime: number; cron: string },
+    env: Record<string, string>,
+    ctx: { waitUntil(promise: Promise<unknown>): void },
+  ) {
+    const prisma = getPrismaClient(env.DATABASE_URL);
+    ctx.waitUntil(autoCompleteEvents(prisma));
   },
 };
