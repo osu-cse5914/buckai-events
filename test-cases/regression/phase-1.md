@@ -21,6 +21,7 @@ bun run test:regression:phase-1
 - **TC-USER-003**: Update interests
 - **TC-USER-004**: Partial update preserves other fields
 - **TC-USER-005**: Cannot update email via profile endpoint
+- **TC-USER-008**: PATCH /users/me rejects non-object JSON payloads
 
 #### Phase 1 — Public Profile API
 
@@ -28,6 +29,7 @@ bun run test:regression:phase-1
 - **TC-PUB-002**: Email not visible on public profile
 - **TC-PUB-003**: Created events on profile (only OPEN/IN_PROGRESS)
 - **TC-PUB-006**: User not found returns 404
+- **TC-PUB-008**: Non-numeric pagination params return 400
 
 #### Phase 1 — Event CRUD API
 
@@ -42,6 +44,9 @@ bun run test:regression:phase-1
 - **TC-EVT-010**: Auto-completion after endAt
 - **TC-EVT-011**: No auto-completion without endAt
 - **TC-EVT-020**: Invalid status transition rejected
+- **TC-EVT-021**: Invalid create payload rejected
+- **TC-EVT-022**: Invalid update payload rejected
+- **TC-EVT-023**: Invalid list filters rejected
 
 #### Phase 1 — Authorization
 
