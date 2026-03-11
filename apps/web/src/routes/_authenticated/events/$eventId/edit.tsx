@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
@@ -42,58 +42,25 @@ function useCurrentUser() {
   });
 }
 
+type EventData = {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  source: string;
+  locationName: string;
+  startAt: string;
+  endAt: string | null;
+  compensationAmount: number | null;
+  compensationType: string | null;
+  creatorId: string | null;
+};
+
 function EventEditPage() {
   const { eventId } = Route.useParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: event, isLoading: eventLoading } = useEvent(eventId);
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [locationName, setLocationName] = useState("");
-  const [startAt, setStartAt] = useState("");
-  const [endAt, setEndAt] = useState("");
-  const [compAmount, setCompAmount] = useState("");
-  const [compType, setCompType] = useState("FIXED");
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
-    if (event && !initialized) {
-      setTitle(event.title);
-      setDescription(event.description);
-      setLocationName(event.locationName);
-      setStartAt(toLocalDatetime(event.startAt));
-      setEndAt(event.endAt ? toLocalDatetime(event.endAt) : "");
-      setCompAmount(
-        event.compensationAmount != null
-          ? String(event.compensationAmount)
-          : "",
-      );
-      setCompType(event.compensationType ?? "FIXED");
-      setInitialized(true);
-    }
-  }, [event, initialized]);
-
-  const mutation = useMutation({
-    mutationFn: async (data: Record<string, unknown>) => {
-      const res = await api.api.v1.events[":id"].$patch({
-        param: { id: eventId },
-        json: data,
-      });
-      if (!res.ok) throw new Error("Failed to update event");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      navigate({
-        to: "/events/$eventId",
-        params: { eventId },
-      });
-    },
-  });
 
   if (eventLoading || userLoading) {
     return (
@@ -146,6 +113,50 @@ function EventEditPage() {
     );
   }
 
+  return <EditForm event={event} eventId={eventId} />;
+}
+
+function EditForm({
+  event,
+  eventId,
+}: {
+  event: EventData;
+  eventId: string;
+}) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [title, setTitle] = useState(event.title);
+  const [description, setDescription] = useState(event.description);
+  const [locationName, setLocationName] = useState(event.locationName);
+  const [startAt, setStartAt] = useState(toLocalDatetime(event.startAt));
+  const [endAt, setEndAt] = useState(
+    event.endAt ? toLocalDatetime(event.endAt) : "",
+  );
+  const [compAmount, setCompAmount] = useState(
+    event.compensationAmount != null ? String(event.compensationAmount) : "",
+  );
+  const [compType, setCompType] = useState(
+    event.compensationType ?? "FIXED",
+  );
+
+  const mutation = useMutation({
+    mutationFn: async (data: Record<string, unknown>) => {
+      const arg = { param: { id: eventId }, json: data };
+      const res = await api.api.v1.events[":id"].$patch(arg);
+      if (!res.ok) throw new Error("Failed to update event");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      navigate({
+        to: "/events/$eventId",
+        params: { eventId },
+      });
+    },
+  });
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -160,7 +171,7 @@ function EventEditPage() {
       body.endAt = new Date(endAt).toISOString();
     }
 
-    if (event!.type === "GIG" && compAmount) {
+    if (event.type === "GIG" && compAmount) {
       body.compensation = {
         amount: parseFloat(compAmount),
         currency: "USD",

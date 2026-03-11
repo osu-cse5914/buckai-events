@@ -98,10 +98,8 @@ function EventDetailPage() {
 
   const statusMutation = useMutation({
     mutationFn: async (status: string) => {
-      const res = await api.api.v1.events[":id"].$patch({
-        param: { id: eventId },
-        json: { status },
-      });
+      const arg = { param: { id: eventId }, json: { status } };
+      const res = await api.api.v1.events[":id"].$patch(arg);
       if (!res.ok) throw new Error("Failed to update status");
       return res.json();
     },
