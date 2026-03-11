@@ -15,4 +15,6 @@ apps/web/src/routeTree.gen.ts
 apps/web/vite.config.js
 .astro
 .worktrees
+test-results
+playwright-report
 apps/docs/src/content/docs/specs
