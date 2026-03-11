@@ -154,7 +154,7 @@ describe("EventsPage", () => {
 
     await renderEventsPage();
 
-    const card = (await screen.findByText("Concert")).closest('[data-slot="card"]')!;
+    const card = (await screen.findByText("Concert")).closest('[data-slot="card"]') as HTMLElement;
     expect(within(card).getByText("EVENT")).toBeInTheDocument();
     expect(within(card).getByText("Open")).toBeInTheDocument();
   });
