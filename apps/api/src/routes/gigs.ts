@@ -128,7 +128,7 @@ export const gigs = new Hono<AppEnv>()
         },
         400,
       );
-    };
+    }
 
     const updated = await prisma.application.findUniqueOrThrow({
       where: { id: appId },
