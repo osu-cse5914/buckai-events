@@ -145,9 +145,17 @@ export const gigs = new Hono<AppEnv>()
     const limitParam = c.req.query("limit");
     const offsetParam = c.req.query("offset");
 
-    const limit = Math.min(Math.max(Number(limitParam) || 20, 1), 100);
-    const offset = Math.max(Number(offsetParam) || 0, 0);
+    const parsedLimit = Number(limitParam);
+    const limit = Math.min(
+      Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1),
+      100,
+    );
 
+    const parsedOffset = Number(offsetParam);
+    const offset = Math.max(
+      Number.isFinite(parsedOffset) ? parsedOffset : 0,
+      0,
+    );
     const prisma = getPrisma(c);
 
     const gig = await prisma.event.findUnique({
