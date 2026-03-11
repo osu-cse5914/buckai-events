@@ -109,12 +109,14 @@ export const gigs = new Hono<AppEnv>()
       },
     });
 
-    await prisma.interaction.create({
+    void prisma.interaction.create({
       data: {
         userId,
         eventId: gigId,
         action: "APPLY",
       },
+    }).catch((error) => {
+      console.error("Failed to record APPLY interaction", error);
     });
 
     return c.json(application, 201);
