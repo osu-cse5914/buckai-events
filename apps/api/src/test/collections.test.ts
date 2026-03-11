@@ -50,11 +50,12 @@ describe("[phase:2] [regression:always] Collection management API", () => {
 
     const res = await createTestApp(USER_B).request("/collections/col1");
     expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.id).toBe("col1");
     expect(body.visibility).toBe("PUBLIC");
-    expect(body.items).toHaveLength(1);
-    expect(body.items[0].event.id).toBe("evt1");
+    const items = body.items as Array<{ event: { id: string } }>;
+    expect(items).toHaveLength(1);
+    expect(items[0].event.id).toBe("evt1");
   });
 
   it("TC-COL-008: private collection of another user returns 404", async () => {
@@ -82,7 +83,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
 
     const res = await createTestApp(USER_A).request("/collections/col1");
     expect(res.status).toBe(200);
-    const body = (await res.json()) as any;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.id).toBe("col1");
     expect(body.visibility).toBe("PRIVATE");
   });
@@ -108,7 +109,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
 
     const res = await deleteCollection(createTestApp(), "notfound");
     expect(res.status).toBe(404);
-    expect((await res.json()) as any).toEqual({ error: "Collection not found" });
+    expect(await res.json()).toEqual({ error: "Collection not found" });
     expect(mockPrisma.collection.delete).not.toHaveBeenCalled();
   });
 
@@ -118,7 +119,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
 
     const res = await deleteCollection(createTestApp(USER_A), "col1");
     expect(res.status).toBe(403);
-    expect((await res.json()) as any).toEqual({ error: "Only the owner can delete this collection" });
+    expect(await res.json()).toEqual({ error: "Only the owner can delete this collection" });
     expect(mockPrisma.collection.delete).not.toHaveBeenCalled();
   });
 });
