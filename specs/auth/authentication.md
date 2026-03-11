@@ -85,6 +85,23 @@ THEN the system creates a User record with clerkId "clerk_new_user" and the emai
 AND the request proceeds normally
 ```
 
+## Configuration
+
+### Clerk Dashboard — Email Domain Allowlist
+
+The Clerk instance is configured to restrict sign-ups to OSU email domains. To set this up or verify the configuration:
+
+1. Open the [Clerk Dashboard](https://dashboard.clerk.com/) and select the project.
+2. Navigate to **User & Authentication → Restrictions**.
+3. Under **Sign-up restrictions**, enable **Allowlist**.
+4. Add the following domains to the allowlist:
+   - `osu.edu`
+   - `buckeyemail.osu.edu`
+5. Ensure **Block sign-ups from email addresses not on the allowlist** is enabled.
+6. Save changes.
+
+This prevents non-OSU users from creating accounts at the Clerk identity layer. The API middleware provides an additional server-side check as defense-in-depth (see S-AUTH-3b).
+
 ## Test Cases
 
 See [`test-cases/auth/authentication.md`](../../test-cases/auth/authentication.md) for the full test case registry (TC-AUTH-001 through TC-AUTH-009), including automated API tests and manual UI verification cases.
