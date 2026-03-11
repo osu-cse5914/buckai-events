@@ -252,7 +252,7 @@ function EventsPage() {
                         {STATUS_LABELS[event.status] ?? event.status}
                       </Badge>
                     </div>
-                    <CardTitle className="mt-2 line-clamp-2 group-hover:underline">
+                    <CardTitle className="mt-2 line-clamp-2 pb-0.5 leading-tight group-hover:underline">
                       {event.title}
                     </CardTitle>
                     {event.category && (

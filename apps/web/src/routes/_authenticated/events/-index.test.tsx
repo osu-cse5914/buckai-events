@@ -116,7 +116,7 @@ async function renderEventsPage() {
   );
 }
 
-describe("EventsPage", () => {
+describe("[phase:1] [regression:always] EventsPage", () => {
   it("shows loading skeletons while fetching", async () => {
     mockGet.mockReturnValue(new Promise(() => {}));
 
@@ -175,6 +175,19 @@ describe("EventsPage", () => {
 
     expect(await screen.findByText("Thompson Library")).toBeInTheDocument();
     expect(screen.getByText(/Apr/)).toBeInTheDocument();
+  });
+
+  it("TC-EVT-018: event card title uses relaxed line height to prevent clamp clipping", async () => {
+    const title =
+      "Long title with descenders going past baseline and wrapping into another line";
+    mockGet.mockResolvedValue(makeResponse([makeEvent({ id: "1", title })]));
+
+    await renderEventsPage();
+
+    const titleNode = await screen.findByText(title);
+    expect(titleNode).toHaveClass("line-clamp-2");
+    expect(titleNode).toHaveClass("leading-tight");
+    expect(titleNode).toHaveClass("pb-0.5");
   });
 
   it("renders gig compensation", async () => {
