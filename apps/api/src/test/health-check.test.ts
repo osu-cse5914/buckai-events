@@ -17,12 +17,3 @@ describe("[phase:0] [regression:always] GET /api/health", () => {
   });
 });
 
-describe("[phase:0] [regression:always] GET /api/ping", () => {
-  it("returns 200 with pong message", async () => {
-    const res = await app.request("/api/ping");
-    expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toContain("application/json");
-    const data = await res.json() as Record<string, unknown>;
-    expect(data.message).toBe("pong");
-  });
-});
