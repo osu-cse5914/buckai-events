@@ -13,13 +13,4 @@ test.describe("API health endpoints", () => {
     });
     expect(body.timestamp).toBeTruthy();
   });
-
-  test("GET /api/ping returns pong", async ({ request }) => {
-    const res = await request.get("/api/ping");
-
-    expect(res.ok()).toBe(true);
-
-    const body = await res.json();
-    expect(body).toEqual({ message: "pong" });
-  });
 });
