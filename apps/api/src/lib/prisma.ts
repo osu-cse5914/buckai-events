@@ -1,5 +1,6 @@
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
+import type { Context } from "hono";
 
 export function getPrismaClient(connectionString?: string): PrismaClient {
   const connStr = connectionString ?? process.env.DATABASE_URL;
@@ -9,4 +10,11 @@ export function getPrismaClient(connectionString?: string): PrismaClient {
 
   const adapter = new PrismaNeon({ connectionString: connStr });
   return new PrismaClient({ adapter, log: ["warn", "error"] });
+}
+
+export function getPrisma(c: Context): PrismaClient {
+  const connectionString =
+    (c.env as Record<string, string>)?.DATABASE_URL ??
+    (typeof process !== "undefined" ? process.env.DATABASE_URL : undefined);
+  return getPrismaClient(connectionString);
 }

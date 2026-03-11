@@ -1,15 +1,6 @@
 import { Hono } from "hono";
-import type { Context } from "hono";
-import { getPrismaClient } from "../lib/prisma";
-
-type EventsEnv = {
-  Bindings: {
-    DATABASE_URL: string;
-  };
-  Variables: {
-    user: { id: string; clerkId: string; email: string };
-  };
-};
+import type { AppEnv } from "../lib/types";
+import { getPrisma } from "../lib/prisma";
 
 // --- Status transition validation (Issue #42) ---
 
@@ -22,15 +13,6 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 
 export function isValidStatusTransition(from: string, to: string): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
-}
-
-// --- Helpers ---
-
-function getPrisma(c: Context<EventsEnv>) {
-  const connectionString =
-    (c.env as Record<string, string>)?.DATABASE_URL ??
-    (typeof process !== "undefined" ? process.env.DATABASE_URL : undefined);
-  return getPrismaClient(connectionString);
 }
 
 const CREATOR_SELECT = { id: true, displayName: true, email: true } as const;
@@ -54,7 +36,7 @@ function parseDateValue(value: unknown): Date | null {
 
 // --- Routes ---
 
-export const events = new Hono<EventsEnv>()
+export const events = new Hono<AppEnv>()
 
   // POST / — Create event or gig (#37)
   .post("/", async (c) => {

@@ -17,7 +17,7 @@ vi.mock("@hono/clerk-auth", () => ({
 vi.mock("../lib/prisma");
 
 import { getAuth } from "@hono/clerk-auth";
-import { getPrismaClient } from "../lib/prisma";
+import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
 import { app } from "../index";
 import { makeAuthRequest } from "./helpers/context";
@@ -60,6 +60,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
 
   beforeEach(() => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: AUTH_USER.clerkId } as never);
 
     // Auth middleware looks up by clerkId; route handler looks up by id
