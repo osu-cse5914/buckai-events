@@ -126,12 +126,17 @@ function EventsPage() {
     <section className="mx-auto max-w-5xl px-6 py-10">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Events</h1>
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <XIcon className="mr-1 size-4" />
-            Clear filters
+        <div className="flex items-center gap-2">
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <XIcon className="mr-1 size-4" />
+              Clear filters
+            </Button>
+          )}
+          <Button size="sm" asChild>
+            <Link to="/events/new">Create Event</Link>
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Filters */}
