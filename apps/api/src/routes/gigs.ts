@@ -106,9 +106,26 @@ export const gigs = new Hono<AppEnv>()
       );
     }
 
-    const updated = await prisma.application.update({
-      where: { id: appId },
+    // Atomic update: include status condition to prevent race conditions
+    const count = await prisma.application.updateMany({
+      where: { id: appId, status: "PENDING" },
       data: { status: body.status },
+    });
+
+    if (count.count === 0) {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/invalid-request",
+          title: "Invalid request",
+          status: 400,
+          detail: "Only PENDING applications can be updated",
+        },
+        400,
+      );
+    }
+
+    const updated = await prisma.application.findUniqueOrThrow({
+      where: { id: appId },
     });
 
     return c.json(updated);
