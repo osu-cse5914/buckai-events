@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,11 +10,34 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import {
+  STATUS_STYLES,
+  STATUS_LABELS,
+  TYPE_STYLES,
+  formatDateLong,
+} from "@/lib/event-utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/events/$eventId/")({
   component: EventDetailPage,
@@ -25,36 +49,6 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   COMPLETED: [],
   CANCELLED: [],
 };
-
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: "Open",
-  IN_PROGRESS: "In Progress",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  OPEN: "bg-green-100 text-green-800",
-  IN_PROGRESS: "bg-blue-100 text-blue-800",
-  COMPLETED: "bg-gray-100 text-gray-800",
-  CANCELLED: "bg-red-100 text-red-800",
-};
-
-const TYPE_STYLES: Record<string, string> = {
-  EVENT: "bg-purple-100 text-purple-800",
-  GIG: "bg-amber-100 text-amber-800",
-};
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 function useEvent(eventId: string) {
   return useQuery({
@@ -122,26 +116,21 @@ function EventDetailPage() {
     },
   });
 
+  const [statusValue, setStatusValue] = useState<string>("");
+
   function handleStatusChange(newStatus: string) {
     if (newStatus) {
       statusMutation.mutate(newStatus);
-    }
-  }
-
-  function handleDelete() {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this event? This action cannot be undone.",
-      )
-    ) {
-      deleteMutation.mutate();
+      setStatusValue("");
     }
   }
 
   if (isLoading) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-10">
-        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="mt-6 h-6 w-32" />
+        <Skeleton className="mt-3 h-8 w-1/2" />
         <Skeleton className="mt-4 h-4 w-full" />
         <Skeleton className="mt-2 h-4 w-3/4" />
       </section>
@@ -221,10 +210,10 @@ function EventDetailPage() {
         <div className="flex items-center gap-2 text-sm">
           <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
           <div>
-            <p>{formatDate(event.startAt)}</p>
+            <p>{formatDateLong(event.startAt)}</p>
             {event.endAt && (
               <p className="text-muted-foreground">
-                to {formatDate(event.endAt)}
+                to {formatDateLong(event.endAt)}
               </p>
             )}
           </div>
@@ -299,29 +288,53 @@ function EventDetailPage() {
                 </Link>
               </Button>
 
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-              >
-                <TrashIcon className="mr-1 size-4" />
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <TrashIcon className="mr-1 size-4" />
+                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete event</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this event? This action
+                      cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={() => deleteMutation.mutate()}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
               {validTransitions.length > 0 && (
                 <Select
-                  aria-label="Change status"
-                  value=""
-                  onChange={(e) => handleStatusChange(e.target.value)}
+                  value={statusValue || undefined}
+                  onValueChange={handleStatusChange}
                   disabled={statusMutation.isPending}
                 >
-                  <option value="">Change status...</option>
-                  {validTransitions.map((status) => (
-                    <option key={status} value={status}>
-                      {STATUS_LABELS[status] ?? status}
-                    </option>
-                  ))}
+                  <SelectTrigger className="w-auto">
+                    <SelectValue placeholder="Change status..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {validTransitions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {STATUS_LABELS[status] ?? status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               )}
             </div>

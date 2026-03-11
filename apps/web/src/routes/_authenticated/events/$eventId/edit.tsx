@@ -6,17 +6,20 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 export const Route = createFileRoute("/_authenticated/events/$eventId/edit")({
   component: EventEditPage,
 });
-
-function toLocalDatetime(iso: string) {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 function useEvent(eventId: string) {
   return useQuery({
@@ -65,7 +68,17 @@ function EventEditPage() {
   if (eventLoading || userLoading) {
     return (
       <section className="mx-auto max-w-2xl px-6 py-10">
-        <p className="text-muted-foreground">Loading...</p>
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="mt-6 h-8 w-48" />
+        <div className="mt-6 space-y-5">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </div>
       </section>
     );
   }
@@ -129,9 +142,11 @@ function EditForm({
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description);
   const [locationName, setLocationName] = useState(event.locationName);
-  const [startAt, setStartAt] = useState(toLocalDatetime(event.startAt));
-  const [endAt, setEndAt] = useState(
-    event.endAt ? toLocalDatetime(event.endAt) : "",
+  const [startAt, setStartAt] = useState<Date | undefined>(
+    new Date(event.startAt),
+  );
+  const [endAt, setEndAt] = useState<Date | undefined>(
+    event.endAt ? new Date(event.endAt) : undefined,
   );
   const [compAmount, setCompAmount] = useState(
     event.compensationAmount != null ? String(event.compensationAmount) : "",
@@ -164,11 +179,11 @@ function EditForm({
       title: title.trim(),
       description: description.trim(),
       location: { name: locationName.trim() },
-      startAt: new Date(startAt).toISOString(),
+      startAt: startAt ? startAt.toISOString() : undefined,
     };
 
     if (endAt) {
-      body.endAt = new Date(endAt).toISOString();
+      body.endAt = endAt.toISOString();
     }
 
     if (event.type === "GIG" && compAmount) {
@@ -209,14 +224,13 @@ function EditForm({
 
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
-          <textarea
+          <Textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
             maxLength={5000}
             rows={4}
-            className="border-input bg-background ring-ring/10 ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
@@ -234,22 +248,21 @@ function EditForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="startAt">Start Date</Label>
-            <Input
+            <DateTimePicker
               id="startAt"
-              type="datetime-local"
               value={startAt}
-              onChange={(e) => setStartAt(e.target.value)}
-              required
+              onChange={setStartAt}
+              placeholder="Pick start date & time"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="endAt">End Date</Label>
-            <Input
+            <DateTimePicker
               id="endAt"
-              type="datetime-local"
               value={endAt}
-              onChange={(e) => setEndAt(e.target.value)}
+              onChange={setEndAt}
+              placeholder="Pick end date & time"
             />
           </div>
         </div>
@@ -271,12 +284,16 @@ function EditForm({
             <div className="space-y-2">
               <Label htmlFor="compType">Compensation Type</Label>
               <Select
-                id="compType"
                 value={compType}
-                onChange={(e) => setCompType(e.target.value)}
+                onValueChange={(v) => setCompType(v)}
               >
-                <option value="FIXED">Fixed</option>
-                <option value="HOURLY">Hourly</option>
+                <SelectTrigger id="compType" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FIXED">Fixed</SelectItem>
+                  <SelectItem value="HOURLY">Hourly</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>

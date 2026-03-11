@@ -10,9 +10,21 @@ import {
   XIcon,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import {
+  STATUS_STYLES,
+  STATUS_LABELS,
+  TYPE_STYLES,
+  formatDate,
+} from "@/lib/event-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -36,8 +48,6 @@ interface Filters {
   status: string;
   source: string;
   category: string;
-  startDate: string;
-  endDate: string;
 }
 
 const DEFAULT_FILTERS: Filters = {
@@ -46,8 +56,6 @@ const DEFAULT_FILTERS: Filters = {
   status: "",
   source: "",
   category: "",
-  startDate: "",
-  endDate: "",
 };
 
 function useEvents(filters: Filters, page: number) {
@@ -63,8 +71,6 @@ function useEvents(filters: Filters, page: number) {
       if (filters.status) query.status = filters.status;
       if (filters.source) query.source = filters.source;
       if (filters.category) query.category = filters.category;
-      if (filters.startDate) query.startDate = filters.startDate;
-      if (filters.endDate) query.endDate = filters.endDate;
 
       const res = await api.api.v1.events.$get({ query });
       if (!res.ok) throw new Error("Failed to fetch events");
@@ -73,35 +79,6 @@ function useEvents(filters: Filters, page: number) {
     placeholderData: keepPreviousData,
   });
 }
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-const STATUS_STYLES: Record<string, string> = {
-  OPEN: "bg-green-100 text-green-800",
-  IN_PROGRESS: "bg-blue-100 text-blue-800",
-  COMPLETED: "bg-gray-100 text-gray-800",
-  CANCELLED: "bg-red-100 text-red-800",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: "Open",
-  IN_PROGRESS: "In Progress",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-};
-
-const TYPE_STYLES: Record<string, string> = {
-  EVENT: "bg-purple-100 text-purple-800",
-  GIG: "bg-amber-100 text-amber-800",
-};
 
 function EventsPage() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -152,53 +129,54 @@ function EventsPage() {
         </div>
 
         <Select
-          value={filters.type}
-          onChange={(e) => updateFilter("type", e.target.value)}
+          value={filters.type || undefined}
+          onValueChange={(v) => updateFilter("type", v === "ALL" ? "" : v)}
         >
-          <option value="">All Types</option>
-          <option value="EVENT">Event</option>
-          <option value="GIG">Gig</option>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Types</SelectItem>
+            <SelectItem value="EVENT">Event</SelectItem>
+            <SelectItem value="GIG">Gig</SelectItem>
+          </SelectContent>
         </Select>
 
         <Select
-          value={filters.status}
-          onChange={(e) => updateFilter("status", e.target.value)}
+          value={filters.status || undefined}
+          onValueChange={(v) => updateFilter("status", v === "ALL" ? "" : v)}
         >
-          <option value="">All Statuses</option>
-          <option value="OPEN">Open</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="CANCELLED">Cancelled</option>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Statuses</SelectItem>
+            <SelectItem value="OPEN">Open</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
         </Select>
 
         <Select
-          value={filters.source}
-          onChange={(e) => updateFilter("source", e.target.value)}
+          value={filters.source || undefined}
+          onValueChange={(v) => updateFilter("source", v === "ALL" ? "" : v)}
         >
-          <option value="">All Sources</option>
-          <option value="USER">User</option>
-          <option value="OSU_API">OSU</option>
-          <option value="TICKETMASTER">Ticketmaster</option>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Sources</SelectItem>
+            <SelectItem value="USER">User</SelectItem>
+            <SelectItem value="OSU_API">OSU</SelectItem>
+            <SelectItem value="TICKETMASTER">Ticketmaster</SelectItem>
+          </SelectContent>
         </Select>
 
         <Input
           placeholder="Category"
           value={filters.category}
           onChange={(e) => updateFilter("category", e.target.value)}
-        />
-
-        <Input
-          type="date"
-          value={filters.startDate}
-          onChange={(e) => updateFilter("startDate", e.target.value)}
-          aria-label="Start date"
-        />
-
-        <Input
-          type="date"
-          value={filters.endDate}
-          onChange={(e) => updateFilter("endDate", e.target.value)}
-          aria-label="End date"
         />
       </div>
 

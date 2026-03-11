@@ -61,7 +61,7 @@ export function DebugPage() {
   };
 
   return (
-    <section className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10">
+    <section className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Debug Tools</h1>
       </div>

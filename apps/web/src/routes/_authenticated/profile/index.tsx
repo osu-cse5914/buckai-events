@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/profile/")({
@@ -40,24 +41,49 @@ export function ProfilePage() {
 
   if (isLoading) {
     return (
-      <section className="mx-auto max-w-2xl px-6 py-10">
-        <p className="text-muted-foreground">Loading profile...</p>
+      <section className="mx-auto max-w-3xl px-6 py-10">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-9 w-16" />
+        </div>
+        <div className="mt-6 space-y-4">
+          <div>
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="mt-1 h-5 w-48" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="mt-1 h-5 w-36" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="mt-1 h-5 w-40" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="mt-1 h-5 w-20" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="mt-1 h-5 w-56" />
+          </div>
+        </div>
       </section>
     );
   }
 
   if (error || !user) {
     return (
-      <section className="mx-auto max-w-2xl px-6 py-10">
-        <p className="text-destructive">
+      <section className="mx-auto max-w-3xl px-6 py-10">
+        <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           {error instanceof Error ? error.message : "Failed to load profile"}
-        </p>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-2xl px-6 py-10">
+    <section className="mx-auto max-w-3xl px-6 py-10">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
         {!isEditing && (

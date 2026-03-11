@@ -6,7 +6,15 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 export const Route = createFileRoute("/_authenticated/events/new")({
   component: EventCreationPage,
@@ -20,8 +28,8 @@ function EventCreationPage() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<"EVENT" | "GIG">("EVENT");
   const [locationName, setLocationName] = useState("");
-  const [startAt, setStartAt] = useState("");
-  const [endAt, setEndAt] = useState("");
+  const [startAt, setStartAt] = useState<Date | undefined>(undefined);
+  const [endAt, setEndAt] = useState<Date | undefined>(undefined);
   const [compAmount, setCompAmount] = useState("");
   const [compType, setCompType] = useState<"FIXED" | "HOURLY">("FIXED");
   const [validationError, setValidationError] = useState("");
@@ -55,11 +63,11 @@ function EventCreationPage() {
       description: description.trim(),
       type,
       location: { name: locationName.trim() },
-      startAt: new Date(startAt).toISOString(),
+      startAt: startAt.toISOString(),
     };
 
     if (endAt) {
-      body.endAt = new Date(endAt).toISOString();
+      body.endAt = endAt.toISOString();
     }
 
     if (type === "GIG" && compAmount) {
@@ -102,7 +110,7 @@ function EventCreationPage() {
 
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
-          <textarea
+          <Textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -110,19 +118,19 @@ function EventCreationPage() {
             required
             maxLength={5000}
             rows={4}
-            className="border-input bg-background ring-ring/10 ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="type">Type</Label>
-          <Select
-            id="type"
-            value={type}
-            onChange={(e) => setType(e.target.value as "EVENT" | "GIG")}
-          >
-            <option value="EVENT">Event</option>
-            <option value="GIG">Gig</option>
+          <Select value={type} onValueChange={(v) => setType(v as "EVENT" | "GIG")}>
+            <SelectTrigger id="type" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="EVENT">Event</SelectItem>
+              <SelectItem value="GIG">Gig</SelectItem>
+            </SelectContent>
           </Select>
         </div>
 
@@ -141,22 +149,21 @@ function EventCreationPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="startAt">Start Date</Label>
-            <Input
+            <DateTimePicker
               id="startAt"
-              type="datetime-local"
               value={startAt}
-              onChange={(e) => setStartAt(e.target.value)}
-              required
+              onChange={setStartAt}
+              placeholder="Pick start date & time"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="endAt">End Date</Label>
-            <Input
+            <DateTimePicker
               id="endAt"
-              type="datetime-local"
               value={endAt}
-              onChange={(e) => setEndAt(e.target.value)}
+              onChange={setEndAt}
+              placeholder="Pick end date & time"
             />
           </div>
         </div>
@@ -179,14 +186,16 @@ function EventCreationPage() {
             <div className="space-y-2">
               <Label htmlFor="compType">Compensation Type</Label>
               <Select
-                id="compType"
                 value={compType}
-                onChange={(e) =>
-                  setCompType(e.target.value as "FIXED" | "HOURLY")
-                }
+                onValueChange={(v) => setCompType(v as "FIXED" | "HOURLY")}
               >
-                <option value="FIXED">Fixed</option>
-                <option value="HOURLY">Hourly</option>
+                <SelectTrigger id="compType" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FIXED">Fixed</SelectItem>
+                  <SelectItem value="HOURLY">Hourly</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>
