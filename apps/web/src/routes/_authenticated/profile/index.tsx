@@ -34,7 +34,7 @@ function useProfile() {
   });
 }
 
-function ProfilePage() {
+export function ProfilePage() {
   const { data: user, isLoading, error } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
 
