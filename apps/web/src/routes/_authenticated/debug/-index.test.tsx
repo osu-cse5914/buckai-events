@@ -16,6 +16,23 @@ vi.mock("@/lib/api", () => ({
   },
 }));
 
+// Mock Clerk
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({
+    userId: "user_test123",
+    sessionId: "sess_test123",
+    orgId: null,
+  }),
+  useUser: () => ({
+    user: {
+      fullName: "Test User",
+      primaryEmailAddress: { emailAddress: "test@osu.edu" },
+      createdAt: new Date("2026-01-01"),
+      lastSignInAt: new Date("2026-03-11"),
+    },
+  }),
+}));
+
 // Mock TanStack Router
 const mockNavigate = vi.fn();
 vi.mock("@tanstack/react-router", () => ({
