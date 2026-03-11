@@ -8,7 +8,10 @@ Authentication is handled by Clerk, restricted to The Ohio State University emai
 
 ### Email Domain Restriction
 
-Only users with `@osu.edu` or `@buckeyemail.osu.edu` email addresses can create accounts. Clerk is configured to enforce this at the identity provider level.
+Only users with `@osu.edu` or `@buckeyemail.osu.edu` email addresses can create accounts. This is enforced at two layers:
+
+1. **Clerk (client-side)**: Clerk is configured with an allowlist of permitted email domains, rejecting non-OSU sign-ups at the identity provider level.
+2. **API middleware (server-side)**: The `requireAuth` middleware validates the email domain from the Clerk JWT as defense-in-depth. Requests with non-OSU emails receive a 403 Forbidden response.
 
 ### JWT Verification
 
@@ -42,6 +45,16 @@ THEN the system creates a User record with that email and their clerkId
 GIVEN a user with email "student@gmail.com"
 WHEN they attempt Clerk sign-up
 THEN Clerk rejects the sign-up
+AND no User record is created
+```
+
+### S-AUTH-3b: Non-OSU email rejected at API layer (defense-in-depth)
+
+```
+GIVEN a valid JWT for a user whose primary email is "student@gmail.com"
+AND no User record exists with that clerkId
+WHEN the user makes an API request
+THEN the API responds with 403 Forbidden
 AND no User record is created
 ```
 
