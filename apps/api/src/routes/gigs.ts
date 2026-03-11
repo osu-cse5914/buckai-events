@@ -2,6 +2,12 @@ import { Hono } from "hono";
 import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
 
+const APPLICANT_SELECT = {
+  id: true,
+  displayName: true,
+  email: true,
+} as const;
+
 export const gigs = new Hono<AppEnv>()
 
   // PATCH /:gigId/applications/:appId — Accept or reject a gig application
@@ -122,11 +128,89 @@ export const gigs = new Hono<AppEnv>()
         },
         400,
       );
-    }
+    };
 
     const updated = await prisma.application.findUniqueOrThrow({
       where: { id: appId },
     });
 
     return c.json(updated);
-  });
+  })
+
+  // GET /:gigId/applications — gig owner sees all applications, applicant sees only their own
+  .get("/:gigId/applications", async (c) => {
+    const { id: userId } = c.get("user");
+    const gigId = c.req.param("gigId");
+
+    const limitParam = c.req.query("limit");
+    const offsetParam = c.req.query("offset");
+
+    const limit = Math.min(Math.max(Number(limitParam) || 20, 1), 100);
+    const offset = Math.max(Number(offsetParam) || 0, 0);
+
+    const prisma = getPrisma(c);
+
+    const gig = await prisma.event.findUnique({
+      where: { id: gigId },
+      select: {
+        id: true,
+        type: true,
+        creatorId: true,
+      },
+    });
+
+    if (!gig) {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/not-found",
+          title: "Resource not found",
+          status: 404,
+          detail: "Gig not found",
+        },
+        404,
+      );
+    }
+
+    if (gig.type !== "GIG") {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/invalid-request",
+          title: "Invalid request",
+          status: 400,
+          detail: "Event is not a gig",
+        },
+        400,
+      );
+    }
+
+    const where =
+      gig.creatorId === userId
+        ? { gigId }
+        : { gigId, applicantId: userId };
+
+    const [data, total] = await Promise.all([
+      prisma.application.findMany({
+        where,
+        include: {
+          applicant: {
+            select: APPLICANT_SELECT,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.application.count({ where }),
+    ]);
+
+    return c.json({
+      data,
+      pagination: {
+        total,
+        limit,
+        offset,
+      },
+    });
+  })
