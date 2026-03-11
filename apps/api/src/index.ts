@@ -10,6 +10,7 @@ import { events } from "./routes/events";
 import { gigs } from "./routes/gigs";
 import { autoCompleteEvents } from "./scheduled/auto-complete";
 import { getPrismaClient } from "./lib/prisma";
+import { collections } from "./routes/collections";
 
 const base = new Hono<AppEnv>();
 
@@ -26,7 +27,8 @@ export const app = base
   .route("/api/v1/auth", auth)
   .route("/api/v1/users", users)
   .route("/api/v1/events", events)
-  .route("/api/v1/gigs", gigs);
+  .route("/api/v1/gigs", gigs)
+  .route("/api/v1/collections", collections);
 
 export type AppType = typeof app;
 
