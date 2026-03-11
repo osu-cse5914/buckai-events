@@ -47,7 +47,7 @@ export const collections = new Hono<AppEnv>()
     await prisma.collection.delete({ where: { id } });
 
     // 204 No Content
-    return c.status(204);
+    return c.body(null, 204);
   });
 
 
