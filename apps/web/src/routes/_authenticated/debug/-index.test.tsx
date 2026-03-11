@@ -5,12 +5,23 @@ import { navLinks } from "@/routes/_authenticated";
 
 // Mock the api module before importing the component
 const mockHealthGet = vi.fn();
+const mockUsersMeGet = vi.fn().mockResolvedValue({
+  ok: true,
+  json: () => Promise.resolve({ id: "db_user_abc123" }),
+});
 
 vi.mock("@/lib/api", () => ({
   api: {
     api: {
       health: {
         $get: (...args: unknown[]) => mockHealthGet(...args),
+      },
+      v1: {
+        users: {
+          me: {
+            $get: (...args: unknown[]) => mockUsersMeGet(...args),
+          },
+        },
       },
     },
   },

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,22 @@ export function DebugPage() {
   const { userId: authUserId, sessionId, orgId } = useAuth();
   const { user } = useUser();
 
+  const [dbUserId, setDbUserId] = useState<string | null>(null);
+
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
 
   const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    api.api.v1.users.me.$get().then(async (res) => {
+      if (res.ok) {
+        const data = await res.json() as { id: string };
+        setDbUserId(data.id);
+      }
+    }).catch(() => {});
+  }, []);
 
   const handleViewApiHealth = async () => {
     setIsCheckingHealth(true);
@@ -63,8 +74,12 @@ export function DebugPage() {
         </p>
         <div className="mt-3 space-y-1 rounded-md border border-border bg-card p-3 text-sm">
           <p>
-            <span className="font-semibold">User ID:</span>{" "}
+            <span className="font-semibold">Clerk ID:</span>{" "}
             <code>{authUserId ?? "—"}</code>
+          </p>
+          <p>
+            <span className="font-semibold">DB User ID:</span>{" "}
+            <code>{dbUserId ?? "—"}</code>
           </p>
           <p>
             <span className="font-semibold">Session ID:</span>{" "}
