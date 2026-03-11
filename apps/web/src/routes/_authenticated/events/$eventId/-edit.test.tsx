@@ -230,8 +230,9 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
     await renderPage();
 
     expect(await screen.findByDisplayValue("25")).toBeInTheDocument();
-    const compTypeSelect = screen.getByLabelText("Compensation Type");
-    expect(compTypeSelect).toHaveValue("HOURLY");
+    // Radix Select shows the selected value in the trigger
+    const compTrigger = screen.getByRole("combobox");
+    expect(compTrigger).toHaveTextContent("Hourly");
   });
 
   it("shows loading state while fetching event", async () => {
@@ -240,6 +241,7 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
 
     await renderPage();
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 });
