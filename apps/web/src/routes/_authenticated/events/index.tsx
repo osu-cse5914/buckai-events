@@ -129,6 +129,7 @@ function EventsPage() {
         </div>
 
         <Select
+          key={`type-${filters.type}`}
           value={filters.type || undefined}
           onValueChange={(v) => updateFilter("type", v === "ALL" ? "" : v)}
         >
@@ -143,6 +144,7 @@ function EventsPage() {
         </Select>
 
         <Select
+          key={`status-${filters.status}`}
           value={filters.status || undefined}
           onValueChange={(v) => updateFilter("status", v === "ALL" ? "" : v)}
         >
@@ -159,6 +161,7 @@ function EventsPage() {
         </Select>
 
         <Select
+          key={`source-${filters.source}`}
           value={filters.source || undefined}
           onValueChange={(v) => updateFilter("source", v === "ALL" ? "" : v)}
         >

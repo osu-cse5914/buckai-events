@@ -63,7 +63,8 @@ describe("ProfilePage", () => {
     mockGet.mockReturnValue(new Promise(() => {}));
 
     render(<ProfilePage />, { wrapper: createWrapper() });
-    expect(screen.getByText("Loading profile...")).toBeInTheDocument();
+    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   // --- Error state ---

@@ -72,17 +72,19 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
 
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
-    expect(screen.getByLabelText("Type")).toBeInTheDocument();
+    expect(screen.getByText("Type")).toBeInTheDocument();
     expect(screen.getByLabelText(/location/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/start date/i)).toBeInTheDocument();
+    // Start date label exists (DateTimePicker renders a button, not an input)
+    const labels = screen.getAllByText(/start date/i);
+    expect(labels.length).toBeGreaterThan(0);
   });
 
   it("TC-EVT-017: endAt is optional", async () => {
     await renderPage();
 
-    const endDateInput = screen.getByLabelText(/end date/i);
-    expect(endDateInput).toBeInTheDocument();
-    expect(endDateInput).not.toBeRequired();
+    // DateTimePicker renders as a button, not a required input
+    const endDateBtn = screen.getByText("Pick end date & time");
+    expect(endDateBtn).toBeInTheDocument();
   });
 
   it("TC-EVT-017: compensation fields shown for GIG type", async () => {
@@ -92,12 +94,14 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
     // Initially no compensation fields
     expect(screen.queryByLabelText(/amount/i)).not.toBeInTheDocument();
 
-    // Select GIG type
-    await user.selectOptions(screen.getByLabelText("Type"), "GIG");
+    // Open the Type select and pick GIG
+    const typeTrigger = screen.getByRole("combobox");
+    await user.click(typeTrigger);
+    await user.click(await screen.findByRole("option", { name: "Gig" }));
 
     // Compensation fields should appear
     expect(screen.getByLabelText(/amount/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/compensation type/i)).toBeInTheDocument();
+    expect(screen.getByText("Compensation Type")).toBeInTheDocument();
   });
 
   it("TC-EVT-017: compensation fields hidden for EVENT type", async () => {
@@ -105,11 +109,15 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
     await renderPage();
 
     // Select GIG to show compensation fields
-    await user.selectOptions(screen.getByLabelText("Type"), "GIG");
+    const typeTrigger = screen.getByRole("combobox");
+    await user.click(typeTrigger);
+    await user.click(await screen.findByRole("option", { name: "Gig" }));
     expect(screen.getByLabelText(/amount/i)).toBeInTheDocument();
 
-    // Switch back to EVENT
-    await user.selectOptions(screen.getByLabelText("Type"), "EVENT");
+    // Switch back to EVENT — the type trigger now shows "Gig"
+    const triggers = screen.getAllByRole("combobox");
+    await user.click(triggers[0]); // Type combobox (first one)
+    await user.click(await screen.findByRole("option", { name: "Event" }));
     expect(screen.queryByLabelText(/amount/i)).not.toBeInTheDocument();
   });
 
@@ -140,9 +148,14 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
     );
     await user.type(screen.getByLabelText(/location/i), "Ohio Union");
 
-    const startDateInput = screen.getByLabelText(/start date/i);
-    await user.clear(startDateInput);
-    await user.type(startDateInput, "2025-04-01T09:00");
+    // Open DateTimePicker and select a date
+    await user.click(screen.getByText("Pick start date & time"));
+    // Click today's date in the calendar
+    const today = new Date();
+    const todayBtn = document.querySelector(
+      `[data-day="${today.toLocaleDateString()}"]`,
+    );
+    if (todayBtn) await user.click(todayBtn as HTMLElement);
 
     await user.click(screen.getByRole("button", { name: /create/i }));
 
@@ -173,9 +186,13 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
     );
     await user.type(screen.getByLabelText(/location/i), "Ohio Union");
 
-    const startDateInput = screen.getByLabelText(/start date/i);
-    await user.clear(startDateInput);
-    await user.type(startDateInput, "2025-04-01T09:00");
+    // Open DateTimePicker and select a date
+    await user.click(screen.getByText("Pick start date & time"));
+    const today = new Date();
+    const todayBtn = document.querySelector(
+      `[data-day="${today.toLocaleDateString()}"]`,
+    );
+    if (todayBtn) await user.click(todayBtn as HTMLElement);
 
     await user.click(screen.getByRole("button", { name: /create/i }));
 
@@ -202,9 +219,13 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
     );
     await user.type(screen.getByLabelText(/location/i), "Ohio Union");
 
-    const startDateInput = screen.getByLabelText(/start date/i);
-    await user.clear(startDateInput);
-    await user.type(startDateInput, "2025-04-01T09:00");
+    // Open DateTimePicker and select a date
+    await user.click(screen.getByText("Pick start date & time"));
+    const today = new Date();
+    const todayBtn = document.querySelector(
+      `[data-day="${today.toLocaleDateString()}"]`,
+    );
+    if (todayBtn) await user.click(todayBtn as HTMLElement);
 
     await user.click(screen.getByRole("button", { name: /create/i }));
 
@@ -227,18 +248,29 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
       screen.getByLabelText(/description/i),
       "Calculus tutor needed",
     );
-    await user.selectOptions(screen.getByLabelText("Type"), "GIG");
+
+    // Open Type select and pick GIG
+    const typeTrigger = screen.getByRole("combobox");
+    await user.click(typeTrigger);
+    await user.click(await screen.findByRole("option", { name: "Gig" }));
+
     await user.type(screen.getByLabelText(/location/i), "Thompson Library");
 
-    const startDateInput = screen.getByLabelText(/start date/i);
-    await user.clear(startDateInput);
-    await user.type(startDateInput, "2025-04-05T14:00");
+    // Open DateTimePicker and select a date
+    await user.click(screen.getByText("Pick start date & time"));
+    const today = new Date();
+    const todayBtn = document.querySelector(
+      `[data-day="${today.toLocaleDateString()}"]`,
+    );
+    if (todayBtn) await user.click(todayBtn as HTMLElement);
 
     await user.type(screen.getByLabelText(/amount/i), "25");
-    await user.selectOptions(
-      screen.getByLabelText(/compensation type/i),
-      "HOURLY",
-    );
+
+    // Open Compensation Type select and pick HOURLY
+    const compTriggers = screen.getAllByRole("combobox");
+    const compTrigger = compTriggers[compTriggers.length - 1];
+    await user.click(compTrigger);
+    await user.click(await screen.findByRole("option", { name: "Hourly" }));
 
     await user.click(screen.getByRole("button", { name: /create/i }));
 

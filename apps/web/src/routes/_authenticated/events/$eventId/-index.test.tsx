@@ -199,7 +199,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     expect(await screen.findByRole("link", { name: /edit/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/change status/i)).toBeInTheDocument();
+    expect(screen.getByText("Change status...")).toBeInTheDocument();
   });
 
   it("TC-EVT-019: non-creators do not see creator actions", async () => {
@@ -211,39 +211,41 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     await screen.findByText("Hackathon");
     expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/change status/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Change status...")).not.toBeInTheDocument();
   });
 
   it("TC-EVT-019: status change shows valid transitions for OPEN event", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent({ status: "OPEN" })));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
+    const user = userEvent.setup();
 
     await renderPage();
     await screen.findByText("Hackathon");
 
-    const statusSelect = screen.getByLabelText(/change status/i);
-    const options = Array.from(statusSelect.querySelectorAll("option"))
-      .map((o) => (o as HTMLOptionElement).value)
-      .filter((v) => v !== "");
-    expect(options).toContain("IN_PROGRESS");
-    expect(options).toContain("CANCELLED");
-    expect(options).not.toContain("COMPLETED");
+    // Click the trigger button (not the inner span with pointer-events:none)
+    const statusTrigger = screen.getByText("Change status...").closest("button")!;
+    await user.click(statusTrigger);
+
+    // Check the available options
+    expect(await screen.findByRole("option", { name: "In Progress" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Cancelled" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Completed" })).not.toBeInTheDocument();
   });
 
   it("TC-EVT-019: status change shows valid transitions for IN_PROGRESS event", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent({ status: "IN_PROGRESS" })));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
+    const user = userEvent.setup();
 
     await renderPage();
     await screen.findByText("Hackathon");
 
-    const statusSelect = screen.getByLabelText(/change status/i);
-    const options = Array.from(statusSelect.querySelectorAll("option"))
-      .map((o) => (o as HTMLOptionElement).value)
-      .filter((v) => v !== "");
-    expect(options).toContain("COMPLETED");
-    expect(options).not.toContain("IN_PROGRESS");
-    expect(options).not.toContain("CANCELLED");
+    const statusTrigger = screen.getByText("Change status...").closest("button")!;
+    await user.click(statusTrigger);
+
+    expect(await screen.findByRole("option", { name: "Completed" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "In Progress" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Cancelled" })).not.toBeInTheDocument();
   });
 
   it("TC-EVT-019: no status change for COMPLETED events", async () => {
@@ -253,36 +255,45 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     await renderPage();
     await screen.findByText("Hackathon");
 
-    expect(screen.queryByLabelText(/change status/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Change status...")).not.toBeInTheDocument();
   });
 
   it("TC-EVT-019: delete requires confirmation dialog", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     const user = userEvent.setup();
 
     await renderPage();
     await screen.findByText("Hackathon");
 
+    // Click delete — opens AlertDialog
     await user.click(screen.getByRole("button", { name: /delete/i }));
 
-    expect(confirmSpy).toHaveBeenCalled();
+    // AlertDialog should be visible
+    expect(await screen.findByText("Delete event")).toBeInTheDocument();
+    expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument();
+
+    // Click Cancel in the dialog
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
     expect(mockEventDelete).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
   it("TC-EVT-019: delete navigates to events list on success", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
     mockEventDelete.mockResolvedValue(okJson({ message: "Event deleted" }));
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
 
     await renderPage();
     await screen.findByText("Hackathon");
 
+    // Click delete — opens AlertDialog
     await user.click(screen.getByRole("button", { name: /delete/i }));
+
+    // Click "Delete" in the confirmation dialog
+    const dialogDeleteBtn = await screen.findByRole("button", { name: "Delete" });
+    await user.click(dialogDeleteBtn);
 
     await vi.waitFor(() => {
       expect(mockEventDelete).toHaveBeenCalled();
