@@ -5,16 +5,12 @@ import { navLinks } from "@/routes/_authenticated";
 
 // Mock the api module before importing the component
 const mockHealthGet = vi.fn();
-const mockDbCheckGet = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   api: {
     api: {
       health: {
         $get: (...args: unknown[]) => mockHealthGet(...args),
-      },
-      "db-check": {
-        $get: (...args: unknown[]) => mockDbCheckGet(...args),
       },
     },
   },
@@ -48,7 +44,6 @@ describe("[phase:1] [regression:always] Debug Page", () => {
 
     expect(screen.getByText("Debug Tools")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View API Health" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Check DB Connection" })).toBeInTheDocument();
   });
 
   // --- TC-DBG-003: Health check displays API status ---
@@ -85,40 +80,6 @@ describe("[phase:1] [regression:always] Debug Page", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Network error")).toBeInTheDocument();
-    });
-  });
-
-  // --- TC-DBG-004: DB connection check displays status ---
-  it("TC-DBG-004: DB connection check displays status on success", async () => {
-    const user = userEvent.setup();
-    mockDbCheckGet.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ database: "connected" }),
-    });
-
-    render(<DebugPage />);
-
-    await user.click(screen.getByRole("button", { name: "Check DB Connection" }));
-
-    await waitFor(() => {
-      expect(screen.getByText("connected")).toBeInTheDocument();
-    });
-  });
-
-  // --- TC-DBG-007: DB check displays error on failure ---
-  it("TC-DBG-007: DB check displays error on failure", async () => {
-    const user = userEvent.setup();
-    mockDbCheckGet.mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ database: "disconnected", error: "Connection refused" }),
-    });
-
-    render(<DebugPage />);
-
-    await user.click(screen.getByRole("button", { name: "Check DB Connection" }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Connection refused")).toBeInTheDocument();
     });
   });
 

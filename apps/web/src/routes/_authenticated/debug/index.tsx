@@ -9,7 +9,6 @@ export const Route = createFileRoute("/_authenticated/debug/")({
 });
 
 type HealthResponse = { service: string; status: string; timestamp: string };
-type DbCheckResponse = { database: string; error?: string };
 
 export function DebugPage() {
   const navigate = useNavigate();
@@ -17,10 +16,6 @@ export function DebugPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
-
-  const [dbStatus, setDbStatus] = useState<DbCheckResponse | null>(null);
-  const [dbError, setDbError] = useState<string | null>(null);
-  const [isCheckingDb, setIsCheckingDb] = useState(false);
 
   const [userId, setUserId] = useState("");
 
@@ -42,27 +37,6 @@ export function DebugPage() {
       );
     } finally {
       setIsCheckingHealth(false);
-    }
-  };
-
-  const handleCheckDb = async () => {
-    setIsCheckingDb(true);
-    setDbError(null);
-
-    try {
-      const res = await api.api["db-check"].$get();
-      const data = (await res.json()) as DbCheckResponse;
-      setDbStatus(data);
-      if (!res.ok) {
-        setDbError(data.error ?? "Database check failed");
-      }
-    } catch (error) {
-      setDbStatus(null);
-      setDbError(
-        error instanceof Error ? error.message : "Database check failed",
-      );
-    } finally {
-      setIsCheckingDb(false);
     }
   };
 
@@ -113,37 +87,6 @@ export function DebugPage() {
             <p>
               <span className="font-semibold">Timestamp:</span>{" "}
               {health.timestamp}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* DB Connection Check */}
-      <div className="rounded-lg border border-dashed border-border p-5">
-        <h2 className="text-lg font-semibold">Database Connection</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Test the database connection
-        </p>
-        <Button
-          variant="outline"
-          className="mt-3"
-          onClick={handleCheckDb}
-          disabled={isCheckingDb}
-        >
-          {isCheckingDb ? "Checking..." : "Check DB Connection"}
-        </Button>
-
-        {dbError && (
-          <div className="mt-3 rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-            {dbError}
-          </div>
-        )}
-
-        {dbStatus && !dbError && (
-          <div className="mt-3 rounded-md border border-border bg-card p-3 text-sm">
-            <p>
-              <span className="font-semibold">Database:</span>{" "}
-              <span className="text-green-600">{dbStatus.database}</span>
             </p>
           </div>
         )}
