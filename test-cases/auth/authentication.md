@@ -28,15 +28,19 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 ## TC-AUTH-003: Non-OSU email rejected
 
-- **Spec scenario**: S-AUTH-3
-- **Type**: Manual
+- **Spec scenario**: S-AUTH-3, S-AUTH-3b
+- **Type**: Automated + Manual
+- **Automated in**: `apps/api/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
-- **Steps**:
+- **Given**: A valid JWT for a user whose primary email is a non-OSU domain (e.g. `user@gmail.com`)
+- **When**: The user makes an API request (server-side) or attempts Clerk sign-up (client-side)
+- **Then**: The API responds with 403 Forbidden; no User record is created
+- **Manual steps** (client-side):
   1. Open the app sign-up page
   2. Enter an email with a non-OSU domain (e.g. `user@gmail.com`)
   3. Attempt to complete sign-up
-- **Expected**: Clerk rejects the sign-up; no User record is created in the database
+- **Expected (manual)**: Clerk rejects the sign-up; no User record is created in the database
 
 ## TC-AUTH-004: Valid JWT on API request
 

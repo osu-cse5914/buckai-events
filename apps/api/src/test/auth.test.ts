@@ -166,6 +166,60 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       expect(await res.json()).toEqual({ user: existingUser });
     });
 
+    it("TC-AUTH-001: provisions user with valid @osu.edu email", async () => {
+      const createdUser = {
+        id: "cuid_osu",
+        clerkId: "clerk_osu",
+        email: "student@osu.edu",
+      };
+
+      vi.mocked(getAuth).mockReturnValue({ userId: "clerk_osu" } as never);
+      vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(null);
+      mockClerkGetUser.mockResolvedValue({
+        primaryEmailAddressId: "email_1",
+        emailAddresses: [{ id: "email_1", emailAddress: "student@osu.edu" }],
+      });
+      vi.mocked(mockPrisma.user.create).mockResolvedValue(createdUser as never);
+
+      const res = await createTestApp().request("/test");
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: { clerkId: "clerk_osu", email: "student@osu.edu" },
+      });
+    });
+
+    it("TC-AUTH-003: rejects non-OSU email with 403", async () => {
+      vi.mocked(getAuth).mockReturnValue({ userId: "clerk_gmail" } as never);
+      vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(null);
+      mockClerkGetUser.mockResolvedValue({
+        primaryEmailAddressId: "email_1",
+        emailAddresses: [{ id: "email_1", emailAddress: "student@gmail.com" }],
+      });
+
+      const res = await createTestApp().request("/test");
+
+      expect(res.status).toBe(403);
+      expect(await res.json()).toEqual({
+        error: "Email domain not allowed. Only @osu.edu and @buckeyemail.osu.edu addresses are permitted.",
+      });
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it("TC-AUTH-003: rejects non-OSU email even if domain contains osu.edu as substring", async () => {
+      vi.mocked(getAuth).mockReturnValue({ userId: "clerk_fake" } as never);
+      vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(null);
+      mockClerkGetUser.mockResolvedValue({
+        primaryEmailAddressId: "email_1",
+        emailAddresses: [{ id: "email_1", emailAddress: "user@notosu.edu" }],
+      });
+
+      const res = await createTestApp().request("/test");
+
+      expect(res.status).toBe(403);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
     it("TC-AUTH-006: returns 400 when Clerk user has no email", async () => {
       vi.mocked(getAuth).mockReturnValue({ userId: "clerk_no_email" } as never);
       vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(null);

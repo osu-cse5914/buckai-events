@@ -3,6 +3,13 @@ import { getAuth } from "@hono/clerk-auth";
 import { Prisma } from "@prisma/client";
 import { getPrismaClient } from "../lib/prisma";
 
+const ALLOWED_EMAIL_DOMAINS = ["osu.edu", "buckeyemail.osu.edu"];
+
+function isAllowedEmailDomain(email: string): boolean {
+  const domain = email.split("@")[1]?.toLowerCase();
+  return ALLOWED_EMAIL_DOMAINS.some((allowed) => domain === allowed);
+}
+
 type AuthUser = {
   id: string;
   clerkId: string;
@@ -42,6 +49,13 @@ export const requireAuth = createMiddleware<AuthEnv>(async (c, next) => {
 
     if (!email) {
       return c.json({ error: "No email associated with account" }, 400);
+    }
+
+    if (!isAllowedEmailDomain(email)) {
+      return c.json(
+        { error: "Email domain not allowed. Only @osu.edu and @buckeyemail.osu.edu addresses are permitted." },
+        403
+      );
     }
 
     try {
