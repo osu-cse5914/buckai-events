@@ -437,7 +437,7 @@ paths:
       operationId: listCollections
       responses:
         '200':
-          description: User's collections ordered by updatedAt descending
+          description: User's collections ordered by updatedAt descending with item counts
           content:
             application/json:
               schema:
@@ -588,7 +588,7 @@ paths:
   /collections/{collectionId}/items/{eventId}:
     delete:
       tags: [Collections]
-      summary: Remove event from collection
+      summary: Remove event from collection (owner only)
       operationId: removeCollectionItem
       parameters:
         - $ref: '#/components/parameters/CollectionId'
@@ -1076,6 +1076,16 @@ components:
           type: string
           format: date-time
 
+    CollectionSummary:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [itemCount]
+          properties:
+            itemCount:
+              type: integer
+              minimum: 0
+
     CollectionWithItems:
       allOf:
         - $ref: '#/components/schemas/Collection'
@@ -1364,7 +1374,7 @@ components:
     SuccessResponse_CollectionArray:
       type: array
       items:
-        $ref: '#/components/schemas/Collection'
+        $ref: '#/components/schemas/CollectionSummary'
 
     SuccessResponse_CollectionItem:
       allOf:

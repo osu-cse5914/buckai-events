@@ -21,7 +21,7 @@ Users save events to named collections (bookmarks). Each collection has a config
 
 ### Listing
 
-- `GET /collections` returns the authenticated user's collections.
+- `GET /collections` returns the authenticated user's collections ordered by `updatedAt` descending, including each collection's item count.
 - `GET /collections/:id` returns a single collection with its items (events).
 - `GET /collections/:id/items` returns the events in a collection, paginated.
 
@@ -64,7 +64,8 @@ THEN the API responds with 409 Conflict
 ### S-COL-5: Remove event from collection
 
 ```
-GIVEN collection C contains event E
+GIVEN user A owns collection C
+AND collection C contains event E
 WHEN user A sends DELETE /collections/C/items/E
 THEN the CollectionItem is removed
 AND event E is not deleted from the system
@@ -76,6 +77,7 @@ AND event E is not deleted from the system
 GIVEN user A has 3 collections
 WHEN user A sends GET /collections
 THEN the response contains user A's 3 collections ordered by updatedAt descending
+AND each collection includes its item count
 ```
 
 ### S-COL-7: View public collection as another user

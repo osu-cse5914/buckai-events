@@ -77,14 +77,14 @@ All paginated endpoints use `limit` (default 20, max 100) and `offset` (default 
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/collections` | List authenticated user's collections |
+| GET | `/api/v1/collections` | List authenticated user's collections ordered by `updatedAt` descending, including `itemCount` |
 | POST | `/api/v1/collections` | Create a collection |
 | GET | `/api/v1/collections/:id` | Get collection with items (respects visibility) |
-| PATCH | `/api/v1/collections/:id` | Update collection (owner only) |
+| PATCH | `/api/v1/collections/:id` | Rename collection or change visibility (owner only). Body: `{ name?, visibility? }` |
 | DELETE | `/api/v1/collections/:id` | Delete collection and items (owner only) |
 | GET | `/api/v1/collections/:id/items` | List events in collection. Params: `limit`, `offset` |
 | POST | `/api/v1/collections/:id/items` | Add event to collection. Body: `{ eventId }` |
-| DELETE | `/api/v1/collections/:id/items/:eventId` | Remove event from collection |
+| DELETE | `/api/v1/collections/:id/items/:eventId` | Remove event from collection (owner only) |
 
 ## Interactions
 

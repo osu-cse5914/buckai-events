@@ -25,7 +25,17 @@ function deleteCollection(app: Hono, id: string) {
   return app.request(`/collections/${id}`, { method: "DELETE" });
 }
 
-// --- Tests ---
+function patchCollection(app: Hono, id: string, body: Record<string, unknown>) {
+  return app.request(`/collections/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function deleteCollectionItem(app: Hono, id: string, eventId: string) {
+  return app.request(`/collections/${id}/items/${eventId}`, { method: "DELETE" });
+}
 
 describe("[phase:2] [regression:always] Collection management API", () => {
   const mockPrisma = createMockPrisma();
@@ -36,15 +46,52 @@ describe("[phase:2] [regression:always] Collection management API", () => {
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
   });
 
-  // GET /:id behavior
+  it("TC-COL-006: lists the authenticated user's collections ordered by updatedAt desc with item counts", async () => {
+    const collectionsForUser = [
+      {
+        id: "col2",
+        userId: USER_A.id,
+        name: "Newest",
+        visibility: "PUBLIC",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        updatedAt: new Date("2026-01-03T00:00:00Z"),
+        _count: { items: 3 },
+      },
+      {
+        id: "col1",
+        userId: USER_A.id,
+        name: "Older",
+        visibility: "PRIVATE",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        updatedAt: new Date("2026-01-02T00:00:00Z"),
+        _count: { items: 1 },
+      },
+    ];
+    vi.mocked(mockPrisma.collection.findMany).mockResolvedValue(collectionsForUser as never);
+
+    const res = await createTestApp(USER_A).request("/collections");
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.collection.findMany).toHaveBeenCalledWith({
+      where: { userId: USER_A.id },
+      orderBy: { updatedAt: "desc" },
+      include: { _count: { select: { items: true } } },
+    });
+
+    const body = (await res.json()) as Array<Record<string, unknown>>;
+    expect(body).toHaveLength(2);
+    expect(body[0].id).toBe("col2");
+    expect(body[0].itemCount).toBe(3);
+    expect(body[1].id).toBe("col1");
+    expect(body[1].itemCount).toBe(1);
+  });
+
   it("TC-COL-007: public collection is visible to other users and includes items", async () => {
     const col = {
       id: "col1",
       userId: USER_A.id,
       visibility: "PUBLIC",
-      items: [
-        { id: "ci1", event: { id: "evt1", title: "Hackathon" } },
-      ],
+      items: [{ id: "ci1", event: { id: "evt1", title: "Hackathon" } }],
     };
     vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(col as never);
 
@@ -88,7 +135,91 @@ describe("[phase:2] [regression:always] Collection management API", () => {
     expect(body.visibility).toBe("PRIVATE");
   });
 
-  // S-COL-10 → TC-COL-010
+  it("TC-COL-009: owner can update collection name and visibility", async () => {
+    const existing = {
+      id: "col1",
+      userId: USER_A.id,
+      name: "Private Picks",
+      visibility: "PRIVATE",
+    };
+    const updated = {
+      ...existing,
+      name: "Public Picks",
+      visibility: "PUBLIC",
+    };
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(existing as never);
+    vi.mocked(mockPrisma.collection.update).mockResolvedValue(updated as never);
+
+    const res = await patchCollection(createTestApp(USER_A), "col1", {
+      name: "Public Picks",
+      visibility: "PUBLIC",
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.collection.update).toHaveBeenCalledWith({
+      where: { id: "col1" },
+      data: { name: "Public Picks", visibility: "PUBLIC" },
+    });
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.name).toBe("Public Picks");
+    expect(body.visibility).toBe("PUBLIC");
+  });
+
+  it("returns 403 when a non-owner attempts to update a collection", async () => {
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
+      { id: "col1", userId: USER_B.id, name: "Private Picks", visibility: "PRIVATE" } as never,
+    );
+
+    const res = await patchCollection(createTestApp(USER_A), "col1", {
+      visibility: "PUBLIC",
+    });
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "Only the owner can update this collection" });
+    expect(mockPrisma.collection.update).not.toHaveBeenCalled();
+  });
+
+  it("TC-COL-005: owner can remove an event from a collection without deleting the event", async () => {
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
+      { id: "col1", userId: USER_A.id } as never,
+    );
+    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(
+      { id: "ci1", collectionId: "col1", eventId: "evt1" } as never,
+    );
+    vi.mocked(mockPrisma.collectionItem.delete).mockResolvedValue(
+      { id: "ci1", collectionId: "col1", eventId: "evt1" } as never,
+    );
+
+    const res = await deleteCollectionItem(createTestApp(USER_A), "col1", "evt1");
+
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe("");
+    expect(mockPrisma.collectionItem.delete).toHaveBeenCalledWith({
+      where: {
+        collectionId_eventId: {
+          collectionId: "col1",
+          eventId: "evt1",
+        },
+      },
+    });
+    expect(mockPrisma.event.delete).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when a non-owner attempts to remove a collection item", async () => {
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
+      { id: "col1", userId: USER_B.id } as never,
+    );
+
+    const res = await deleteCollectionItem(createTestApp(USER_A), "col1", "evt1");
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({
+      error: "Only the owner can remove items from this collection",
+    });
+    expect(mockPrisma.collectionItem.delete).not.toHaveBeenCalled();
+  });
+
   it("TC-COL-010: delete collection owned by user, returns 204 and cascades", async () => {
     const col = { id: "col1", userId: USER_A.id };
     vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(col as never);
@@ -97,10 +228,8 @@ describe("[phase:2] [regression:always] Collection management API", () => {
     const res = await deleteCollection(createTestApp(), "col1");
 
     expect(res.status).toBe(204);
-    // body should be empty for 204
     expect(await res.text()).toBe("");
     expect(mockPrisma.collection.delete).toHaveBeenCalledWith({ where: { id: "col1" } });
-    // we rely on DB cascade, so we shouldn't call collectionItem.delete ourselves
     expect(mockPrisma.collectionItem.delete).not.toHaveBeenCalled();
   });
 
