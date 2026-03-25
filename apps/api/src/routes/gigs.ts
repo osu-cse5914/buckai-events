@@ -143,7 +143,6 @@ export const gigs = new Hono<AppEnv>()
       }),
     ]);
 
-    return c.json(created, 201);
     // Parse optional message from body
     let message: string | null = null;
     try {
