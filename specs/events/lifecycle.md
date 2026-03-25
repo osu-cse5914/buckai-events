@@ -74,6 +74,8 @@ THEN the response contains only events matching all filters
 AND results are paginated with limit and offset params
 ```
 
+The optional `user` query parameter filters results to events created by a specific user ID.
+
 ### S-EVT-5: Update own event
 
 ```
