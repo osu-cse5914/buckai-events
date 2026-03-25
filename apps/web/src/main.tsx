@@ -4,15 +4,12 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import { getClerkPublishableKey } from "./lib/env";
 import "./index.css";
 
 const queryClient = new QueryClient();
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!CLERK_PUBLISHABLE_KEY) {
-  throw new Error("VITE_CLERK_PUBLISHABLE_KEY is not set. Add it to apps/web/.env");
-}
+const CLERK_PUBLISHABLE_KEY = getClerkPublishableKey(import.meta.env);
 
 const router = createRouter({
   routeTree,
