@@ -125,24 +125,6 @@ export const gigs = new Hono<AppEnv>()
         409,
       );
     }
-    const [created] = await prisma.$transaction([
-      prisma.application.create({
-        data: {
-          gigId,
-          applicantId: userId,
-          message: body.message ?? null,
-          status: "PENDING",
-        },
-      }),
-      prisma.interaction.create({
-        data: {
-          userId,
-          eventId: gigId,
-          action: "APPLY",
-        },
-      }),
-    ]);
-
     // Parse optional message from body
     let message: string | null = null;
     try {
