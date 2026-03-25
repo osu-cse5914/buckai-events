@@ -57,7 +57,7 @@ All paginated endpoints use `limit` (default 20, max 100) and `offset` (default 
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/events` | List events. Filters: `type`, `category`, `startDate`, `endDate`, `source`, `status`, `search`, `limit`, `offset` |
+| GET | `/api/v1/events` | List events. Filters: `type`, `category`, `startDate`, `endDate`, `source`, `status`, `user`, `search`, `limit`, `offset` |
 | POST | `/api/v1/events` | Create an event or gig |
 | GET | `/api/v1/events/:id` | Get single event with full detail |
 | PATCH | `/api/v1/events/:id` | Update event (owner only; forbidden for external events) |

@@ -20,13 +20,13 @@ servers:
 
 tags:
   - name: Users
-    description: User profile management and public profiles
+    description: User profile management and user-scoped relationship endpoints
   - name: Social
-    description: Follow relationships and social event feed
+    description: Social feed endpoints
   - name: Events
-    description: Event and gig CRUD, listing, and filtering
-  - name: Applications
-    description: Gig application lifecycle
+    description: Event CRUD, listing, and filtering
+  - name: Gigs
+    description: Gig application endpoints
   - name: Collections
     description: Save/bookmark events into named collections
   - name: Interactions
@@ -101,7 +101,7 @@ paths:
 
   /users/{userId}/follow:
     post:
-      tags: [Social]
+      tags: [Users]
       summary: Follow a user
       operationId: followUser
       parameters:
@@ -123,7 +123,7 @@ paths:
           $ref: '#/components/responses/Conflict'
 
     delete:
-      tags: [Social]
+      tags: [Users]
       summary: Unfollow a user
       operationId: unfollowUser
       parameters:
@@ -138,7 +138,7 @@ paths:
 
   /users/{userId}/followers:
     get:
-      tags: [Social]
+      tags: [Users]
       summary: List a user's followers
       operationId: listFollowers
       parameters:
@@ -159,7 +159,7 @@ paths:
 
   /users/{userId}/following:
     get:
-      tags: [Social]
+      tags: [Users]
       summary: List users that a user follows
       operationId: listFollowing
       parameters:
@@ -234,6 +234,7 @@ paths:
           name: status
           schema:
             $ref: '#/components/schemas/EventStatus'
+        - $ref: '#/components/parameters/EventUser'
         - in: query
           name: search
           description: Full-text search on title and description
@@ -342,7 +343,7 @@ paths:
   #needs further functionality to get a specific gig application, and also more functionality for submitting an application to a gig such as adding relevant fields
   /gigs/{gigId}/applications:
     post:
-      tags: [Applications]
+      tags: [Gigs]
       summary: Apply to a gig
       description: |
         gigId is an Event ID. The system validates that the event has type = GIG.
@@ -375,7 +376,7 @@ paths:
           $ref: '#/components/responses/Conflict'
 
     get:
-      tags: [Applications]
+      tags: [Gigs]
       summary: List applications for a gig
       description: Gig owner sees all applications. Applicant sees only their own.
       operationId: listApplications
@@ -399,7 +400,7 @@ paths:
 
   /gigs/{gigId}/applications/{appId}:
     patch:
-      tags: [Applications]
+      tags: [Gigs]
       summary: Update application status (gig owner only)
       operationId: updateApplication
       parameters:
@@ -781,6 +782,13 @@ components:
       name: collectionId
       in: path
       required: true
+      schema:
+        type: string
+
+    EventUser:
+      name: user
+      in: query
+      description: Filter events to those created by the specified user ID.
       schema:
         type: string
 

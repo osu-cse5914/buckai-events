@@ -114,6 +114,7 @@ export const events = new Hono<AppEnv>()
     const endDate = c.req.query("endDate");
     const source = c.req.query("source");
     const status = c.req.query("status");
+    const userId = c.req.query("user");
     const search = c.req.query("search");
     const limitParam = c.req.query("limit");
     const offsetParam = c.req.query("offset");
@@ -139,6 +140,7 @@ export const events = new Hono<AppEnv>()
       }
       where.status = status;
     }
+    if (userId) where.creatorId = userId;
 
     if (startDate || endDate) {
       const startAtFilter: Record<string, unknown> = {};

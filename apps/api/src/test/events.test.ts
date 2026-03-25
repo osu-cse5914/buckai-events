@@ -339,6 +339,20 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       );
     });
 
+    it("filters events by creator user", async () => {
+      vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+      vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
+
+      const res = await createTestApp().request("/events?user=user_b");
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ creatorId: "user_b" }),
+        }),
+      );
+    });
+
     it("uses default pagination (limit=20, offset=0) when not specified", async () => {
       vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
