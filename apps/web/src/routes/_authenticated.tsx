@@ -17,9 +17,11 @@ import {
 } from "@/components/ui/sheet";
 import { api, setTokenGetter } from "@/lib/api";
 
-const navLinks = [
+export const navLinks = [
   { to: "/events", label: "Events" },
+  { to: "/applications", label: "My Applications" },
   { to: "/profile", label: "Profile" },
+  { to: "/debug", label: "Debug" },
 ] as const;
 
 export const Route = createFileRoute("/_authenticated")({

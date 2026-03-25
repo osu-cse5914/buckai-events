@@ -116,7 +116,7 @@ async function renderEventsPage() {
   );
 }
 
-describe("EventsPage", () => {
+describe("[phase:1] [regression:always] EventsPage", () => {
   it("shows loading skeletons while fetching", async () => {
     mockGet.mockReturnValue(new Promise(() => {}));
 
@@ -177,6 +177,19 @@ describe("EventsPage", () => {
     expect(screen.getByText(/Apr/)).toBeInTheDocument();
   });
 
+  it("TC-EVT-018: event card title uses relaxed line height to prevent clamp clipping", async () => {
+    const title =
+      "Long title with descenders going past baseline and wrapping into another line";
+    mockGet.mockResolvedValue(makeResponse([makeEvent({ id: "1", title })]));
+
+    await renderEventsPage();
+
+    const titleNode = await screen.findByText(title);
+    expect(titleNode).toHaveClass("line-clamp-2");
+    expect(titleNode).toHaveClass("leading-tight");
+    expect(titleNode).toHaveClass("pb-0.5");
+  });
+
   it("renders gig compensation", async () => {
     mockGet.mockResolvedValue(
       makeResponse([
@@ -230,8 +243,13 @@ describe("EventsPage", () => {
     await renderEventsPage();
     await screen.findByText("No events found");
 
-    const typeSelect = screen.getByDisplayValue("All Types");
-    await user.selectOptions(typeSelect, "EVENT");
+    // Find the first select trigger (type filter) and click to open
+    const triggers = screen.getAllByRole("combobox");
+    await user.click(triggers[0]);
+
+    // Select "Event" from the dropdown
+    const eventOption = await screen.findByRole("option", { name: "Event" });
+    await user.click(eventOption);
 
     await vi.waitFor(() => {
       const calls = mockGet.mock.calls;
@@ -319,13 +337,18 @@ describe("EventsPage", () => {
     await renderEventsPage();
     await screen.findByText("No events found");
 
-    const typeSelect = screen.getByDisplayValue("All Types");
-    await user.selectOptions(typeSelect, "GIG");
+    // Open type select and pick "Gig"
+    const triggers = screen.getAllByRole("combobox");
+    await user.click(triggers[0]);
+    const gigOption = await screen.findByRole("option", { name: "Gig" });
+    await user.click(gigOption);
 
     const clearBtns = await screen.findAllByRole("button", { name: /Clear filters/ });
     await user.click(clearBtns[0]);
 
-    expect(typeSelect).toHaveValue("");
+    // After clearing, the type trigger should show the placeholder
+    const resetTriggers = screen.getAllByRole("combobox");
+    expect(resetTriggers[0]).toHaveTextContent("All Types");
   });
 
   it("renders category on event card when present", async () => {

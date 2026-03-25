@@ -71,6 +71,7 @@ export const gigs = new Hono<AppEnv>()
       );
     }
 
+
     //403 Forbidden if user tries to apply to their own gig
     if (gig.creatorId === userId) {
       return c.json(
@@ -96,17 +97,23 @@ export const gigs = new Hono<AppEnv>()
         400,
       );
     }
-
-    const existing = await prisma.application.findUnique({
-      where: {
-        gigId_applicantId: {
-          gigId,
-          applicantId: userId,
-        },
-      },
-    });
-
     //409 Conflict if user already applied to this gig
+    if (gig.creatorId === userId) {
+      return c.json(
+        {
+          type: "https://social-osu.app/problems/forbidden",
+          title: "Forbidden",
+          status: 403,
+          detail: "Cannot apply to your own gig",
+        },
+        403,
+      );
+    }
+
+    // Check for duplicate application
+    const existing = await prisma.application.findUnique({
+      where: { gigId_applicantId: { gigId, applicantId: userId } },
+    });
     if (existing) {
       return c.json(
         {
@@ -118,7 +125,6 @@ export const gigs = new Hono<AppEnv>()
         409,
       );
     }
-
     const [created] = await prisma.$transaction([
       prisma.application.create({
         data: {
@@ -138,6 +144,41 @@ export const gigs = new Hono<AppEnv>()
     ]);
 
     return c.json(created, 201);
+    // Parse optional message from body
+    let message: string | null = null;
+    try {
+      const body = await c.req.json();
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        typeof body.message === "string"
+      ) {
+        message = body.message;
+      }
+    } catch {
+      // No body or invalid JSON — message stays null
+    }
+
+    const application = await prisma.application.create({
+      data: {
+        gigId,
+        applicantId: userId,
+        message,
+        status: "PENDING",
+      },
+    });
+
+    void prisma.interaction.create({
+      data: {
+        userId,
+        eventId: gigId,
+        action: "APPLY",
+      },
+    }).catch((error) => {
+      console.error("Failed to record APPLY interaction", error);
+    });
+
+    return c.json(application, 201);
   })
 
   // PATCH /:gigId/applications/:appId — Accept or reject a gig application
@@ -275,10 +316,17 @@ export const gigs = new Hono<AppEnv>()
 
     const limitParam = c.req.query("limit");
     const offsetParam = c.req.query("offset");
+    const parsedLimit = Number(limitParam);
+    const limit = Math.min(
+      Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1),
+      100,
+    );
 
-    const limit = Math.min(Math.max(Number(limitParam) || 20, 1), 100);
-    const offset = Math.max(Number(offsetParam) || 0, 0);
-
+    const parsedOffset = Number(offsetParam);
+    const offset = Math.max(
+      Number.isFinite(parsedOffset) ? parsedOffset : 0,
+      0,
+    );
     const prisma = getPrisma(c);
 
     const gig = await prisma.event.findUnique({
@@ -301,8 +349,8 @@ export const gigs = new Hono<AppEnv>()
         404,
       );
     }
-
     //400 Bad Request if event has type = EVENT instead of GIG
+
     if (gig.type !== "GIG") {
       return c.json(
         {

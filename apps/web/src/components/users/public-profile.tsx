@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { UsersIcon, CalendarIcon } from "lucide-react";
+import { STATUS_STYLES, STATUS_LABELS } from "@/lib/event-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,34 +103,39 @@ export function ProfileView({ user }: { user: PublicProfileData }) {
           ) : (
             <div className="mt-3 grid gap-3">
               {user.createdEvents.items.map((event) => (
-                <Card key={event.id}>
-                  <CardHeader>
-                    <CardTitle className="text-base">{event.title}</CardTitle>
-                    <CardDescription className="flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <CalendarIcon className="size-3.5" />
-                        {new Date(event.createdAt).toLocaleDateString()}
-                      </span>
-                      <Badge
-                        variant={
-                          event.status === "OPEN" ? "default" : "secondary"
-                        }
-                      >
-                        {event.status === "IN_PROGRESS"
-                          ? "In Progress"
-                          : event.status.charAt(0) +
-                            event.status.slice(1).toLowerCase()}
-                      </Badge>
-                    </CardDescription>
-                  </CardHeader>
-                  {event.description && (
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {event.description}
-                      </p>
-                    </CardContent>
-                  )}
-                </Card>
+                <Link
+                  key={event.id}
+                  to="/events/$eventId"
+                  params={{ eventId: event.id }}
+                  className="group"
+                >
+                  <Card className="transition-shadow group-hover:shadow-md">
+                    <CardHeader>
+                      <CardTitle className="text-base group-hover:underline">
+                        {event.title}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-4">
+                        <span className="flex items-center gap-1">
+                          <CalendarIcon className="size-3.5" />
+                          {new Date(event.createdAt).toLocaleDateString()}
+                        </span>
+                        <Badge
+                          variant="secondary"
+                          className={STATUS_STYLES[event.status] ?? ""}
+                        >
+                          {STATUS_LABELS[event.status] ?? event.status}
+                        </Badge>
+                      </CardDescription>
+                    </CardHeader>
+                    {event.description && (
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {event.description}
+                        </p>
+                      </CardContent>
+                    )}
+                  </Card>
+                </Link>
               ))}
             </div>
           )}
@@ -141,7 +147,7 @@ export function ProfileView({ user }: { user: PublicProfileData }) {
 
 export function ProfileNotFound() {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-20 text-center">
+    <section className="mx-auto max-w-3xl px-6 py-10 text-center">
       <h1 className="text-2xl font-bold tracking-tight">User not found</h1>
       <p className="mt-2 text-muted-foreground">
         The user you're looking for doesn't exist.
@@ -155,13 +161,16 @@ export function ProfileNotFound() {
 
 export function ProfileError() {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-20 text-center">
+    <section className="mx-auto max-w-3xl px-6 py-10 text-center">
       <h1 className="text-2xl font-bold tracking-tight">
         Something went wrong
       </h1>
       <p className="mt-2 text-muted-foreground">
         Could not load this profile. Please try again later.
       </p>
+      <Button asChild className="mt-6" variant="outline">
+        <Link to="/">Go home</Link>
+      </Button>
     </section>
   );
 }
