@@ -78,6 +78,7 @@ Optional local overrides:
 - `apps/api/.env`
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
+  - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
 - `apps/web/.env`
   - `VITE_API_URL` defaults to `http://localhost:3001`
   - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key
@@ -103,7 +104,7 @@ bun run dev
 
 Notes:
 
-- The web app uses a checked-in development Clerk publishable key by default so a clean clone can boot without extra web-only secrets.
+- The web app and local API both use a checked-in development Clerk publishable key by default so a clean clone can boot without extra public-key setup.
 - Authenticated API requests still require `CLERK_SECRET_KEY` in `apps/api/.env`.
 
 ## Common Commands

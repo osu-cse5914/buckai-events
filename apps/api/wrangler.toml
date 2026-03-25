@@ -15,3 +15,6 @@ not_found_handling = "single-page-application"
 
 [triggers]
 crons = ["*/15 * * * *"]
+
+[vars]
+CLERK_PUBLISHABLE_KEY = "pk_test_ZHJpdmVuLWVhZ2xlLTI2LmNsZXJrLmFjY291bnRzLmRldiQ"
