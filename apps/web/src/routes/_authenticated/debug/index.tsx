@@ -32,7 +32,7 @@ export function DebugPage() {
         setDbUserId(data.id);
       }
     }).catch(() => {});
-  }, []);
+  }, [api]);
 
   const handleViewApiHealth = async () => {
     setIsCheckingHealth(true);

@@ -12,12 +12,6 @@ function isAllowedEmailDomain(email: string): boolean {
   return ALLOWED_EMAIL_DOMAINS.some((allowed) => domain === allowed);
 }
 
-type AuthUser = {
-  id: string;
-  clerkId: string;
-  email: string;
-};
-
 /**
  * Requires a valid Clerk JWT and auto-provisions a User row on first auth.
  * Must be applied AFTER clerkMiddleware().
