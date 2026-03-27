@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,13 @@ function combineDateAndTime(date: Date, time: string): Date {
   const result = new Date(date);
   result.setHours(hours, minutes, 0, 0);
   return result;
+}
+
+function formatDateTimeLabel(date: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
 
 interface DateTimePickerProps {
@@ -72,7 +78,7 @@ function DateTimePicker({
           )}
         >
           <CalendarIcon className="mr-2 size-4" />
-          {value ? format(value, "PPP p") : placeholder}
+          {value ? formatDateTimeLabel(value) : placeholder}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

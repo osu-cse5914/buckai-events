@@ -9,13 +9,17 @@ import {
   ChevronRightIcon,
   XIcon,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
 import {
   STATUS_STYLES,
   STATUS_LABELS,
   TYPE_STYLES,
   formatDate,
 } from "@/lib/event-utils";
+import {
+  type EventRecord,
+  type PaginatedResponse,
+} from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,7 +63,8 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 function useEvents(filters: Filters, page: number) {
-  return useQuery({
+  const api = useApiClient();
+  return useQuery<PaginatedResponse<EventRecord>>({
     queryKey: ["events", filters, page],
     queryFn: async () => {
       const query: Record<string, string> = {
@@ -74,7 +79,7 @@ function useEvents(filters: Filters, page: number) {
 
       const res = await api.api.v1.events.$get({ query });
       if (!res.ok) throw new Error("Failed to fetch events");
-      return res.json();
+      return res.json() as Promise<PaginatedResponse<EventRecord>>;
     },
     placeholderData: keepPreviousData,
   });

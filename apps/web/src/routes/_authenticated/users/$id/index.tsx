@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
 import {
   ProfileView,
   ProfileNotFound,
   ProfileError,
   ProfileSkeleton,
+  type PublicProfileData,
 } from "@/components/users/public-profile";
 
 export const Route = createFileRoute("/_authenticated/users/$id/")({
@@ -13,7 +14,8 @@ export const Route = createFileRoute("/_authenticated/users/$id/")({
 });
 
 function usePublicProfile(id: string) {
-  return useQuery({
+  const api = useApiClient();
+  return useQuery<PublicProfileData>({
     queryKey: ["users", id],
     queryFn: async () => {
       const res = await api.api.v1.users[":id"].$get({
@@ -25,7 +27,7 @@ function usePublicProfile(id: string) {
       if (!res.ok) {
         throw new Error("Failed to fetch user profile");
       }
-      return res.json();
+      return res.json() as Promise<PublicProfileData>;
     },
   });
 }

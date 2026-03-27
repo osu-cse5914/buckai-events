@@ -7,25 +7,46 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 const mockEventGet = vi.fn();
 const mockEventPatch = vi.fn();
 const mockUserGet = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+let mockLoaderData: unknown;
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        events: {
-          ":id": {
-            $get: (...args: unknown[]) => mockEventGet(...args),
-            $patch: (...args: unknown[]) => mockEventPatch(...args),
-          },
+    v1: {
+      events: {
+        ":id": {
+          $get: (...args: unknown[]) => mockEventGet(...args),
+          $patch: (...args: unknown[]) => mockEventPatch(...args),
         },
-        users: {
-          me: {
-            $get: (...args: unknown[]) => mockUserGet(...args),
-          },
+      },
+      users: {
+        me: {
+          $get: (...args: unknown[]) => mockUserGet(...args),
         },
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
+}));
+
+vi.mock("@/components/ui/date-time-picker", () => ({
+  DateTimePicker: ({
+    value,
+    onChange,
+    placeholder,
+    id,
+  }: {
+    value?: Date;
+    onChange: (date: Date | undefined) => void;
+    placeholder?: string;
+    id?: string;
+  }) => (
+    <button id={id} type="button" onClick={() => onChange(value)}>
+      {value ? value.toISOString() : placeholder}
+    </button>
+  ),
 }));
 
 // Mock TanStack Router
@@ -38,6 +59,7 @@ vi.mock("@tanstack/react-router", () => ({
     return {
       component: config.component,
       useParams: () => ({ eventId: "evt_1" }),
+      useLoaderData: () => mockLoaderData,
     };
   },
   Link: ({
@@ -100,6 +122,7 @@ function okJson(data: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   capturedComponent = null;
+  mockLoaderData = undefined;
   vi.resetModules();
 });
 
@@ -117,6 +140,11 @@ async function renderPage() {
 
 describe("[phase:1] [regression:always] EventEditForm", () => {
   it("TC-EVT-019: form pre-filled with current event values", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: mockCreatorUser,
+    };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
 
@@ -128,6 +156,11 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
   });
 
   it("TC-EVT-019: only creator can access edit page", async () => {
+    mockLoaderData = {
+      access: "forbidden",
+      event: makeEvent(),
+      currentUser: mockOtherUser,
+    };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockOtherUser));
 
@@ -139,6 +172,11 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
   });
 
   it("TC-EVT-019: external events cannot be edited", async () => {
+    mockLoaderData = {
+      access: "external",
+      event: makeEvent({ source: "OSU_API", creatorId: "user_1" }),
+      currentUser: mockCreatorUser,
+    };
     mockEventGet.mockResolvedValue(
       okJson(makeEvent({ source: "OSU_API", creatorId: "user_1" })),
     );
@@ -153,6 +191,11 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
 
   it("TC-EVT-019: submits to PATCH /api/v1/events/:id", async () => {
     const user = userEvent.setup();
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: mockCreatorUser,
+    };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
     mockEventPatch.mockResolvedValue(
@@ -178,6 +221,11 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
 
   it("TC-EVT-019: redirects to detail page on success", async () => {
     const user = userEvent.setup();
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: mockCreatorUser,
+    };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
     mockEventPatch.mockResolvedValue(okJson(makeEvent()));
@@ -199,6 +247,11 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
 
   it("TC-EVT-019: shows error on failed submission", async () => {
     const user = userEvent.setup();
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: mockCreatorUser,
+    };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
     mockEventPatch.mockResolvedValue({ ok: false, status: 400 });
@@ -216,6 +269,15 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
   });
 
   it("TC-EVT-019: pre-fills compensation fields for GIG events", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent({
+        type: "GIG",
+        compensationAmount: 25,
+        compensationType: "HOURLY",
+      }),
+      currentUser: mockCreatorUser,
+    };
     mockEventGet.mockResolvedValue(
       okJson(
         makeEvent({
@@ -235,13 +297,17 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
     expect(compTrigger).toHaveTextContent("Hourly");
   });
 
-  it("shows loading state while fetching event", async () => {
-    mockEventGet.mockReturnValue(new Promise(() => {}));
-    mockUserGet.mockReturnValue(new Promise(() => {}));
+  it("shows not-found state when the owner route loader cannot resolve the event", async () => {
+    mockLoaderData = {
+      access: "not-found",
+      event: null,
+      currentUser: mockCreatorUser,
+    };
 
     await renderPage();
 
-    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
-    expect(skeletons.length).toBeGreaterThan(0);
+    expect(
+      await screen.findByRole("heading", { name: /event not found/i }),
+    ).toBeInTheDocument();
   });
 });

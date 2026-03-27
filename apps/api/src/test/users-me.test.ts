@@ -69,6 +69,12 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
     const res = await app.request(makeAuthRequest("/api/v1/users/me"));
 
     expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("unauthorized"),
+      title: "Unauthorized",
+      status: 401,
+      detail: "Authentication is required",
+    });
   });
 
   it("returns 404 when user no longer exists in database", async () => {
@@ -213,6 +219,12 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     );
 
     expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("unauthorized"),
+      title: "Unauthorized",
+      status: 401,
+      detail: "Authentication is required",
+    });
   });
 
   it("TC-USER-008: returns 400 for null JSON payload", async () => {

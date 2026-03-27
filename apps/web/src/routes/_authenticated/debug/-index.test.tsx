@@ -9,22 +9,24 @@ const mockUsersMeGet = vi.fn().mockResolvedValue({
   ok: true,
   json: () => Promise.resolve({ id: "db_user_abc123" }),
 });
-
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      health: {
-        $get: (...args: unknown[]) => mockHealthGet(...args),
-      },
-      v1: {
-        users: {
-          me: {
-            $get: (...args: unknown[]) => mockUsersMeGet(...args),
-          },
+    health: {
+      $get: (...args: unknown[]) => mockHealthGet(...args),
+    },
+    v1: {
+      users: {
+        me: {
+          $get: (...args: unknown[]) => mockUsersMeGet(...args),
         },
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 // Mock Clerk

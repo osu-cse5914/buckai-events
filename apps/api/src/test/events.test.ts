@@ -289,7 +289,12 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       const res = await createTestApp().request("/events/nonexistent");
 
       expect(res.status).toBe(404);
-      expect((await res.json()) as Record<string, unknown>).toEqual({ error: "Event not found" });
+      expect((await res.json()) as Record<string, unknown>).toMatchObject({
+        type: expect.stringContaining("not-found"),
+        title: "Resource not found",
+        status: 404,
+        detail: "Event not found",
+      });
     });
   });
 
@@ -517,7 +522,12 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
 
       expect(res.status).toBe(400);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.error).toContain("Invalid status transition");
+      expect(body).toMatchObject({
+        type: expect.stringContaining("invalid-request"),
+        title: "Invalid request",
+        status: 400,
+      });
+      expect(body.detail).toContain("Invalid status transition");
       expect(mockPrisma.event.update).not.toHaveBeenCalled();
     });
 

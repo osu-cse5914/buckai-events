@@ -5,17 +5,41 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock API
 const mockPost = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        events: {
-          $post: (...args: unknown[]) => mockPost(...args),
-        },
+    v1: {
+      events: {
+        $post: (...args: unknown[]) => mockPost(...args),
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
+}));
+
+vi.mock("@/components/ui/date-time-picker", () => ({
+  DateTimePicker: ({
+    value,
+    onChange,
+    placeholder,
+    id,
+  }: {
+    value?: Date;
+    onChange: (date: Date | undefined) => void;
+    placeholder?: string;
+    id?: string;
+  }) => (
+    <button
+      id={id}
+      type="button"
+      onClick={() => onChange(new Date("2026-03-20T14:00:00.000Z"))}
+    >
+      {value ? value.toISOString() : placeholder}
+    </button>
+  ),
 }));
 
 // Mock TanStack Router
@@ -148,14 +172,7 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
     );
     await user.type(screen.getByLabelText(/location/i), "Ohio Union");
 
-    // Open DateTimePicker and select a date
     await user.click(screen.getByText("Pick start date & time"));
-    // Click today's date in the calendar
-    const today = new Date();
-    const todayBtn = document.querySelector(
-      `[data-day="${today.toLocaleDateString()}"]`,
-    );
-    if (todayBtn) await user.click(todayBtn as HTMLElement);
 
     await user.click(screen.getByRole("button", { name: /create/i }));
 
@@ -186,13 +203,7 @@ describe("[phase:1] [regression:always] EventCreationForm", () => {
     );
     await user.type(screen.getByLabelText(/location/i), "Ohio Union");
 
-    // Open DateTimePicker and select a date
     await user.click(screen.getByText("Pick start date & time"));
-    const today = new Date();
-    const todayBtn = document.querySelector(
-      `[data-day="${today.toLocaleDateString()}"]`,
-    );
-    if (todayBtn) await user.click(todayBtn as HTMLElement);
 
     await user.click(screen.getByRole("button", { name: /create/i }));
 

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
+import { loadOwnedEventRouteData } from "@/lib/route-loaders";
+import { queryKeys, type EventRecord } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -18,72 +19,20 @@ import {
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 export const Route = createFileRoute("/_authenticated/events/$eventId/edit")({
+  loader: ({ context, params }) =>
+    loadOwnedEventRouteData({
+      api: context.api,
+      queryClient: context.queryClient,
+      eventId: params.eventId,
+    }),
   component: EventEditPage,
 });
 
-function useEvent(eventId: string) {
-  return useQuery({
-    queryKey: ["event", eventId],
-    queryFn: async () => {
-      const res = await api.api.v1.events[":id"].$get({
-        param: { id: eventId },
-      });
-      if (!res.ok) throw new Error("Failed to load event");
-      return res.json();
-    },
-  });
-}
-
-function useCurrentUser() {
-  return useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const res = await api.api.v1.users.me.$get();
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
-}
-
-type EventData = {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  source: string;
-  locationName: string;
-  startAt: string;
-  endAt: string | null;
-  compensationAmount: number | null;
-  compensationType: string | null;
-  creatorId: string | null;
-};
-
 function EventEditPage() {
   const { eventId } = Route.useParams();
+  const { access, event } = Route.useLoaderData();
 
-  const { data: event, isLoading: eventLoading } = useEvent(eventId);
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
-
-  if (eventLoading || userLoading) {
-    return (
-      <section className="mx-auto max-w-2xl px-6 py-10">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="mt-6 h-8 w-48" />
-        <div className="mt-6 space-y-5">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (!event) {
+  if (access === "not-found" || !event) {
     return (
       <section className="mx-auto max-w-2xl px-6 py-10 text-center">
         <h1 className="text-2xl font-bold">Event not found</h1>
@@ -94,7 +43,7 @@ function EventEditPage() {
     );
   }
 
-  if (event.source !== "USER") {
+  if (access === "external") {
     return (
       <section className="mx-auto max-w-2xl px-6 py-10 text-center">
         <h1 className="text-2xl font-bold">Cannot be edited</h1>
@@ -110,7 +59,7 @@ function EventEditPage() {
     );
   }
 
-  if (!currentUser || currentUser.id !== event.creatorId) {
+  if (access !== "ok") {
     return (
       <section className="mx-auto max-w-2xl px-6 py-10 text-center">
         <h1 className="text-2xl font-bold">Not authorized</h1>
@@ -133,9 +82,10 @@ function EditForm({
   event,
   eventId,
 }: {
-  event: EventData;
+  event: EventRecord;
   eventId: string;
 }) {
+  const api = useApiClient();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -163,7 +113,7 @@ function EditForm({
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.event(eventId) });
       queryClient.invalidateQueries({ queryKey: ["events"] });
       navigate({
         to: "/events/$eventId",

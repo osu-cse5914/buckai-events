@@ -1,3 +1,5 @@
+import type { PrismaClient } from "@prisma/client";
+
 /** Cloudflare Workers asset binding (serves static files with SPA fallback) */
 interface AssetsFetcher {
   fetch(request: Request): Promise<Response>;
@@ -11,6 +13,7 @@ export type AppEnv = {
     ASSETS: AssetsFetcher;
   };
   Variables: {
+    prisma?: PrismaClient;
     user: { id: string; clerkId: string; email: string };
   };
 };

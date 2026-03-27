@@ -5,16 +5,18 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock api module
 const mockGet = vi.fn();
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        events: {
-          $get: (...args: unknown[]) => mockGet(...args),
-        },
+    v1: {
+      events: {
+        $get: (...args: unknown[]) => mockGet(...args),
       },
     },
   },
+};
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 // Mock TanStack Router — capture the component passed to createFileRoute

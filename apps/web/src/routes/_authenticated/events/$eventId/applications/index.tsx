@@ -1,7 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
+import { loadOwnedEventRouteData } from "@/lib/route-loaders";
+import {
+  gigApplicationsQueryOptions,
+  queryKeys,
+  type GigApplication,
+  type PaginatedResponse,
+} from "@/lib/queries";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
@@ -14,19 +21,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute(
   "/_authenticated/events/$eventId/applications/",
 )({
+  loader: ({ context, params }) =>
+    loadOwnedEventRouteData({
+      api: context.api,
+      queryClient: context.queryClient,
+      eventId: params.eventId,
+      requireGig: true,
+    }),
   component: ManageApplicationsPage,
 });
-
-type GigApplication = {
-  id: string;
-  message: string | null;
-  status: string;
-  applicant: {
-    id: string;
-    displayName: string | null;
-    email: string;
-  };
-};
 
 type DecisionResponse = {
   id: string;
@@ -34,71 +37,15 @@ type DecisionResponse = {
   status: string;
 };
 
-type ApplicationsResponse = {
-  data: GigApplication[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-  };
-};
-
-type EventRecord = {
-  id: string;
-  title: string;
-  type: string;
-  creatorId: string | null;
-};
-
-function useEvent(eventId: string) {
-  return useQuery<EventRecord | null>({
-    queryKey: ["event", eventId],
-    queryFn: async () => {
-      const res = await api.api.v1.events[":id"].$get({
-        param: { id: eventId },
-      });
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error("Failed to load event");
-      return res.json() as Promise<EventRecord>;
-    },
-  });
-}
-
-function useCurrentUser() {
-  return useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const res = await api.api.v1.users.me.$get();
-      if (!res.ok) throw new Error("Failed to load profile");
-      return res.json() as Promise<{ id: string; email: string }>;
-    },
-  });
-}
-
-function useApplications(eventId: string, enabled: boolean) {
-  return useQuery<ApplicationsResponse>({
-    queryKey: ["gig-applications", eventId],
-    enabled,
-    queryFn: async () => {
-      const res = await api.api.v1.gigs[":gigId"].applications.$get({
-        param: { gigId: eventId },
-      });
-      if (!res.ok) throw new Error("Failed to load applications");
-      return res.json() as Promise<ApplicationsResponse>;
-    },
-  });
-}
-
 function ManageApplicationsPage() {
+  const api = useApiClient();
   const { eventId } = Route.useParams();
+  const { access, event } = Route.useLoaderData();
   const queryClient = useQueryClient();
-  const { data: event, isLoading: eventLoading, error: eventError } =
-    useEvent(eventId);
-  const { data: currentUser, isLoading: userLoading, error: userError } =
-    useCurrentUser();
-
-  const isOwner = !!(event && currentUser && event.creatorId === currentUser.id);
-  const applicationsQuery = useApplications(eventId, !!event && !!currentUser);
+  const applicationsQuery = useQuery({
+    ...gigApplicationsQueryOptions(api, eventId),
+    enabled: access === "ok",
+  });
 
   const decisionMutation = useMutation({
     mutationFn: async ({
@@ -121,8 +68,8 @@ function ManageApplicationsPage() {
       return res.json() as Promise<DecisionResponse>;
     },
     onSuccess: (updated) => {
-      queryClient.setQueryData<ApplicationsResponse | undefined>(
-        ["gig-applications", eventId],
+      queryClient.setQueryData<PaginatedResponse<GigApplication> | undefined>(
+        queryKeys.gigApplications(eventId),
         (current) =>
           current
             ? {
@@ -135,48 +82,21 @@ function ManageApplicationsPage() {
               }
             : current,
       );
-      queryClient.invalidateQueries({ queryKey: ["my-applications"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myApplications });
     },
   });
 
-  if (eventLoading || userLoading) {
-    return (
-      <section className="mx-auto max-w-4xl px-6 py-10">
-        <Skeleton className="h-6 w-36" />
-        <Skeleton className="mt-6 h-8 w-64" />
-        <div className="mt-6 grid gap-4">
-          {Array.from({ length: 2 }).map((_, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-4 w-28" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="mt-4 h-9 w-48" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (eventError || userError || !event) {
+  if (access === "not-found" || !event) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-10">
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          {eventError instanceof Error
-            ? eventError.message
-            : userError instanceof Error
-              ? userError.message
-              : "Failed to load applications"}
+          Failed to load applications
         </div>
       </section>
     );
   }
 
-  if (!isOwner) {
+  if (access !== "ok") {
     return (
       <section className="mx-auto max-w-4xl px-6 py-10">
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">

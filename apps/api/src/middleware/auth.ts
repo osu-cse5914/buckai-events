@@ -1,7 +1,9 @@
 import { createMiddleware } from "hono/factory";
 import { getAuth } from "@hono/clerk-auth";
 import { Prisma } from "@prisma/client";
-import { getPrismaClient } from "../lib/prisma";
+import type { AppEnv } from "../lib/types";
+import { getPrisma } from "../lib/prisma";
+import { badRequest, forbidden, unauthorized } from "../lib/problem-details";
 
 const ALLOWED_EMAIL_DOMAINS = ["osu.edu", "buckeyemail.osu.edu"];
 
@@ -16,26 +18,19 @@ type AuthUser = {
   email: string;
 };
 
-type AuthEnv = {
-  Variables: { user: AuthUser };
-};
-
 /**
  * Requires a valid Clerk JWT and auto-provisions a User row on first auth.
  * Must be applied AFTER clerkMiddleware().
  */
-export const requireAuth = createMiddleware<AuthEnv>(async (c, next) => {
+export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   const auth = getAuth(c);
   const clerkId = auth?.userId;
 
   if (!clerkId) {
-    return c.json({ error: "Unauthorized" }, 401);
+    return unauthorized(c);
   }
 
-  const connectionString =
-    (c.env as Record<string, string>)?.DATABASE_URL ??
-    (typeof process !== "undefined" ? process.env.DATABASE_URL : undefined);
-  const prisma = getPrismaClient(connectionString);
+  const prisma = getPrisma(c);
 
   let user = await prisma.user.findUnique({ where: { clerkId } });
 
@@ -48,13 +43,13 @@ export const requireAuth = createMiddleware<AuthEnv>(async (c, next) => {
       )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
 
     if (!email) {
-      return c.json({ error: "No email associated with account" }, 400);
+      return badRequest(c, "No email associated with account");
     }
 
     if (!isAllowedEmailDomain(email)) {
-      return c.json(
-        { error: "Email domain not allowed. Only @osu.edu and @buckeyemail.osu.edu addresses are permitted." },
-        403
+      return forbidden(
+        c,
+        "Email domain not allowed. Only @osu.edu and @buckeyemail.osu.edu addresses are permitted.",
       );
     }
 
