@@ -61,18 +61,33 @@ Install dependencies:
 bun install
 ```
 
-Create the API env file:
+Create the local env files:
 
 ```bash
 cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
 ```
 
-Set `DATABASE_URL` in `apps/api/.env` to your Neon connection string.
+Set the required API secrets in `apps/api/.env`:
 
-Generate the Prisma client:
+- `DATABASE_URL`: your Neon or local Postgres connection string
+- `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
+
+Optional local overrides:
+
+- `apps/api/.env`
+  - `PORT` defaults to `3001`
+  - `CORS_ORIGIN` defaults to `http://localhost:5173`
+  - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
+- `apps/web/.env`
+  - `VITE_API_URL` defaults to `http://localhost:3001`
+  - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key
+
+Generate the Prisma client and initialize the database schema:
 
 ```bash
 bun run db:generate
+bun run db:push
 ```
 
 ## Development
@@ -86,6 +101,11 @@ bun run dev
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3001`
 - API base path: `http://localhost:3001/api/v1`
+
+Notes:
+
+- The web app and local API both use a checked-in development Clerk publishable key by default so a clean clone can boot without extra public-key setup.
+- Authenticated API requests still require `CLERK_SECRET_KEY` in `apps/api/.env`.
 
 ## Common Commands
 
@@ -114,6 +134,13 @@ First-time Cloudflare setup:
    ```bash
    cd apps/api && wrangler secret put DATABASE_URL
    ```
+3. Set the production Clerk secret.
+   ```bash
+   cd apps/api && wrangler secret put CLERK_SECRET_KEY
+   ```
+
+If you deploy against a different Clerk instance than the repo default, set
+`VITE_CLERK_PUBLISHABLE_KEY` in the build environment before `bun run deploy`.
 
 Manual deploy:
 

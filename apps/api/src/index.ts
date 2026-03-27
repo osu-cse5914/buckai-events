@@ -11,6 +11,9 @@ import { gigs } from "./routes/gigs";
 import { autoCompleteEvents } from "./scheduled/auto-complete";
 import { getPrismaClient } from "./lib/prisma";
 import { collections } from "./routes/collections";
+import { ensureClerkPublishableKey } from "./lib/clerk";
+
+ensureClerkPublishableKey();
 
 const base = new Hono<AppEnv>();
 
