@@ -20,6 +20,7 @@ function usePublicProfile(id: string) {
     queryFn: async () => {
       const res = await api.api.v1.users[":id"].$get({
         param: { id },
+        query: {},
       });
       if (res.status === 404) {
         throw new NotFoundError();

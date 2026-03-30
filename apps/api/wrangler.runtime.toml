@@ -1,0 +1,6 @@
+name = "social-osu-api-runtime-test"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+CLERK_PUBLISHABLE_KEY = "pk_test_ZHJpdmVuLWVhZ2xlLTI2LmNsZXJrLmFjY291bnRzLmRldiQ"

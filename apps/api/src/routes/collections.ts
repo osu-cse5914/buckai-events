@@ -1,18 +1,18 @@
 import { Hono } from "hono";
-import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
+import { validateCollectionIdParam } from "../lib/validators";
 import {
   requireCollection,
   requireCollectionOwner,
   requireCollectionVisibility,
 } from "../lib/resources";
+import type { AppEnv } from "../lib/types";
 
 export const collections = new Hono<AppEnv>()
-  // GET /:id — fetch a single collection with its items (#76)
-  .get("/:id", async (c) => {
+  .get("/:id", validateCollectionIdParam, async (c) => {
     const user = c.get("user");
     const prisma = getPrisma(c);
-    const id = c.req.param("id");
+    const { id } = c.req.valid("param");
 
     const collection = await requireCollection(
       c,
@@ -33,12 +33,10 @@ export const collections = new Hono<AppEnv>()
 
     return c.json(collection);
   })
-
-  // DELETE /:id — delete a collection with cascade to items (S-COL-10)
-  .delete("/:id", async (c) => {
+  .delete("/:id", validateCollectionIdParam, async (c) => {
     const user = c.get("user");
     const prisma = getPrisma(c);
-    const id = c.req.param("id");
+    const { id } = c.req.valid("param");
 
     const collection = await requireCollection(
       c,
@@ -59,10 +57,6 @@ export const collections = new Hono<AppEnv>()
       return ownershipError;
     }
 
-    // Schema cascades to CollectionItem via onDelete: Cascade
     await prisma.collection.delete({ where: { id } });
-
-    // 204 No Content
     return c.body(null, 204);
   });
-
