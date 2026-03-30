@@ -65,8 +65,6 @@ describe("[phase:1] [regression:always] Debug Page", () => {
     expect(navLinks.map((link) => link.label)).toEqual([
       "Featured",
       "Catalog",
-      "Search",
-      "AI",
       "You",
     ]);
   });

@@ -23,8 +23,6 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
     expect(navLinks).toEqual([
       { to: "/featured", label: "Featured" },
       { to: "/catalog", label: "Catalog" },
-      { to: "/search", label: "Search" },
-      { to: "/ai", label: "AI" },
       { to: "/you", label: "You" },
     ]);
   });

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { CompassIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -60,10 +59,7 @@ export function CatalogPage() {
 
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
-      <div className="flex items-center gap-3">
-        <CompassIcon className="size-6 text-muted-foreground" />
-        <h1 className="text-3xl font-bold tracking-tight">Catalog</h1>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight">Catalog</h1>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Select

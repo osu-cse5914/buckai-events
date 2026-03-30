@@ -19,8 +19,8 @@ import {
   useEventsQuery,
 } from "@/components/events/events-browser";
 
-export function SearchPage() {
-  const [search, setSearch] = useState("");
+export function SearchPage({ initialSearch }: { initialSearch?: string }) {
+  const [search, setSearch] = useState(initialSearch ?? "");
   const [type, setType] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(0);
@@ -57,10 +57,7 @@ export function SearchPage() {
 
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
-      <div className="flex items-center gap-3">
-        <SearchIcon className="size-6 text-muted-foreground" />
-        <h1 className="text-3xl font-bold tracking-tight">Search</h1>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight">Search</h1>
 
       <div className="flex flex-col gap-3 lg:flex-row">
         <div className="relative flex-1">

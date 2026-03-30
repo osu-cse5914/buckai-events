@@ -4,10 +4,18 @@ import {
   Link,
   Outlet,
   redirect,
+  useNavigate,
 } from "@tanstack/react-router";
 import { UserButton } from "@clerk/clerk-react";
-import { BugIcon, MenuIcon, UserRoundIcon } from "lucide-react";
+import {
+  BugIcon,
+  MenuIcon,
+  SearchIcon,
+  SparklesIcon,
+  UserRoundIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -19,9 +27,13 @@ import {
 export const navLinks = [
   { to: "/featured", label: "Featured" },
   { to: "/catalog", label: "Catalog" },
+  { to: "/you", label: "You" },
+] as const;
+
+const mobileNavLinks = [
+  ...navLinks,
   { to: "/search", label: "Search" },
   { to: "/ai", label: "AI" },
-  { to: "/you", label: "You" },
 ] as const;
 
 export const Route = createFileRoute("/_authenticated")({
@@ -35,6 +47,17 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const q = searchQuery.trim();
+    navigate({
+      to: "/search",
+      search: q ? { q } : {},
+    });
+  }
 
   return (
     <>
@@ -60,6 +83,26 @@ function AuthenticatedLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            <form
+              onSubmit={submitSearch}
+              className="relative hidden md:flex md:w-64 lg:w-80"
+            >
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                aria-label="Search"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="h-10 rounded-full pl-9"
+              />
+            </form>
+
+            <Button variant="outline" size="icon" asChild>
+              <Link to="/ai" aria-label="AI">
+                <SparklesIcon className="size-4" />
+              </Link>
+            </Button>
+
             <UserButton>
               <UserButton.MenuItems>
                 <UserButton.Link
@@ -97,7 +140,7 @@ function AuthenticatedLayout() {
                 </SheetHeader>
 
                 <nav className="flex flex-col gap-1 px-4">
-                  {navLinks.map(({ to, label }) => (
+                  {mobileNavLinks.map(({ to, label }) => (
                     <Button
                       key={to}
                       variant="ghost"
