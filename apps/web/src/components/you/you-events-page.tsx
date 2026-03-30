@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
+import {
+  currentUserQueryOptions,
+  type CurrentUser,
+} from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import {
   EventsEmptyState,
@@ -12,21 +16,9 @@ import {
   useEventsQuery,
 } from "@/components/events/events-browser";
 
-type CurrentUser = {
-  id: string;
-};
-
 function useCurrentUser() {
-  return useQuery<CurrentUser>({
-    queryKey: ["you-current-user"],
-    queryFn: async () => {
-      const response = await api.api.v1.users.me.$get();
-      if (!response.ok) {
-        throw new Error("Failed to load current user");
-      }
-      return response.json() as Promise<CurrentUser>;
-    },
-  });
+  const api = useApiClient();
+  return useQuery<CurrentUser>(currentUserQueryOptions(api));
 }
 
 export function YouEventsPage() {

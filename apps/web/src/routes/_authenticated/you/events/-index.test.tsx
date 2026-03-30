@@ -4,22 +4,24 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockUsersMeGet = vi.fn();
 const mockEventsGet = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        users: {
-          me: {
-            $get: (...args: unknown[]) => mockUsersMeGet(...args),
-          },
+    v1: {
+      users: {
+        me: {
+          $get: (...args: unknown[]) => mockUsersMeGet(...args),
         },
-        events: {
-          $get: (...args: unknown[]) => mockEventsGet(...args),
-        },
+      },
+      events: {
+        $get: (...args: unknown[]) => mockEventsGet(...args),
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 let capturedComponent: React.ComponentType | null = null;

@@ -7,7 +7,7 @@ import {
   ChevronRightIcon,
   MapPinIcon,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
 import {
   STATUS_LABELS,
   STATUS_STYLES,
@@ -81,6 +81,8 @@ export function useEventsQuery(
   page: number,
   enabled = true,
 ) {
+  const api = useApiClient();
+
   return useQuery<EventsResponse>({
     queryKey: ["events-browser", filters, page],
     enabled,

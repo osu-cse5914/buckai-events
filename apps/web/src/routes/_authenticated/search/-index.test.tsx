@@ -4,17 +4,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockGet = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        events: {
-          $get: (...args: unknown[]) => mockGet(...args),
-        },
+    v1: {
+      events: {
+        $get: (...args: unknown[]) => mockGet(...args),
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 let capturedComponent: React.ComponentType | null = null;
