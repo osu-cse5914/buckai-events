@@ -92,6 +92,13 @@ export function SearchPage({ initialSearch }: { initialSearch?: string }) {
                 Clear
               </Button>
             ) : null}
+
+            <Button variant="outline" asChild>
+              <Link to="/ai" search={{ prompt: handoffPrompt }}>
+                <SparklesIcon className="mr-1 size-4" />
+                Ask AI
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

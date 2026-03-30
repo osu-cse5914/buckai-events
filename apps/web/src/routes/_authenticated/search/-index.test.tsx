@@ -116,7 +116,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
 
     await renderSearchPage();
 
-    const aiLink = screen.getByRole("link", { name: /ask ai/i });
+    const aiLink = await screen.findByRole("link", { name: /ask ai/i });
     expect(aiLink).toHaveAttribute("href", "/ai?prompt=music");
   });
 });
