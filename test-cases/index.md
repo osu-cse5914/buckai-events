@@ -7,6 +7,9 @@ This directory manages all test cases — automated and manual — for the Socia
 ```
 test-cases/
 ├── index.md                    ← This file (master index)
+├── system/
+│   ├── app-pages.md            ← TC-PAGES-*
+│   └── debug-page.md           ← TC-DBG-*
 ├── auth/
 │   ├── authentication.md       ← TC-AUTH-*
 │   └── authorization.md        ← TC-AUTHZ-*
