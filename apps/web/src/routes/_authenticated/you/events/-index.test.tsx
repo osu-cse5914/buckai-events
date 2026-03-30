@@ -90,7 +90,7 @@ describe("[phase:6] [regression:always] YouEventsPage", () => {
     );
 
     await renderYouEventsPage();
-    await screen.findByText("You have not created any listings yet");
+    await screen.findByText("No events yet");
 
     expect(mockEventsGet).toHaveBeenCalledWith({
       query: {
