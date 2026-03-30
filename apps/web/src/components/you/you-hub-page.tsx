@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -25,7 +24,6 @@ export function YouHubPage() {
           <CardHeader>
             <BriefcaseBusinessIcon className="size-5 text-muted-foreground" />
             <CardTitle>Applications</CardTitle>
-            <CardDescription>Track your applications.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
@@ -38,7 +36,6 @@ export function YouHubPage() {
           <CardHeader>
             <PlusSquareIcon className="size-5 text-muted-foreground" />
             <CardTitle>Events</CardTitle>
-            <CardDescription>Manage your events and gigs.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
@@ -51,7 +48,6 @@ export function YouHubPage() {
           <CardHeader>
             <BookmarkIcon className="size-5 text-muted-foreground" />
             <CardTitle>Collections</CardTitle>
-            <CardDescription>Coming soon.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>

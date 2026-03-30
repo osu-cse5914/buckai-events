@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -17,15 +16,14 @@ export function YouCollectionsPage() {
       <Card className="border-dashed">
         <CardHeader>
           <BookmarkIcon className="size-5 text-muted-foreground" />
-          <CardTitle>Coming soon</CardTitle>
-          <CardDescription>Collections are not available yet.</CardDescription>
+          <CardTitle>Collections</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-3">
           <Button asChild>
-            <Link to="/catalog">Browse Catalog</Link>
+            <Link to="/catalog">Catalog</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link to="/you">Back to You</Link>
+            <Link to="/you">You</Link>
           </Button>
         </CardContent>
       </Card>

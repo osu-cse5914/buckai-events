@@ -1,14 +1,12 @@
 import { useState } from "react";
 import {
   BotMessageSquareIcon,
-  MessageSquareIcon,
   SparklesIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -22,7 +20,6 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
       <Card className="h-fit">
         <CardHeader>
           <CardTitle>Recent Conversations</CardTitle>
-          <CardDescription>Coming soon.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {[
@@ -41,40 +38,30 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
       </Card>
 
       <Card className="min-h-[32rem]">
-        <CardHeader className="space-y-3">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <BotMessageSquareIcon className="size-6 text-muted-foreground" />
             <CardTitle className="text-3xl tracking-tight">AI</CardTitle>
           </div>
-          <CardDescription>Coming soon.</CardDescription>
         </CardHeader>
 
         <CardContent className="flex h-full flex-col gap-6">
           <div className="flex-1 rounded-xl border border-dashed bg-muted/20 p-6">
             <div className="flex items-start gap-3">
               <SparklesIcon className="mt-0.5 size-4 text-muted-foreground" />
-              <div className="space-y-2 text-sm">
-                <p className="font-medium">Prompts</p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "Find free events tonight",
-                    "Show gigs paying at least $20/hr",
-                    "What should I do this weekend?",
-                  ].map((prompt) => (
-                    <span
-                      key={prompt}
-                      className="rounded-full border px-3 py-1 text-muted-foreground"
-                    >
-                      {prompt}
-                    </span>
-                  ))}
-                </div>
-                {initialPrompt ? (
-                  <p className="text-muted-foreground">
-                    Prompt:{" "}
-                    <span className="font-medium">{initialPrompt}</span>
-                  </p>
-                ) : null}
+              <div className="flex flex-wrap gap-2 text-sm">
+                {[
+                  "Find free events tonight",
+                  "Show gigs paying at least $20/hr",
+                  "What should I do this weekend?",
+                ].map((prompt) => (
+                  <span
+                    key={prompt}
+                    className="rounded-full border px-3 py-1 text-muted-foreground"
+                  >
+                    {prompt}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -87,14 +74,10 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
               id="ai-prompt"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="What do you want to find?"
+              placeholder={initialPrompt ?? "Ask AI"}
               className="min-h-28"
             />
-            <div className="flex items-center justify-between gap-3">
-              <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <MessageSquareIcon className="size-4" />
-                Sending coming soon.
-              </p>
+            <div className="flex justify-end">
               <Button disabled>Send</Button>
             </div>
           </div>

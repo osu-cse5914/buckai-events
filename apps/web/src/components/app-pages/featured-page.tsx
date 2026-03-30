@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -22,7 +21,6 @@ export function FeaturedPage() {
           <CardHeader>
             <CompassIcon className="size-5 text-muted-foreground" />
             <CardTitle>Catalog</CardTitle>
-            <CardDescription>Browse all events and gigs.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
@@ -35,7 +33,6 @@ export function FeaturedPage() {
           <CardHeader>
             <SearchIcon className="size-5 text-muted-foreground" />
             <CardTitle>Search</CardTitle>
-            <CardDescription>Search events and gigs.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
@@ -48,7 +45,6 @@ export function FeaturedPage() {
           <CardHeader>
             <UserRoundIcon className="size-5 text-muted-foreground" />
             <CardTitle>My Profile</CardTitle>
-            <CardDescription>Update your profile.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>
