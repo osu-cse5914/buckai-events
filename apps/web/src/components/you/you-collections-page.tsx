@@ -12,22 +12,13 @@ import {
 export function YouCollectionsPage() {
   return (
     <section className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Your Collections</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Collections are intentionally nested under You, but the list and
-          create endpoints have not been merged on this branch yet.
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight">Collections</h1>
 
       <Card className="border-dashed">
         <CardHeader>
           <BookmarkIcon className="size-5 text-muted-foreground" />
-          <CardTitle>Collections are routed, not fully wired</CardTitle>
-          <CardDescription>
-            This page holds the correct IA boundary today and leaves the actual
-            collection management flow to the follow-up API and UI work.
-          </CardDescription>
+          <CardTitle>Coming soon</CardTitle>
+          <CardDescription>Collections are not available yet.</CardDescription>
         </CardHeader>
         <CardContent className="flex gap-3">
           <Button asChild>

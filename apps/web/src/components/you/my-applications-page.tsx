@@ -63,18 +63,13 @@ export function MyApplicationsPage() {
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-10">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Your Applications</h1>
-        <p className="text-sm text-muted-foreground">
-          Track the gigs you have applied to and their current statuses.
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight">Applications</h1>
 
       {data && data.data.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed p-8 text-center">
           <p className="text-lg font-medium">No applications yet</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Apply to a gig from its detail page and it will appear here.
+            Apply to a gig to see it here.
           </p>
         </div>
       ) : (

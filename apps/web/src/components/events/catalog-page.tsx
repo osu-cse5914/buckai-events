@@ -61,25 +61,14 @@ export function CatalogPage() {
 
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <CompassIcon className="size-4" />
-          Catalog
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Browse every event and gig.
-        </h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Catalog stays neutral and exhaustive. Recommendation framing belongs
-          to Featured, and query-led exploration belongs to Search.
-        </p>
+      <div className="flex items-center gap-3">
+        <CompassIcon className="size-6 text-muted-foreground" />
+        <h1 className="text-3xl font-bold tracking-tight">Catalog</h1>
       </div>
 
       <div className="rounded-2xl border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Browse with filters, then open a detail page for actions.
-          </p>
+          <p className="text-sm text-muted-foreground">Filters</p>
           {hasActiveFilters ? (
             <Button variant="ghost" size="sm" onClick={clearFilters}>
               <XIcon className="mr-1 size-4" />
@@ -87,7 +76,7 @@ export function CatalogPage() {
             </Button>
           ) : (
             <Button variant="outline" size="sm" asChild>
-              <Link to="/search">Need a direct query?</Link>
+              <Link to="/search">Search</Link>
             </Button>
           )}
         </div>
@@ -167,7 +156,7 @@ export function CatalogPage() {
           title="No events found"
           description={
             hasActiveFilters
-              ? "Try adjusting the browse filters."
+              ? "Try different filters."
               : "No events have been created yet."
           }
         />

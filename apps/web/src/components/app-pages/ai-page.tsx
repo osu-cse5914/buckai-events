@@ -22,9 +22,7 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
       <Card className="h-fit">
         <CardHeader>
           <CardTitle>Recent Conversations</CardTitle>
-          <CardDescription>
-            Conversation history belongs here once the chat APIs land.
-          </CardDescription>
+          <CardDescription>Coming soon.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {[
@@ -44,20 +42,11 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
 
       <Card className="min-h-[32rem]">
         <CardHeader className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <BotMessageSquareIcon className="size-4" />
-            AI
+          <div className="flex items-center gap-3">
+            <BotMessageSquareIcon className="size-6 text-muted-foreground" />
+            <CardTitle className="text-3xl tracking-tight">AI</CardTitle>
           </div>
-          <div>
-            <CardTitle className="text-3xl tracking-tight">
-              Conversation-first event discovery
-            </CardTitle>
-            <CardDescription className="mt-2 max-w-2xl text-sm">
-              This route owns the chat UI. The backend conversation APIs are not
-              on this branch yet, so the page is an explicit shell instead of a
-              fake working chat.
-            </CardDescription>
-          </div>
+          <CardDescription>Coming soon.</CardDescription>
         </CardHeader>
 
         <CardContent className="flex h-full flex-col gap-6">
@@ -65,7 +54,7 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
             <div className="flex items-start gap-3">
               <SparklesIcon className="mt-0.5 size-4 text-muted-foreground" />
               <div className="space-y-2 text-sm">
-                <p className="font-medium">Suggested prompts</p>
+                <p className="font-medium">Prompts</p>
                 <div className="flex flex-wrap gap-2">
                   {[
                     "Find free events tonight",
@@ -82,7 +71,7 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
                 </div>
                 {initialPrompt ? (
                   <p className="text-muted-foreground">
-                    Search handed off:{" "}
+                    Prompt:{" "}
                     <span className="font-medium">{initialPrompt}</span>
                   </p>
                 ) : null}
@@ -92,21 +81,21 @@ export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
 
           <div className="space-y-3">
             <label className="text-sm font-medium" htmlFor="ai-prompt">
-              Message the assistant
+              Message
             </label>
             <Textarea
               id="ai-prompt"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Describe what you want to find"
+              placeholder="What do you want to find?"
               className="min-h-28"
             />
             <div className="flex items-center justify-between gap-3">
               <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                 <MessageSquareIcon className="size-4" />
-                Live sending is coming in the chat phase.
+                Sending coming soon.
               </p>
-              <Button disabled>Start Conversation</Button>
+              <Button disabled>Send</Button>
             </div>
           </div>
         </CardContent>

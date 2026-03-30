@@ -114,8 +114,8 @@ export function SearchPage() {
 
       {!hasStartedSearch ? (
         <EventsEmptyState
-          title="Start with a direct query"
-          description="Search is for explicit intent. Enter a keyword, type, or category to load matching events and gigs, or jump straight into AI mode."
+          title="Start searching"
+          description="Enter a keyword, type, or category."
         />
       ) : null}
 
@@ -130,7 +130,7 @@ export function SearchPage() {
       {hasStartedSearch && data && data.data.length === 0 ? (
         <EventsEmptyState
           title="No results matched your search"
-          description="Try a broader query, switch event type, or hand the same prompt to AI for help."
+          description="Try a broader query or Ask AI."
         />
       ) : null}
       {hasStartedSearch && data && data.data.length > 0 ? (

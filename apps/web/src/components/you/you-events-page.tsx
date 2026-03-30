@@ -73,14 +73,7 @@ export function YouEventsPage() {
   return (
     <section className="mx-auto max-w-5xl px-6 py-10">
       <div className="flex items-center justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Your Events & Gigs
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Create new listings and manage the ones you already own.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight">Events</h1>
         <Button asChild>
           <Link to="/events/new">Create Event</Link>
         </Button>
@@ -95,8 +88,8 @@ export function YouEventsPage() {
       ) : null}
       {data && data.data.length === 0 ? (
         <EventsEmptyState
-          title="You have not created any listings yet"
-          description="Create your first event or gig from here, then come back to manage it."
+          title="No events yet"
+          description="Create an event to see it here."
           action={
             <Button asChild>
               <Link to="/events/new">Create Event</Link>
