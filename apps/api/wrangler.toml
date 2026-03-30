@@ -2,6 +2,7 @@ name = "social-osu"
 account_id = "2b7085f62464ab452fbd1c9569cedaef"
 main = "src/index.ts"
 compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "../web/dist"

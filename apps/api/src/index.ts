@@ -1,44 +1,16 @@
-import { Hono } from "hono";
-import { cors } from "hono/cors";
-import { clerkMiddleware } from "@hono/clerk-auth";
-import type { AppEnv } from "./lib/types";
-import { requireAuth } from "./middleware/auth";
-import { health } from "./routes/health";
-import { auth } from "./routes/auth";
-import { users } from "./routes/users";
-import { events } from "./routes/events";
-import { gigs } from "./routes/gigs";
+import { app } from "./app";
 import { autoCompleteEvents } from "./scheduled/auto-complete";
-import { getPrismaClient } from "./lib/prisma";
-import { collections } from "./routes/collections";
 import { ensureClerkPublishableKey } from "./lib/clerk";
-
-ensureClerkPublishableKey();
-
-const base = new Hono<AppEnv>();
-
-// CORS only needed for local dev (FE at :5173, BE at :3001).
-// In production both are served from the same CF Worker origin.
-base.use("/api/*", cors({ origin: "http://localhost:5173" }));
-
-// Clerk JWT verification + user auto-provisioning for /api/v1/*
-base.use("/api/v1/*", clerkMiddleware());
-base.use("/api/v1/*", requireAuth);
-
-export const app = base
-  .route("/api", health)
-  .route("/api/v1/auth", auth)
-  .route("/api/v1/users", users)
-  .route("/api/v1/events", events)
-  .route("/api/v1/gigs", gigs)
-  .route("/api/v1/collections", collections);
-
-export type AppType = typeof app;
+import { runWithPrisma } from "./lib/worker-runtime";
+import type { WorkerBindings } from "./lib/types";
 
 // Compatible with both Bun (reads `port`) and CF Workers (ignores `port`, uses `fetch`)
-export default {
+ensureClerkPublishableKey();
+export { app } from "./app";
+
+const worker = {
   port: typeof process !== "undefined" ? Number(process.env.PORT ?? 3001) : 3001,
-  fetch(request: Request, env: Record<string, unknown>, ctx: never) {
+  fetch(request: Request, env: WorkerBindings, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
     // API routes handled by Hono
@@ -58,11 +30,12 @@ export default {
 
   // Cloudflare Workers cron trigger — auto-complete past events every 15 minutes
   async scheduled(
-    _event: { scheduledTime: number; cron: string },
-    env: Record<string, string>,
-    ctx: { waitUntil(promise: Promise<unknown>): void },
+    _event: ScheduledController,
+    env: WorkerBindings,
+    ctx: ExecutionContext,
   ) {
-    const prisma = getPrismaClient(env.DATABASE_URL);
-    ctx.waitUntil(autoCompleteEvents(prisma));
+    ctx.waitUntil(runWithPrisma(env.DATABASE_URL, autoCompleteEvents));
   },
-};
+} satisfies ExportedHandler<WorkerBindings> & { port: number };
+
+export default worker;

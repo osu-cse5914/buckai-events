@@ -10,11 +10,15 @@
     "deploy": "bun --cwd ../web run build && wrangler deploy",
     "start": "bun run dist/index.js",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun run types:worker:check && tsc --noEmit",
+    "types:worker": "wrangler types",
+    "types:worker:check": "wrangler types --check",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
-    "test": "vitest run"
+    "test:unit": "vitest run -c vitest.config.ts",
+    "test:runtime": "vitest run -c vitest.runtime.config.ts",
+    "test": "bun run test:unit && bun run test:runtime"
   },
   "exports": {
     ".": "./src/index.ts"
