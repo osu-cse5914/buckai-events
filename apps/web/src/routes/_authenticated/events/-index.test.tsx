@@ -19,14 +19,18 @@ vi.mock("@/lib/api", () => ({
   useApiClient: () => mockApiClient,
 }));
 
-// Mock TanStack Router — capture the component passed to createFileRoute
-let capturedComponent: React.ComponentType | null = null;
+// Mock TanStack Router — capture the legacy alias redirect
+let capturedBeforeLoad: (() => unknown) | null = null;
+const redirectMock = vi.fn((options: { to: string }) => options);
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (config: { component: React.ComponentType }) => {
-    capturedComponent = config.component;
-    return { component: config.component };
-  },
+  createFileRoute:
+    () =>
+    (config: { beforeLoad?: () => unknown; component?: React.ComponentType }) => {
+      capturedBeforeLoad = config.beforeLoad ?? null;
+      return { beforeLoad: config.beforeLoad, component: config.component };
+    },
+  redirect: (options: { to: string }) => redirectMock(options),
   Link: ({
     children,
     to,
@@ -100,25 +104,41 @@ function makeResponse(
 
 beforeEach(() => {
   vi.clearAllMocks();
-  capturedComponent = null;
+  capturedBeforeLoad = null;
   vi.resetModules();
 });
 
 async function renderEventsPage() {
-  await import("./index");
-  if (!capturedComponent) {
-    throw new Error("EventsPage component was not captured from createFileRoute");
-  }
-  const Component = capturedComponent;
+  const { CatalogPage } = await import("@/components/events/catalog-page");
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <Component />
+      <CatalogPage />
     </QueryClientProvider>,
   );
 }
 
-describe("[phase:1] [regression:always] EventsPage", () => {
+describe("[phase:6] [regression:always] Legacy Events Route", () => {
+  it("TC-PAGES-015: redirects /events to /catalog", async () => {
+    await import("./index");
+
+    if (!capturedBeforeLoad) {
+      throw new Error("Legacy /events beforeLoad handler was not captured");
+    }
+
+    let thrown: unknown;
+    try {
+      capturedBeforeLoad();
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(redirectMock).toHaveBeenCalledWith({ to: "/catalog" });
+    expect(thrown).toEqual({ to: "/catalog" });
+  });
+});
+
+describe("[phase:1] [regression:always] CatalogPage", () => {
   it("shows loading skeletons while fetching", async () => {
     mockGet.mockReturnValue(new Promise(() => {}));
 
@@ -260,21 +280,15 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     });
   });
 
-  it("passes search text to API", async () => {
+  it("does not render a keyword search input in catalog mode", async () => {
     mockGet.mockResolvedValue(makeResponse([]));
-    const user = userEvent.setup();
 
     await renderEventsPage();
     await screen.findByText("No events found");
 
-    const searchInput = screen.getByPlaceholderText("Search events...");
-    await user.type(searchInput, "hackathon");
-
-    await vi.waitFor(() => {
-      const calls = mockGet.mock.calls;
-      const lastCall = calls[calls.length - 1];
-      expect(lastCall[0].query.search).toBe("hackathon");
-    });
+    expect(
+      screen.queryByPlaceholderText("Search events..."),
+    ).not.toBeInTheDocument();
   });
 
   it("shows pagination when total exceeds page size", async () => {

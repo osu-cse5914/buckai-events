@@ -22,13 +22,17 @@ vi.mock("@/lib/api", () => ({
   useApiClient: () => mockApiClient,
 }));
 
-let capturedComponent: React.ComponentType | null = null;
+let capturedBeforeLoad: (() => unknown) | null = null;
+const redirectMock = vi.fn((options: { to: string }) => options);
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (config: { component: React.ComponentType }) => {
-    capturedComponent = config.component;
-    return { component: config.component };
-  },
+  createFileRoute:
+    () =>
+    (config: { beforeLoad?: () => unknown; component?: React.ComponentType }) => {
+      capturedBeforeLoad = config.beforeLoad ?? null;
+      return { beforeLoad: config.beforeLoad, component: config.component };
+    },
+  redirect: (options: { to: string }) => redirectMock(options),
   Link: ({
     children,
     to,
@@ -62,23 +66,39 @@ function okJson(data: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  capturedComponent = null;
+  capturedBeforeLoad = null;
   vi.resetModules();
 });
 
 async function renderPage() {
-  await import("./index");
-  if (!capturedComponent) {
-    throw new Error("MyApplicationsPage component was not captured");
-  }
-  const Component = capturedComponent;
+  const { MyApplicationsPage } = await import("@/components/you/my-applications-page");
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <Component />
+      <MyApplicationsPage />
     </QueryClientProvider>,
   );
 }
+
+describe("[phase:6] [regression:always] Legacy Applications Route", () => {
+  it("TC-PAGES-016: redirects /applications to /you/applications", async () => {
+    await import("./index");
+
+    if (!capturedBeforeLoad) {
+      throw new Error("Legacy /applications beforeLoad handler was not captured");
+    }
+
+    let thrown: unknown;
+    try {
+      capturedBeforeLoad();
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(redirectMock).toHaveBeenCalledWith({ to: "/you/applications" });
+    expect(thrown).toEqual({ to: "/you/applications" });
+  });
+});
 
 describe("[phase:2] [regression:always] MyApplicationsPage", () => {
   it("TC-APP-011: renders the current user's applications with status badges and links", async () => {
