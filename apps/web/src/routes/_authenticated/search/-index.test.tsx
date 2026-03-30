@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
@@ -20,13 +19,16 @@ vi.mock("@/lib/api", () => ({
 }));
 
 let capturedComponent: React.ComponentType | null = null;
+const state = vi.hoisted(() => ({
+  routeSearch: {} as { q?: string },
+}));
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (config: { component: React.ComponentType }) => {
     capturedComponent = config.component;
     return {
       component: config.component,
-      useSearch: () => ({}),
+      useSearch: () => state.routeSearch,
     };
   },
   Link: ({
@@ -76,6 +78,7 @@ function makeResponse(data: unknown[] = []) {
 beforeEach(() => {
   vi.clearAllMocks();
   capturedComponent = null;
+  state.routeSearch = {};
   vi.resetModules();
 });
 
@@ -96,13 +99,10 @@ async function renderSearchPage() {
 
 describe("[phase:6] [regression:always] SearchPage", () => {
   it("TC-PAGES-012: passes search text to the events API", async () => {
+    state.routeSearch = { q: "hackathon" };
     mockGet.mockResolvedValue(makeResponse([]));
-    const user = userEvent.setup();
 
     await renderSearchPage();
-
-    const searchInput = screen.getByPlaceholderText("Search events or gigs...");
-    await user.type(searchInput, "hackathon");
 
     await vi.waitFor(() => {
       const lastCall = mockGet.mock.calls.at(-1);
@@ -111,13 +111,10 @@ describe("[phase:6] [regression:always] SearchPage", () => {
   });
 
   it("TC-PAGES-013: renders the AI handoff link with the current prompt", async () => {
+    state.routeSearch = { q: "music" };
     mockGet.mockResolvedValue(makeResponse([]));
-    const user = userEvent.setup();
 
     await renderSearchPage();
-
-    const searchInput = screen.getByPlaceholderText("Search events or gigs...");
-    await user.type(searchInput, "music");
 
     const aiLink = screen.getByRole("link", { name: /ask ai/i });
     expect(aiLink).toHaveAttribute("href", "/ai?prompt=music");

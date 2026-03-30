@@ -5,6 +5,7 @@ import {
   Outlet,
   redirect,
   useNavigate,
+  useRouterState,
 } from "@tanstack/react-router";
 import { UserButton } from "@clerk/clerk-react";
 import {
@@ -47,17 +48,14 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-
-  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const q = searchQuery.trim();
-    navigate({
-      to: "/search",
-      search: q ? { q } : {},
-    });
-  }
+  const location = useRouterState({
+    select: (state) => state.location,
+  });
+  const routeQuery =
+    location.pathname === "/search" && typeof location.search.q === "string"
+      ? location.search.q
+      : "";
 
   return (
     <>
@@ -83,19 +81,16 @@ function AuthenticatedLayout() {
           </div>
 
           <div className="flex items-center gap-3">
-            <form
-              onSubmit={submitSearch}
-              className="relative hidden md:flex md:w-64 lg:w-80"
-            >
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                aria-label="Search"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-10 rounded-full pl-9"
-              />
-            </form>
+            <HeaderSearchForm
+              key={`${location.pathname}:${routeQuery}`}
+              initialValue={routeQuery}
+              onSubmit={(query) =>
+                navigate({
+                  to: "/search",
+                  search: query ? { q: query } : {},
+                })
+              }
+            />
 
             <Button variant="outline" size="icon" asChild>
               <Link to="/ai" aria-label="AI">
@@ -165,5 +160,36 @@ function AuthenticatedLayout() {
 
       <Outlet />
     </>
+  );
+}
+
+function HeaderSearchForm({
+  initialValue,
+  onSubmit,
+}: {
+  initialValue: string;
+  onSubmit: (query: string) => void;
+}) {
+  const [value, setValue] = useState(initialValue);
+
+  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSubmit(value.trim());
+  }
+
+  return (
+    <form
+      onSubmit={submitSearch}
+      className="relative hidden md:flex md:w-64 lg:w-80"
+    >
+      <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        aria-label="Search"
+        placeholder="Search"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        className="h-10 rounded-full pl-9"
+      />
+    </form>
   );
 }
