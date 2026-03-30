@@ -5,12 +5,6 @@ import {
   PlusSquareIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export function YouHubPage() {
   return (
@@ -19,42 +13,36 @@ export function YouHubPage() {
         <h1 className="text-3xl font-bold tracking-tight">You</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
+      <div className="overflow-hidden rounded-2xl border">
+        <section className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
             <BriefcaseBusinessIcon className="size-5 text-muted-foreground" />
-            <CardTitle>Applications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button asChild>
-              <Link to="/you/applications">Applications</Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <h2 className="text-lg font-semibold">Applications</h2>
+          </div>
+          <Button asChild>
+            <Link to="/you/applications">Applications</Link>
+          </Button>
+        </section>
 
-        <Card>
-          <CardHeader>
+        <section className="flex flex-col gap-4 border-t px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
             <PlusSquareIcon className="size-5 text-muted-foreground" />
-            <CardTitle>Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button asChild>
-              <Link to="/you/events">Events</Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <h2 className="text-lg font-semibold">Events</h2>
+          </div>
+          <Button asChild>
+            <Link to="/you/events">Events</Link>
+          </Button>
+        </section>
 
-        <Card>
-          <CardHeader>
+        <section className="flex flex-col gap-4 border-t px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
             <BookmarkIcon className="size-5 text-muted-foreground" />
-            <CardTitle>Collections</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" asChild>
-              <Link to="/you/collections">Collections</Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <h2 className="text-lg font-semibold">Collections</h2>
+          </div>
+          <Button variant="outline" asChild>
+            <Link to="/you/collections">Collections</Link>
+          </Button>
+        </section>
       </div>
     </section>
   );
