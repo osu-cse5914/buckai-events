@@ -9,10 +9,5 @@ export const Route = createFileRoute("/_authenticated/ai/")({
   validateSearch: (search: Record<string, unknown>): AiSearch => ({
     prompt: typeof search.prompt === "string" ? search.prompt : undefined,
   }),
-  component: AiRoute,
+  component: AiPage,
 });
-
-function AiRoute() {
-  const { prompt } = Route.useSearch();
-  return <AiPage key={prompt ?? ""} initialPrompt={prompt} />;
-}
