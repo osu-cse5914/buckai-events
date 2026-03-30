@@ -5,15 +5,16 @@
 
 ## Overview
 
-A developer-facing debug page accessible via a "Debug" tab in the header navigation. It provides quick access to internal debugging tools without manually typing URLs.
+A developer-facing debug page accessible from a development-only entry in the avatar menu or by direct URL. It provides quick access to internal debugging tools without making Debug part of the primary product navigation.
 
 ## Scenarios
 
 ### S-DBG-1: Debug navigation link
 
 **Given** a user is authenticated
-**When** the header navigation renders
-**Then** a "Debug" link appears alongside Events and Profile
+**When** the primary navigation renders
+**Then** "Debug" does not appear alongside the product destinations
+**And** the page remains available through development-only access
 
 ### S-DBG-2: Debug page displays debug tools
 

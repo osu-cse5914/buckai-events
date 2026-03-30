@@ -61,11 +61,12 @@ describe("[phase:1] [regression:always] Debug Page", () => {
     vi.clearAllMocks();
   });
 
-  // --- TC-DBG-001: Debug nav link appears in header ---
-  it("TC-DBG-001: debug nav link is included in navigation links", () => {
-    const debugLink = navLinks.find((link) => link.label === "Debug");
-    expect(debugLink).toBeDefined();
-    expect(debugLink!.to).toBe("/debug");
+  it("TC-DBG-001: keeps debug out of the primary navigation model", () => {
+    expect(navLinks.map((link) => link.label)).toEqual([
+      "Featured",
+      "Catalog",
+      "You",
+    ]);
   });
 
   // --- TC-DBG-002: Debug page renders heading and tool buttons ---

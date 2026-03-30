@@ -6,7 +6,7 @@
 
 | ID | Spec Scenario | Description | Type | Automated in | Phase | Regression |
 |----|---------------|-------------|------|-------------|-------|------------|
-| TC-DBG-001 | S-DBG-1 | Debug nav link appears in header | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
+| TC-DBG-001 | S-DBG-1 | Debug stays out of the primary navigation model | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
 | TC-DBG-002 | S-DBG-2 | Debug page renders heading and tool buttons | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
 | TC-DBG-003 | S-DBG-3 | Health check displays API status | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
 | TC-DBG-004 | S-DBG-4 | DB connection check displays status | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
