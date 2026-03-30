@@ -57,18 +57,9 @@ export function SearchPage() {
 
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <SearchIcon className="size-4" />
-          Search
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Query-first discovery with an AI handoff.
-        </h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Search stays results-driven. Use AI when you want conversational help
-          interpreting or refining what you typed.
-        </p>
+      <div className="flex items-center gap-3">
+        <SearchIcon className="size-6 text-muted-foreground" />
+        <h1 className="text-3xl font-bold tracking-tight">Search</h1>
       </div>
 
       <div className="rounded-2xl border bg-card p-4">
