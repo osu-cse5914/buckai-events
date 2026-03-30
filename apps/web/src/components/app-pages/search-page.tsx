@@ -1,6 +1,4 @@
 import { useDeferredValue, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,9 +49,6 @@ export function SearchPage({ initialSearch }: { initialSearch?: string }) {
     setType(value === "ALL" ? "" : value);
     setPage(0);
   }
-
-  const handoffPrompt = search.trim() || category.trim() || undefined;
-
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
@@ -92,13 +87,6 @@ export function SearchPage({ initialSearch }: { initialSearch?: string }) {
                 Clear
               </Button>
             ) : null}
-
-            <Button variant="outline" asChild>
-              <Link to="/ai" search={{ prompt: handoffPrompt }}>
-                <SparklesIcon className="mr-1 size-4" />
-                Ask AI
-              </Link>
-            </Button>
           </div>
         </div>
       </div>
@@ -127,7 +115,7 @@ export function SearchPage({ initialSearch }: { initialSearch?: string }) {
         <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
           <EventsEmptyState
             title="No results matched your search"
-            description="Try a broader query or Ask AI."
+            description="Try a broader query."
           />
         </div>
       ) : null}

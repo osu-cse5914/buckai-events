@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
@@ -108,15 +108,5 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       const lastCall = mockGet.mock.calls.at(-1);
       expect(lastCall?.[0].query.search).toBe("hackathon");
     });
-  });
-
-  it("TC-PAGES-013: renders the AI handoff link with the current prompt", async () => {
-    state.routeSearch = { q: "music" };
-    mockGet.mockResolvedValue(makeResponse([]));
-
-    await renderSearchPage();
-
-    const aiLink = await screen.findByRole("link", { name: /ask ai/i });
-    expect(aiLink).toHaveAttribute("href", "/ai?prompt=music");
   });
 });
