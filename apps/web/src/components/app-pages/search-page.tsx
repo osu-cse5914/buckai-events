@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { SearchIcon, SparklesIcon, XIcon } from "lucide-react";
+import { SearchIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,27 +56,35 @@ export function SearchPage() {
   const handoffPrompt = search.trim() || category.trim() || undefined;
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
       <div className="flex items-center gap-3">
         <SearchIcon className="size-6 text-muted-foreground" />
         <h1 className="text-3xl font-bold tracking-tight">Search</h1>
       </div>
 
-      <div className="rounded-2xl border bg-card p-4">
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_160px_auto]">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search events or gigs..."
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(0);
-              }}
-              className="pl-9"
-            />
-          </div>
+      <div className="flex flex-col gap-3 lg:flex-row">
+        <div className="relative flex-1">
+          <SearchIcon className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search events or gigs..."
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+            }}
+            className="h-14 rounded-2xl pl-12 text-base"
+          />
+        </div>
+        <Button variant="outline" className="h-14 px-6" asChild>
+          <Link to="/ai" search={{ prompt: handoffPrompt }}>
+            <SparklesIcon className="mr-1 size-4" />
+            Ask AI
+          </Link>
+        </Button>
+      </div>
 
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="grid flex-1 gap-3 sm:grid-cols-2">
           <Select value={type || "ALL"} onValueChange={updateType}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Any Type" />
@@ -96,20 +104,13 @@ export function SearchPage() {
               setPage(0);
             }}
           />
-
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={clearFilters}>
-              <XIcon className="mr-1 size-4" />
-              Clear
-            </Button>
-            <Button asChild>
-              <Link to="/ai" search={{ prompt: handoffPrompt }}>
-                <SparklesIcon className="mr-1 size-4" />
-                Ask AI
-              </Link>
-            </Button>
-          </div>
         </div>
+
+        {(search || type || category) ? (
+          <Button variant="outline" onClick={clearFilters}>
+            Clear
+          </Button>
+        ) : null}
       </div>
 
       {!hasStartedSearch ? (

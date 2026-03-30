@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { CompassIcon, XIcon } from "lucide-react";
+import { CompassIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -60,88 +59,80 @@ export function CatalogPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
       <div className="flex items-center gap-3">
         <CompassIcon className="size-6 text-muted-foreground" />
         <h1 className="text-3xl font-bold tracking-tight">Catalog</h1>
       </div>
 
-      <div className="rounded-2xl border bg-card p-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">Filters</p>
-          {hasActiveFilters ? (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <XIcon className="mr-1 size-4" />
-              Clear filters
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/search">Search</Link>
-            </Button>
-          )}
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Select
+          value={filters.type || "ALL"}
+          onValueChange={(value) =>
+            updateFilter("type", value === "ALL" ? "" : value)
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Types</SelectItem>
+            <SelectItem value="EVENT">Event</SelectItem>
+            <SelectItem value="GIG">Gig</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Select
-            value={filters.type || "ALL"}
-            onValueChange={(value) =>
-              updateFilter("type", value === "ALL" ? "" : value)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Types</SelectItem>
-              <SelectItem value="EVENT">Event</SelectItem>
-              <SelectItem value="GIG">Gig</SelectItem>
-            </SelectContent>
-          </Select>
+        <Select
+          value={filters.status || "ALL"}
+          onValueChange={(value) =>
+            updateFilter("status", value === "ALL" ? "" : value)
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Statuses</SelectItem>
+            <SelectItem value="OPEN">Open</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <Select
-            value={filters.status || "ALL"}
-            onValueChange={(value) =>
-              updateFilter("status", value === "ALL" ? "" : value)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="OPEN">Open</SelectItem>
-              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+        <Select
+          value={filters.source || "ALL"}
+          onValueChange={(value) =>
+            updateFilter("source", value === "ALL" ? "" : value)
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Sources</SelectItem>
+            <SelectItem value="USER">User</SelectItem>
+            <SelectItem value="OSU_API">OSU</SelectItem>
+            <SelectItem value="TICKETMASTER">Ticketmaster</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <Select
-            value={filters.source || "ALL"}
-            onValueChange={(value) =>
-              updateFilter("source", value === "ALL" ? "" : value)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Sources" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Sources</SelectItem>
-              <SelectItem value="USER">User</SelectItem>
-              <SelectItem value="OSU_API">OSU</SelectItem>
-              <SelectItem value="TICKETMASTER">Ticketmaster</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Input
-            placeholder="Category"
-            value={filters.category}
-            onChange={(event) =>
-              updateFilter("category", event.target.value)
-            }
-          />
-        </div>
+        <Input
+          placeholder="Category"
+          value={filters.category}
+          onChange={(event) =>
+            updateFilter("category", event.target.value)
+          }
+        />
       </div>
+
+      {hasActiveFilters ? (
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={clearFilters}>
+            Clear filters
+          </Button>
+        </div>
+      ) : null}
 
       {isLoading ? <EventsLoadingGrid /> : null}
       {isError ? (

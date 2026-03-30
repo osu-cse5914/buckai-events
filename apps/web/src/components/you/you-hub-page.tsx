@@ -19,7 +19,7 @@ export function YouHubPage() {
             <BriefcaseBusinessIcon className="size-5 text-muted-foreground" />
             <h2 className="text-lg font-semibold">Applications</h2>
           </div>
-          <Button asChild>
+          <Button variant="outline" asChild>
             <Link to="/you/applications">Applications</Link>
           </Button>
         </section>
@@ -29,7 +29,7 @@ export function YouHubPage() {
             <PlusSquareIcon className="size-5 text-muted-foreground" />
             <h2 className="text-lg font-semibold">Events</h2>
           </div>
-          <Button asChild>
+          <Button variant="outline" asChild>
             <Link to="/you/events">Events</Link>
           </Button>
         </section>
