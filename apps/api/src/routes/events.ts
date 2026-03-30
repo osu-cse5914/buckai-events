@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
+import { paginated, parsePagination } from "../lib/pagination";
+import { badRequest } from "../lib/problem-details";
+import { requireEvent, requireOwnedUserEvent } from "../lib/resources";
 
 // --- Status transition validation (Issue #42) ---
 
@@ -45,26 +48,26 @@ export const events = new Hono<AppEnv>()
     const { title, description, type, location, startAt, endAt, compensation } = body;
 
     if (!title || !description || !type || !location?.name || !startAt) {
-      return c.json(
-        { error: "Missing required fields: title, description, type, location.name, startAt" },
-        400,
+      return badRequest(
+        c,
+        "Missing required fields: title, description, type, location.name, startAt",
       );
     }
 
     if (!isAllowedValue(type, EVENT_TYPES)) {
-      return c.json({ error: "type must be EVENT or GIG" }, 400);
+      return badRequest(c, "type must be EVENT or GIG");
     }
 
     const parsedStartAt = parseDateValue(startAt);
     if (!parsedStartAt) {
-      return c.json({ error: "startAt must be a valid date" }, 400);
+      return badRequest(c, "startAt must be a valid date");
     }
 
     let parsedEndAt: Date | null = null;
     if (endAt !== undefined && endAt !== null) {
       parsedEndAt = parseDateValue(endAt);
       if (!parsedEndAt) {
-        return c.json({ error: "endAt must be a valid date" }, 400);
+        return badRequest(c, "endAt must be a valid date");
       }
     }
 
@@ -73,7 +76,7 @@ export const events = new Hono<AppEnv>()
       compensation?.type !== null &&
       !isAllowedValue(compensation.type, COMPENSATION_TYPES)
     ) {
-      return c.json({ error: "compensation.type must be FIXED or HOURLY" }, 400);
+      return badRequest(c, "compensation.type must be FIXED or HOURLY");
     }
 
     const prisma = getPrisma(c);
@@ -116,27 +119,32 @@ export const events = new Hono<AppEnv>()
     const status = c.req.query("status");
     const userId = c.req.query("user");
     const search = c.req.query("search");
-    const limitParam = c.req.query("limit");
-    const offsetParam = c.req.query("offset");
+    const pagination = parsePagination(c);
+    if ("response" in pagination) {
+      return pagination.response;
+    }
 
     const where: Record<string, unknown> = {};
 
     if (type) {
       if (!isAllowedValue(type, EVENT_TYPES)) {
-        return c.json({ error: "type must be EVENT or GIG" }, 400);
+        return badRequest(c, "type must be EVENT or GIG");
       }
       where.type = type;
     }
     if (category) where.category = category;
     if (source) {
       if (!isAllowedValue(source, EVENT_SOURCES)) {
-        return c.json({ error: "source must be OSU_API, TICKETMASTER, or USER" }, 400);
+        return badRequest(c, "source must be OSU_API, TICKETMASTER, or USER");
       }
       where.source = source;
     }
     if (status) {
       if (!isAllowedValue(status, EVENT_STATUSES)) {
-        return c.json({ error: "status must be OPEN, IN_PROGRESS, COMPLETED, or CANCELLED" }, 400);
+        return badRequest(
+          c,
+          "status must be OPEN, IN_PROGRESS, COMPLETED, or CANCELLED",
+        );
       }
       where.status = status;
     }
@@ -147,14 +155,14 @@ export const events = new Hono<AppEnv>()
       if (startDate) {
         const parsedStartDate = parseDateValue(startDate);
         if (!parsedStartDate) {
-          return c.json({ error: "startDate must be a valid date" }, 400);
+          return badRequest(c, "startDate must be a valid date");
         }
         startAtFilter.gte = parsedStartDate;
       }
       if (endDate) {
         const parsedEndDate = parseDateValue(endDate);
         if (!parsedEndDate) {
-          return c.json({ error: "endDate must be a valid date" }, 400);
+          return badRequest(c, "endDate must be a valid date");
         }
         startAtFilter.lte = parsedEndDate;
       }
@@ -168,8 +176,7 @@ export const events = new Hono<AppEnv>()
       ];
     }
 
-    const limit = Math.min(Math.max(Number(limitParam) || 20, 1), 100);
-    const offset = Math.max(Number(offsetParam) || 0, 0);
+    const { limit, offset } = pagination;
 
     const [data, total] = await Promise.all([
       prisma.event.findMany({
@@ -182,7 +189,7 @@ export const events = new Hono<AppEnv>()
       prisma.event.count({ where }),
     ]);
 
-    return c.json({ data, pagination: { total, limit, offset } });
+    return c.json(paginated(data, { total, limit, offset }));
   })
 
   // GET /:id — Event detail (#39)
@@ -190,13 +197,16 @@ export const events = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const id = c.req.param("id");
 
-    const event = await prisma.event.findUnique({
-      where: { id },
-      include: { creator: { select: CREATOR_SELECT } },
-    });
+    const event = await requireEvent(
+      c,
+      prisma.event.findUnique({
+        where: { id },
+        include: { creator: { select: CREATOR_SELECT } },
+      }),
+    );
 
-    if (!event) {
-      return c.json({ error: "Event not found" }, 404);
+    if (event instanceof Response) {
+      return event;
     }
 
     return c.json(event);
@@ -209,25 +219,21 @@ export const events = new Hono<AppEnv>()
     const id = c.req.param("id");
     const body = await c.req.json();
 
-    const event = await prisma.event.findUnique({ where: { id } });
-
-    if (!event) {
-      return c.json({ error: "Event not found" }, 404);
+    const event = await requireEvent(c, prisma.event.findUnique({ where: { id } }));
+    if (event instanceof Response) {
+      return event;
     }
 
-    if (event.source !== "USER") {
-      return c.json({ error: "External events cannot be modified" }, 403);
-    }
-
-    if (event.creatorId !== user.id) {
-      return c.json({ error: "Only the event creator can update this event" }, 403);
+    const ownershipError = requireOwnedUserEvent(c, event, user.id, "update");
+    if (ownershipError) {
+      return ownershipError;
     }
 
     if (body.status && body.status !== event.status) {
       if (!isValidStatusTransition(event.status, body.status)) {
-        return c.json(
-          { error: `Invalid status transition from ${event.status} to ${body.status}` },
-          400,
+        return badRequest(
+          c,
+          `Invalid status transition from ${event.status} to ${body.status}`,
         );
       }
     }
@@ -235,7 +241,7 @@ export const events = new Hono<AppEnv>()
     if (body.startAt !== undefined) {
       const parsedStartAt = parseDateValue(body.startAt);
       if (!parsedStartAt) {
-        return c.json({ error: "startAt must be a valid date" }, 400);
+        return badRequest(c, "startAt must be a valid date");
       }
       body.startAt = parsedStartAt;
     }
@@ -243,7 +249,7 @@ export const events = new Hono<AppEnv>()
     if (body.endAt !== undefined && body.endAt !== null) {
       const parsedEndAt = parseDateValue(body.endAt);
       if (!parsedEndAt) {
-        return c.json({ error: "endAt must be a valid date" }, 400);
+        return badRequest(c, "endAt must be a valid date");
       }
       body.endAt = parsedEndAt;
     }
@@ -253,7 +259,7 @@ export const events = new Hono<AppEnv>()
       body.compensation?.type !== null &&
       !isAllowedValue(body.compensation.type, COMPENSATION_TYPES)
     ) {
-      return c.json({ error: "compensation.type must be FIXED or HOURLY" }, 400);
+      return badRequest(c, "compensation.type must be FIXED or HOURLY");
     }
 
     const data: Record<string, unknown> = {};
@@ -287,18 +293,14 @@ export const events = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const id = c.req.param("id");
 
-    const event = await prisma.event.findUnique({ where: { id } });
-
-    if (!event) {
-      return c.json({ error: "Event not found" }, 404);
+    const event = await requireEvent(c, prisma.event.findUnique({ where: { id } }));
+    if (event instanceof Response) {
+      return event;
     }
 
-    if (event.source !== "USER") {
-      return c.json({ error: "External events cannot be deleted" }, 403);
-    }
-
-    if (event.creatorId !== user.id) {
-      return c.json({ error: "Only the event creator can delete this event" }, 403);
+    const ownershipError = requireOwnedUserEvent(c, event, user.id, "delete");
+    if (ownershipError) {
+      return ownershipError;
     }
 
     // Prisma schema cascades to applications, interactions, collectionItems, embedding

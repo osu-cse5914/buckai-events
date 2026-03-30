@@ -1,12 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarIcon, MapPinIcon } from "lucide-react";
-import { api } from "@/lib/api";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
   formatDate,
 } from "@/lib/event-utils";
+import { useApiClient } from "@/lib/api";
+import {
+  myApplicationsQueryOptions,
+  type MyApplication,
+  type PaginatedResponse,
+} from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,37 +20,9 @@ export const Route = createFileRoute("/_authenticated/applications/")({
   component: MyApplicationsPage,
 });
 
-type MyApplication = {
-  id: string;
-  message: string | null;
-  status: string;
-  gig: {
-    id: string;
-    title: string;
-    status: string;
-    startAt: string;
-    locationName: string;
-  };
-};
-
-type MyApplicationsResponse = {
-  data: MyApplication[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-  };
-};
-
 function useMyApplications() {
-  return useQuery<MyApplicationsResponse>({
-    queryKey: ["my-applications"],
-    queryFn: async () => {
-      const res = await api.api.v1.users.me.applications.$get();
-      if (!res.ok) throw new Error("Failed to load applications");
-      return res.json() as Promise<MyApplicationsResponse>;
-    },
-  });
+  const api = useApiClient();
+  return useQuery<PaginatedResponse<MyApplication>>(myApplicationsQueryOptions(api));
 }
 
 function MyApplicationsPage() {

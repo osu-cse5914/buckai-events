@@ -16,7 +16,7 @@ vi.mock("@hono/clerk-auth", () => ({
 vi.mock("../lib/prisma");
 
 import { getAuth } from "@hono/clerk-auth";
-import { getPrismaClient } from "../lib/prisma";
+import { getPrisma, getPrismaClient } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
 import { requireAuth } from "../middleware/auth";
 
@@ -41,6 +41,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
 
   beforeEach(() => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
   });
 
   // S-AUTH-5 → TC-AUTH-005: Missing or invalid JWT returns 401
@@ -51,7 +52,12 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(401);
-      expect(await res.json()).toEqual({ error: "Unauthorized" });
+      expect(await res.json()).toMatchObject({
+        type: expect.stringContaining("unauthorized"),
+        title: "Unauthorized",
+        status: 401,
+        detail: "Authentication is required",
+      });
     });
 
     it("TC-AUTH-005: returns 401 when auth is undefined", async () => {
@@ -60,7 +66,12 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(401);
-      expect(await res.json()).toEqual({ error: "Unauthorized" });
+      expect(await res.json()).toMatchObject({
+        type: expect.stringContaining("unauthorized"),
+        title: "Unauthorized",
+        status: 401,
+        detail: "Authentication is required",
+      });
     });
   });
 
@@ -200,8 +211,12 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(403);
-      expect(await res.json()).toEqual({
-        error: "Email domain not allowed. Only @osu.edu and @buckeyemail.osu.edu addresses are permitted.",
+      expect(await res.json()).toMatchObject({
+        type: expect.stringContaining("forbidden"),
+        title: "Forbidden",
+        status: 403,
+        detail:
+          "Email domain not allowed. Only @osu.edu and @buckeyemail.osu.edu addresses are permitted.",
       });
       expect(mockPrisma.user.create).not.toHaveBeenCalled();
     });
@@ -231,7 +246,12 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: "No email associated with account" });
+      expect(await res.json()).toMatchObject({
+        type: expect.stringContaining("invalid-request"),
+        title: "Invalid request",
+        status: 400,
+        detail: "No email associated with account",
+      });
     });
   });
 });

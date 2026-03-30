@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/debug/")({
   component: DebugPage,
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/debug/")({
 type HealthResponse = { service: string; status: string; timestamp: string };
 
 export function DebugPage() {
+  const api = useApiClient();
   const navigate = useNavigate();
   const { userId: authUserId, sessionId, orgId } = useAuth();
   const { user } = useUser();
@@ -31,7 +32,7 @@ export function DebugPage() {
         setDbUserId(data.id);
       }
     }).catch(() => {});
-  }, []);
+  }, [api]);
 
   const handleViewApiHealth = async () => {
     setIsCheckingHealth(true);

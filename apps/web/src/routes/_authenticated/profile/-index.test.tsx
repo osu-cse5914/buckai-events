@@ -6,20 +6,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Mock the api module before importing the component
 const mockGet = vi.fn();
 const mockPatch = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        users: {
-          me: {
-            $get: (...args: unknown[]) => mockGet(...args),
-            $patch: (...args: unknown[]) => mockPatch(...args),
-          },
+    v1: {
+      users: {
+        me: {
+          $get: (...args: unknown[]) => mockGet(...args),
+          $patch: (...args: unknown[]) => mockPatch(...args),
         },
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 // Mock TanStack Router's createFileRoute

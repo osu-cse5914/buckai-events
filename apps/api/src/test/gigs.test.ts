@@ -255,7 +255,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
   // GET /gigs/:gigId/applications (#57)
   // ===========================================================================
   describe("GET /:gigId/applications (#57)", () => {
-    it("owner sees all applications for their gig", async () => {
+    it("TC-AUTHZ-005: owner sees all applications for their gig", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(GIG as never);
 
       const apps = [
@@ -283,8 +283,11 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
       );
     });
 
-    it("applicant sees only their own application", async () => {
+    it("TC-AUTHZ-007: applicant sees only their own application", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(GIG as never);
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
+        makeApplication({ id: "app_1", applicantId: APPLICANT_A.id }) as never,
+      );
 
       const ownApp = [
         makeApplication({ id: "app_1", applicantId: APPLICANT_A.id }),
@@ -313,6 +316,24 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
           where: { gigId: GIG.id, applicantId: APPLICANT_A.id },
         }),
       );
+    });
+
+    it("TC-AUTHZ-006: non-owner who has not applied cannot view gig applications", async () => {
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(GIG as never);
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
+        null as never,
+      );
+
+      const res = await getApplications(createTestApp(APPLICANT_B), GIG.id);
+
+      expect(res.status).toBe(403);
+      expect(await res.json()).toMatchObject({
+        type: expect.stringContaining("forbidden"),
+        title: "Forbidden",
+        status: 403,
+        detail: "Only the gig owner or an applicant can view applications",
+      });
+      expect(mockPrisma.application.findMany).not.toHaveBeenCalled();
     });
 
     it("respects limit and offset pagination", async () => {

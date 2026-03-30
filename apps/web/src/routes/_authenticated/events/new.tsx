@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/events/new")({
 });
 
 function EventCreationPage() {
+  const api = useApiClient();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

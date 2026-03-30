@@ -1,26 +1,18 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
+import { paginated, paginatedMeta, parsePagination } from "../lib/pagination";
+import { badRequest, notFound } from "../lib/problem-details";
 
 export const users = new Hono<AppEnv>()
   .get("/me/applications", async (c) => {
     const { id } = c.get("user");
     const prisma = getPrisma(c);
-
-    const limitParam = c.req.query("limit");
-    const offsetParam = c.req.query("offset");
-
-    const parsedLimit = Number(limitParam);
-    const limit = Math.min(
-      Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1),
-      100,
-    );
-
-    const parsedOffset = Number(offsetParam);
-    const offset = Math.max(
-      Number.isFinite(parsedOffset) ? parsedOffset : 0,
-      0,
-    );
+    const pagination = parsePagination(c);
+    if ("response" in pagination) {
+      return pagination.response;
+    }
+    const { limit, offset } = pagination;
 
     const where = { applicantId: id };
     const [data, total] = await Promise.all([
@@ -44,24 +36,14 @@ export const users = new Hono<AppEnv>()
       prisma.application.count({ where }),
     ]);
 
-    return c.json({
-      data,
-      pagination: {
-        total,
-        limit,
-        offset,
-      },
-    });
+    return c.json(paginated(data, { total, limit, offset }));
   })
   .get("/me", async (c) => {
     const { id } = c.get("user");
     const prisma = getPrisma(c);
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      return c.json(
-        { type: "https://social-osu.app/problems/not-found", title: "Resource not found", status: 404, detail: "User not found" },
-        404
-      );
+      return notFound(c, "User not found");
     }
     return c.json(user);
   })
@@ -69,9 +51,11 @@ export const users = new Hono<AppEnv>()
     const { id } = c.get("user");
     const body = await c.req.json();
     if (typeof body !== "object" || body === null || Array.isArray(body)) {
-      return c.json(
-        { type: "https://social-osu.app/problems/invalid-body", title: "Invalid request body", status: 400, detail: "Request body must be a JSON object" },
-        400
+      return badRequest(
+        c,
+        "Request body must be a JSON object",
+        "invalid-body",
+        "Invalid request body",
       );
     }
     const allowedFields = ["displayName", "major", "gradYear", "interests"] as const;
@@ -92,24 +76,14 @@ export const users = new Hono<AppEnv>()
 
     const user = await prisma.user.findUnique({ where: { id: targetId } });
     if (!user) {
-      return c.json(
-        { type: "https://social-osu.app/problems/not-found", title: "Resource not found", status: 404, detail: `User ${targetId} was not found` },
-        404
-      );
+      return notFound(c, `User ${targetId} was not found`);
     }
 
-    const rawLimit = c.req.query("limit");
-    const rawOffset = c.req.query("offset");
-    const parsedLimit = rawLimit !== undefined ? Number(rawLimit) : 20;
-    const parsedOffset = rawOffset !== undefined ? Number(rawOffset) : 0;
-    if (Number.isNaN(parsedLimit) || Number.isNaN(parsedOffset)) {
-      return c.json(
-        { type: "https://social-osu.app/problems/invalid-query", title: "Invalid query parameter", status: 400, detail: "limit and offset must be numeric" },
-        400
-      );
+    const pagination = parsePagination(c, { strict: true });
+    if ("response" in pagination) {
+      return pagination.response;
     }
-    const limit = Math.min(parsedLimit, 100);
-    const offset = parsedOffset;
+    const { limit, offset } = pagination;
 
     const [events, eventCount, follow] = await Promise.all([
       prisma.event.findMany({
@@ -137,9 +111,6 @@ export const users = new Hono<AppEnv>()
       followingCount: user.followingCount,
       createdAt: user.createdAt,
       isFollowing: !!follow,
-      createdEvents: {
-        items: events,
-        meta: { total: eventCount, limit, offset },
-      },
+      createdEvents: paginatedMeta(events, { total: eventCount, limit, offset }),
     });
   });

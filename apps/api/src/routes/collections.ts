@@ -1,6 +1,11 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
+import {
+  requireCollection,
+  requireCollectionOwner,
+  requireCollectionVisibility,
+} from "../lib/resources";
 
 export const collections = new Hono<AppEnv>()
   // GET /:id — fetch a single collection with its items (#76)
@@ -9,19 +14,21 @@ export const collections = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const id = c.req.param("id");
 
-    const collection = await prisma.collection.findUnique({
-      where: { id },
-      include: { items: { include: { event: true } } },
-    });
+    const collection = await requireCollection(
+      c,
+      prisma.collection.findUnique({
+        where: { id },
+        include: { items: { include: { event: true } } },
+      }),
+    );
 
-    if (!collection) {
-      return c.json({ error: "Collection not found" }, 404);
+    if (collection instanceof Response) {
+      return collection;
     }
 
-    // owner always has access; others only if PUBLIC
-    if (collection.userId !== user.id && collection.visibility !== "PUBLIC") {
-      // hide existence of private collections to other users
-      return c.json({ error: "Collection not found" }, 404);
+    const visibilityError = requireCollectionVisibility(c, collection, user.id);
+    if (visibilityError) {
+      return visibilityError;
     }
 
     return c.json(collection);
@@ -33,14 +40,23 @@ export const collections = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const id = c.req.param("id");
 
-    const collection = await prisma.collection.findUnique({ where: { id } });
+    const collection = await requireCollection(
+      c,
+      prisma.collection.findUnique({ where: { id } }),
+    );
 
-    if (!collection) {
-      return c.json({ error: "Collection not found" }, 404);
+    if (collection instanceof Response) {
+      return collection;
     }
 
-    if (collection.userId !== user.id) {
-      return c.json({ error: "Only the owner can delete this collection" }, 403);
+    const ownershipError = requireCollectionOwner(
+      c,
+      collection,
+      user.id,
+      "Only the owner can delete this collection",
+    );
+    if (ownershipError) {
+      return ownershipError;
     }
 
     // Schema cascades to CollectionItem via onDelete: Cascade
@@ -49,5 +65,4 @@ export const collections = new Hono<AppEnv>()
     // 204 No Content
     return c.body(null, 204);
   });
-
 

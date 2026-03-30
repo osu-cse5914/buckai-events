@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
+import { paginated, parsePagination } from "../lib/pagination";
+import { badRequest, conflict, forbidden, notFound } from "../lib/problem-details";
+import { requireGig, resolveGigApplicationsWhere } from "../lib/resources";
 
 const APPLICANT_SELECT = {
   id: true,
@@ -16,56 +19,21 @@ export const gigs = new Hono<AppEnv>()
     const gigId = c.req.param("gigId");
     const prisma = getPrisma(c);
 
-    const gig = await prisma.event.findUnique({
-      where: { id: gigId },
+    const gig = await requireGig(c, prisma.event.findUnique({ where: { id: gigId } }), {
+      missingDetail: "Gig not found",
+      invalidDetail: "Event is not a gig",
     });
 
-    if (!gig) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/not-found",
-          title: "Resource not found",
-          status: 404,
-          detail: "Gig not found",
-        },
-        404,
-      );
-    }
-
-    if (gig.type !== "GIG") {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-request",
-          title: "Invalid request",
-          status: 400,
-          detail: "Event is not a gig",
-        },
-        400,
-      );
+    if (gig instanceof Response) {
+      return gig;
     }
 
     if (gig.status === "CANCELLED") {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-request",
-          title: "Invalid request",
-          status: 400,
-          detail: "Cannot apply to a cancelled gig",
-        },
-        400,
-      );
+      return badRequest(c, "Cannot apply to a cancelled gig");
     }
 
     if (gig.creatorId === userId) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/forbidden",
-          title: "Forbidden",
-          status: 403,
-          detail: "Cannot apply to your own gig",
-        },
-        403,
-      );
+      return forbidden(c, "Cannot apply to your own gig");
     }
 
     // Check for duplicate application
@@ -74,15 +42,7 @@ export const gigs = new Hono<AppEnv>()
     });
 
     if (existing) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/conflict",
-          title: "Conflict",
-          status: 409,
-          detail: "You have already applied to this gig",
-        },
-        409,
-      );
+      return conflict(c, "You have already applied to this gig");
     }
 
     // Parse optional message from body
@@ -131,69 +91,36 @@ export const gigs = new Hono<AppEnv>()
     const body = await c.req.json();
 
     if (typeof body !== "object" || body === null || Array.isArray(body)) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-body",
-          title: "Invalid request body",
-          status: 400,
-          detail: "Request body must be a JSON object",
-        },
-        400,
+      return badRequest(
+        c,
+        "Request body must be a JSON object",
+        "invalid-body",
+        "Invalid request body",
       );
     }
 
     if (body.status !== "ACCEPTED" && body.status !== "REJECTED") {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-body",
-          title: "Invalid request body",
-          status: 400,
-          detail: "status must be ACCEPTED or REJECTED",
-        },
-        400,
+      return badRequest(
+        c,
+        "status must be ACCEPTED or REJECTED",
+        "invalid-body",
+        "Invalid request body",
       );
     }
 
     const prisma = getPrisma(c);
 
-    const gig = await prisma.event.findUnique({
-      where: { id: gigId },
+    const gig = await requireGig(c, prisma.event.findUnique({ where: { id: gigId } }), {
+      missingDetail: "Gig not found",
+      invalidDetail: "Event is not a gig",
     });
 
-    if (!gig) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/not-found",
-          title: "Resource not found",
-          status: 404,
-          detail: "Gig not found",
-        },
-        404,
-      );
-    }
-
-    if (gig.type !== "GIG") {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-request",
-          title: "Invalid request",
-          status: 400,
-          detail: "Event is not a gig",
-        },
-        400,
-      );
+    if (gig instanceof Response) {
+      return gig;
     }
 
     if (gig.creatorId !== userId) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/forbidden",
-          title: "Forbidden",
-          status: 403,
-          detail: "Only the gig owner can update application status",
-        },
-        403,
-      );
+      return forbidden(c, "Only the gig owner can update application status");
     }
 
     const application = await prisma.application.findUnique({
@@ -201,27 +128,11 @@ export const gigs = new Hono<AppEnv>()
     });
 
     if (!application || application.gigId !== gigId) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/not-found",
-          title: "Resource not found",
-          status: 404,
-          detail: "Application not found",
-        },
-        404,
-      );
+      return notFound(c, "Application not found");
     }
 
     if (application.status !== "PENDING") {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-request",
-          title: "Invalid request",
-          status: 400,
-          detail: "Only PENDING applications can be updated",
-        },
-        400,
-      );
+      return badRequest(c, "Only PENDING applications can be updated");
     }
 
     // Atomic update: include status condition to prevent race conditions
@@ -231,15 +142,7 @@ export const gigs = new Hono<AppEnv>()
     });
 
     if (count.count === 0) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-request",
-          title: "Invalid request",
-          status: 400,
-          detail: "Only PENDING applications can be updated",
-        },
-        400,
-      );
+      return badRequest(c, "Only PENDING applications can be updated");
     }
 
     const updated = await prisma.application.findUniqueOrThrow({
@@ -254,59 +157,37 @@ export const gigs = new Hono<AppEnv>()
     const { id: userId } = c.get("user");
     const gigId = c.req.param("gigId");
 
-    const limitParam = c.req.query("limit");
-    const offsetParam = c.req.query("offset");
-
-    const parsedLimit = Number(limitParam);
-    const limit = Math.min(
-      Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1),
-      100,
-    );
-
-    const parsedOffset = Number(offsetParam);
-    const offset = Math.max(
-      Number.isFinite(parsedOffset) ? parsedOffset : 0,
-      0,
-    );
+    const pagination = parsePagination(c);
+    if ("response" in pagination) {
+      return pagination.response;
+    }
+    const { limit, offset } = pagination;
     const prisma = getPrisma(c);
 
-    const gig = await prisma.event.findUnique({
-      where: { id: gigId },
-      select: {
-        id: true,
-        type: true,
-        creatorId: true,
+    const gig = await requireGig(
+      c,
+      prisma.event.findUnique({
+        where: { id: gigId },
+        select: {
+          id: true,
+          type: true,
+          creatorId: true,
+        },
+      }),
+      {
+        missingDetail: "Gig not found",
+        invalidDetail: "Event is not a gig",
       },
-    });
+    );
 
-    if (!gig) {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/not-found",
-          title: "Resource not found",
-          status: 404,
-          detail: "Gig not found",
-        },
-        404,
-      );
+    if (gig instanceof Response) {
+      return gig;
     }
 
-    if (gig.type !== "GIG") {
-      return c.json(
-        {
-          type: "https://social-osu.app/problems/invalid-request",
-          title: "Invalid request",
-          status: 400,
-          detail: "Event is not a gig",
-        },
-        400,
-      );
+    const where = await resolveGigApplicationsWhere(c, prisma, gig, gigId, userId);
+    if (where instanceof Response) {
+      return where;
     }
-
-    const where =
-      gig.creatorId === userId
-        ? { gigId }
-        : { gigId, applicantId: userId };
 
     const [data, total] = await Promise.all([
       prisma.application.findMany({
@@ -325,12 +206,5 @@ export const gigs = new Hono<AppEnv>()
       prisma.application.count({ where }),
     ]);
 
-    return c.json({
-      data,
-      pagination: {
-        total,
-        limit,
-        offset,
-      },
-    });
+    return c.json(paginated(data, { total, limit, offset }));
   })

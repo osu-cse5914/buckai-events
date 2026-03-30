@@ -5,34 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
+import {
+  currentUserQueryOptions,
+  queryKeys,
+  type CurrentUser,
+} from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/profile/")({
   component: ProfilePage,
 });
 
-type User = {
-  id: string;
-  email: string;
-  displayName: string | null;
-  major: string | null;
-  gradYear: number | null;
-  interests: string[];
-  createdAt: string;
-  updatedAt: string;
-  followerCount: number;
-  followingCount: number;
-};
-
 function useProfile() {
-  return useQuery<User>({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const res = await api.api.v1.users.me.$get();
-      if (!res.ok) throw new Error("Failed to load profile");
-      return res.json() as Promise<User>;
-    },
-  });
+  const api = useApiClient();
+  return useQuery<CurrentUser>(currentUserQueryOptions(api));
 }
 
 export function ProfilePage() {
@@ -102,7 +88,7 @@ export function ProfilePage() {
   );
 }
 
-function ProfileDisplay({ user }: { user: User }) {
+function ProfileDisplay({ user }: { user: CurrentUser }) {
   return (
     <div className="mt-6 space-y-4">
       <Field label="Email" value={user.email} />
@@ -128,10 +114,11 @@ function ProfileEditForm({
   onCancel,
   onSaved,
 }: {
-  user: User;
+  user: CurrentUser;
   onCancel: () => void;
   onSaved: () => void;
 }) {
+  const api = useApiClient();
   const queryClient = useQueryClient();
   const [displayName, setDisplayName] = useState(user.displayName ?? "");
   const [major, setMajor] = useState(user.major ?? "");
@@ -145,7 +132,7 @@ function ProfileEditForm({
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile });
       onSaved();
     },
   });

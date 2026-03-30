@@ -69,7 +69,12 @@ describe("[phase:2] [regression:always] Collection management API", () => {
 
     const res = await createTestApp(USER_B).request("/collections/col1");
     expect(res.status).toBe(404);
-    expect(await res.json()).toEqual({ error: "Collection not found" });
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("not-found"),
+      title: "Resource not found",
+      status: 404,
+      detail: "Collection not found",
+    });
   });
 
   it("owner can view their own private collection", async () => {
@@ -109,7 +114,12 @@ describe("[phase:2] [regression:always] Collection management API", () => {
 
     const res = await deleteCollection(createTestApp(), "notfound");
     expect(res.status).toBe(404);
-    expect(await res.json()).toEqual({ error: "Collection not found" });
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("not-found"),
+      title: "Resource not found",
+      status: 404,
+      detail: "Collection not found",
+    });
     expect(mockPrisma.collection.delete).not.toHaveBeenCalled();
   });
 
@@ -119,7 +129,12 @@ describe("[phase:2] [regression:always] Collection management API", () => {
 
     const res = await deleteCollection(createTestApp(USER_A), "col1");
     expect(res.status).toBe(403);
-    expect(await res.json()).toEqual({ error: "Only the owner can delete this collection" });
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("forbidden"),
+      title: "Forbidden",
+      status: 403,
+      detail: "Only the owner can delete this collection",
+    });
     expect(mockPrisma.collection.delete).not.toHaveBeenCalled();
   });
 });

@@ -9,7 +9,14 @@ import {
   PencilIcon,
   TrashIcon,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
+import {
+  currentGigApplicationQueryOptions,
+  currentUserQueryOptions,
+  eventDetailQueryOptions,
+  queryKeys,
+  type ApplicationSummary,
+} from "@/lib/queries";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
@@ -63,67 +70,16 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   CANCELLED: [],
 };
 
-type ApplicationSummary = {
-  id: string;
-  message: string | null;
-  status: string;
-};
-
-type GigApplicationsResponse = {
-  data: ApplicationSummary[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-  };
-};
-
-function useEvent(eventId: string) {
-  return useQuery({
-    queryKey: ["event", eventId],
-    queryFn: async () => {
-      const res = await api.api.v1.events[":id"].$get({
-        param: { id: eventId },
-      });
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error("Failed to load event");
-      return res.json();
-    },
-  });
-}
-
-function useCurrentUser() {
-  return useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const res = await api.api.v1.users.me.$get();
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
-}
-
-function useGigApplications(gigId: string, enabled: boolean) {
-  return useQuery<GigApplicationsResponse>({
-    queryKey: ["gig", gigId, "applications", "me"],
-    enabled,
-    queryFn: async () => {
-      const res = await api.api.v1.gigs[":gigId"].applications.$get({
-        param: { gigId },
-      });
-      if (!res.ok) throw new Error("Failed to load application status");
-      return res.json() as Promise<GigApplicationsResponse>;
-    },
-  });
-}
-
 function EventDetailPage() {
+  const api = useApiClient();
   const { eventId } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: event, isLoading, error } = useEvent(eventId);
-  const { data: currentUser } = useCurrentUser();
+  const { data: event, isLoading, error } = useQuery(
+    eventDetailQueryOptions(api, eventId),
+  );
+  const { data: currentUser } = useQuery(currentUserQueryOptions(api));
 
   const isCreator = !!(
     currentUser &&
@@ -137,7 +93,10 @@ function EventDetailPage() {
     event.type === "GIG" &&
     currentUser.id !== event.creatorId
   );
-  const applicationsQuery = useGigApplications(eventId, showGigApplication);
+  const applicationsQuery = useQuery({
+    ...currentGigApplicationQueryOptions(api, eventId),
+    enabled: showGigApplication,
+  });
   const [statusValue, setStatusValue] = useState<string>("");
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
   const [applyMessage, setApplyMessage] = useState("");
@@ -158,7 +117,7 @@ function EventDetailPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.event(eventId) });
     },
   });
 
@@ -208,9 +167,9 @@ function EventDetailPage() {
       setApplySuccessMessage("Application submitted.");
       setIsApplyDialogOpen(false);
       queryClient.invalidateQueries({
-        queryKey: ["gig", eventId, "applications", "me"],
+        queryKey: queryKeys.gigApplicationStatus(eventId),
       });
-      queryClient.invalidateQueries({ queryKey: ["my-applications"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myApplications });
     },
     onError: (error) => {
       setApplyErrorMessage(
@@ -270,8 +229,7 @@ function EventDetailPage() {
   }
 
   const validTransitions = VALID_TRANSITIONS[event.status] || [];
-  const currentApplication =
-    submittedApplication ?? applicationsQuery.data?.data[0] ?? null;
+  const currentApplication = submittedApplication ?? applicationsQuery.data ?? null;
   const hasApplied = !!currentApplication;
 
   return (

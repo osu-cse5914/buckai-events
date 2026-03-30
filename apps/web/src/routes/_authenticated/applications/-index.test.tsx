@@ -3,21 +3,23 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockApplicationsGet = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        users: {
-          me: {
-            applications: {
-              $get: (...args: unknown[]) => mockApplicationsGet(...args),
-            },
+    v1: {
+      users: {
+        me: {
+          applications: {
+            $get: (...args: unknown[]) => mockApplicationsGet(...args),
           },
         },
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 let capturedComponent: React.ComponentType | null = null;

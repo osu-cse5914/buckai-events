@@ -6,35 +6,41 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 const mockEventGet = vi.fn();
 const mockGigApplicationsGet = vi.fn();
 const mockGigApplicationsPost = vi.fn();
+const mockMyApplicationsGet = vi.fn();
 const mockUserGet = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        events: {
-          ":id": {
-            $get: (...args: unknown[]) => mockEventGet(...args),
-            $patch: vi.fn(),
-            $delete: vi.fn(),
+    v1: {
+      events: {
+        ":id": {
+          $get: (...args: unknown[]) => mockEventGet(...args),
+          $patch: vi.fn(),
+          $delete: vi.fn(),
+        },
+      },
+      gigs: {
+        ":gigId": {
+          applications: {
+            $get: (...args: unknown[]) => mockGigApplicationsGet(...args),
+            $post: (...args: unknown[]) => mockGigApplicationsPost(...args),
           },
         },
-        gigs: {
-          ":gigId": {
-            applications: {
-              $get: (...args: unknown[]) => mockGigApplicationsGet(...args),
-              $post: (...args: unknown[]) => mockGigApplicationsPost(...args),
-            },
-          },
-        },
-        users: {
-          me: {
-            $get: (...args: unknown[]) => mockUserGet(...args),
+      },
+      users: {
+        me: {
+          $get: (...args: unknown[]) => mockUserGet(...args),
+          applications: {
+            $get: (...args: unknown[]) => mockMyApplicationsGet(...args),
           },
         },
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 let capturedComponent: React.ComponentType | null = null;
@@ -119,6 +125,9 @@ function okJson(data: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   capturedComponent = null;
+  mockMyApplicationsGet.mockResolvedValue(
+    okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
+  );
   vi.resetModules();
 });
 

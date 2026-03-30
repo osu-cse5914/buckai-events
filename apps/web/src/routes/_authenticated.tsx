@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   createFileRoute,
   Link,
   Outlet,
   redirect,
 } from "@tanstack/react-router";
-import { useAuth, UserButton } from "@clerk/clerk-react";
+import { UserButton } from "@clerk/clerk-react";
 import { MenuIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { api, setTokenGetter } from "@/lib/api";
 
 export const navLinks = [
   { to: "/events", label: "Events" },
@@ -34,17 +33,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-  const { getToken } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setTokenGetter(getToken);
-
-    // Trigger user provisioning on first authenticated load
-    api.api.v1.auth.me.$get().catch(() => {
-      // Provisioning errors are non-fatal for the UI
-    });
-  }, [getToken]);
 
   return (
     <>

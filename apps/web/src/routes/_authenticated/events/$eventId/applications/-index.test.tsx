@@ -7,34 +7,37 @@ const mockEventGet = vi.fn();
 const mockApplicationsGet = vi.fn();
 const mockApplicationPatch = vi.fn();
 const mockUserGet = vi.fn();
-
-vi.mock("@/lib/api", () => ({
+let mockLoaderData: unknown;
+const mockApiClient = {
   api: {
-    api: {
-      v1: {
-        events: {
-          ":id": {
-            $get: (...args: unknown[]) => mockEventGet(...args),
-          },
+    v1: {
+      events: {
+        ":id": {
+          $get: (...args: unknown[]) => mockEventGet(...args),
         },
-        gigs: {
-          ":gigId": {
-            applications: {
-              $get: (...args: unknown[]) => mockApplicationsGet(...args),
-              ":appId": {
-                $patch: (...args: unknown[]) => mockApplicationPatch(...args),
-              },
+      },
+      gigs: {
+        ":gigId": {
+          applications: {
+            $get: (...args: unknown[]) => mockApplicationsGet(...args),
+            ":appId": {
+              $patch: (...args: unknown[]) => mockApplicationPatch(...args),
             },
           },
         },
-        users: {
-          me: {
-            $get: (...args: unknown[]) => mockUserGet(...args),
-          },
+      },
+      users: {
+        me: {
+          $get: (...args: unknown[]) => mockUserGet(...args),
         },
       },
     },
   },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
 }));
 
 let capturedComponent: React.ComponentType | null = null;
@@ -45,6 +48,7 @@ vi.mock("@tanstack/react-router", () => ({
     return {
       component: config.component,
       useParams: () => ({ eventId: "evt_1" }),
+      useLoaderData: () => mockLoaderData,
     };
   },
   Link: ({
@@ -112,6 +116,7 @@ function okJson(data: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   capturedComponent = null;
+  mockLoaderData = undefined;
   vi.resetModules();
 });
 
@@ -131,6 +136,11 @@ async function renderPage() {
 
 describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
   it("TC-APP-012: renders applicant info and actions for pending applications", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: { id: "user_owner", email: "owner@osu.edu" },
+    };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(
       okJson({ id: "user_owner", email: "owner@osu.edu" }),
@@ -169,6 +179,11 @@ describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
   });
 
   it("TC-APP-012: updates application status immediately after an owner decision", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: { id: "user_owner", email: "owner@osu.edu" },
+    };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(
       okJson({ id: "user_owner", email: "owner@osu.edu" }),
