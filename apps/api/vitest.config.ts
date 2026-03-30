@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    exclude: ["src/test/runtime/**"],
     setupFiles: ["./setupTests.ts"],
     coverage: {
       provider: "istanbul",
