@@ -1,3 +1,5 @@
+/// <reference path="../../worker-configuration.d.ts" />
+
 import type { PrismaClient } from "@prisma/client";
 
 export type WorkerBindings = Env & {

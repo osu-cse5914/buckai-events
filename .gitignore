@@ -19,3 +19,4 @@ apps/web/vite.config.js
 test-results
 playwright-report
 apps/docs/src/content/docs/specs
+apps/docs/src/content/docs/plans

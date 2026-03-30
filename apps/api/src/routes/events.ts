@@ -3,10 +3,12 @@ import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
 import { badRequest } from "../lib/problem-details";
 import {
-  validateEventCreateJson,
+  parseEventCreateBody,
+  parseEventUpdateBody,
+  readJsonBody,
+  toEventListInput,
   validateEventIdParam,
   validateEventListQuery,
-  validateEventUpdateJson,
 } from "../lib/validators";
 import { requireEvent, requireOwnedUserEvent } from "../lib/resources";
 import type { AppEnv } from "../lib/types";
@@ -21,9 +23,12 @@ import {
 export { isValidStatusTransition } from "../services/events";
 
 export const events = new Hono<AppEnv>()
-  .post("/", validateEventCreateJson, async (c) => {
+  .post("/", async (c) => {
     const user = c.get("user");
-    const input = c.req.valid("json");
+    const input = parseEventCreateBody(await readJsonBody(c), c);
+    if (input instanceof Response) {
+      return input;
+    }
     const prisma = getPrisma(c);
 
     const event = await createEvent(prisma, user.id, input);
@@ -31,7 +36,7 @@ export const events = new Hono<AppEnv>()
   })
   .get("/", validateEventListQuery, async (c) => {
     const prisma = getPrisma(c);
-    const query = c.req.valid("query");
+    const query = toEventListInput(c.req.valid("query"));
     const result = await listEvents(prisma, query);
 
     return c.json(
@@ -60,11 +65,14 @@ export const events = new Hono<AppEnv>()
 
     return c.json(event);
   })
-  .patch("/:id", validateEventIdParam, validateEventUpdateJson, async (c) => {
+  .patch("/:id", validateEventIdParam, async (c) => {
     const user = c.get("user");
     const prisma = getPrisma(c);
     const { id } = c.req.valid("param");
-    const body = c.req.valid("json");
+    const body = parseEventUpdateBody(await readJsonBody(c), c);
+    if (body instanceof Response) {
+      return body;
+    }
 
     const event = await requireEvent(c, prisma.event.findUnique({ where: { id } }));
     if (event instanceof Response) {

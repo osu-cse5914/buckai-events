@@ -1,3 +1,4 @@
+import type { Context } from "hono";
 import { validator } from "hono/validator";
 import { badRequest } from "./problem-details";
 import {
@@ -14,6 +15,22 @@ import {
   type EventUpdateInput,
 } from "../services/events";
 import type { GigApplicationInput } from "../services/gigs";
+
+export type PaginationQuery = {
+  limit?: string;
+  offset?: string;
+};
+
+export type EventListQuery = PaginationQuery & {
+  type?: string;
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  source?: string;
+  status?: string;
+  user?: string;
+  search?: string;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -82,6 +99,44 @@ function firstQueryValue(value: string | string[] | undefined): string | undefin
   return Array.isArray(value) ? value[0] : value;
 }
 
+export function resolvePaginationQuery(
+  query: PaginationQuery,
+  options?: Parameters<typeof parsePaginationInput>[2],
+): { limit: number; offset: number } {
+  const pagination = parsePaginationInput(query.limit, query.offset, options);
+  if (pagination === "invalid") {
+    throw new Error("Pagination query must be validated before parsing");
+  }
+
+  return pagination;
+}
+
+export function toEventListInput(query: EventListQuery): EventListInput {
+  return {
+    ...resolvePaginationQuery(query),
+    type: query.type as EventType | undefined,
+    category: query.category,
+    startDate: query.startDate ? new Date(query.startDate) : undefined,
+    endDate: query.endDate ? new Date(query.endDate) : undefined,
+    source: query.source as EventSource | undefined,
+    status: query.status as EventStatus | undefined,
+    user: query.user,
+    search: query.search,
+  };
+}
+
+export async function readJsonBody(c: Context): Promise<unknown> {
+  try {
+    return await c.req.json();
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return undefined;
+    }
+
+    throw error;
+  }
+}
+
 export const validateEventIdParam = validator("param", (value, c) => {
   const id = value.id?.trim();
   if (!id) {
@@ -138,7 +193,10 @@ export const validateUserIdParam = validator("param", (value, c) => {
   return { id };
 });
 
-export const validateEventCreateJson = validator("json", (value, c) => {
+export function parseEventCreateBody(
+  value: unknown,
+  c: Context,
+): EventCreateInput | Response {
   if (!isRecord(value)) {
     return badRequest(
       c,
@@ -225,9 +283,14 @@ export const validateEventCreateJson = validator("json", (value, c) => {
     endAt: parsedEndAt,
     compensation: parsedCompensation,
   } satisfies EventCreateInput;
-});
+}
 
-export const validateEventUpdateJson = validator("json", (value, c) => {
+export const validateEventCreateJson = validator("json", parseEventCreateBody);
+
+export function parseEventUpdateBody(
+  value: unknown,
+  c: Context,
+): EventUpdateInput | Response {
   if (!isRecord(value)) {
     return badRequest(
       c,
@@ -322,7 +385,9 @@ export const validateEventUpdateJson = validator("json", (value, c) => {
   }
 
   return output;
-});
+}
+
+export const validateEventUpdateJson = validator("json", parseEventUpdateBody);
 
 export const validateEventListQuery = validator("query", (value, c) => {
   const pagination = parsePaginationInput(value.limit, value.offset);
@@ -335,7 +400,17 @@ export const validateEventListQuery = validator("query", (value, c) => {
     );
   }
 
-  let type: EventType | undefined;
+  const output: EventListQuery = {};
+  const limitValue = firstQueryValue(value.limit);
+  const offsetValue = firstQueryValue(value.offset);
+  if (limitValue !== undefined) {
+    output.limit = limitValue;
+  }
+  if (offsetValue !== undefined) {
+    output.offset = offsetValue;
+  }
+
+  let type: string | undefined;
   const typeValue = firstQueryValue(value.type);
   if (typeValue !== undefined) {
     if (!isAllowedValue(typeValue, EVENT_TYPES)) {
@@ -343,8 +418,11 @@ export const validateEventListQuery = validator("query", (value, c) => {
     }
     type = typeValue;
   }
+  if (type !== undefined) {
+    output.type = type;
+  }
 
-  let source: EventSource | undefined;
+  let source: string | undefined;
   const sourceValue = firstQueryValue(value.source);
   if (sourceValue !== undefined) {
     if (!isAllowedValue(sourceValue, EVENT_SOURCES)) {
@@ -352,8 +430,11 @@ export const validateEventListQuery = validator("query", (value, c) => {
     }
     source = sourceValue;
   }
+  if (source !== undefined) {
+    output.source = source;
+  }
 
-  let status: EventStatus | undefined;
+  let status: string | undefined;
   const statusValue = firstQueryValue(value.status);
   if (statusValue !== undefined) {
     if (!isAllowedValue(statusValue, EVENT_STATUSES)) {
@@ -364,38 +445,52 @@ export const validateEventListQuery = validator("query", (value, c) => {
     }
     status = statusValue;
   }
+  if (status !== undefined) {
+    output.status = status;
+  }
 
-  let startDate: Date | undefined;
+  let startDate: string | undefined;
   const startDateValue = firstQueryValue(value.startDate);
   if (startDateValue !== undefined) {
     const parsedStartDate = parseDateValue(startDateValue);
     if (!parsedStartDate) {
       return badRequest(c, "startDate must be a valid date");
     }
-    startDate = parsedStartDate;
+    startDate = startDateValue;
+  }
+  if (startDate !== undefined) {
+    output.startDate = startDate;
   }
 
-  let endDate: Date | undefined;
+  let endDate: string | undefined;
   const endDateValue = firstQueryValue(value.endDate);
   if (endDateValue !== undefined) {
     const parsedEndDate = parseDateValue(endDateValue);
     if (!parsedEndDate) {
       return badRequest(c, "endDate must be a valid date");
     }
-    endDate = parsedEndDate;
+    endDate = endDateValue;
+  }
+  if (endDate !== undefined) {
+    output.endDate = endDate;
   }
 
-  return {
-    type,
-    category: firstQueryValue(value.category),
-    startDate,
-    endDate,
-    source,
-    status,
-    user: firstQueryValue(value.user),
-    search: firstQueryValue(value.search),
-    ...pagination,
-  } satisfies EventListInput;
+  const category = firstQueryValue(value.category);
+  if (category !== undefined) {
+    output.category = category;
+  }
+
+  const user = firstQueryValue(value.user);
+  if (user !== undefined) {
+    output.user = user;
+  }
+
+  const search = firstQueryValue(value.search);
+  if (search !== undefined) {
+    output.search = search;
+  }
+
+  return output;
 });
 
 export const validatePaginationQuery = validator("query", (value, c) => {
@@ -409,7 +504,17 @@ export const validatePaginationQuery = validator("query", (value, c) => {
     );
   }
 
-  return pagination;
+  const output: PaginationQuery = {};
+  const limitValue = firstQueryValue(value.limit);
+  const offsetValue = firstQueryValue(value.offset);
+  if (limitValue !== undefined) {
+    output.limit = limitValue;
+  }
+  if (offsetValue !== undefined) {
+    output.offset = offsetValue;
+  }
+
+  return output;
 });
 
 export const validateStrictPaginationQuery = validator("query", (value, c) => {
@@ -425,10 +530,20 @@ export const validateStrictPaginationQuery = validator("query", (value, c) => {
     );
   }
 
-  return pagination;
+  const output: PaginationQuery = {};
+  const limitValue = firstQueryValue(value.limit);
+  const offsetValue = firstQueryValue(value.offset);
+  if (limitValue !== undefined) {
+    output.limit = limitValue;
+  }
+  if (offsetValue !== undefined) {
+    output.offset = offsetValue;
+  }
+
+  return output;
 });
 
-export const validateGigApplicationJson = validator("json", (value) => {
+export function parseGigApplicationBody(value: unknown): GigApplicationInput {
   if (!isRecord(value)) {
     return {
       message: null,
@@ -438,9 +553,14 @@ export const validateGigApplicationJson = validator("json", (value) => {
   return {
     message: typeof value.message === "string" ? value.message : null,
   } satisfies GigApplicationInput;
-});
+}
 
-export const validateGigApplicationStatusJson = validator("json", (value, c) => {
+export const validateGigApplicationJson = validator("json", parseGigApplicationBody);
+
+export function parseGigApplicationStatusBody(
+  value: unknown,
+  c: Context,
+): { status: "ACCEPTED" | "REJECTED" } | Response {
   if (!isRecord(value)) {
     return badRequest(
       c,
@@ -460,9 +580,17 @@ export const validateGigApplicationStatusJson = validator("json", (value, c) => 
   }
 
   return { status: value.status };
-});
+}
 
-export const validateUserPatchJson = validator("json", (value, c) => {
+export const validateGigApplicationStatusJson = validator(
+  "json",
+  parseGigApplicationStatusBody,
+);
+
+export function parseUserPatchBody(
+  value: unknown,
+  c: Context,
+): Record<string, unknown> | Response {
   if (!isRecord(value)) {
     return badRequest(
       c,
@@ -482,4 +610,6 @@ export const validateUserPatchJson = validator("json", (value, c) => {
   }
 
   return data;
-});
+}
+
+export const validateUserPatchJson = validator("json", parseUserPatchBody);

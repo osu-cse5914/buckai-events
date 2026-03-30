@@ -1,3 +1,5 @@
+/// <reference path="../worker-configuration.d.ts" />
+
 import { app } from "./app";
 import { autoCompleteEvents } from "./scheduled/auto-complete";
 import { ensureClerkPublishableKey } from "./lib/clerk";
@@ -7,6 +9,7 @@ import type { WorkerBindings } from "./lib/types";
 // Compatible with both Bun (reads `port`) and CF Workers (ignores `port`, uses `fetch`)
 ensureClerkPublishableKey();
 export { app } from "./app";
+export type { AppType } from "./app";
 
 const worker = {
   port: typeof process !== "undefined" ? Number(process.env.PORT ?? 3001) : 3001,

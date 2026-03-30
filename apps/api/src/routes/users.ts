@@ -3,10 +3,12 @@ import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
 import { notFound } from "../lib/problem-details";
 import {
+  parseUserPatchBody,
+  readJsonBody,
+  resolvePaginationQuery,
   validatePaginationQuery,
   validateStrictPaginationQuery,
   validateUserIdParam,
-  validateUserPatchJson,
 } from "../lib/validators";
 import type { AppEnv } from "../lib/types";
 import { getPublicProfile, listOwnApplications } from "../services/users";
@@ -15,7 +17,7 @@ export const users = new Hono<AppEnv>()
   .get("/me/applications", validatePaginationQuery, async (c) => {
     const { id } = c.get("user");
     const prisma = getPrisma(c);
-    const { limit, offset } = c.req.valid("query");
+    const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
 
     const result = await listOwnApplications(prisma, {
       applicantId: id,
@@ -40,9 +42,12 @@ export const users = new Hono<AppEnv>()
     }
     return c.json(user);
   })
-  .patch("/me", validateUserPatchJson, async (c) => {
+  .patch("/me", async (c) => {
     const { id } = c.get("user");
-    const data = c.req.valid("json");
+    const data = parseUserPatchBody(await readJsonBody(c), c);
+    if (data instanceof Response) {
+      return data;
+    }
     const prisma = getPrisma(c);
     const updated = await prisma.user.update({ where: { id }, data });
     return c.json(updated);
@@ -50,7 +55,9 @@ export const users = new Hono<AppEnv>()
   .get("/:id", validateUserIdParam, validateStrictPaginationQuery, async (c) => {
     const { id: authUserId } = c.get("user");
     const { id: targetId } = c.req.valid("param");
-    const { limit, offset } = c.req.valid("query");
+    const { limit, offset } = resolvePaginationQuery(c.req.valid("query"), {
+      strict: true,
+    });
     const prisma = getPrisma(c);
 
     const profile = await getPublicProfile(prisma, {

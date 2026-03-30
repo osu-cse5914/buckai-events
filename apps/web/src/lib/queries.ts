@@ -176,6 +176,7 @@ export function gigApplicationsQueryOptions(api: ApiClient, eventId: string) {
     queryFn: async () => {
       const res = await api.api.v1.gigs[":gigId"].applications.$get({
         param: { gigId: eventId },
+        query: {},
       });
       if (!res.ok) {
         throw new Error("Failed to load applications");

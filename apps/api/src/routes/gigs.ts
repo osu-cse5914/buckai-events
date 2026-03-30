@@ -4,9 +4,11 @@ import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
 import { badRequest, conflict, forbidden, notFound } from "../lib/problem-details";
 import {
-  validateGigApplicationJson,
+  parseGigApplicationBody,
+  parseGigApplicationStatusBody,
+  readJsonBody,
+  resolvePaginationQuery,
   validateGigApplicationParams,
-  validateGigApplicationStatusJson,
   validateGigRouteParams,
   validatePaginationQuery,
 } from "../lib/validators";
@@ -19,11 +21,10 @@ export const gigs = new Hono<AppEnv>()
   .post(
     "/:gigId/applications",
     validateGigRouteParams,
-    validateGigApplicationJson,
     async (c) => {
       const { id: userId } = c.get("user");
       const { gigId } = c.req.valid("param");
-      const body = c.req.valid("json");
+      const body = parseGigApplicationBody(await readJsonBody(c));
       const prisma = getPrisma(c);
 
       const gig = await requireGig(
@@ -82,11 +83,13 @@ export const gigs = new Hono<AppEnv>()
   .patch(
     "/:gigId/applications/:appId",
     validateGigApplicationParams,
-    validateGigApplicationStatusJson,
     async (c) => {
       const { id: userId } = c.get("user");
       const { gigId, appId } = c.req.valid("param");
-      const body = c.req.valid("json");
+      const body = parseGigApplicationStatusBody(await readJsonBody(c), c);
+      if (body instanceof Response) {
+        return body;
+      }
       const prisma = getPrisma(c);
 
       const gig = await requireGig(
@@ -145,7 +148,7 @@ export const gigs = new Hono<AppEnv>()
     async (c) => {
       const { id: userId } = c.get("user");
       const { gigId } = c.req.valid("param");
-      const { limit, offset } = c.req.valid("query");
+      const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
       const prisma = getPrisma(c);
 
       const gig = await requireGig(
