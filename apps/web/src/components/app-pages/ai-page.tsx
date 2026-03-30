@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   BotMessageSquareIcon,
   MessageSquareIcon,
@@ -16,10 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 export function AiPage({ initialPrompt }: { initialPrompt?: string }) {
   const [draft, setDraft] = useState(initialPrompt ?? "");
-
-  useEffect(() => {
-    setDraft(initialPrompt ?? "");
-  }, [initialPrompt]);
 
   return (
     <section className="mx-auto grid max-w-6xl gap-6 px-6 py-10 lg:grid-cols-[280px_minmax(0,1fr)]">

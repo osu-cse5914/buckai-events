@@ -14,5 +14,5 @@ export const Route = createFileRoute("/_authenticated/ai/")({
 
 function AiRoute() {
   const { prompt } = Route.useSearch();
-  return <AiPage initialPrompt={prompt} />;
+  return <AiPage key={prompt ?? ""} initialPrompt={prompt} />;
 }
