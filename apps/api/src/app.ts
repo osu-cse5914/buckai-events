@@ -1,5 +1,5 @@
 import { clerkMiddleware } from "@hono/clerk-auth";
-import type { Env, Hono, Schema } from "hono";
+import type { Hono } from "hono";
 import { cors } from "hono/cors";
 import { appFactory } from "./factory";
 import { problemFromError, notFound, ProblemError } from "./lib/problem-details";
@@ -12,11 +12,9 @@ import { gigs } from "./routes/gigs";
 import { health } from "./routes/health";
 import { users } from "./routes/users";
 
-export function registerApiErrorHandlers<
-  E extends Env,
-  S extends Schema,
-  BasePath extends string,
->(app: Hono<E, S, BasePath>) {
+export function registerApiErrorHandlers<T extends Hono<any, any, any>>(
+  app: T,
+): T {
   app.notFound((c) => notFound(c, "Route not found"));
   app.onError((error, c) => {
     if (!(error instanceof ProblemError)) {
@@ -40,14 +38,15 @@ export function createApiApp() {
   app.use("/api/v1/*", clerkMiddleware());
   app.use("/api/v1/*", requireAuth);
 
-  app.route("/api", health);
-  app.route("/api/v1/auth", auth);
-  app.route("/api/v1/users", users);
-  app.route("/api/v1/events", events);
-  app.route("/api/v1/gigs", gigs);
-  app.route("/api/v1/collections", collections);
+  const routedApp = app
+    .route("/api", health)
+    .route("/api/v1/auth", auth)
+    .route("/api/v1/users", users)
+    .route("/api/v1/events", events)
+    .route("/api/v1/gigs", gigs)
+    .route("/api/v1/collections", collections);
 
-  return registerApiErrorHandlers(app);
+  return registerApiErrorHandlers(routedApp);
 }
 
 export const app = createApiApp();

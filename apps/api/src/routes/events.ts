@@ -14,7 +14,6 @@ import {
   createEvent,
   deleteOwnedEvent,
   getEventByIdOrThrow,
-  isValidStatusTransition,
   listEvents,
   updateOwnedEvent,
 } from "../services/events";
