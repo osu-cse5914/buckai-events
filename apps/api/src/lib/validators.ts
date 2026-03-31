@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import type { CollectionVisibility } from "@prisma/client";
+import type { CollectionVisibility, InteractionType } from "@prisma/client";
 import { validator } from "hono/validator";
 import { badRequest } from "./problem-details";
 import {
@@ -614,6 +614,50 @@ export function parseUserPatchBody(
 }
 
 export const validateUserPatchJson = validator("json", parseUserPatchBody);
+
+export const INTERACTION_TYPES = [
+  "VIEW",
+  "SAVE",
+  "CLICK",
+  "APPLY",
+  "DISMISS",
+] as const;
+
+export function parseInteractionCreateBody(
+  value: unknown,
+  c: Context,
+): { eventId: string; action: InteractionType } | Response {
+  if (!isRecord(value)) {
+    return badRequest(
+      c,
+      "Request body must be a JSON object",
+      "invalid-body",
+      "Invalid request body",
+    );
+  }
+
+  const eventId = typeof value.eventId === "string" ? value.eventId.trim() : "";
+  if (!eventId) {
+    return badRequest(c, "eventId is required");
+  }
+
+  if (
+    typeof value.action !== "string" ||
+    !isAllowedValue(value.action, INTERACTION_TYPES)
+  ) {
+    return badRequest(
+      c,
+      "action must be VIEW, SAVE, CLICK, APPLY, or DISMISS",
+      "invalid-body",
+      "Invalid request body",
+    );
+  }
+
+  return {
+    eventId,
+    action: value.action,
+  };
+}
 
 export const COLLECTION_VISIBILITIES = ["PRIVATE", "PUBLIC"] as const;
 
