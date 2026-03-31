@@ -5,6 +5,10 @@ import { autoCompleteEvents } from "./scheduled/auto-complete";
 import { ensureClerkPublishableKey } from "./lib/clerk";
 import { runWithPrisma } from "./lib/worker-runtime";
 import type { WorkerBindings } from "./lib/types";
+import { syncExternalEvents } from "./services/external-ingestion";
+
+export const AUTO_COMPLETE_CRON = "*/15 * * * *";
+export const EXTERNAL_INGESTION_CRON = "0 */6 * * *";
 
 // Compatible with both Bun (reads `port`) and CF Workers (ignores `port`, uses `fetch`)
 ensureClerkPublishableKey();
@@ -31,13 +35,26 @@ const worker = {
     return app.fetch(request, env, ctx);
   },
 
-  // Cloudflare Workers cron trigger — auto-complete past events every 15 minutes
+  // Cloudflare Workers cron trigger — run scheduled jobs by cron expression
   async scheduled(
-    _event: ScheduledController,
+    event: ScheduledController,
     env: WorkerBindings,
     ctx: ExecutionContext,
   ) {
-    ctx.waitUntil(runWithPrisma(env.DATABASE_URL, autoCompleteEvents));
+    if (event.cron === AUTO_COMPLETE_CRON) {
+      ctx.waitUntil(runWithPrisma(env.DATABASE_URL, autoCompleteEvents));
+      return;
+    }
+
+    if (event.cron === EXTERNAL_INGESTION_CRON) {
+      ctx.waitUntil(
+        runWithPrisma(env.DATABASE_URL, (prisma) =>
+          syncExternalEvents(prisma, {
+            ticketmasterApiKey: env.TICKETMASTER_API_KEY,
+          }),
+        ),
+      );
+    }
   },
 } satisfies ExportedHandler<WorkerBindings> & { port: number };
 

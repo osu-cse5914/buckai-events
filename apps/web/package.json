@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "generate-routes": "tsr generate",
-    "build": "tsr generate && tsc --noEmit && vite build",
+    "generate-routes": "rm -f src/routeTree.gen.ts && tsr generate",
+    "prebuild": "bun run generate-routes",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "typecheck": "tsr generate && tsc --noEmit --pretty false",
+    "pretypecheck": "bun run generate-routes",
+    "typecheck": "tsc --noEmit --pretty false",
+    "pretest": "bun run generate-routes",
     "test": "vitest run"
   },
   "dependencies": {

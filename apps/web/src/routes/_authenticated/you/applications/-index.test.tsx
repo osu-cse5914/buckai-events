@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockApplicationsGet = vi.fn();
 const mockApiClient = {
@@ -22,17 +22,7 @@ vi.mock("@/lib/api", () => ({
   useApiClient: () => mockApiClient,
 }));
 
-let capturedBeforeLoad: (() => unknown) | null = null;
-const redirectMock = vi.fn((options: { to: string }) => options);
-
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute:
-    () =>
-    (config: { beforeLoad?: () => unknown; component?: React.ComponentType }) => {
-      capturedBeforeLoad = config.beforeLoad ?? null;
-      return { beforeLoad: config.beforeLoad, component: config.component };
-    },
-  redirect: (options: { to: string }) => redirectMock(options),
   Link: ({
     children,
     to,
@@ -66,7 +56,6 @@ function okJson(data: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  capturedBeforeLoad = null;
   vi.resetModules();
 });
 
@@ -79,26 +68,6 @@ async function renderPage() {
     </QueryClientProvider>,
   );
 }
-
-describe("[phase:6] [regression:always] Legacy Applications Route", () => {
-  it("TC-PAGES-016: redirects /applications to /you/applications", async () => {
-    await import("./index");
-
-    if (!capturedBeforeLoad) {
-      throw new Error("Legacy /applications beforeLoad handler was not captured");
-    }
-
-    let thrown: unknown;
-    try {
-      capturedBeforeLoad();
-    } catch (error) {
-      thrown = error;
-    }
-
-    expect(redirectMock).toHaveBeenCalledWith({ to: "/you/applications" });
-    expect(thrown).toEqual({ to: "/you/applications" });
-  });
-});
 
 describe("[phase:2] [regression:always] MyApplicationsPage", () => {
   it("TC-APP-011: renders the current user's applications with status badges and links", async () => {

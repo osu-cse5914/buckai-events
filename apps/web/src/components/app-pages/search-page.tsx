@@ -1,4 +1,5 @@
-import { useDeferredValue, useState } from "react";
+import { startTransition } from "react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,38 +18,41 @@ import {
   useEventsQuery,
 } from "@/components/events/events-browser";
 
-export function SearchPage({ initialSearch }: { initialSearch?: string }) {
-  const search = initialSearch ?? "";
-  const [type, setType] = useState("");
-  const [category, setCategory] = useState("");
-  const [page, setPage] = useState(0);
-
-  const deferredSearch = useDeferredValue(search.trim());
-  const deferredCategory = useDeferredValue(category.trim());
+export function SearchPage({
+  search,
+  type,
+  category,
+  page,
+  onTypeChange,
+  onCategoryChange,
+  onClearFilters,
+  onPageChange,
+}: {
+  search: string;
+  type: string;
+  category: string;
+  page: number;
+  onTypeChange: (value: "" | "EVENT" | "GIG") => void;
+  onCategoryChange: (value: string) => void;
+  onClearFilters: () => void;
+  onPageChange: (page: number) => void;
+}) {
+  const trimmedSearch = search.trim();
+  const trimmedCategory = category.trim();
   const hasStartedSearch = Boolean(
-    deferredSearch || type || deferredCategory,
+    trimmedSearch || type || trimmedCategory,
   );
 
   const { data, isLoading, isError, error } = useEventsQuery(
     {
-      search: deferredSearch || undefined,
+      search: trimmedSearch || undefined,
       type: type || undefined,
-      category: deferredCategory || undefined,
+      category: trimmedCategory || undefined,
     },
     page,
     hasStartedSearch,
   );
 
-  function clearFilters() {
-    setType("");
-    setCategory("");
-    setPage(0);
-  }
-
-  function updateType(value: string) {
-    setType(value === "ALL" ? "" : value);
-    setPage(0);
-  }
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
@@ -60,7 +64,12 @@ export function SearchPage({ initialSearch }: { initialSearch?: string }) {
       <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="grid flex-1 gap-3 sm:grid-cols-2">
-            <Select value={type || "ALL"} onValueChange={updateType}>
+            <Select
+              value={type || "ALL"}
+              onValueChange={(value) =>
+                onTypeChange(value === "ALL" ? "" : (value as "EVENT" | "GIG"))
+              }
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Any Type" />
               </SelectTrigger>
@@ -74,16 +83,23 @@ export function SearchPage({ initialSearch }: { initialSearch?: string }) {
             <Input
               placeholder="Category"
               value={category}
-              onChange={(event) => {
-                setCategory(event.target.value);
-                setPage(0);
-              }}
+              onChange={(event) =>
+                startTransition(() => onCategoryChange(event.target.value))
+              }
             />
           </div>
 
           <div className="flex gap-3">
+            <Button variant="outline" asChild>
+              <Link
+                to="/ai"
+                search={trimmedSearch ? { prompt: trimmedSearch } : {}}
+              >
+                Ask AI
+              </Link>
+            </Button>
             {(type || category) ? (
-              <Button variant="outline" onClick={clearFilters}>
+              <Button variant="outline" onClick={onClearFilters}>
                 Clear
               </Button>
             ) : null}
@@ -125,7 +141,7 @@ export function SearchPage({ initialSearch }: { initialSearch?: string }) {
           <EventsPagination
             page={page}
             total={data.pagination.total}
-            onPageChange={setPage}
+            onPageChange={onPageChange}
           />
         </div>
       ) : null}

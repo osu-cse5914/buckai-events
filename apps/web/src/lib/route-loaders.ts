@@ -3,6 +3,9 @@ import type { ApiClient } from "./api";
 import {
   currentUserQueryOptions,
   eventDetailQueryOptions,
+  eventsListQueryOptions,
+  type EventListFilters,
+  type EventsResponse,
   type CurrentUser,
   type EventRecord,
 } from "./queries";
@@ -46,4 +49,24 @@ export async function loadOwnedEventRouteData({
   }
 
   return { access: "ok", currentUser, event };
+}
+
+export async function loadEventsRouteData({
+  api,
+  queryClient,
+  filters,
+  page,
+  enabled = true,
+}: {
+  api: ApiClient;
+  queryClient: QueryClient;
+  filters: EventListFilters;
+  page: number;
+  enabled?: boolean;
+}): Promise<EventsResponse | null> {
+  if (!enabled) {
+    return null;
+  }
+
+  return queryClient.ensureQueryData(eventsListQueryOptions(api, filters, page));
 }

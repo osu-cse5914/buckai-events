@@ -64,6 +64,26 @@ Spec: [`profile`](../../specs/users/profile.md)
 - **When**: User A sends `PATCH /users/me` with a non-object JSON payload (e.g., `null`, `42`, `"string"`)
 - **Then**: The API responds with 400 Bad Request using RFC 7807 Problem Details format
 
+## TC-USER-009: GET /users/me includes role
+
+- **Spec scenario**: S-USER-1
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A is authenticated
+- **When**: User A sends `GET /users/me`
+- **Then**: The response includes user A's persisted `role`
+
+## TC-USER-010: PATCH /users/me ignores role changes
+
+- **Spec scenario**: S-USER-6
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A is authenticated with role `USER`
+- **When**: User A sends `PATCH /users/me` with `{ "role": "ADMIN" }`
+- **Then**: The `role` field is ignored and remains `USER`
+
 ## TC-USER-006: Profile edit form — UI
 
 - **Spec scenario**: —

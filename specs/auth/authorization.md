@@ -2,7 +2,7 @@
 
 ## Overview
 
-Authorization is ownership-based. There are no admin roles. Users can only modify resources they own.
+Authorization is ownership-based with a persisted app role on each user. The default role is `USER`. `ADMIN` exists for operational actions only and does not bypass normal ownership checks for events, gigs, applications, collections, or conversations.
 
 ## Rules
 
@@ -20,6 +20,7 @@ Authorization is ownership-based. There are no admin roles. Users can only modif
 | Collection | Update | Owner only |
 | Collection | Delete | Owner only |
 | Conversation | All | Owner only |
+| External ingestion sync | Trigger manual sync | ADMIN only |
 
 ## Scenarios
 
@@ -104,6 +105,23 @@ WHEN user B sends GET /collections/:id
 THEN the API responds with 404 Not Found
 ```
 
+### S-AUTHZ-11: Non-admin cannot trigger manual external sync
+
+```
+GIVEN user A is authenticated with role USER
+WHEN user A sends POST /admin/external-ingestion/sync
+THEN the API responds with 403 Forbidden
+```
+
+### S-AUTHZ-12: Admin can trigger manual external sync
+
+```
+GIVEN user A is authenticated with role ADMIN
+WHEN user A sends POST /admin/external-ingestion/sync
+THEN the API responds with 200 OK
+AND the external sync service is invoked
+```
+
 ## Test Cases
 
-See [`test-cases/auth/authorization.md`](../../test-cases/auth/authorization.md) for the full test case registry (TC-AUTHZ-001 through TC-AUTHZ-012), covering ownership checks across events, applications, collections, and conversations.
+See [`test-cases/auth/authorization.md`](../../test-cases/auth/authorization.md) for the full test case registry (TC-AUTHZ-001 through TC-AUTHZ-014), covering ownership checks across events, applications, collections, conversations, and the admin-only external sync trigger.

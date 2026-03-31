@@ -330,7 +330,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     });
     await vi.waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
-        expect.objectContaining({ to: "/events" }),
+        expect.objectContaining({ to: "/catalog" }),
       );
     });
   });

@@ -48,7 +48,7 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
     }
 
     try {
-      user = await prisma.user.create({ data: { clerkId, email } });
+      user = await prisma.user.create({ data: { clerkId, email, role: "USER" } });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         user = await prisma.user.findUniqueOrThrow({ where: { clerkId } });
@@ -58,6 +58,19 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
     }
   }
 
-  c.set("user", { id: user.id, clerkId: user.clerkId, email: user.email });
+  c.set("user", {
+    id: user.id,
+    clerkId: user.clerkId,
+    email: user.email,
+    role: user.role,
+  });
+  await next();
+});
+
+export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
+  if (c.get("user").role !== "ADMIN") {
+    return forbidden(c, "Admin access is required");
+  }
+
   await next();
 });

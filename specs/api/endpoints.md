@@ -39,13 +39,19 @@ All paginated endpoints use `limit` (default 20, max 100) and `offset` (default 
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/users/me` | Get authenticated user's profile |
-| PATCH | `/api/v1/users/me` | Update profile fields |
+| GET | `/api/v1/users/me` | Get authenticated user's profile, including persisted `role` |
+| PATCH | `/api/v1/users/me` | Update profile fields (`role` remains immutable) |
 | GET | `/api/v1/users/:id` | Get public profile of a user |
 | POST | `/api/v1/users/:id/follow` | Follow a user |
 | DELETE | `/api/v1/users/:id/follow` | Unfollow a user |
 | GET | `/api/v1/users/:id/followers` | List a user's followers. Params: `limit`, `offset` |
 | GET | `/api/v1/users/:id/following` | List users that a user follows. Params: `limit`, `offset` |
+
+## Admin
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/v1/admin/external-ingestion/sync` | Trigger a synchronous external event sync. ADMIN only. Returns `startedAt`, `finishedAt`, and per-source counters |
 
 ## Social Feed
 
@@ -113,7 +119,7 @@ All paginated endpoints use `limit` (default 20, max 100) and `offset` (default 
 |-------------|------|------|
 | 400 | BAD_REQUEST | Invalid input, applying to non-gig event, applying to cancelled gig |
 | 401 | UNAUTHORIZED | Missing or invalid JWT |
-| 403 | FORBIDDEN | Ownership violation, self-application to own gig |
+| 403 | FORBIDDEN | Ownership violation, self-application to own gig, non-admin access to admin sync |
 | 404 | NOT_FOUND | Resource not found or private resource accessed by non-owner |
 | 409 | CONFLICT | Duplicate application, duplicate collection item, duplicate follow |
 | 500 | INTERNAL_ERROR | Unexpected server error |

@@ -85,11 +85,11 @@ function EventCreationPage() {
   return (
     <section className="mx-auto max-w-2xl px-6 py-10">
       <Link
-        to="/events"
+        to="/catalog"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeftIcon className="size-4" />
-        Back to Events
+        Back to Catalog
       </Link>
 
       <h1 className="mt-6 text-2xl font-bold tracking-tight">
@@ -219,7 +219,7 @@ function EventCreationPage() {
             {mutation.isPending ? "Creating..." : "Create Event"}
           </Button>
           <Button type="button" variant="outline" asChild>
-            <Link to="/events">Cancel</Link>
+            <Link to="/catalog">Cancel</Link>
           </Button>
         </div>
       </form>

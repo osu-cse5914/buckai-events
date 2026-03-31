@@ -5,6 +5,7 @@ import { appFactory } from "./factory";
 import { problemFromError, notFound, ProblemError } from "./lib/problem-details";
 import { requireAuth } from "./middleware/auth";
 import { withRequestResources } from "./middleware/request-resources";
+import { admin } from "./routes/admin";
 import { auth } from "./routes/auth";
 import { collections } from "./routes/collections";
 import { events } from "./routes/events";
@@ -48,6 +49,7 @@ export function createApiApp() {
   const routedApp = app
     .route("/api", health)
     .route("/api/v1/auth", auth)
+    .route("/api/v1/admin", admin)
     .route("/api/v1/users", users)
     .route("/api/v1/events", events)
     .route("/api/v1/gigs", gigs)

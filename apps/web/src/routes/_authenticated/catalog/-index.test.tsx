@@ -1,36 +1,78 @@
+import { useState } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { CatalogPage } from "@/components/events/catalog-page";
 
-// Mock api module
-const mockGet = vi.fn();
-const mockApiClient = {
-  api: {
-    v1: {
-      events: {
-        $get: (...args: unknown[]) => mockGet(...args),
+const state = vi.hoisted(() => {
+  const mockGet = vi.fn();
+  return {
+    mockGet,
+    loadEventsRouteDataMock: vi.fn(),
+    mockApiClient: {
+      api: {
+        v1: {
+          events: {
+            $get: (...args: unknown[]) => mockGet(...args),
+          },
+        },
       },
     },
-  },
-};
+  };
+});
+
+const mockApiClient = state.mockApiClient;
+
 vi.mock("@/lib/api", () => ({
-  api: mockApiClient,
-  useApiClient: () => mockApiClient,
+  api: state.mockApiClient,
+  useApiClient: () => state.mockApiClient,
 }));
 
-// Mock TanStack Router — capture the legacy alias redirect
-let capturedBeforeLoad: (() => unknown) | null = null;
-const redirectMock = vi.fn((options: { to: string }) => options);
+vi.mock("@/lib/route-loaders", () => ({
+  loadEventsRouteData: (...args: unknown[]) =>
+    state.loadEventsRouteDataMock(...args),
+}));
+
+let capturedValidateSearch:
+  | ((search: Record<string, unknown>) => Record<string, unknown>)
+  | null = null;
+let capturedLoaderDeps:
+  | ((args: { search: Record<string, unknown> }) => Record<string, unknown>)
+  | null = null;
+let capturedLoader:
+  | ((args: {
+      context: { api: typeof mockApiClient; queryClient: unknown };
+      deps: Record<string, unknown>;
+    }) => Promise<unknown>)
+  | null = null;
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute:
-    () =>
-    (config: { beforeLoad?: () => unknown; component?: React.ComponentType }) => {
-      capturedBeforeLoad = config.beforeLoad ?? null;
-      return { beforeLoad: config.beforeLoad, component: config.component };
+    (path: string) =>
+    (config: {
+      validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
+      loaderDeps?: (args: {
+        search: Record<string, unknown>;
+      }) => Record<string, unknown>;
+      loader?: (args: {
+        context: { api: typeof mockApiClient; queryClient: unknown };
+        deps: Record<string, unknown>;
+      }) => Promise<unknown>;
+      component?: React.ComponentType;
+    }) => {
+      if (path === "/_authenticated/catalog/") {
+        capturedValidateSearch = config.validateSearch ?? null;
+        capturedLoaderDeps = config.loaderDeps ?? null;
+        capturedLoader = config.loader ?? null;
+      }
+
+      return {
+        component: config.component,
+        fullPath: path,
+      };
     },
-  redirect: (options: { to: string }) => redirectMock(options),
+  useNavigate: () => vi.fn(),
   Link: ({
     children,
     to,
@@ -50,6 +92,13 @@ vi.mock("@tanstack/react-router", () => ({
     </a>
   ),
 }));
+
+const DEFAULT_FILTERS = {
+  type: "",
+  status: "",
+  source: "",
+  category: "",
+};
 
 function createQueryClient() {
   return new QueryClient({
@@ -102,47 +151,101 @@ function makeResponse(
   };
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  capturedBeforeLoad = null;
-  vi.resetModules();
-});
+function CatalogHarness({
+  initialFilters = DEFAULT_FILTERS,
+  initialPage = 0,
+}: {
+  initialFilters?: typeof DEFAULT_FILTERS;
+  initialPage?: number;
+}) {
+  const [filters, setFilters] = useState(initialFilters);
+  const [page, setPage] = useState(initialPage);
 
-async function renderEventsPage() {
-  const { CatalogPage } = await import("@/components/events/catalog-page");
+  return (
+    <CatalogPage
+      filters={filters}
+      page={page}
+      onFilterChange={(key, value) => {
+        setFilters((current) => ({ ...current, [key]: value }));
+        setPage(0);
+      }}
+      onClearFilters={() => {
+        setFilters(DEFAULT_FILTERS);
+        setPage(0);
+      }}
+      onPageChange={setPage}
+    />
+  );
+}
+
+async function renderCatalogPage(options?: {
+  initialFilters?: typeof DEFAULT_FILTERS;
+  initialPage?: number;
+}) {
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <CatalogPage />
+      <CatalogHarness {...options} />
     </QueryClientProvider>,
   );
 }
 
-describe("[phase:6] [regression:always] Legacy Events Route", () => {
-  it("TC-PAGES-015: redirects /events to /catalog", async () => {
+beforeEach(() => {
+  vi.clearAllMocks();
+  capturedValidateSearch = null;
+  capturedLoaderDeps = null;
+  capturedLoader = null;
+  vi.resetModules();
+});
+
+describe("[phase:6] [regression:always] CatalogRoute", () => {
+  it("TC-PAGES-017: validates catalog URL state and primes loader data", async () => {
     await import("./index");
 
-    if (!capturedBeforeLoad) {
-      throw new Error("Legacy /events beforeLoad handler was not captured");
+    if (!capturedValidateSearch || !capturedLoaderDeps || !capturedLoader) {
+      throw new Error("Catalog route config was not captured");
     }
 
-    let thrown: unknown;
-    try {
-      capturedBeforeLoad();
-    } catch (error) {
-      thrown = error;
-    }
+    const search = capturedValidateSearch({
+      type: "EVENT",
+      status: "OPEN",
+      source: "USER",
+      category: " music ",
+      page: "2",
+    });
+    const deps = capturedLoaderDeps({ search });
 
-    expect(redirectMock).toHaveBeenCalledWith({ to: "/catalog" });
-    expect(thrown).toEqual({ to: "/catalog" });
+    await capturedLoader({
+      context: { api: mockApiClient, queryClient: {} },
+      deps,
+    });
+
+    expect(search).toEqual({
+      type: "EVENT",
+      status: "OPEN",
+      source: "USER",
+      category: "music",
+      page: 2,
+    });
+    expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
+      api: mockApiClient,
+      queryClient: {},
+      filters: {
+        type: "EVENT",
+        status: "OPEN",
+        source: "USER",
+        category: "music",
+      },
+      page: 1,
+    });
   });
 });
 
 describe("[phase:1] [regression:always] CatalogPage", () => {
   it("shows loading skeletons while fetching", async () => {
-    mockGet.mockReturnValue(new Promise(() => {}));
+    state.mockGet.mockReturnValue(new Promise(() => {}));
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
@@ -153,28 +256,28 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
       makeEvent({ id: "1", title: "Hackathon" }),
       makeEvent({ id: "2", title: "Jazz Night", type: "GIG", category: "music" }),
     ];
-    mockGet.mockResolvedValue(makeResponse(events));
+    state.mockGet.mockResolvedValue(makeResponse(events));
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     expect(await screen.findByText("Hackathon")).toBeInTheDocument();
     expect(await screen.findByText("Jazz Night")).toBeInTheDocument();
   });
 
   it("shows empty state when no events match", async () => {
-    mockGet.mockResolvedValue(makeResponse([]));
+    state.mockGet.mockResolvedValue(makeResponse([]));
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     expect(await screen.findByText("No events found")).toBeInTheDocument();
   });
 
   it("renders event card with type and status badges", async () => {
-    mockGet.mockResolvedValue(
+    state.mockGet.mockResolvedValue(
       makeResponse([makeEvent({ id: "1", title: "Concert", type: "EVENT", status: "OPEN" })]),
     );
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     const card = (await screen.findByText("Concert")).closest('[data-slot="card"]') as HTMLElement;
     expect(within(card).getByText("EVENT")).toBeInTheDocument();
@@ -182,7 +285,7 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
   });
 
   it("renders event card with location and date", async () => {
-    mockGet.mockResolvedValue(
+    state.mockGet.mockResolvedValue(
       makeResponse([
         makeEvent({
           id: "1",
@@ -193,7 +296,7 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
       ]),
     );
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     expect(await screen.findByText("Thompson Library")).toBeInTheDocument();
     expect(screen.getByText(/Apr/)).toBeInTheDocument();
@@ -202,9 +305,9 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
   it("TC-EVT-018: event card title uses relaxed line height to prevent clamp clipping", async () => {
     const title =
       "Long title with descenders going past baseline and wrapping into another line";
-    mockGet.mockResolvedValue(makeResponse([makeEvent({ id: "1", title })]));
+    state.mockGet.mockResolvedValue(makeResponse([makeEvent({ id: "1", title })]));
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     const titleNode = await screen.findByText(title);
     expect(titleNode).toHaveClass("line-clamp-2");
@@ -213,7 +316,7 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
   });
 
   it("renders gig compensation", async () => {
-    mockGet.mockResolvedValue(
+    state.mockGet.mockResolvedValue(
       makeResponse([
         makeEvent({
           id: "1",
@@ -225,17 +328,17 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
       ]),
     );
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     expect(await screen.findByText("$25/hr")).toBeInTheDocument();
   });
 
   it("event cards link to detail page", async () => {
-    mockGet.mockResolvedValue(
+    state.mockGet.mockResolvedValue(
       makeResponse([makeEvent({ id: "evt_abc", title: "Study Group" })]),
     );
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     const link = await screen.findByText("Study Group");
     const anchor = link.closest("a");
@@ -243,7 +346,7 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
   });
 
   it("shows creator name on event card", async () => {
-    mockGet.mockResolvedValue(
+    state.mockGet.mockResolvedValue(
       makeResponse([
         makeEvent({
           id: "1",
@@ -253,37 +356,35 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
       ]),
     );
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     expect(await screen.findByText("Bob Smith")).toBeInTheDocument();
   });
 
   it("passes filter params to API", async () => {
-    mockGet.mockResolvedValue(makeResponse([]));
+    state.mockGet.mockResolvedValue(makeResponse([]));
     const user = userEvent.setup();
 
-    await renderEventsPage();
+    await renderCatalogPage();
     await screen.findByText("No events found");
 
-    // Find the first select trigger (type filter) and click to open
     const triggers = screen.getAllByRole("combobox");
     await user.click(triggers[0]);
 
-    // Select "Event" from the dropdown
     const eventOption = await screen.findByRole("option", { name: "Event" });
     await user.click(eventOption);
 
     await vi.waitFor(() => {
-      const calls = mockGet.mock.calls;
-      const lastCall = calls[calls.length - 1];
-      expect(lastCall[0].query.type).toBe("EVENT");
+      const lastCall = state.mockGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.type).toBe("EVENT");
+      expect(lastCall?.[0].query.offset).toBe("0");
     });
   });
 
   it("does not render a keyword search input in catalog mode", async () => {
-    mockGet.mockResolvedValue(makeResponse([]));
+    state.mockGet.mockResolvedValue(makeResponse([]));
 
-    await renderEventsPage();
+    await renderCatalogPage();
     await screen.findByText("No events found");
 
     expect(
@@ -295,9 +396,9 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
     const events = Array.from({ length: 12 }, (_, i) =>
       makeEvent({ id: `evt_${i}`, title: `Event ${i}` }),
     );
-    mockGet.mockResolvedValue(makeResponse(events, 30));
+    state.mockGet.mockResolvedValue(makeResponse(events, 30));
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     await screen.findByText("Event 0");
     expect(screen.getByText(/Showing 1/)).toBeInTheDocument();
@@ -309,11 +410,11 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
   });
 
   it("does not show pagination for single page", async () => {
-    mockGet.mockResolvedValue(
+    state.mockGet.mockResolvedValue(
       makeResponse([makeEvent({ id: "1", title: "Solo Event" })], 1),
     );
 
-    await renderEventsPage();
+    await renderCatalogPage();
     await screen.findByText("Solo Event");
 
     expect(screen.queryByText(/Showing/)).not.toBeInTheDocument();
@@ -323,37 +424,35 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
     const events = Array.from({ length: 12 }, (_, i) =>
       makeEvent({ id: `evt_${i}`, title: `Event ${i}` }),
     );
-    mockGet.mockResolvedValue(makeResponse(events, 24));
+    state.mockGet.mockResolvedValue(makeResponse(events, 24));
     const user = userEvent.setup();
 
-    await renderEventsPage();
+    await renderCatalogPage();
     await screen.findByText("Event 0");
 
     await user.click(screen.getByRole("button", { name: "2" }));
 
     await vi.waitFor(() => {
-      const calls = mockGet.mock.calls;
-      const lastCall = calls[calls.length - 1];
-      expect(lastCall[0].query.offset).toBe("12");
+      const lastCall = state.mockGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.offset).toBe("12");
     });
   });
 
   it("shows error state on fetch failure", async () => {
-    mockGet.mockResolvedValue({ ok: false, status: 500 });
+    state.mockGet.mockResolvedValue({ ok: false, status: 500 });
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     expect(await screen.findByText("Failed to fetch events")).toBeInTheDocument();
   });
 
   it("clear filters button resets all filters", async () => {
-    mockGet.mockResolvedValue(makeResponse([]));
+    state.mockGet.mockResolvedValue(makeResponse([]));
     const user = userEvent.setup();
 
-    await renderEventsPage();
+    await renderCatalogPage();
     await screen.findByText("No events found");
 
-    // Open type select and pick "Gig"
     const triggers = screen.getAllByRole("combobox");
     await user.click(triggers[0]);
     const gigOption = await screen.findByRole("option", { name: "Gig" });
@@ -362,17 +461,16 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
     const clearBtns = await screen.findAllByRole("button", { name: /Clear filters/ });
     await user.click(clearBtns[0]);
 
-    // After clearing, the type trigger should show the placeholder
     const resetTriggers = screen.getAllByRole("combobox");
     expect(resetTriggers[0]).toHaveTextContent("All Types");
   });
 
   it("renders category on event card when present", async () => {
-    mockGet.mockResolvedValue(
+    state.mockGet.mockResolvedValue(
       makeResponse([makeEvent({ id: "1", title: "Concert", category: "music" })]),
     );
 
-    await renderEventsPage();
+    await renderCatalogPage();
 
     expect(await screen.findByText("music")).toBeInTheDocument();
   });

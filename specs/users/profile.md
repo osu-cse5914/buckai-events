@@ -8,11 +8,11 @@ Users have a profile with optional fields for display name, major, graduation ye
 
 ### Profile Read
 
-`GET /users/me` returns the authenticated user's profile including all fields and their selected interests.
+`GET /users/me` returns the authenticated user's profile including all fields, their selected interests, and their persisted app `role`.
 
 ### Profile Update
 
-`PATCH /users/me` accepts partial updates to: `displayName`, `major`, `gradYear`, `interests`. Other fields (id, email, clerkId, createdAt) are immutable via this endpoint.
+`PATCH /users/me` accepts partial updates to: `displayName`, `major`, `gradYear`, `interests`. Other fields (`id`, `email`, `clerkId`, `role`, `createdAt`) are immutable via this endpoint.
 
 ### Interests
 
@@ -26,6 +26,7 @@ Interests are an array of category strings selected by the user. They are used a
 GIVEN user A is authenticated
 WHEN user A sends GET /users/me
 THEN the response contains user A's id, email, displayName, major, gradYear, interests, createdAt, updatedAt
+AND the response contains user A's role
 ```
 
 ### S-USER-2: Update display name
@@ -63,6 +64,15 @@ THEN the email field is ignored
 AND user A's email is unchanged
 ```
 
+### S-USER-6: Cannot update role
+
+```
+GIVEN user A is authenticated with role USER
+WHEN user A sends PATCH /users/me with { "role": "ADMIN" }
+THEN the role field is ignored
+AND user A's role remains USER
+```
+
 ## Test Cases
 
-See [`test-cases/users/profile.md`](../../test-cases/users/profile.md) for the full test case registry (TC-USER-001 through TC-USER-007), including automated API tests and manual UI verification cases.
+See [`test-cases/users/profile.md`](../../test-cases/users/profile.md) for the full test case registry (TC-USER-001 through TC-USER-010), including automated API tests and manual UI verification cases.
