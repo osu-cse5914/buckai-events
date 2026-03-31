@@ -1,4 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} from "../lib/problem-details";
 
 export const CREATOR_SELECT = {
   id: true,
@@ -79,6 +84,34 @@ export type EventUpdateInput = {
 
 export function isValidStatusTransition(from: string, to: string): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+type UserOwnedEvent = {
+  source: string;
+  creatorId: string | null;
+  status: string;
+};
+
+function ensureOwnedUserEvent(
+  event: UserOwnedEvent,
+  userId: string,
+  action: "update" | "delete",
+) {
+  if (event.source !== "USER") {
+    throw new ForbiddenError(
+      action === "update"
+        ? "External events cannot be modified"
+        : "External events cannot be deleted",
+    );
+  }
+
+  if (event.creatorId !== userId) {
+    throw new ForbiddenError(
+      action === "update"
+        ? "Only the event creator can update this event"
+        : "Only the event creator can delete this event",
+    );
+  }
 }
 
 export async function createEvent(
@@ -199,4 +232,60 @@ export async function updateEvent(
     data: toEventUpdateData(input),
     include: { creator: { select: CREATOR_SELECT } },
   });
+}
+
+export async function getEventByIdOrThrow(
+  prisma: PrismaClient,
+  id: string,
+) {
+  const event = await prisma.event.findUnique({
+    where: { id },
+    include: { creator: { select: CREATOR_SELECT } },
+  });
+
+  if (!event) {
+    throw new NotFoundError("Event not found");
+  }
+
+  return event;
+}
+
+export async function updateOwnedEvent(
+  prisma: PrismaClient,
+  id: string,
+  userId: string,
+  input: EventUpdateInput,
+) {
+  const event = await prisma.event.findUnique({ where: { id } });
+  if (!event) {
+    throw new NotFoundError("Event not found");
+  }
+
+  ensureOwnedUserEvent(event, userId, "update");
+
+  if (
+    input.status !== undefined &&
+    input.status !== event.status &&
+    !isValidStatusTransition(event.status, input.status)
+  ) {
+    throw new BadRequestError(
+      `Invalid status transition from ${event.status} to ${input.status}`,
+    );
+  }
+
+  return updateEvent(prisma, id, input);
+}
+
+export async function deleteOwnedEvent(
+  prisma: PrismaClient,
+  id: string,
+  userId: string,
+) {
+  const event = await prisma.event.findUnique({ where: { id } });
+  if (!event) {
+    throw new NotFoundError("Event not found");
+  }
+
+  ensureOwnedUserEvent(event, userId, "delete");
+  await prisma.event.delete({ where: { id } });
 }

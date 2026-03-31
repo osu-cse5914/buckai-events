@@ -10,7 +10,10 @@ bun run test:regression:phase-6
 
 ### Included automated test cases
 
-All automated cases from Phase 0 through Phase 6.
+All automated cases from Phase 0 through Phase 5, plus:
+
+- **TC-API-001**: Unknown API route returns RFC 7807 not-found response
+- **TC-API-002**: Uncaught handler error returns RFC 7807 internal-error response
 
 ## Manual checklist — Full system
 

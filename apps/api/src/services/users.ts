@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { NotFoundError } from "../lib/problem-details";
 
 export type UsersListOwnApplicationsInput = {
   applicantId: string;
@@ -55,7 +56,7 @@ export async function getPublicProfile(
 ) {
   const user = await prisma.user.findUnique({ where: { id: input.targetId } });
   if (!user) {
-    return null;
+    throw new NotFoundError(`User ${input.targetId} was not found`);
   }
 
   const [events, eventCount, follow] = await Promise.all([
@@ -102,4 +103,24 @@ export async function getPublicProfile(
       },
     },
   };
+}
+
+export async function getCurrentUserOrThrow(
+  prisma: PrismaClient,
+  userId: string,
+) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  return user;
+}
+
+export async function updateCurrentUser(
+  prisma: PrismaClient,
+  userId: string,
+  data: UpdateOwnProfileInput,
+) {
+  return prisma.user.update({ where: { id: userId }, data });
 }
