@@ -168,7 +168,7 @@ function BrandLink({ compact = false }: { compact?: boolean }) {
         compact ? "flex-row" : "flex-col text-center",
       )}
     >
-      <span className="flex size-10 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-red-500 text-sm font-semibold tracking-tight text-white shadow-sm transition-transform group-hover:scale-[1.03]">
+      <span className="flex size-10 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-red-500 text-sm font-semibold tracking-tight text-white shadow-sm">
         SO
       </span>
     </Link>
