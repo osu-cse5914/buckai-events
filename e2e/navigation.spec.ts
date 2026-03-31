@@ -26,10 +26,10 @@ test.describe("Navigation and auth redirect", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("unauthenticated user visiting /events is redirected to /sign-in", async ({
+  test("unauthenticated user visiting /catalog is redirected to /sign-in", async ({
     page,
   }) => {
-    await page.goto("/events");
+    await page.goto("/catalog");
     await expect(page).toHaveURL(/sign-in/);
   });
 

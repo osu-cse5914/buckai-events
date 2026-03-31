@@ -1,36 +1,77 @@
+import { useState } from "react";
 import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { SearchPage } from "@/components/app-pages/search-page";
 
-const mockGet = vi.fn();
-const mockApiClient = {
-  api: {
-    v1: {
-      events: {
-        $get: (...args: unknown[]) => mockGet(...args),
+const state = vi.hoisted(() => {
+  const mockGet = vi.fn();
+  return {
+    mockGet,
+    loadEventsRouteDataMock: vi.fn(),
+    mockApiClient: {
+      api: {
+        v1: {
+          events: {
+            $get: (...args: unknown[]) => mockGet(...args),
+          },
+        },
       },
     },
-  },
-};
+  };
+});
+
+const mockApiClient = state.mockApiClient;
 
 vi.mock("@/lib/api", () => ({
-  api: mockApiClient,
-  useApiClient: () => mockApiClient,
+  api: state.mockApiClient,
+  useApiClient: () => state.mockApiClient,
 }));
 
-let capturedComponent: React.ComponentType | null = null;
-const state = vi.hoisted(() => ({
-  routeSearch: {} as { q?: string },
+vi.mock("@/lib/route-loaders", () => ({
+  loadEventsRouteData: (...args: unknown[]) =>
+    state.loadEventsRouteDataMock(...args),
 }));
+
+let capturedValidateSearch:
+  | ((search: Record<string, unknown>) => Record<string, unknown>)
+  | null = null;
+let capturedLoaderDeps:
+  | ((args: { search: Record<string, unknown> }) => Record<string, unknown>)
+  | null = null;
+let capturedLoader:
+  | ((args: {
+      context: { api: typeof mockApiClient; queryClient: unknown };
+      deps: Record<string, unknown>;
+    }) => Promise<unknown>)
+  | null = null;
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (config: { component: React.ComponentType }) => {
-    capturedComponent = config.component;
-    return {
-      component: config.component,
-      useSearch: () => state.routeSearch,
-    };
-  },
+  createFileRoute:
+    (path: string) =>
+    (config: {
+      validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
+      loaderDeps?: (args: {
+        search: Record<string, unknown>;
+      }) => Record<string, unknown>;
+      loader?: (args: {
+        context: { api: typeof mockApiClient; queryClient: unknown };
+        deps: Record<string, unknown>;
+      }) => Promise<unknown>;
+      component: React.ComponentType;
+    }) => {
+      if (path === "/_authenticated/search/") {
+        capturedValidateSearch = config.validateSearch ?? null;
+        capturedLoaderDeps = config.loaderDeps ?? null;
+        capturedLoader = config.loader ?? null;
+      }
+
+      return {
+        component: config.component,
+        fullPath: path,
+      };
+    },
+  useNavigate: () => vi.fn(),
   Link: ({
     children,
     to,
@@ -77,36 +118,124 @@ function makeResponse(data: unknown[] = []) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  capturedComponent = null;
-  state.routeSearch = {};
+  capturedValidateSearch = null;
+  capturedLoaderDeps = null;
+  capturedLoader = null;
   vi.resetModules();
 });
 
-async function renderSearchPage() {
-  await import("./index");
-  if (!capturedComponent) {
-    throw new Error("SearchPage component was not captured");
-  }
+function SearchHarness({
+  initialSearch = "",
+  initialType = "",
+  initialCategory = "",
+  initialPage = 0,
+}: {
+  initialSearch?: string;
+  initialType?: string;
+  initialCategory?: string;
+  initialPage?: number;
+}) {
+  const [type, setType] = useState(initialType);
+  const [category, setCategory] = useState(initialCategory);
+  const [page, setPage] = useState(initialPage);
 
-  const Component = capturedComponent;
+  return (
+    <SearchPage
+      search={initialSearch}
+      type={type}
+      category={category}
+      page={page}
+      onTypeChange={(value) => {
+        setType(value);
+        setPage(0);
+      }}
+      onCategoryChange={(value) => {
+        setCategory(value);
+        setPage(0);
+      }}
+      onClearFilters={() => {
+        setType("");
+        setCategory("");
+        setPage(0);
+      }}
+      onPageChange={setPage}
+    />
+  );
+}
+
+async function renderSearchPage(options?: {
+  initialSearch?: string;
+  initialType?: string;
+  initialCategory?: string;
+  initialPage?: number;
+}) {
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <Component />
+      <SearchHarness {...options} />
     </QueryClientProvider>,
   );
 }
 
 describe("[phase:6] [regression:always] SearchPage", () => {
-  it("TC-PAGES-012: passes search text to the events API", async () => {
-    state.routeSearch = { q: "hackathon" };
-    mockGet.mockResolvedValue(makeResponse([]));
+  it("TC-PAGES-018: validates search URL state and primes loader data", async () => {
+    await import("./index");
 
-    await renderSearchPage();
+    if (!capturedValidateSearch || !capturedLoaderDeps || !capturedLoader) {
+      throw new Error("Search route config was not captured");
+    }
+
+    const search = capturedValidateSearch({
+      q: "  hackathon ",
+      type: "EVENT",
+      category: " music ",
+      page: "3",
+    });
+    const deps = capturedLoaderDeps({ search });
+
+    await capturedLoader({
+      context: { api: mockApiClient, queryClient: {} },
+      deps,
+    });
+
+    expect(search).toEqual({
+      q: "hackathon",
+      type: "EVENT",
+      category: "music",
+      page: 3,
+    });
+    expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
+      api: mockApiClient,
+      queryClient: {},
+      filters: {
+        search: "hackathon",
+        type: "EVENT",
+        category: "music",
+      },
+      page: 2,
+      enabled: true,
+    });
+  });
+
+  it("TC-PAGES-012: passes search text to the events API", async () => {
+    state.mockGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage({ initialSearch: "hackathon" });
 
     await vi.waitFor(() => {
-      const lastCall = mockGet.mock.calls.at(-1);
+      const lastCall = state.mockGet.mock.calls.at(-1);
       expect(lastCall?.[0].query.search).toBe("hackathon");
     });
+  });
+
+  it("TC-PAGES-013: search handoff link carries the current prompt into AI mode", async () => {
+    state.mockGet.mockResolvedValue(makeResponse([]));
+
+    const { getByRole } = await renderSearchPage({ initialSearch: "campus jobs" });
+
+    expect(getByRole("link", { name: "Ask AI" })).toHaveAttribute(
+      "href",
+      "/ai?prompt=campus%20jobs",
+    );
   });
 });

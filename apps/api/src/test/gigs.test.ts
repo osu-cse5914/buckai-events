@@ -5,6 +5,7 @@ vi.mock("../lib/prisma");
 
 import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
+import { registerApiErrorHandlers } from "../app";
 import { gigs } from "../routes/gigs";
 
 // --- Test data ---
@@ -15,6 +16,7 @@ const APPLICANT_B = { id: "user_b", clerkId: "clerk_b", email: "b@osu.edu" };
 
 function createTestApp(user = OWNER) {
   const app = new Hono();
+  registerApiErrorHandlers(app);
   app.use("/*", async (c, next) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (c as any).set("user", user);
@@ -217,6 +219,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
       );
 
       expect(res.status).toBe(409);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(mockPrisma.application.create).not.toHaveBeenCalled();
     });
 
@@ -232,6 +235,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
       );
 
       expect(res.status).toBe(400);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(mockPrisma.application.create).not.toHaveBeenCalled();
     });
 
@@ -327,6 +331,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
       const res = await getApplications(createTestApp(APPLICANT_B), GIG.id);
 
       expect(res.status).toBe(403);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(await res.json()).toMatchObject({
         type: expect.stringContaining("forbidden"),
         title: "Forbidden",

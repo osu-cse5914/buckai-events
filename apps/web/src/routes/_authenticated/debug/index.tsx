@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,25 @@ export const Route = createFileRoute("/_authenticated/debug/")({
 });
 
 type HealthResponse = { service: string; status: string; timestamp: string };
+type DebugUser = { id: string; role: "USER" | "ADMIN" };
+type SyncSourceSummary = {
+  fetched: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  completed: number;
+};
+type SyncSummary = {
+  startedAt: string;
+  finishedAt: string;
+  sources: {
+    osu: SyncSourceSummary;
+    ticketmaster: SyncSourceSummary;
+  };
+};
+type ProblemDetails = {
+  detail?: string;
+};
 
 export function DebugPage() {
   const api = useApiClient();
@@ -17,21 +36,25 @@ export function DebugPage() {
   const { userId: authUserId, sessionId, orgId } = useAuth();
   const { user } = useUser();
 
-  const [dbUserId, setDbUserId] = useState<string | null>(null);
-
+  const [currentUser, setCurrentUser] = useState<DebugUser | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
-
+  const [syncSummary, setSyncSummary] = useState<SyncSummary | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
-    api.api.v1.users.me.$get().then(async (res) => {
-      if (res.ok) {
-        const data = await res.json() as { id: string };
-        setDbUserId(data.id);
-      }
-    }).catch(() => {});
+    api.api.v1.users.me
+      .$get()
+      .then(async (res) => {
+        if (res.ok) {
+          const data = (await res.json()) as DebugUser;
+          setCurrentUser(data);
+        }
+      })
+      .catch(() => {});
   }, [api]);
 
   const handleViewApiHealth = async () => {
@@ -55,6 +78,29 @@ export function DebugPage() {
     }
   };
 
+  const handleSyncExternalEvents = async () => {
+    setIsSyncing(true);
+    setSyncError(null);
+    setSyncSummary(null);
+
+    try {
+      const res = await api.api.v1.admin["external-ingestion"].sync.$post();
+      if (!res.ok) {
+        const problem = (await res
+          .json()
+          .catch(() => ({}))) as ProblemDetails;
+        throw new Error(problem.detail ?? `Sync failed with status ${res.status}`);
+      }
+
+      const data = (await res.json()) as SyncSummary;
+      setSyncSummary(data);
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "Sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleViewProfile = () => {
     if (userId.trim()) {
       navigate({ to: "/users/$id", params: { id: userId.trim() } });
@@ -67,7 +113,6 @@ export function DebugPage() {
         <h1 className="text-2xl font-bold tracking-tight">Debug Tools</h1>
       </div>
 
-      {/* Current User Info */}
       <div className="rounded-lg border border-dashed border-border p-5">
         <h2 className="text-lg font-semibold">Current User</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -80,7 +125,11 @@ export function DebugPage() {
           </p>
           <p>
             <span className="font-semibold">DB User ID:</span>{" "}
-            <code>{dbUserId ?? "—"}</code>
+            <code>{currentUser?.id ?? "—"}</code>
+          </p>
+          <p>
+            <span className="font-semibold">Role:</span>{" "}
+            <code>{currentUser?.role ?? "—"}</code>
           </p>
           <p>
             <span className="font-semibold">Session ID:</span>{" "}
@@ -113,7 +162,39 @@ export function DebugPage() {
         </div>
       </div>
 
-      {/* Environment Info */}
+      {currentUser?.role === "ADMIN" && (
+        <div className="rounded-lg border border-dashed border-border p-5">
+          <h2 className="text-lg font-semibold">External Sync</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Trigger the external OSU and Ticketmaster sync on demand
+          </p>
+          <Button
+            variant="outline"
+            className="mt-3"
+            onClick={handleSyncExternalEvents}
+            disabled={isSyncing}
+          >
+            {isSyncing ? "Syncing..." : "Sync External Events"}
+          </Button>
+
+          {syncError && (
+            <div className="mt-3 rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+              {syncError}
+            </div>
+          )}
+
+          {syncSummary && (
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <SyncSummaryCard title="OSU" summary={syncSummary.sources.osu} />
+              <SyncSummaryCard
+                title="Ticketmaster"
+                summary={syncSummary.sources.ticketmaster}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="rounded-lg border border-dashed border-border p-5">
         <h2 className="text-lg font-semibold">Environment</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -155,7 +236,6 @@ export function DebugPage() {
         </div>
       </div>
 
-      {/* API Health Check */}
       <div className="rounded-lg border border-dashed border-border p-5">
         <h2 className="text-lg font-semibold">API Health</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -192,7 +272,6 @@ export function DebugPage() {
         )}
       </div>
 
-      {/* User Profile Viewer */}
       <div className="rounded-lg border border-dashed border-border p-5">
         <h2 className="text-lg font-semibold">User Profile Viewer</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -211,5 +290,24 @@ export function DebugPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+function SyncSummaryCard({
+  title,
+  summary,
+}: {
+  title: string;
+  summary: SyncSourceSummary;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card p-3 text-sm">
+      <h3 className="font-semibold">{title}</h3>
+      <p className="mt-2">Fetched: {summary.fetched}</p>
+      <p>Created: {summary.created}</p>
+      <p>Updated: {summary.updated}</p>
+      <p>Skipped: {summary.skipped}</p>
+      <p>Completed: {summary.completed}</p>
+    </div>
   );
 }

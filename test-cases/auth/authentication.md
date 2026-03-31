@@ -120,3 +120,15 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 - **Given**: An unauthenticated user
 - **When**: They navigate to `/sign-up`
 - **Then**: The Clerk sign-up widget is visible (no 404)
+
+## TC-AUTH-011: Shared authenticated shell redirects signed-out visitors
+
+- **Spec scenario**: S-AUTH-7
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/-app-pages.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A visitor is not signed in
+- **When**: They navigate into the authenticated client route tree
+- **Then**: The shared shell guard redirects them to `/sign-in`
+- **And**: Child routes do not need to redefine their own auth redirect

@@ -187,6 +187,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     );
 
     expect(res.status).toBe(404);
+    expect(res.headers.get("content-type")).toContain("application/problem+json");
     const data = (await res.json()) as Record<string, unknown>;
     expect(data).toMatchObject({
       type: expect.stringContaining("not-found"),

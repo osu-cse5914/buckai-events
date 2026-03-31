@@ -87,7 +87,20 @@ function AuthenticatedLayout() {
               onSubmit={(query) =>
                 navigate({
                   to: "/search",
-                  search: query ? { q: query } : {},
+                  search: (current) => ({
+                    q: query || undefined,
+                    type:
+                      location.pathname === "/search" &&
+                      typeof current.type === "string"
+                        ? current.type
+                        : undefined,
+                    category:
+                      location.pathname === "/search" &&
+                      typeof current.category === "string"
+                        ? current.category
+                        : undefined,
+                    page: undefined,
+                  }),
                 })
               }
             />

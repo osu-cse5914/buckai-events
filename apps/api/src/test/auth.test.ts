@@ -21,7 +21,7 @@ import { createMockPrisma } from "./helpers/prisma";
 import { requireAuth } from "../middleware/auth";
 
 type TestEnv = {
-  Variables: { user: { id: string; clerkId: string; email: string } };
+  Variables: { user: { id: string; clerkId: string; email: string; role: string } };
 };
 
 function createTestApp() {
@@ -52,6 +52,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(401);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(await res.json()).toMatchObject({
         type: expect.stringContaining("unauthorized"),
         title: "Unauthorized",
@@ -66,6 +67,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(401);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(await res.json()).toMatchObject({
         type: expect.stringContaining("unauthorized"),
         title: "Unauthorized",
@@ -82,6 +84,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         id: "cuid_123",
         clerkId: "clerk_abc123",
         email: "student@osu.edu",
+        role: "ADMIN",
       };
 
       vi.mocked(getAuth).mockReturnValue({ userId: "clerk_abc123" } as never);
@@ -105,6 +108,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         id: "cuid_new",
         clerkId: "clerk_new_user",
         email: "newstudent@osu.edu",
+        role: "USER",
       };
 
       vi.mocked(getAuth).mockReturnValue({ userId: "clerk_new_user" } as never);
@@ -121,7 +125,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
 
       expect(res.status).toBe(200);
       expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: { clerkId: "clerk_new_user", email: "newstudent@osu.edu" },
+        data: { clerkId: "clerk_new_user", email: "newstudent@osu.edu", role: "USER" },
       });
       expect(await res.json()).toEqual({ user: createdUser });
     });
@@ -140,13 +144,18 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         id: "cuid_multi",
         clerkId: "clerk_multi",
         email: "primary@buckeyemail.osu.edu",
+        role: "USER",
       } as never);
 
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(200);
       expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: { clerkId: "clerk_multi", email: "primary@buckeyemail.osu.edu" },
+        data: {
+          clerkId: "clerk_multi",
+          email: "primary@buckeyemail.osu.edu",
+          role: "USER",
+        },
       });
     });
 
@@ -155,6 +164,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         id: "cuid_race",
         clerkId: "clerk_racer",
         email: "racer@osu.edu",
+        role: "USER",
       };
 
       vi.mocked(getAuth).mockReturnValue({ userId: "clerk_racer" } as never);
@@ -182,6 +192,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         id: "cuid_osu",
         clerkId: "clerk_osu",
         email: "student@osu.edu",
+        role: "USER",
       };
 
       vi.mocked(getAuth).mockReturnValue({ userId: "clerk_osu" } as never);
@@ -196,7 +207,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
 
       expect(res.status).toBe(200);
       expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: { clerkId: "clerk_osu", email: "student@osu.edu" },
+        data: { clerkId: "clerk_osu", email: "student@osu.edu", role: "USER" },
       });
     });
 
@@ -211,6 +222,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(403);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(await res.json()).toMatchObject({
         type: expect.stringContaining("forbidden"),
         title: "Forbidden",
