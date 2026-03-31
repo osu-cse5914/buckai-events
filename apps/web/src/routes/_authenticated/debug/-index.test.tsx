@@ -80,7 +80,8 @@ describe("[phase:1] [regression:always] Debug Page", () => {
   it("TC-DBG-001: keeps debug out of the primary navigation model", () => {
     expect(navLinks.map((link) => link.label)).toEqual([
       "Featured",
-      "Catalog",
+      "Events",
+      "Gigs",
       "You",
     ]);
   });

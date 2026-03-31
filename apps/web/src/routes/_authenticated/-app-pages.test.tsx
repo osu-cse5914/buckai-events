@@ -26,7 +26,8 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
   it("TC-PAGES-011: primary nav exposes only the app-pages destinations", () => {
     expect(navLinks).toEqual([
       { to: "/featured", label: "Featured" },
-      { to: "/catalog", label: "Catalog" },
+      { to: "/events", label: "Events" },
+      { to: "/gigs", label: "Gigs" },
       { to: "/you", label: "You" },
     ]);
   });

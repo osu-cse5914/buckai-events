@@ -1,38 +1,39 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CatalogPage } from "@/components/events/catalog-page";
+import { BrowsePage } from "@/components/events/browse-page";
 import {
   toOptionalPage,
   toPageIndex,
-  validateCatalogSearch,
+  validateBrowseSearch,
 } from "@/lib/event-route-search";
 import { loadEventsRouteData } from "@/lib/route-loaders";
 
-export const Route = createFileRoute("/_authenticated/catalog/")({
-  validateSearch: validateCatalogSearch,
+export const Route = createFileRoute("/_authenticated/gigs/")({
+  validateSearch: validateBrowseSearch,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
     loadEventsRouteData({
       api: context.api,
       queryClient: context.queryClient,
       filters: {
-        type: deps.type,
+        type: "GIG",
         status: deps.status,
         source: deps.source,
         category: deps.category,
       },
       page: toPageIndex(deps.page ?? 1),
     }),
-  component: CatalogRoute,
+  component: GigsRoute,
 });
 
-function CatalogRoute() {
+function GigsRoute() {
   const navigate = useNavigate({ from: Route.fullPath });
   const search = Route.useSearch();
 
   return (
-    <CatalogPage
+    <BrowsePage
+      browseType="GIG"
+      title="Gigs"
       filters={{
-        type: search.type ?? "",
         status: search.status ?? "",
         source: search.source ?? "",
         category: search.category ?? "",

@@ -330,7 +330,26 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     });
     await vi.waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
-        expect.objectContaining({ to: "/catalog" }),
+        expect.objectContaining({ to: "/events" }),
+      );
+    });
+  });
+
+  it("TC-EVT-019: delete navigates to gigs list for gig records", async () => {
+    mockEventGet.mockResolvedValue(okJson(makeEvent({ type: "GIG" })));
+    mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
+    mockEventDelete.mockResolvedValue(okJson({ message: "Event deleted" }));
+    const user = userEvent.setup();
+
+    await renderPage();
+    await screen.findByText("Hackathon");
+
+    await user.click(screen.getByRole("button", { name: /delete/i }));
+    await user.click(await screen.findByRole("button", { name: "Delete" }));
+
+    await vi.waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        expect.objectContaining({ to: "/gigs" }),
       );
     });
   });

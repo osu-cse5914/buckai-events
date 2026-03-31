@@ -20,6 +20,7 @@ import {
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
+  browsePathForEventType,
   STATUS_STYLES,
   STATUS_LABELS,
   TYPE_STYLES,
@@ -131,7 +132,7 @@ function EventDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      navigate({ to: "/catalog" });
+      navigate({ to: browsePathForEventType(event?.type) });
     },
   });
   const applyMutation = useMutation({
@@ -222,12 +223,14 @@ function EventDetailPage() {
           This event does not exist or has been removed.
         </p>
         <Button asChild className="mt-4">
-          <Link to="/catalog">Back to Catalog</Link>
+          <Link to="/events">Back to Events</Link>
         </Button>
       </section>
     );
   }
 
+  const browsePath = browsePathForEventType(event.type);
+  const browseLabel = event.type === "GIG" ? "Gigs" : "Events";
   const validTransitions = VALID_TRANSITIONS[event.status] || [];
   const currentApplication = submittedApplication ?? applicationsQuery.data ?? null;
   const hasApplied = !!currentApplication;
@@ -235,11 +238,11 @@ function EventDetailPage() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-10">
       <Link
-        to="/catalog"
+        to={browsePath}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeftIcon className="size-4" />
-        Back to Catalog
+        Back to {browseLabel}
       </Link>
 
       <div className="mt-6">

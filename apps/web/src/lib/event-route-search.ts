@@ -7,8 +7,7 @@ export const EVENT_STATUSES = [
 ] as const;
 export const EVENT_SOURCES = ["USER", "OSU_API", "TICKETMASTER"] as const;
 
-export type CatalogRouteSearch = {
-  type?: (typeof EVENT_TYPES)[number];
+export type BrowseRouteSearch = {
   status?: (typeof EVENT_STATUSES)[number];
   source?: (typeof EVENT_SOURCES)[number];
   category?: string;
@@ -55,11 +54,10 @@ function normalizePage(value: unknown) {
   return Number.isInteger(parsed) && parsed > 1 ? parsed : undefined;
 }
 
-export function validateCatalogSearch(
+export function validateBrowseSearch(
   search: Record<string, unknown>,
-): CatalogRouteSearch {
+): BrowseRouteSearch {
   return {
-    type: normalizeEnumValue(search.type, EVENT_TYPES),
     status: normalizeEnumValue(search.status, EVENT_STATUSES),
     source: normalizeEnumValue(search.source, EVENT_SOURCES),
     category: normalizeTrimmedString(search.category),

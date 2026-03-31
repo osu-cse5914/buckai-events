@@ -53,3 +53,7 @@ export function formatDateLong(dateString: string) {
     minute: "2-digit",
   });
 }
+
+export function browsePathForEventType(type?: string): "/events" | "/gigs" {
+  return type === "GIG" ? "/gigs" : "/events";
+}
