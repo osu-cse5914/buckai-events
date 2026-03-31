@@ -164,20 +164,12 @@ function BrandLink({ compact = false }: { compact?: boolean }) {
     <Link
       to="/featured"
       className={cn(
-        "group inline-flex shrink-0 items-center gap-3",
-        compact ? "flex-row" : "flex-col gap-2 text-center",
+        "group inline-flex shrink-0 items-center",
+        compact ? "flex-row" : "flex-col text-center",
       )}
     >
       <span className="flex size-10 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-red-500 text-sm font-semibold tracking-tight text-white shadow-sm transition-transform group-hover:scale-[1.03]">
         SO
-      </span>
-      <span
-        className={cn(
-          "font-semibold tracking-tight",
-          compact ? "text-sm" : "text-[11px] leading-tight",
-        )}
-      >
-        Social OSU
       </span>
     </Link>
   );
