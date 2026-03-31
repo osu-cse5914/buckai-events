@@ -77,9 +77,61 @@ export type MyApplication = ApplicationSummary & {
   };
 };
 
+export const PAGE_SIZE = 12;
+
+export type EventListItem = {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  source: string;
+  status: string;
+  category: string | null;
+  tags: string[];
+  imageUrl: string | null;
+  ticketUrl: string | null;
+  locationName: string;
+  locationLatitude: number | null;
+  locationLongitude: number | null;
+  startAt: string;
+  endAt: string | null;
+  compensationAmount: number | null;
+  compensationCurrency: string | null;
+  compensationType: string | null;
+  summary: string | null;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
+  creator?: {
+    id: string;
+    displayName: string | null;
+    email: string;
+  };
+};
+
+export type EventsResponse = {
+  data: EventListItem[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+};
+
+export type EventListFilters = {
+  search?: string;
+  type?: string;
+  status?: string;
+  source?: string;
+  category?: string;
+  userId?: string;
+};
+
 export const queryKeys = {
   profile: ["profile"] as const,
   event: (eventId: string) => ["event", eventId] as const,
+  eventsList: (filters: EventListFilters, page: number) =>
+    ["events", filters, page] as const,
   myApplications: ["my-applications"] as const,
   gigApplications: (eventId: string) => ["gig-applications", eventId] as const,
   gigApplicationStatus: (eventId: string) =>
@@ -113,6 +165,35 @@ export function eventDetailQueryOptions(api: ApiClient, eventId: string) {
         throw new Error("Failed to load event");
       }
       return res.json() as Promise<EventRecord>;
+    },
+  });
+}
+
+export function eventsListQueryOptions(
+  api: ApiClient,
+  filters: EventListFilters,
+  page: number,
+) {
+  return queryOptions<EventsResponse>({
+    queryKey: queryKeys.eventsList(filters, page),
+    queryFn: async () => {
+      const query: Record<string, string> = {
+        limit: String(PAGE_SIZE),
+        offset: String(page * PAGE_SIZE),
+      };
+
+      if (filters.search) query.search = filters.search;
+      if (filters.type) query.type = filters.type;
+      if (filters.status) query.status = filters.status;
+      if (filters.source) query.source = filters.source;
+      if (filters.category) query.category = filters.category;
+      if (filters.userId) query.user = filters.userId;
+
+      const response = await api.api.v1.events.$get({ query });
+      if (!response.ok) {
+        throw new Error("Failed to fetch events");
+      }
+      return response.json() as Promise<EventsResponse>;
     },
   });
 }

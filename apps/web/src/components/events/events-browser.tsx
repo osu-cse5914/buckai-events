@@ -9,6 +9,13 @@ import {
 } from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import {
+  eventsListQueryOptions,
+  PAGE_SIZE,
+  type EventListFilters,
+  type EventListItem,
+  type EventsResponse,
+} from "@/lib/queries";
+import {
   STATUS_LABELS,
   STATUS_STYLES,
   TYPE_STYLES,
@@ -26,85 +33,16 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const PAGE_SIZE = 12;
-
-export type EventListItem = {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  source: string;
-  status: string;
-  category: string | null;
-  tags: string[];
-  imageUrl: string | null;
-  ticketUrl: string | null;
-  locationName: string;
-  locationLatitude: number | null;
-  locationLongitude: number | null;
-  startAt: string;
-  endAt: string | null;
-  compensationAmount: number | null;
-  compensationCurrency: string | null;
-  compensationType: string | null;
-  summary: string | null;
-  creatorId: string;
-  createdAt: string;
-  updatedAt: string;
-  creator?: {
-    id: string;
-    displayName: string | null;
-    email: string;
-  };
-};
-
-export type EventsResponse = {
-  data: EventListItem[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-  };
-};
-
-export type EventsQueryFilters = {
-  search?: string;
-  type?: string;
-  status?: string;
-  source?: string;
-  category?: string;
-  userId?: string;
-};
-
 export function useEventsQuery(
-  filters: EventsQueryFilters,
+  filters: EventListFilters,
   page: number,
   enabled = true,
 ) {
   const api = useApiClient();
 
   return useQuery<EventsResponse>({
-    queryKey: ["events-browser", filters, page],
+    ...eventsListQueryOptions(api, filters, page),
     enabled,
-    queryFn: async () => {
-      const query: Record<string, string> = {
-        limit: String(PAGE_SIZE),
-        offset: String(page * PAGE_SIZE),
-      };
-
-      if (filters.search) query.search = filters.search;
-      if (filters.type) query.type = filters.type;
-      if (filters.status) query.status = filters.status;
-      if (filters.source) query.source = filters.source;
-      if (filters.category) query.category = filters.category;
-      if (filters.userId) query.user = filters.userId;
-
-      const response = await api.api.v1.events.$get({ query });
-      if (!response.ok) {
-        throw new Error("Failed to fetch events");
-      }
-      return response.json() as Promise<EventsResponse>;
-    },
     placeholderData: keepPreviousData,
   });
 }

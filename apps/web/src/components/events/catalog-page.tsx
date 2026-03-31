@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { startTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,10 +31,19 @@ const DEFAULT_FILTERS: CatalogFilters = {
   category: "",
 };
 
-export function CatalogPage() {
-  const [filters, setFilters] = useState<CatalogFilters>(DEFAULT_FILTERS);
-  const [page, setPage] = useState(0);
-
+export function CatalogPage({
+  filters = DEFAULT_FILTERS,
+  page = 0,
+  onFilterChange,
+  onClearFilters,
+  onPageChange,
+}: {
+  filters?: CatalogFilters;
+  page?: number;
+  onFilterChange: (key: keyof CatalogFilters, value: string) => void;
+  onClearFilters: () => void;
+  onPageChange: (page: number) => void;
+}) {
   const { data, isLoading, isError, error } = useEventsQuery(
     {
       type: filters.type || undefined,
@@ -47,16 +56,6 @@ export function CatalogPage() {
 
   const hasActiveFilters = Object.values(filters).some((value) => value !== "");
 
-  function updateFilter(key: keyof CatalogFilters, value: string) {
-    setFilters((current) => ({ ...current, [key]: value }));
-    setPage(0);
-  }
-
-  function clearFilters() {
-    setFilters(DEFAULT_FILTERS);
-    setPage(0);
-  }
-
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
       <h1 className="text-3xl font-bold tracking-tight">Catalog</h1>
@@ -65,7 +64,7 @@ export function CatalogPage() {
         <Select
           value={filters.type || "ALL"}
           onValueChange={(value) =>
-            updateFilter("type", value === "ALL" ? "" : value)
+            onFilterChange("type", value === "ALL" ? "" : value)
           }
         >
           <SelectTrigger className="w-full">
@@ -81,7 +80,7 @@ export function CatalogPage() {
         <Select
           value={filters.status || "ALL"}
           onValueChange={(value) =>
-            updateFilter("status", value === "ALL" ? "" : value)
+            onFilterChange("status", value === "ALL" ? "" : value)
           }
         >
           <SelectTrigger className="w-full">
@@ -99,7 +98,7 @@ export function CatalogPage() {
         <Select
           value={filters.source || "ALL"}
           onValueChange={(value) =>
-            updateFilter("source", value === "ALL" ? "" : value)
+            onFilterChange("source", value === "ALL" ? "" : value)
           }
         >
           <SelectTrigger className="w-full">
@@ -117,14 +116,16 @@ export function CatalogPage() {
           placeholder="Category"
           value={filters.category}
           onChange={(event) =>
-            updateFilter("category", event.target.value)
+            startTransition(() =>
+              onFilterChange("category", event.target.value),
+            )
           }
         />
       </div>
 
       {hasActiveFilters ? (
         <div className="flex justify-end">
-          <Button variant="outline" onClick={clearFilters}>
+          <Button variant="outline" onClick={onClearFilters}>
             Clear filters
           </Button>
         </div>
@@ -154,7 +155,7 @@ export function CatalogPage() {
           <EventsPagination
             page={page}
             total={data.pagination.total}
-            onPageChange={setPage}
+            onPageChange={onPageChange}
           />
         </>
       ) : null}

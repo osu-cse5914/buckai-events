@@ -131,7 +131,7 @@ function EventDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      navigate({ to: "/events" });
+      navigate({ to: "/catalog" });
     },
   });
   const applyMutation = useMutation({
@@ -222,7 +222,7 @@ function EventDetailPage() {
           This event does not exist or has been removed.
         </p>
         <Button asChild className="mt-4">
-          <Link to="/events">Back to Events</Link>
+          <Link to="/catalog">Back to Catalog</Link>
         </Button>
       </section>
     );
@@ -235,11 +235,11 @@ function EventDetailPage() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-10">
       <Link
-        to="/events"
+        to="/catalog"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeftIcon className="size-4" />
-        Back to Events
+        Back to Catalog
       </Link>
 
       <div className="mt-6">
