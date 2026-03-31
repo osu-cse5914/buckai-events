@@ -13,9 +13,16 @@ Unless otherwise noted, this spec covers the authenticated product shell. Sign-i
 
 Route recommendations in this document are intentionally conservative. The authenticated shell keeps `/` as a redirect into `Featured`, but primary destination routes should otherwise use their canonical paths directly instead of legacy aliases.
 
+This merged spec normalizes older naming into the current page model:
+
+- `Home Page` becomes `Featured`
+- Separate `Events` and `Gigs` browse pages become `Catalog` with item-type filtering
+- `My Page` becomes `You`
+- `AI Agent Page` becomes `AI`
+
 ## Navigation Model
 
-The authenticated app is organized around five primary destinations and one secondary account control. The primary navbar exposes separate `Search` and `AI` buttons.
+The authenticated app is organized around five primary destinations and one secondary account control. The primary navbar exposes separate `Search` and `AI` controls in the shell in addition to the tab bar.
 
 | Item | Surface Type | Purpose | Route Recommendation |
 | --- | --- | --- | --- |
@@ -51,6 +58,7 @@ It contains:
 
 - A recommendation-ranked feed of events and gigs
 - Recommendation framing such as "because you liked", interest alignment, or similar personalization cues
+- Discovery modules such as `Recommended`, `Popular`, and `Upcoming` when the product needs multiple feed groupings
 - Feed-level filters that refine recommended content without turning the page into the exhaustive browse surface
 - Quick actions such as save, apply, or open detail
 
@@ -66,7 +74,8 @@ It does not contain:
 It contains:
 
 - A comprehensive list of available events and gigs
-- Neutral browse controls such as filters, sorting, pagination, and category narrowing
+- Neutral browse controls such as item-type filters, category filters, sorting, pagination, and category narrowing
+- Sort options such as date-driven ordering and engagement-driven ordering when supported
 - URL-owned browse state so filters and pagination survive reload, browser history, and shared links
 - Results shown without recommendation framing
 - Entry points into event and gig detail pages
@@ -84,6 +93,7 @@ It contains:
 - A summary view of the user's collections, applications, owned events and gigs, and relevant personal settings
 - Status snapshots, counts, and recent activity relevant to the current user
 - Shortcuts into `You` subpages
+- Summary modules that replace the older `Collections`, `Applications`, and `Created` sections from `My Page`
 
 It does not contain:
 
@@ -99,10 +109,10 @@ Collections and applications are not top-level navigation items. They are subpag
 It contains:
 
 - A direct query input for keyword or semantic search
-- Search results for events and gigs
+- Search results for events and gigs, including mixed result sets when supported
 - Structured filters that refine explicit search results
 - URL-owned query, filter, and pagination state so search sessions are durable across reload, browser history, and shared links
-- AI enhancement that improves search, such as summaries
+- AI enhancement that improves search, such as summaries or refinement help
 - A clear link or handoff control into AI mode
 - Recent searches when supported
 
@@ -115,6 +125,7 @@ It contains:
 It contains:
 
 - A chat-based agent entry point for natural-language event and gig discovery
+- A new-conversation entry point
 - Conversation history or recent conversations when supported
 - Assistant responses that can surface structured event and gig results
 - Confirmation moments for assistant-driven actions such as save or apply
@@ -135,6 +146,7 @@ It does not contain:
 - **Belongs on this page**:
   - Personalized event and gig feed
   - Recommendation reasons or personalization labels
+  - Discovery modules such as recommended, popular, and upcoming
   - Feed filters scoped to discovery
   - Quick actions that launch overlays or navigate to detail pages
 
@@ -144,7 +156,7 @@ It does not contain:
 - **Route recommendation**: `/catalog`
 - **Belongs on this page**:
   - Full browse list
-  - Filter and sort controls
+  - Item-type, category, and sort controls
   - Pagination or infinite scrolling
   - Entry to event and gig detail pages
 
@@ -177,7 +189,8 @@ It does not contain:
 - **Belongs on this page**:
   - Entry point to start a new chat-based agent session
   - Recent or pinned conversations when supported
-  - Agent-centric empty state guidance
+  - Agent-centric empty-state guidance
+  - Sidebar or list navigation for prior conversations when supported
 
 #### AI Conversation Page
 
@@ -223,7 +236,7 @@ Collection detail remains part of the `You` information architecture. If public 
   - The user's applications
   - Application statuses
   - Links back to the related gig detail pages
-  - Empty state guidance when the user has not applied to any gigs
+  - Empty-state guidance when the user has not applied to any gigs
 
 #### Your Events and Gigs Page
 
@@ -251,9 +264,12 @@ This page does not replace `My Profile` and does not own account-session actions
 - **Purpose**: Canonical full-page view for a single event or gig
 - **Route recommendation**: `/events/:eventId`
 - **Belongs on this page**:
-  - Full event or gig information
+  - Title, categories, organizer, date and time, location, capacity or participant count, description, and notes
   - Organizer information
   - Contextual actions such as save, apply, edit, or manage applications
+  - Navigation back to discovery or management surfaces
+
+The canonical detail experience is a full page. A lightweight preview overlay may exist, but it does not replace the route-owned detail view.
 
 Save and apply remain actions launched from this page. They do not create separate applicant-facing pages.
 
@@ -346,6 +362,7 @@ Mobile navigation is a responsive presentation of the same primary navigation mo
 - The authenticated product has five primary destinations only: `Featured`, `Catalog`, `Search`, `AI`, and `You`.
 - `Avatar Menu` is secondary account navigation and never replaces or duplicates a primary destination.
 - `Featured`, `Catalog`, `Search`, and `AI` are discovery surfaces; `You` is the personal management surface.
+- The merged page model normalizes legacy names: `Home` becomes `Featured`, separate `Events` and `Gigs` browse pages collapse into `Catalog`, `My Page` becomes `You`, and `AI Agent Page` becomes `AI`.
 - `Catalog` and `Search` keep their active browse state in URL search params so filters, query text, and pagination survive refresh, history navigation, and shared links.
 - `My Profile` is a dedicated full page reached from the avatar menu, not part of the `You` hub.
 - Collections and applications are subpages under `You`, not top-level tabs.
@@ -354,7 +371,9 @@ Mobile navigation is a responsive presentation of the same primary navigation mo
 - Event, profile, and collection detail views are full pages because they need durable URLs, browser history support, and deep linking.
 - Save, apply, confirm, and menu interactions stay as overlays because they are action flows, not canonical destinations.
 - `Featured` is the only page whose defining frame is recommendation and personalization.
+- `Featured` may organize content into recommended, popular, and upcoming modules without turning into a neutral browse page.
 - `Catalog` is the neutral browse surface and must not be framed as a recommendation feed.
+- `Catalog` owns item-type filtering; separate top-level `Events` and `Gigs` browse tabs are removed.
 - `Catalog` uses `/catalog` as its canonical app-page route; the legacy `/events` alias is removed.
 - `Search` is the traditional query-first destination. It may offer lightweight AI enhancement and a handoff into AI mode, but it does not own assistant conversation history.
 - `You` applications use `/you/applications` as their canonical route; the legacy `/applications` alias is removed.

@@ -1,6 +1,6 @@
 # App Pages - Test Cases
 
-**Spec**: [`/specs/system/app-pages.md`](../../specs/system/app-pages.md)
+**Spec**: [`/specs/interface/app-pages.md`](../../specs/interface/app-pages.md)
 
 ## Test Cases
 
