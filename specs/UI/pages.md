@@ -1,6 +1,6 @@
 ## Main Pages
 
-### Home Page (Social OSU)
+### Home Page (Social OSU / Featured)
 
 The Home Page is the main landing page after login, accessible via the "Social OSU" item in the navigation bar. This page focuses on content discovery and presents events and gigs through a combination of AI recommendations and simple ranking strategies.
 
@@ -180,7 +180,7 @@ Users can:
 - the detail view may be implemented as a modal/dialog overlay or a separate page
 - uses existing UI components such as Card and Dialog
 
-### My Page
+### My Page (You)
 
 The My Page displays user-related content and is accessible from the "My Page" item in the navigation bar. This page serves as a central place for users to manage their activities and saved content.
 
