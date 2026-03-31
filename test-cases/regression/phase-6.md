@@ -10,7 +10,7 @@ bun run test:regression:phase-6
 
 ### Included automated test cases
 
-All automated cases from Phase 0 through Phase 5.
+All automated cases from Phase 0 through Phase 6.
 
 ## Manual checklist — Full system
 

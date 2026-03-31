@@ -14,6 +14,7 @@ model User {
   id             String   @id @default(cuid())
   clerkId        String   @unique
   email          String   @unique
+  role           UserRole @default(USER)
   displayName    String?  @db.VarChar(100)
   major          String?  @db.VarChar(100)
   gradYear       Int?
@@ -42,10 +43,12 @@ model Event {
   type               EventType
   source             EventSource
   externalId         String?      @unique
+  sourceHash         String?
   category           String?
   tags               String[]
   imageUrl           String?
   ticketUrl          String?
+  externalUrl        String?
   locationName       String       @db.VarChar(500)
   locationLatitude   Float?
   locationLongitude  Float?
@@ -187,6 +190,11 @@ model EventEmbedding {
 }
 
 // ─── Enums ──────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
 
 enum EventType {
   EVENT

@@ -4,6 +4,7 @@ import type { ApiClient } from "./api";
 export type CurrentUser = {
   id: string;
   email: string;
+  role: "USER" | "ADMIN";
   displayName: string | null;
   major: string | null;
   gradYear: number | null;
@@ -25,6 +26,7 @@ export type EventRecord = {
   tags: string[];
   imageUrl: string | null;
   ticketUrl: string | null;
+  externalUrl?: string | null;
   locationName: string;
   locationLatitude: number | null;
   locationLongitude: number | null;

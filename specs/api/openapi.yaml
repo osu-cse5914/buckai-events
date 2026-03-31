@@ -21,6 +21,8 @@ servers:
 tags:
   - name: Users
     description: User profile management and user-scoped relationship endpoints
+  - name: Admin
+    description: Admin-only operational endpoints
   - name: Social
     description: Social feed endpoints
   - name: Events
@@ -57,6 +59,25 @@ paths:
                 $ref: '#/components/schemas/SuccessResponse_User'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /admin/external-ingestion/sync:
+    post:
+      tags: [Admin]
+      summary: Trigger a synchronous external event sync
+      operationId: triggerExternalEventSync
+      responses:
+        '200':
+          description: External sync summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_ExternalSyncSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
     patch:
       tags: [Users]
@@ -828,6 +849,10 @@ components:
       type: string
       enum: [OSU_API, TICKETMASTER, USER]
 
+    UserRole:
+      type: string
+      enum: [USER, ADMIN]
+
     EventStatus:
       type: string
       enum: [OPEN, IN_PROGRESS, COMPLETED, CANCELLED]
@@ -902,7 +927,7 @@ components:
     # ── Entity Schemas ──
     User:
       type: object
-      required: [id, clerkId, email, interests, followerCount, followingCount, createdAt, updatedAt]
+      required: [id, clerkId, email, role, interests, followerCount, followingCount, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -911,6 +936,8 @@ components:
         email:
           type: string
           format: email
+        role:
+          $ref: '#/components/schemas/UserRole'
         displayName:
           type: string
           maxLength: 100
@@ -1344,6 +1371,45 @@ components:
           maxLength: 10000
       additionalProperties: false
 
+    ExternalSyncSourceSummary:
+      type: object
+      required: [fetched, created, updated, skipped, completed]
+      properties:
+        fetched:
+          type: integer
+          minimum: 0
+        created:
+          type: integer
+          minimum: 0
+        updated:
+          type: integer
+          minimum: 0
+        skipped:
+          type: integer
+          minimum: 0
+        completed:
+          type: integer
+          minimum: 0
+
+    ExternalSyncSummary:
+      type: object
+      required: [startedAt, finishedAt, sources]
+      properties:
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        sources:
+          type: object
+          required: [osu, ticketmaster]
+          properties:
+            osu:
+              $ref: '#/components/schemas/ExternalSyncSourceSummary'
+            ticketmaster:
+              $ref: '#/components/schemas/ExternalSyncSourceSummary'
+
     # ── Response Shapes ──
     SuccessResponse_User:
       allOf:
@@ -1352,6 +1418,10 @@ components:
     SuccessResponse_PublicProfile:
       allOf:
         - $ref: '#/components/schemas/PublicProfile'
+
+    SuccessResponse_ExternalSyncSummary:
+      allOf:
+        - $ref: '#/components/schemas/ExternalSyncSummary'
 
     SuccessResponse_Event:
       allOf:
@@ -1511,6 +1581,13 @@ components:
 
     Conflict:
       description: Duplicate resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalError:
+      description: Unexpected server error
       content:
         application/problem+json:
           schema:

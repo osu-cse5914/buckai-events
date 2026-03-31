@@ -115,3 +115,13 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
   2. Navigate to the event list page
   3. Filter by source (OSU_API or TICKETMASTER)
 - **Expected**: External events appear in the list with correct data; no edit/delete controls are shown
+
+## TC-ING-012: External sync returns per-source summary counters
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The external sync runs across OSU and Ticketmaster sources
+- **When**: The sync finishes
+- **Then**: It returns per-source `fetched`, `created`, `updated`, `skipped`, and `completed` counters plus `startedAt` and `finishedAt`

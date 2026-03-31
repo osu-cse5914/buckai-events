@@ -93,3 +93,12 @@ export function notFound(c: Context, detail: string): Response {
 export function conflict(c: Context, detail: string): Response {
   return problem(c, { status: 409, detail, type: "conflict" });
 }
+
+export function internalError(c: Context, detail: string): Response {
+  return problem(c, {
+    status: 500,
+    detail,
+    type: "internal-error",
+    title: "Internal server error",
+  });
+}

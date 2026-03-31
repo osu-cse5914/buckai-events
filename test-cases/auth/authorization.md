@@ -125,3 +125,23 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 - **Given**: User A owns conversation C
 - **When**: User B sends `GET /conversations/C/messages`
 - **Then**: The API responds with 404 Not Found
+
+## TC-AUTHZ-013: Non-admin cannot trigger manual external sync
+
+- **Spec scenario**: S-AUTHZ-11
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An authenticated user with role `USER`
+- **When**: The user sends `POST /admin/external-ingestion/sync`
+- **Then**: The API responds with 403 Forbidden
+
+## TC-AUTHZ-014: Admin can trigger manual external sync
+
+- **Spec scenario**: S-AUTHZ-12
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An authenticated user with role `ADMIN`
+- **When**: The user sends `POST /admin/external-ingestion/sync`
+- **Then**: The API responds with 200 OK and invokes the external sync service once

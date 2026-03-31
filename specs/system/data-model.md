@@ -28,6 +28,7 @@ Event ──< EventEmbedding    (1:1, vector search)
 | id | String | PK, cuid | |
 | clerkId | String | unique | Clerk external ID |
 | email | String | unique | Must be `@osu.edu` or `@buckeyemail.osu.edu` |
+| role | UserRole | enum, default `USER` | `USER` or `ADMIN` |
 | displayName | String? | max 100 chars | |
 | major | String? | max 100 chars | Free-text, not validated against a list |
 | gradYear | Int? | min 2000, max 2100 | Expected graduation year |
@@ -175,6 +176,7 @@ These are embedded objects stored as JSON columns or flattened into parent table
 ## Enums
 
 ```
+UserRole:             USER | ADMIN
 EventType:            EVENT | GIG
 EventSource:          OSU_API | TICKETMASTER | USER
 EventStatus:          OPEN | IN_PROGRESS | COMPLETED | CANCELLED

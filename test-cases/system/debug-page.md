@@ -13,3 +13,7 @@
 | TC-DBG-005 | S-DBG-5 | User profile viewer navigates to user page | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
 | TC-DBG-006 | S-DBG-3 | Health check displays error on failure | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
 | TC-DBG-007 | S-DBG-4 | DB check displays error on failure | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 1 | Always |
+| TC-DBG-008 | S-DBG-6 | Admin sees the external sync control | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
+| TC-DBG-009 | S-DBG-7 | Non-admin does not see the external sync control | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
+| TC-DBG-010 | S-DBG-8 | Successful external sync shows returned counts | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
+| TC-DBG-011 | S-DBG-9 | Failed external sync shows an error state | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
