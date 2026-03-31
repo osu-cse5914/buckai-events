@@ -125,3 +125,14 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 - **Given**: The external sync runs across OSU and Ticketmaster sources
 - **When**: The sync finishes
 - **Then**: It returns per-source `fetched`, `created`, `updated`, `skipped`, and `completed` counters plus `startedAt` and `finishedAt`
+
+## TC-ING-013: Missing Ticketmaster API key does not block OSU sync
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The external sync runs without `TICKETMASTER_API_KEY`
+- **When**: The sync finishes
+- **Then**: OSU events are still fetched and ingested
+- **And**: Ticketmaster is skipped with zero summary counters

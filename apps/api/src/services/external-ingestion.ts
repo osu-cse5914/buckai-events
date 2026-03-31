@@ -88,7 +88,7 @@ export type ExternalEventCandidate = {
 };
 
 export type ExternalSyncOptions = {
-  ticketmasterApiKey: string;
+  ticketmasterApiKey?: string;
   fetchImpl?: FetchLike;
   now?: Date;
 };
@@ -389,9 +389,18 @@ export async function syncExternalEvents(
   { ticketmasterApiKey, fetchImpl = fetch, now = new Date() }: ExternalSyncOptions,
 ) : Promise<ExternalSyncSummary> {
   const startedAt = new Date();
+  const normalizedTicketmasterApiKey = ticketmasterApiKey?.trim();
+  const ticketmasterCandidatesPromise = normalizedTicketmasterApiKey
+    ? fetchTicketmasterEvents(normalizedTicketmasterApiKey, fetchImpl)
+    : Promise.resolve([] as ExternalEventCandidate[]);
+
+  if (!normalizedTicketmasterApiKey) {
+    console.warn("Skipping Ticketmaster sync because TICKETMASTER_API_KEY is missing");
+  }
+
   const [osuCandidates, ticketmasterCandidates] = await Promise.all([
     fetchOsuEvents(fetchImpl),
-    fetchTicketmasterEvents(ticketmasterApiKey, fetchImpl),
+    ticketmasterCandidatesPromise,
   ]);
 
   const osu = await syncExternalSource(prisma, "OSU_API", osuCandidates, now);
