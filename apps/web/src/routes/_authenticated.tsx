@@ -82,7 +82,7 @@ function AuthenticatedLayout() {
             ))}
           </div>
 
-          <div className="flex flex-col items-center gap-1.5">
+          <div className="flex flex-col items-center gap-1.5 py-1.5">
             <AccountMenu />
           </div>
         </div>
