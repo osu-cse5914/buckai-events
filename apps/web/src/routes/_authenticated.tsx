@@ -83,7 +83,7 @@ function AuthenticatedLayout() {
 
         <div className="mt-auto flex flex-col items-center gap-1.5 pt-6">
           <AccountMenu />
-          <span className="text-[11px] font-medium text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             Account
           </span>
         </div>
@@ -173,7 +173,7 @@ function BrandLink({ compact = false }: { compact?: boolean }) {
       <span
         className={cn(
           "font-semibold tracking-tight",
-          compact ? "text-sm" : "text-[10px] leading-tight",
+          compact ? "text-sm" : "text-[11px] leading-tight",
         )}
       >
         Social OSU
@@ -218,7 +218,7 @@ function ShellNavLink({
         <span
           className={cn(
             "font-medium",
-            variant === "rail" ? "text-[10px] leading-tight" : "text-sm",
+            variant === "rail" ? "text-[11px] leading-tight" : "text-sm",
           )}
         >
           {item.label}
