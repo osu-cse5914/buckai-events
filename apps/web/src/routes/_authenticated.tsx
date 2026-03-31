@@ -59,17 +59,6 @@ function AuthenticatedLayout() {
       <aside className="hidden h-screen w-24 shrink-0 border-r border-border md:sticky md:top-0 md:flex md:flex-col md:px-3 md:py-4">
         <BrandLink />
 
-        <div className="mt-6 flex flex-col gap-1.5">
-          {utilityNavLinks.map((item) => (
-            <ShellNavLink
-              key={item.to}
-              item={item}
-              pathname={location.pathname}
-              variant="rail"
-            />
-          ))}
-        </div>
-
         <nav className="mt-6 flex flex-col gap-1.5">
           {navLinks.map((item) => (
             <ShellNavLink
@@ -81,11 +70,24 @@ function AuthenticatedLayout() {
           ))}
         </nav>
 
-        <div className="mt-auto flex flex-col items-center gap-1.5 pt-6">
-          <AccountMenu />
-          <span className="text-xs font-medium text-muted-foreground">
-            Account
-          </span>
+        <div className="mt-auto flex flex-col gap-4 pt-6">
+          <div className="flex flex-col gap-1.5 border-t border-border pt-4">
+            {utilityNavLinks.map((item) => (
+              <ShellNavLink
+                key={item.to}
+                item={item}
+                pathname={location.pathname}
+                variant="rail"
+              />
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center gap-1.5">
+            <AccountMenu />
+            <span className="text-xs font-medium text-muted-foreground">
+              Account
+            </span>
+          </div>
         </div>
       </aside>
 
@@ -109,19 +111,7 @@ function AuthenticatedLayout() {
                 </SheetHeader>
 
                 <div className="flex flex-1 flex-col px-3 pb-4">
-                  <div className="flex flex-col gap-1.5">
-                    {utilityNavLinks.map((item) => (
-                      <ShellNavLink
-                        key={item.to}
-                        item={item}
-                        pathname={location.pathname}
-                        variant="drawer"
-                        onClick={() => setMobileOpen(false)}
-                      />
-                    ))}
-                  </div>
-
-                  <nav className="mt-4 flex flex-col gap-1.5 border-t border-border pt-4">
+                  <nav className="mt-4 flex flex-col gap-1.5">
                     {navLinks.map((item) => (
                       <ShellNavLink
                         key={item.to}
@@ -133,14 +123,28 @@ function AuthenticatedLayout() {
                     ))}
                   </nav>
 
-                  <div className="mt-auto border-t border-border pt-4">
-                    <div className="flex items-center gap-3 rounded-2xl bg-accent/50 px-3 py-2.5">
-                      <AccountMenu />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">Account</p>
-                        <p className="text-xs text-muted-foreground">
-                          Profile and session
-                        </p>
+                  <div className="mt-auto flex flex-col gap-4 pt-4">
+                    <div className="flex flex-col gap-1.5 border-t border-border pt-4">
+                      {utilityNavLinks.map((item) => (
+                        <ShellNavLink
+                          key={item.to}
+                          item={item}
+                          pathname={location.pathname}
+                          variant="drawer"
+                          onClick={() => setMobileOpen(false)}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="border-t border-border pt-4">
+                      <div className="flex items-center gap-3 rounded-2xl bg-accent/50 px-3 py-2.5">
+                        <AccountMenu />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">Account</p>
+                          <p className="text-xs text-muted-foreground">
+                            Profile and session
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
