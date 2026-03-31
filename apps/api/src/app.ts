@@ -1,5 +1,5 @@
 import { clerkMiddleware } from "@hono/clerk-auth";
-import type { Hono } from "hono";
+import type { Context } from "hono";
 import { cors } from "hono/cors";
 import { appFactory } from "./factory";
 import { problemFromError, notFound, ProblemError } from "./lib/problem-details";
@@ -12,11 +12,18 @@ import { gigs } from "./routes/gigs";
 import { health } from "./routes/health";
 import { users } from "./routes/users";
 
-export function registerApiErrorHandlers<T extends Hono<any, any, any>>(
-  app: T,
-): T {
-  app.notFound((c) => notFound(c, "Route not found"));
-  app.onError((error, c) => {
+type ErrorHandlerRegistrable = {
+  notFound: (handler: (c: Context) => Response | Promise<Response>) => unknown;
+  onError: (
+    handler: (error: Error, c: Context) => Response | Promise<Response>,
+  ) => unknown;
+};
+
+export function registerApiErrorHandlers<T>(app: T): T {
+  const errorHandlerApp = app as T & ErrorHandlerRegistrable;
+
+  errorHandlerApp.notFound((c) => notFound(c, "Route not found"));
+  errorHandlerApp.onError((error, c) => {
     if (!(error instanceof ProblemError)) {
       console.error(error);
     }
