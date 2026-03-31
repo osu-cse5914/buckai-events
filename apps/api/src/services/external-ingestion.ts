@@ -109,7 +109,6 @@ export type ExternalSyncSummary = {
     ticketmaster: ExternalSyncSourceSummary;
   };
 };
-
 function assertOk(response: Response, detail: string) {
   if (!response.ok) {
     throw new Error(`${detail}: ${response.status} ${response.statusText}`);
