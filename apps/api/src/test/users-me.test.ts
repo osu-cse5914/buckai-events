@@ -26,6 +26,7 @@ const FULL_USER = {
   id: "user_1",
   clerkId: "clerk_abc123",
   email: "student@osu.edu",
+  role: "USER",
   displayName: "Brutus",
   major: "CS",
   gradYear: 2025,
@@ -195,6 +196,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
           id: "hacked_id",
           clerkId: "hacked_clerk",
           email: "hacked@osu.edu",
+          role: "ADMIN",
         }),
       })
     );
@@ -206,6 +208,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     expect(updateData).not.toHaveProperty("id");
     expect(updateData).not.toHaveProperty("clerkId");
     expect(updateData).not.toHaveProperty("email");
+    expect(updateData).not.toHaveProperty("role");
   });
 
   it("returns 401 when unauthenticated", async () => {
@@ -275,5 +278,54 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("[phase:6] [regression:always] GET /api/v1/users/me role contract", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+    vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
+    vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+  });
+
+  it("TC-USER-009: includes the authenticated user's persisted role", async () => {
+    const res = await app.request(makeAuthRequest("/api/v1/users/me"));
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data.role).toBe("USER");
+  });
+});
+
+describe("[phase:6] [regression:always] PATCH /api/v1/users/me immutable role", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+    vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
+    vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+  });
+
+  it("TC-USER-010: role field is silently ignored", async () => {
+    vi.mocked(mockPrisma.user.update).mockResolvedValue(FULL_USER as never);
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/users/me", {
+        method: "PATCH",
+        body: JSON.stringify({ role: "ADMIN" }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data.role).toBe("USER");
+    if (vi.mocked(mockPrisma.user.update).mock.calls.length > 0) {
+      const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<string, unknown>;
+      expect(updateCall.data).not.toHaveProperty("role");
+    }
   });
 });
