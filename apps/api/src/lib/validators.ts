@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import type { CollectionVisibility } from "@prisma/client";
 import { validator } from "hono/validator";
 import { badRequest } from "./problem-details";
 import {
@@ -613,3 +614,77 @@ export function parseUserPatchBody(
 }
 
 export const validateUserPatchJson = validator("json", parseUserPatchBody);
+
+export const COLLECTION_VISIBILITIES = ["PRIVATE", "PUBLIC"] as const;
+
+export const validateCollectionItemParams = validator("param", (value, c) => {
+  const id = value.id?.trim();
+  const eventId = value.eventId?.trim();
+  if (!id || !eventId) {
+    return badRequest(
+      c,
+      "id and eventId are required",
+      "invalid-param",
+      "Invalid path parameter",
+    );
+  }
+
+  return { id, eventId };
+});
+
+export function parseCollectionPatchBody(
+  value: unknown,
+  c: Context,
+): { name?: string; visibility?: CollectionVisibility } | Response {
+  if (!isRecord(value)) {
+    return badRequest(
+      c,
+      "Request body must be a JSON object",
+      "invalid-body",
+      "Invalid request body",
+    );
+  }
+
+  const output: { name?: string; visibility?: CollectionVisibility } = {};
+
+  if (value.name !== undefined) {
+    if (typeof value.name !== "string") {
+      return badRequest(c, "name must be a string");
+    }
+    output.name = value.name;
+  }
+
+  if (value.visibility !== undefined) {
+    if (
+      typeof value.visibility !== "string" ||
+      !isAllowedValue(value.visibility, COLLECTION_VISIBILITIES)
+    ) {
+      return badRequest(c, "visibility must be PRIVATE or PUBLIC");
+    }
+
+    output.visibility = value.visibility;
+  }
+
+  return output;
+}
+
+export function parseCollectionItemCreateBody(
+  value: unknown,
+  c: Context,
+): { eventId: string } | Response {
+  if (!isRecord(value)) {
+    return badRequest(
+      c,
+      "Request body must be a JSON object",
+      "invalid-body",
+      "Invalid request body",
+    );
+  }
+
+  const eventId = typeof value.eventId === "string" ? value.eventId.trim() : "";
+  if (!eventId) {
+    return badRequest(c, "eventId is required");
+  }
+
+  return { eventId };
+}
