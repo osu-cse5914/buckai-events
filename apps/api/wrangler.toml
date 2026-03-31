@@ -9,13 +9,21 @@ directory = "../web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
-# DATABASE_URL, CLERK_SECRET_KEY, TICKETMASTER_API_KEY, and
-# GOOGLE_GENERATIVE_AI_API_KEY are stored as encrypted secrets.
-# Set them once after login:
+# DATABASE_URL, CLERK_SECRET_KEY, TICKETMASTER_API_KEY,
+# GOOGLE_GENERATIVE_AI_API_KEY, and OPENAI_COMPATIBLE_API_KEY
+# are stored as encrypted secrets when used.
+# Set the required secrets once after login:
 #   wrangler secret put DATABASE_URL
 #   wrangler secret put CLERK_SECRET_KEY
 #   wrangler secret put TICKETMASTER_API_KEY
 #   wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+#
+# If your AI router config uses an OPENAI_COMPATIBLE provider, also set:
+#   wrangler secret put OPENAI_COMPATIBLE_API_KEY
+#
+# AI_ROUTER_CONFIG_JSON is required runtime config for the AI router.
+# Set it per environment in the Cloudflare dashboard, or store it as a secret:
+#   wrangler secret put AI_ROUTER_CONFIG_JSON
 
 [triggers]
 crons = ["*/15 * * * *", "0 */6 * * *"]

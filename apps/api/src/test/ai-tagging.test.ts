@@ -4,6 +4,20 @@ import { generateEventTagging } from "../services/ai-tagging";
 
 describe("[phase:4] [regression:always] AI tagging service", () => {
   it("normalizes structured tagging output to the event schema limits", async () => {
+    const generateText = vi.fn().mockResolvedValue({
+      output: {
+        tags: [
+          " Jazz ",
+          "MUSIC",
+          "music",
+          "",
+          "tag-that-is-way-too-long-to-keep-because-it-exceeds-fifty-characters",
+        ],
+        summary: "  A great live set from student musicians.  ",
+        category: " Music ",
+      },
+    });
+
     const result = await generateEventTagging(
       {
         title: "Jazz Night at the Union",
@@ -33,22 +47,17 @@ describe("[phase:4] [regression:always] AI tagging service", () => {
           }),
           getLanguageModel: () => ({ kind: "fake-language-model" }) as never,
         },
-        generateText: vi.fn().mockResolvedValue({
-          output: {
-            tags: [
-              " Jazz ",
-              "MUSIC",
-              "music",
-              "",
-              "tag-that-is-way-too-long-to-keep-because-it-exceeds-fifty-characters",
-            ],
-            summary: "  A great live set from student musicians.  ",
-            category: " Music ",
-          },
-        }),
+        generateText,
       },
     );
 
+    expect(generateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: "test prompt",
+        temperature: 0.3,
+        maxOutputTokens: 300,
+      }),
+    );
     expect(result).toEqual({
       tags: ["jazz", "music"],
       summary: "A great live set from student musicians.",

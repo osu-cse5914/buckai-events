@@ -41,7 +41,7 @@ Development is organized into 7 phases tracked via GitHub Issues and Milestones:
 - Backend: Hono on Cloudflare Workers
 - Database: Neon PostgreSQL via Prisma ORM
 - Auth: Clerk (OSU email restricted)
-- AI: Google Gemini via Vercel AI SDK
+- AI: Vercel AI SDK with Google Gemini and OpenAI-compatible provider support
 - CI/CD: GitHub Actions
 
 ## Project Structure
@@ -72,7 +72,8 @@ Set the required API secrets in `apps/api/.env`:
 
 - `DATABASE_URL`: your Neon or local Postgres connection string
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
-- `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used by the AI router and tagging service
+- `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used when a router provider entry references it
+- `AI_ROUTER_CONFIG_JSON`: serialized provider/model/task config consumed by the AI router
 
 Optional local overrides:
 
@@ -80,10 +81,83 @@ Optional local overrides:
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
-  - `AI_GOOGLE_FLASH_MODEL_ID`, `AI_GOOGLE_PRO_MODEL_ID`, `AI_GOOGLE_EMBEDDING_MODEL_ID` override the default Google model IDs used by the AI router
+  - `OPENAI_COMPATIBLE_API_KEY` is required only when your router config references an `OPENAI_COMPATIBLE` provider
 - `apps/web/.env`
   - `VITE_API_URL` defaults to `http://localhost:3001`
   - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key
+
+Example `AI_ROUTER_CONFIG_JSON`:
+
+```json
+{
+  "providers": {
+    "google": {
+      "id": "google",
+      "type": "GOOGLE",
+      "apiKeyEnvVar": "GOOGLE_GENERATIVE_AI_API_KEY"
+    },
+    "openai": {
+      "id": "openai",
+      "type": "OPENAI_COMPATIBLE",
+      "apiKeyEnvVar": "OPENAI_COMPATIBLE_API_KEY",
+      "baseUrl": "https://example.com/v1"
+    }
+  },
+  "models": {
+    "gemini-flash": {
+      "id": "gemini-flash",
+      "providerId": "google",
+      "modelId": "gemini-2.5-flash",
+      "type": "GENERATIVE",
+      "maxTokens": 1024
+    },
+    "gemini-pro": {
+      "id": "gemini-pro",
+      "providerId": "google",
+      "modelId": "gemini-2.5-pro",
+      "type": "GENERATIVE",
+      "maxTokens": 2048
+    },
+    "text-embed": {
+      "id": "text-embed",
+      "providerId": "google",
+      "modelId": "gemini-embedding-001",
+      "type": "EMBEDDING",
+      "dimensions": 768
+    },
+    "gpt4o": {
+      "id": "gpt4o",
+      "providerId": "openai",
+      "modelId": "gpt-4o",
+      "type": "GENERATIVE"
+    }
+  },
+  "tasks": {
+    "chatbot": {
+      "id": "chatbot",
+      "modelId": "gpt4o",
+      "temperature": 0.7
+    },
+    "tagging": {
+      "id": "tagging",
+      "modelId": "gemini-flash",
+      "systemPrompt": "You classify campus events into structured metadata.",
+      "temperature": 0.3,
+      "maxOutputTokens": 300
+    },
+    "title-generation": {
+      "id": "title-generation",
+      "modelId": "gemini-flash",
+      "temperature": 0.5,
+      "maxOutputTokens": 80
+    },
+    "embedding": {
+      "id": "embedding",
+      "modelId": "text-embed"
+    }
+  }
+}
+```
 
 Generate the Prisma client and initialize the database schema:
 
@@ -140,6 +214,12 @@ First-time Cloudflare setup:
    ```bash
    cd apps/api && wrangler secret put CLERK_SECRET_KEY
    ```
+4. Set the AI provider secrets used by your router config.
+   ```bash
+   cd apps/api && wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+   cd apps/api && wrangler secret put OPENAI_COMPATIBLE_API_KEY
+   ```
+5. Set `AI_ROUTER_CONFIG_JSON` in your deployment environment to the serialized router config.
 
 If you deploy against a different Clerk instance than the repo default, set
 `VITE_CLERK_PUBLISHABLE_KEY` in the build environment before `bun run deploy`.

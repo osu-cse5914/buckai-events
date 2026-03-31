@@ -1,24 +1,20 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { EmbeddingModel, LanguageModel } from "ai";
+import { z } from "zod";
 
 export const AI_PROVIDER_TYPES = ["GOOGLE", "OPENAI_COMPATIBLE"] as const;
 export const AI_MODEL_TYPES = ["GENERATIVE", "EMBEDDING"] as const;
-export const AI_TASK_IDS = [
-  "chatbot",
-  "tagging",
-  "title-generation",
-  "embedding",
-] as const;
 
 export type AIProviderType = (typeof AI_PROVIDER_TYPES)[number];
 export type AIModelType = (typeof AI_MODEL_TYPES)[number];
-export type AITaskId = (typeof AI_TASK_IDS)[number];
+export type AITaskId = string;
 export type AIEnvironment = Record<string, string | undefined> | undefined;
 
 export type AIProviderConfig = {
   id: string;
   type: AIProviderType;
-  apiKeyEnvVar?: string;
+  apiKeyEnvVar: string;
   baseUrl?: string;
   rateLimit?: number;
 };
@@ -45,8 +41,6 @@ export type AIConfig = {
   models: Record<string, AIModelConfig>;
   tasks: Record<string, AITaskConfig>;
 };
-
-export type AIConfigOverrides = Partial<AIConfig>;
 
 export type ResolvedAITask = {
   task: AITaskConfig;
@@ -77,38 +71,10 @@ export type AIProviderAdapters = Partial<
 >;
 
 type CreateAIModelRouterOptions = {
-  config?: AIConfigOverrides;
-  baseConfig?: AIConfig;
+  config?: AIConfig;
   adapters?: AIProviderAdapters;
   env?: AIEnvironment;
 };
-
-const CATEGORY_VOCABULARY = [
-  "music",
-  "sports",
-  "tech",
-  "arts",
-  "academic",
-  "social",
-  "career",
-  "food",
-  "fitness",
-  "gaming",
-  "outdoors",
-  "volunteering",
-  "cultural",
-  "science",
-  "business",
-  "other",
-] as const;
-
-const TAGGING_SYSTEM_PROMPT = [
-  "You classify campus events into structured metadata.",
-  "Return concise output only.",
-  `Choose category from: ${CATEGORY_VOCABULARY.join(", ")}.`,
-  "Tags should be short lowercase phrases suitable for event discovery.",
-  "Summary should be a single short sentence.",
-].join(" ");
 
 export class AIConfigurationError extends Error {
   constructor(message: string) {
@@ -124,6 +90,45 @@ export class AIProviderUnavailableError extends Error {
   }
 }
 
+const aiProviderConfigSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.enum(AI_PROVIDER_TYPES),
+    apiKeyEnvVar: z.string().min(1),
+    baseUrl: z.string().min(1).optional(),
+    rateLimit: z.number().int().positive().optional(),
+  })
+  .strict();
+
+const aiModelConfigSchema = z
+  .object({
+    id: z.string().min(1),
+    providerId: z.string().min(1),
+    modelId: z.string().min(1),
+    type: z.enum(AI_MODEL_TYPES),
+    maxTokens: z.number().int().positive().optional(),
+    dimensions: z.number().int().positive().optional(),
+  })
+  .strict();
+
+const aiTaskConfigSchema = z
+  .object({
+    id: z.string().min(1),
+    modelId: z.string().min(1),
+    systemPrompt: z.string().min(1).optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    maxOutputTokens: z.number().int().positive().optional(),
+  })
+  .strict();
+
+const aiConfigSchema = z
+  .object({
+    providers: z.record(aiProviderConfigSchema),
+    models: z.record(aiModelConfigSchema),
+    tasks: z.record(aiTaskConfigSchema),
+  })
+  .strict();
+
 function readEnvValue(env: AIEnvironment, key: string): string | undefined {
   const boundValue = env?.[key];
   if (typeof boundValue === "string" && boundValue.trim().length > 0) {
@@ -137,17 +142,102 @@ function readEnvValue(env: AIEnvironment, key: string): string | undefined {
 function requireProviderApiKey(
   provider: AIProviderConfig,
   env: AIEnvironment,
-): string | undefined {
-  if (!provider.apiKeyEnvVar) {
-    return undefined;
-  }
-
+): string {
   const apiKey = readEnvValue(env, provider.apiKeyEnvVar);
   if (!apiKey) {
     throw new AIProviderUnavailableError(provider.id, provider.apiKeyEnvVar);
   }
 
   return apiKey;
+}
+
+function requireProviderBaseUrl(provider: AIProviderConfig): string {
+  if (provider.baseUrl?.trim()) {
+    return provider.baseUrl.trim();
+  }
+
+  throw new AIConfigurationError(
+    `Provider "${provider.id}" requires a non-empty baseUrl`,
+  );
+}
+
+function validateIndexedIds<T extends { id: string }>(
+  values: Record<string, T>,
+  type: "provider" | "model" | "task",
+) {
+  for (const [key, value] of Object.entries(values)) {
+    if (key !== value.id) {
+      throw new AIConfigurationError(
+        `AI ${type} key "${key}" must match id "${value.id}"`,
+      );
+    }
+  }
+}
+
+export function validateAIConfig(config: AIConfig): AIConfig {
+  validateIndexedIds(config.providers, "provider");
+  validateIndexedIds(config.models, "model");
+  validateIndexedIds(config.tasks, "task");
+
+  for (const provider of Object.values(config.providers)) {
+    if (
+      provider.type === "OPENAI_COMPATIBLE" &&
+      (!provider.baseUrl || provider.baseUrl.trim().length === 0)
+    ) {
+      throw new AIConfigurationError(
+        `Provider "${provider.id}" requires a non-empty baseUrl`,
+      );
+    }
+  }
+
+  for (const model of Object.values(config.models)) {
+    if (!config.providers[model.providerId]) {
+      throw new AIConfigurationError(
+        `Model "${model.id}" references unknown provider "${model.providerId}"`,
+      );
+    }
+  }
+
+  for (const task of Object.values(config.tasks)) {
+    if (!config.models[task.modelId]) {
+      throw new AIConfigurationError(
+        `Task "${task.id}" references unknown model "${task.modelId}"`,
+      );
+    }
+  }
+
+  return config;
+}
+
+export function parseAIConfig(rawConfig: string): AIConfig {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(rawConfig);
+  } catch {
+    throw new AIConfigurationError("AI router config is not valid JSON");
+  }
+
+  const result = aiConfigSchema.safeParse(parsed);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    throw new AIConfigurationError(
+      `AI router config is invalid: ${issue?.message ?? "unknown validation error"}`,
+    );
+  }
+
+  return validateAIConfig(result.data);
+}
+
+export function loadAIConfigFromEnv(env?: AIEnvironment): AIConfig {
+  const rawConfig = readEnvValue(env, "AI_ROUTER_CONFIG_JSON");
+  if (!rawConfig) {
+    throw new AIConfigurationError(
+      "Missing required AI router config env var AI_ROUTER_CONFIG_JSON",
+    );
+  }
+
+  return parseAIConfig(rawConfig);
 }
 
 const defaultAdapters: AIProviderAdapters = {
@@ -169,82 +259,37 @@ const defaultAdapters: AIProviderAdapters = {
       return google.embeddingModel(model.modelId as never);
     },
   },
-};
+  OPENAI_COMPATIBLE: {
+    languageModel(provider, model, env) {
+      const openaiCompatible = createOpenAICompatible({
+        name: provider.id,
+        apiKey: requireProviderApiKey(provider, env),
+        baseURL: requireProviderBaseUrl(provider),
+      });
 
-export function createDefaultAIConfig(env?: AIEnvironment): AIConfig {
-  return {
-    providers: {
-      google: {
-        id: "google",
-        type: "GOOGLE",
-        apiKeyEnvVar: "GOOGLE_GENERATIVE_AI_API_KEY",
-        baseUrl: readEnvValue(env, "AI_GOOGLE_BASE_URL"),
-      },
+      return openaiCompatible.languageModel(model.modelId as never);
     },
-    models: {
-      "gemini-flash": {
-        id: "gemini-flash",
-        providerId: "google",
-        modelId: readEnvValue(env, "AI_GOOGLE_FLASH_MODEL_ID") ?? "gemini-2.5-flash",
-        type: "GENERATIVE",
-        maxTokens: 1024,
-      },
-      "gemini-pro": {
-        id: "gemini-pro",
-        providerId: "google",
-        modelId: readEnvValue(env, "AI_GOOGLE_PRO_MODEL_ID") ?? "gemini-2.5-pro",
-        type: "GENERATIVE",
-        maxTokens: 2048,
-      },
-      "text-embed": {
-        id: "text-embed",
-        providerId: "google",
-        modelId:
-          readEnvValue(env, "AI_GOOGLE_EMBEDDING_MODEL_ID") ??
-          "gemini-embedding-001",
-        type: "EMBEDDING",
-        dimensions: 768,
-      },
+    embeddingModel(provider, model, env) {
+      const openaiCompatible = createOpenAICompatible({
+        name: provider.id,
+        apiKey: requireProviderApiKey(provider, env),
+        baseURL: requireProviderBaseUrl(provider),
+      });
+
+      return openaiCompatible.embeddingModel(model.modelId as never);
     },
-    tasks: {
-      chatbot: {
-        id: "chatbot",
-        modelId: "gemini-pro",
-        temperature: 0.7,
-      },
-      tagging: {
-        id: "tagging",
-        modelId: "gemini-flash",
-        systemPrompt: TAGGING_SYSTEM_PROMPT,
-        temperature: 0.3,
-        maxOutputTokens: 300,
-      },
-      "title-generation": {
-        id: "title-generation",
-        modelId: "gemini-flash",
-        temperature: 0.5,
-        maxOutputTokens: 80,
-      },
-      embedding: {
-        id: "embedding",
-        modelId: "text-embed",
-      },
-    },
-  };
-}
+  },
+};
 
 export function createAIModelRouter({
   config,
-  baseConfig,
   adapters = defaultAdapters,
   env,
 }: CreateAIModelRouterOptions = {}) {
-  const resolvedConfig = mergeAIConfig(
-    baseConfig ?? createDefaultAIConfig(env),
-    config,
-  );
+  const resolvedConfig = config ? validateAIConfig(config) : loadAIConfigFromEnv(env);
+  validateAdapterCoverage(resolvedConfig, adapters);
 
-  function resolveTask(taskId: AITaskId | string): ResolvedAITask {
+  function resolveTask(taskId: AITaskId): ResolvedAITask {
     const task = resolvedConfig.tasks[taskId];
     if (!task) {
       throw new AIConfigurationError(`Unknown AI task "${taskId}"`);
@@ -267,7 +312,7 @@ export function createAIModelRouter({
     return { task, model, provider };
   }
 
-  function getLanguageModel(taskId: AITaskId | string): LanguageModel {
+  function getLanguageModel(taskId: AITaskId): LanguageModel {
     const resolved = resolveTask(taskId);
     if (resolved.model.type !== "GENERATIVE") {
       throw new AIConfigurationError(
@@ -285,7 +330,7 @@ export function createAIModelRouter({
     return adapter(resolved.provider, resolved.model, env);
   }
 
-  function getEmbeddingModel(taskId: AITaskId | string): EmbeddingModel {
+  function getEmbeddingModel(taskId: AITaskId): EmbeddingModel {
     const resolved = resolveTask(taskId);
     if (resolved.model.type !== "EMBEDDING") {
       throw new AIConfigurationError(
@@ -311,23 +356,21 @@ export function createAIModelRouter({
   };
 }
 
-function mergeAIConfig(baseConfig: AIConfig, overrides?: AIConfigOverrides): AIConfig {
-  if (!overrides) {
-    return baseConfig;
-  }
+function validateAdapterCoverage(config: AIConfig, adapters: AIProviderAdapters): void {
+  for (const model of Object.values(config.models)) {
+    const provider = config.providers[model.providerId];
+    const adapter = adapters[provider.type];
 
-  return {
-    providers: {
-      ...baseConfig.providers,
-      ...overrides.providers,
-    },
-    models: {
-      ...baseConfig.models,
-      ...overrides.models,
-    },
-    tasks: {
-      ...baseConfig.tasks,
-      ...overrides.tasks,
-    },
-  };
+    if (model.type === "GENERATIVE" && !adapter?.languageModel) {
+      throw new AIConfigurationError(
+        `Provider type "${provider.type}" does not have a language-model adapter`,
+      );
+    }
+
+    if (model.type === "EMBEDDING" && !adapter?.embeddingModel) {
+      throw new AIConfigurationError(
+        `Provider type "${provider.type}" does not have an embedding adapter`,
+      );
+    }
+  }
 }

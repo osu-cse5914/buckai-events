@@ -1,6 +1,7 @@
 import { Hono, type Context } from "hono";
 import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
+import { createAIModelRouter } from "../lib/ai/router";
 import {
   dispatchDetachedTask,
   resolveConnectionString,
@@ -34,33 +35,19 @@ type EventTaggingEnqueuer = (
   input: EventTaggingInput,
 ) => void;
 
-function hasGoogleAIKey(env: Record<string, string | undefined> | undefined) {
-  const boundValue = env?.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
-  if (boundValue) {
-    return true;
-  }
-
-  return Boolean(
-    typeof process !== "undefined" &&
-      process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim(),
-  );
-}
-
 function enqueueEventTagging(
   c: Context<AppEnv>,
   eventId: string,
   input: EventTaggingInput,
 ) {
   const env = c.env as unknown as Record<string, string | undefined> | undefined;
-  if (!hasGoogleAIKey(env)) {
-    return;
-  }
+  const router = createAIModelRouter({ env });
 
   dispatchDetachedTask(
     c,
     runWithPrisma(resolveConnectionString(c.env), async (prisma) => {
       const tagging = await generateEventTagging(input, {
-        env,
+        router,
       });
 
       await prisma.event.update({

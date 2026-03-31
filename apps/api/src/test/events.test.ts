@@ -76,6 +76,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
   const mockPrisma = createMockPrisma();
 
   beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
   });
