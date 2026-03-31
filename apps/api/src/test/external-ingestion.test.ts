@@ -464,4 +464,43 @@ describe("[phase:6] [regression:always] External event ingestion summaries", () 
       },
     });
   });
+
+  it("TC-ING-013: skips Ticketmaster when the API key is missing and still syncs OSU", async () => {
+    const fetchMock = stubExternalFetch({
+      osuEvents: [makeOsuEvent()],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
+    vi.mocked(mockPrisma.event.findMany)
+      .mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([] as never);
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(
+      makeStoredExternalEvent() as never,
+    );
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    try {
+      const result = await syncExternalEvents(mockPrisma, {
+        now: new Date("2026-03-31T12:00:00.000Z"),
+      });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0]?.[0]).toContain("content.osu.edu");
+      expect(mockPrisma.event.create).toHaveBeenCalledTimes(1);
+      expect(result).toMatchObject({
+        startedAt: expect.any(Date),
+        finishedAt: expect.any(Date),
+        sources: {
+          osu: { fetched: 1, created: 1, updated: 0, skipped: 0, completed: 0 },
+          ticketmaster: { fetched: 0, created: 0, updated: 0, skipped: 0, completed: 0 },
+        },
+      });
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Skipping Ticketmaster sync because TICKETMASTER_API_KEY is missing",
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
 });
