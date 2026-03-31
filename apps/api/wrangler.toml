@@ -9,12 +9,13 @@ directory = "../web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
-# DATABASE_URL, CLERK_SECRET_KEY, and TICKETMASTER_API_KEY are stored as encrypted
-# secrets.
+# DATABASE_URL, CLERK_SECRET_KEY, TICKETMASTER_API_KEY, and
+# GOOGLE_GENERATIVE_AI_API_KEY are stored as encrypted secrets.
 # Set them once after login:
 #   wrangler secret put DATABASE_URL
 #   wrangler secret put CLERK_SECRET_KEY
 #   wrangler secret put TICKETMASTER_API_KEY
+#   wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
 
 [triggers]
 crons = ["*/15 * * * *", "0 */6 * * *"]

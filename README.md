@@ -72,6 +72,7 @@ Set the required API secrets in `apps/api/.env`:
 
 - `DATABASE_URL`: your Neon or local Postgres connection string
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
+- `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used by the AI router and tagging service
 
 Optional local overrides:
 
@@ -79,6 +80,7 @@ Optional local overrides:
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
+  - `AI_GOOGLE_FLASH_MODEL_ID`, `AI_GOOGLE_PRO_MODEL_ID`, `AI_GOOGLE_EMBEDDING_MODEL_ID` override the default Google model IDs used by the AI router
 - `apps/web/.env`
   - `VITE_API_URL` defaults to `http://localhost:3001`
   - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key

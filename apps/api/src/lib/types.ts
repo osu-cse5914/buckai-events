@@ -6,6 +6,12 @@ export type WorkerBindings = Env & {
   DATABASE_URL: string;
   CLERK_SECRET_KEY: string;
   TICKETMASTER_API_KEY?: string;
+  GOOGLE_GENERATIVE_AI_API_KEY?: string;
+  OPENAI_COMPATIBLE_API_KEY?: string;
+  AI_GOOGLE_FLASH_MODEL_ID?: string;
+  AI_GOOGLE_PRO_MODEL_ID?: string;
+  AI_GOOGLE_EMBEDDING_MODEL_ID?: string;
+  AI_GOOGLE_BASE_URL?: string;
 };
 
 export type AppEnv = {

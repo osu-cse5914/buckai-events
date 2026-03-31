@@ -52,6 +52,24 @@ export function trackBackgroundTask(
   void handledTask;
 }
 
+export function dispatchDetachedTask(
+  c: Context<AppEnv>,
+  task: Promise<unknown>,
+  label: string,
+): void {
+  const handledTask = task.catch((error) => {
+    console.error(`Failed to ${label}`, error);
+  });
+
+  const executionCtx = getExecutionContext(c);
+  if (executionCtx) {
+    executionCtx.waitUntil(handledTask);
+    return;
+  }
+
+  void handledTask;
+}
+
 export async function drainRequestResources(
   c: Context<AppEnv>,
   prisma: PrismaClient,
