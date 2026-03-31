@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getPrisma } from "../lib/prisma";
 import { trackBackgroundTask } from "../lib/worker-runtime";
 import {
+  parseCollectionCreateBody,
   parseCollectionItemCreateBody,
   parseCollectionPatchBody,
   readJsonBody,
@@ -11,6 +12,7 @@ import {
 import type { AppEnv } from "../lib/types";
 import {
   addItemToOwnedCollection,
+  createOwnedCollection,
   deleteOwnedCollection,
   getCollectionForViewer,
   removeItemFromOwnedCollection,
@@ -18,6 +20,21 @@ import {
 } from "../services/collections";
 
 export const collections = new Hono<AppEnv>()
+  .post("/", async (c) => {
+    const user = c.get("user");
+    const prisma = getPrisma(c);
+    const body = parseCollectionCreateBody(await readJsonBody(c), c);
+    if (body instanceof Response) {
+      return body;
+    }
+
+    const collection = await createOwnedCollection(prisma, {
+      ownerId: user.id,
+      data: body,
+    });
+
+    return c.json(collection, 201);
+  })
   .get("/", async (c) => {
     const user = c.get("user");
     const prisma = getPrisma(c);

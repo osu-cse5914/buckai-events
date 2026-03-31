@@ -676,6 +676,38 @@ export const validateCollectionItemParams = validator("param", (value, c) => {
   return { id, eventId };
 });
 
+export function parseCollectionCreateBody(
+  value: unknown,
+  c: Context,
+): { name: string; visibility?: CollectionVisibility } | Response {
+  if (!isRecord(value)) {
+    return badRequest(
+      c,
+      "Request body must be a JSON object",
+      "invalid-body",
+      "Invalid request body",
+    );
+  }
+
+  const name = typeof value.name === "string" ? value.name.trim() : "";
+  if (!name) {
+    return badRequest(c, "name is required");
+  }
+
+  if (
+    value.visibility !== undefined &&
+    (typeof value.visibility !== "string" ||
+      !isAllowedValue(value.visibility, COLLECTION_VISIBILITIES))
+  ) {
+    return badRequest(c, "visibility must be PRIVATE or PUBLIC");
+  }
+
+  return {
+    name,
+    visibility: value.visibility,
+  };
+}
+
 export function parseCollectionPatchBody(
   value: unknown,
   c: Context,

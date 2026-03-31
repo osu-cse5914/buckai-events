@@ -27,6 +27,16 @@ function deleteCollection(app: Hono, id: string) {
   return app.request(`/collections/${id}`, { method: "DELETE" });
 }
 
+function createCollection(app: Hono, body: Record<string, unknown>) {
+  return app.request("/collections", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 function listCollections(app: Hono) {
   return app.request("/collections");
 }
@@ -74,6 +84,59 @@ describe("[phase:2] [regression:always] Collection management API", () => {
     vi.resetAllMocks();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+  });
+
+  it("TC-COL-001: create a collection with default PRIVATE visibility", async () => {
+    const createdCollection = {
+      id: "col1",
+      userId: USER_A.id,
+      name: "Music Events",
+      visibility: "PRIVATE",
+    };
+    vi.mocked(mockPrisma.collection.create).mockResolvedValue(
+      createdCollection as never,
+    );
+
+    const res = await createCollection(createTestApp(USER_A), {
+      name: "Music Events",
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockPrisma.collection.create).toHaveBeenCalledWith({
+      data: {
+        userId: USER_A.id,
+        name: "Music Events",
+        visibility: "PRIVATE",
+      },
+    });
+    expect(await res.json()).toEqual(createdCollection);
+  });
+
+  it("TC-COL-002: create a public collection", async () => {
+    const createdCollection = {
+      id: "col2",
+      userId: USER_A.id,
+      name: "Must See",
+      visibility: "PUBLIC",
+    };
+    vi.mocked(mockPrisma.collection.create).mockResolvedValue(
+      createdCollection as never,
+    );
+
+    const res = await createCollection(createTestApp(USER_A), {
+      name: "Must See",
+      visibility: "PUBLIC",
+    });
+
+    expect(res.status).toBe(201);
+    expect(mockPrisma.collection.create).toHaveBeenCalledWith({
+      data: {
+        userId: USER_A.id,
+        name: "Must See",
+        visibility: "PUBLIC",
+      },
+    });
+    expect(await res.json()).toEqual(createdCollection);
   });
 
   it("TC-COL-006: list own collections ordered by updatedAt descending with item counts", async () => {
