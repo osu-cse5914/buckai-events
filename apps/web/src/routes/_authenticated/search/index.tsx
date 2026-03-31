@@ -36,6 +36,15 @@ function SearchRoute() {
       type={search.type ?? ""}
       category={search.category ?? ""}
       page={toPageIndex(search.page ?? 1)}
+      onSearchSubmit={(value) =>
+        navigate({
+          search: (current) => ({
+            ...current,
+            q: value.trim() || undefined,
+            page: undefined,
+          }),
+        })
+      }
       onTypeChange={(value) =>
         navigate({
           search: (current) => ({

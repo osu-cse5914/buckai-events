@@ -4,19 +4,20 @@ import {
   Link,
   Outlet,
   redirect,
-  useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
 import { UserButton } from "@clerk/clerk-react";
 import {
   BugIcon,
+  BriefcaseBusinessIcon,
+  CalendarIcon,
   MenuIcon,
   SearchIcon,
   SparklesIcon,
+  StarIcon,
   UserRoundIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -24,6 +25,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 export const navLinks = [
   { to: "/featured", label: "Featured" },
@@ -32,10 +34,9 @@ export const navLinks = [
   { to: "/you", label: "You" },
 ] as const;
 
-const mobileNavLinks = [
-  ...navLinks,
+export const utilityNavLinks = [
   { to: "/search", label: "Search" },
-  { to: "/ai", label: "AI" },
+  { to: "/ai", label: "Agent" },
 ] as const;
 
 export const Route = createFileRoute("/_authenticated")({
@@ -49,166 +50,220 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useRouterState({
     select: (state) => state.location,
   });
-  const routeQuery =
-    location.pathname === "/search" && typeof location.search.q === "string"
-      ? location.search.q
-      : "";
 
   return (
-    <>
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-6">
-            <Link
-              to="/featured"
-              className="text-sm font-semibold tracking-tight hover:opacity-80"
-            >
-              Social OSU
-            </Link>
+    <div className="min-h-screen bg-background md:flex">
+      <aside className="hidden h-screen w-28 shrink-0 border-r border-border md:sticky md:top-0 md:flex md:flex-col md:px-4 md:py-6">
+        <BrandLink />
 
-            <nav className="hidden items-center gap-1 md:flex">
-              {navLinks.map(({ to, label }) => (
-                <Button key={to} variant="ghost" size="sm" asChild>
-                  <Link
-                    to={to}
-                    activeProps={{ className: "bg-accent" }}
-                    activeOptions={{ exact: true }}
-                  >
-                    {label}
-                  </Link>
-                </Button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <HeaderSearchForm
-              key={`${location.pathname}:${routeQuery}`}
-              initialValue={routeQuery}
-              onSubmit={(query) =>
-                navigate({
-                  to: "/search",
-                  search: (current) => ({
-                    q: query || undefined,
-                    type:
-                      location.pathname === "/search" &&
-                      typeof current.type === "string"
-                        ? current.type
-                        : undefined,
-                    category:
-                      location.pathname === "/search" &&
-                      typeof current.category === "string"
-                        ? current.category
-                        : undefined,
-                    page: undefined,
-                  }),
-                })
-              }
+        <div className="mt-8 flex flex-col gap-2">
+          {utilityNavLinks.map((item) => (
+            <ShellNavLink
+              key={item.to}
+              item={item}
+              pathname={location.pathname}
+              variant="rail"
             />
+          ))}
+        </div>
 
-            <Button variant="outline" size="icon" asChild>
-              <Link to="/ai" aria-label="AI">
-                <SparklesIcon className="size-4" />
-              </Link>
-            </Button>
+        <nav className="mt-8 flex flex-col gap-2">
+          {navLinks.map((item) => (
+            <ShellNavLink
+              key={item.to}
+              item={item}
+              pathname={location.pathname}
+              variant="rail"
+            />
+          ))}
+        </nav>
 
-            <UserButton>
-              <UserButton.MenuItems>
-                <UserButton.Link
-                  label="My Profile"
-                  labelIcon={<UserRoundIcon className="size-4" />}
-                  href="/profile"
-                />
-                {import.meta.env.DEV ? (
-                  <UserButton.Link
-                    label="Debug"
-                    labelIcon={<BugIcon className="size-4" />}
-                    href="/debug"
-                  />
-                ) : null}
-                <UserButton.Action label="manageAccount" />
-                <UserButton.Action label="signOut" />
-              </UserButton.MenuItems>
-            </UserButton>
+        <div className="mt-auto flex flex-col items-center gap-2 pt-8">
+          <AccountMenu />
+          <span className="text-[11px] font-medium text-muted-foreground">
+            Account
+          </span>
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-b border-border md:hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <BrandLink compact />
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden"
-                  aria-label="Open menu"
-                >
+                <Button variant="ghost" size="icon" aria-label="Open menu">
                   <MenuIcon className="size-5" />
                 </Button>
               </SheetTrigger>
 
-              <SheetContent side="right">
-                <SheetHeader>
-                  <SheetTitle>Social OSU</SheetTitle>
+              <SheetContent side="left" className="flex w-72 flex-col px-0">
+                <SheetHeader className="px-4 pb-2">
+                  <SheetTitle>
+                    <BrandLink compact />
+                  </SheetTitle>
                 </SheetHeader>
 
-                <nav className="flex flex-col gap-1 px-4">
-                  {mobileNavLinks.map(({ to, label }) => (
-                    <Button
-                      key={to}
-                      variant="ghost"
-                      className="justify-start"
-                      asChild
-                    >
-                      <Link
-                        to={to}
-                        activeProps={{ className: "bg-accent" }}
-                        activeOptions={{ exact: true }}
+                <div className="flex flex-1 flex-col px-4 pb-6">
+                  <div className="flex flex-col gap-2">
+                    {utilityNavLinks.map((item) => (
+                      <ShellNavLink
+                        key={item.to}
+                        item={item}
+                        pathname={location.pathname}
+                        variant="drawer"
                         onClick={() => setMobileOpen(false)}
-                      >
-                        {label}
-                      </Link>
-                    </Button>
-                  ))}
-                </nav>
+                      />
+                    ))}
+                  </div>
+
+                  <nav className="mt-6 flex flex-col gap-2 border-t border-border pt-6">
+                    {navLinks.map((item) => (
+                      <ShellNavLink
+                        key={item.to}
+                        item={item}
+                        pathname={location.pathname}
+                        variant="drawer"
+                        onClick={() => setMobileOpen(false)}
+                      />
+                    ))}
+                  </nav>
+
+                  <div className="mt-auto border-t border-border pt-6">
+                    <div className="flex items-center gap-3 rounded-2xl bg-accent/50 px-4 py-3">
+                      <AccountMenu />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">Account</p>
+                        <p className="text-xs text-muted-foreground">
+                          Profile and session
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </SheetContent>
             </Sheet>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <Outlet />
-    </>
+        <main className="min-w-0 flex-1">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }
 
-function HeaderSearchForm({
-  initialValue,
-  onSubmit,
-}: {
-  initialValue: string;
-  onSubmit: (query: string) => void;
-}) {
-  const [value, setValue] = useState(initialValue);
+function BrandLink({ compact = false }: { compact?: boolean }) {
+  return (
+    <Link
+      to="/featured"
+      className={cn(
+        "group inline-flex shrink-0 items-center gap-3",
+        compact ? "flex-row" : "flex-col text-center",
+      )}
+    >
+      <span className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-red-500 text-sm font-semibold tracking-tight text-white shadow-sm transition-transform group-hover:scale-[1.03]">
+        SO
+      </span>
+      <span
+        className={cn(
+          "font-semibold tracking-tight",
+          compact ? "text-sm" : "text-[11px] leading-tight",
+        )}
+      >
+        Social OSU
+      </span>
+    </Link>
+  );
+}
 
-  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onSubmit(value.trim());
-  }
+function ShellNavLink({
+  item,
+  pathname,
+  variant,
+  onClick,
+}: {
+  item: (typeof navLinks)[number] | (typeof utilityNavLinks)[number];
+  pathname: string;
+  variant: "rail" | "drawer";
+  onClick?: () => void;
+}) {
+  const Icon = NAV_ICONS[item.to];
+  const isActive = isNavActive(pathname, item.to);
 
   return (
-    <form
-      onSubmit={submitSearch}
-      className="relative hidden md:flex md:w-64 lg:w-80"
+    <Button
+      variant="ghost"
+      asChild
+      className={cn(
+        variant === "rail"
+          ? "h-auto w-full flex-col gap-1.5 rounded-2xl px-2 py-3 text-center"
+          : "h-12 w-full justify-start gap-3 rounded-2xl px-4",
+        isActive
+          ? "bg-accent text-accent-foreground"
+          : "text-muted-foreground hover:text-foreground",
+      )}
     >
-      <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        aria-label="Search"
-        placeholder="Search"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        className="h-10 rounded-full pl-9"
-      />
-    </form>
+      <Link
+        to={item.to}
+        onClick={onClick}
+        aria-current={isActive ? "page" : undefined}
+      >
+        <Icon className={cn("shrink-0", variant === "rail" ? "size-5" : "size-4")} />
+        <span
+          className={cn(
+            "font-medium",
+            variant === "rail" ? "text-[11px] leading-tight" : "text-sm",
+          )}
+        >
+          {item.label}
+        </span>
+      </Link>
+    </Button>
   );
+}
+
+function AccountMenu() {
+  return (
+    <UserButton>
+      <UserButton.MenuItems>
+        <UserButton.Link
+          label="My Profile"
+          labelIcon={<UserRoundIcon className="size-4" />}
+          href="/profile"
+        />
+        {import.meta.env.DEV ? (
+          <UserButton.Link
+            label="Debug"
+            labelIcon={<BugIcon className="size-4" />}
+            href="/debug"
+          />
+        ) : null}
+        <UserButton.Action label="manageAccount" />
+        <UserButton.Action label="signOut" />
+      </UserButton.MenuItems>
+    </UserButton>
+  );
+}
+
+const NAV_ICONS = {
+  "/featured": StarIcon,
+  "/events": CalendarIcon,
+  "/gigs": BriefcaseBusinessIcon,
+  "/you": UserRoundIcon,
+  "/search": SearchIcon,
+  "/ai": SparklesIcon,
+} as const;
+
+function isNavActive(pathname: string, to: string) {
+  if (to === "/featured") {
+    return pathname === "/featured";
+  }
+
+  return pathname === to || pathname.startsWith(`${to}/`);
 }

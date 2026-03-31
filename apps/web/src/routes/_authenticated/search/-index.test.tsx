@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { render } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { SearchPage } from "@/components/app-pages/search-page";
@@ -135,16 +136,21 @@ function SearchHarness({
   initialCategory?: string;
   initialPage?: number;
 }) {
+  const [search, setSearch] = useState(initialSearch);
   const [type, setType] = useState(initialType);
   const [category, setCategory] = useState(initialCategory);
   const [page, setPage] = useState(initialPage);
 
   return (
     <SearchPage
-      search={initialSearch}
+      search={search}
       type={type}
       category={category}
       page={page}
+      onSearchSubmit={(value) => {
+        setSearch(value);
+        setPage(0);
+      }}
       onTypeChange={(value) => {
         setType(value);
         setPage(0);
@@ -237,5 +243,31 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       "href",
       "/ai?prompt=campus%20jobs",
     );
+  });
+
+  it("TC-PAGES-012: search page submits a new query and resets pagination", async () => {
+    const user = userEvent.setup();
+    state.mockGet.mockResolvedValue(makeResponse([{ id: "evt-1", title: "Hackathon" }]));
+
+    await renderSearchPage({
+      initialSearch: "music",
+      initialPage: 2,
+    });
+
+    await waitFor(() => {
+      const lastCall = state.mockGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.search).toBe("music");
+      expect(lastCall?.[0].query.offset).toBe("24");
+    });
+
+    await user.clear(screen.getByRole("textbox", { name: "Search query" }));
+    await user.type(screen.getByRole("textbox", { name: "Search query" }), "hackathon");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      const lastCall = state.mockGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.search).toBe("hackathon");
+      expect(lastCall?.[0].query.offset).toBe("0");
+    });
   });
 });
