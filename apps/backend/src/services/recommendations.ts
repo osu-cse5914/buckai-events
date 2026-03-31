@@ -45,7 +45,8 @@ function isEligibleCandidate(
 }
 
 function stripInteractionCounts(candidate: RecommendationCandidate) {
-  const { interactions, ...event } = candidate;
+  const event = { ...candidate };
+  Reflect.deleteProperty(event, "interactions");
   return event;
 }
 
