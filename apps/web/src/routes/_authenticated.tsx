@@ -84,9 +84,6 @@ function AuthenticatedLayout() {
 
           <div className="flex flex-col items-center gap-1.5">
             <AccountMenu />
-            <span className="text-xs font-medium text-muted-foreground">
-              Account
-            </span>
           </div>
         </div>
       </aside>
