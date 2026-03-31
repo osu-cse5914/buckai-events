@@ -33,6 +33,10 @@ export type EventListQuery = PaginationQuery & {
   search?: string;
 };
 
+export type RecommendationsQuery = PaginationQuery & {
+  type?: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -489,6 +493,38 @@ export const validateEventListQuery = validator("query", (value, c) => {
   const search = firstQueryValue(value.search);
   if (search !== undefined) {
     output.search = search;
+  }
+
+  return output;
+});
+
+export const validateRecommendationsQuery = validator("query", (value, c) => {
+  const pagination = parsePaginationInput(value.limit, value.offset);
+  if (pagination === "invalid") {
+    return badRequest(
+      c,
+      "limit and offset must be numeric",
+      "invalid-query",
+      "Invalid query parameter",
+    );
+  }
+
+  const output: RecommendationsQuery = {};
+  const limitValue = firstQueryValue(value.limit);
+  const offsetValue = firstQueryValue(value.offset);
+  if (limitValue !== undefined) {
+    output.limit = limitValue;
+  }
+  if (offsetValue !== undefined) {
+    output.offset = offsetValue;
+  }
+
+  const typeValue = firstQueryValue(value.type);
+  if (typeValue !== undefined) {
+    if (!isAllowedValue(typeValue, EVENT_TYPES)) {
+      return badRequest(c, "type must be EVENT or GIG");
+    }
+    output.type = typeValue;
   }
 
   return output;

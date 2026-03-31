@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
 import { badRequest } from "../lib/problem-details";
+import { trackBackgroundTask } from "../lib/worker-runtime";
 import {
   parseEventCreateBody,
   parseEventUpdateBody,
@@ -19,6 +20,7 @@ import {
   listEvents,
   updateEvent,
 } from "../services/events";
+import { generateEmbedding, syncEventEmbedding } from "../services/embeddings";
 
 export { isValidStatusTransition } from "../services/events";
 
@@ -32,6 +34,23 @@ export const events = new Hono<AppEnv>()
     const prisma = getPrisma(c);
 
     const event = await createEvent(prisma, user.id, input);
+    const embeddingApiKey =
+      c.env?.GEMINI_API_KEY ??
+      (typeof process !== "undefined"
+        ? process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY
+        : undefined);
+    if (embeddingApiKey) {
+      trackBackgroundTask(
+        c,
+        syncEventEmbedding(prisma, event, (text, options) =>
+          generateEmbedding(text, {
+            ...options,
+            apiKey: embeddingApiKey,
+          }),
+        ),
+        "sync event embedding",
+      );
+    }
     return c.json(event, 201);
   })
   .get("/", validateEventListQuery, async (c) => {
@@ -94,6 +113,23 @@ export const events = new Hono<AppEnv>()
     }
 
     const updated = await updateEvent(prisma, id, body);
+    const embeddingApiKey =
+      c.env?.GEMINI_API_KEY ??
+      (typeof process !== "undefined"
+        ? process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY
+        : undefined);
+    if (embeddingApiKey) {
+      trackBackgroundTask(
+        c,
+        syncEventEmbedding(prisma, updated, (text, options) =>
+          generateEmbedding(text, {
+            ...options,
+            apiKey: embeddingApiKey,
+          }),
+        ),
+        "sync event embedding",
+      );
+    }
     return c.json(updated);
   })
   .delete("/:id", validateEventIdParam, async (c) => {

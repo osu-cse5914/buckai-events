@@ -5,6 +5,7 @@ import type { PrismaClient } from "@prisma/client";
 export type WorkerBindings = Env & {
   DATABASE_URL: string;
   CLERK_SECRET_KEY: string;
+  GEMINI_API_KEY?: string;
 };
 
 export type AppEnv = {

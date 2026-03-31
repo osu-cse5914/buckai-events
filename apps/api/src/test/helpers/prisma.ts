@@ -21,6 +21,7 @@ export function createMockPrisma(): PrismaClient {
   // The cast to PrismaClient is intentional — only stub what you use.
   return {
     $queryRaw: vi.fn().mockResolvedValue([{ "?column?": 1 }]),
+    $queryRawUnsafe: vi.fn(),
     $disconnect: vi.fn().mockResolvedValue(undefined),
     user: {
       findUnique: vi.fn(),
@@ -38,6 +39,15 @@ export function createMockPrisma(): PrismaClient {
       create: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    eventEmbedding: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
       delete: vi.fn(),
       count: vi.fn(),
     },
