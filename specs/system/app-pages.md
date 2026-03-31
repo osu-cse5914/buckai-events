@@ -11,7 +11,7 @@ This spec is intentionally limited to information architecture. It does not defi
 
 Unless otherwise noted, this spec covers the authenticated product shell. Sign-in, sign-up, and the developer-only debug page remain separate system pages outside the primary product navigation model.
 
-Route recommendations in this document are intentionally conservative. If the app temporarily keeps legacy routes such as `/events`, `/applications`, or `/profile`, those may remain as aliases or redirects while the product converges on the navigation model defined here.
+Route recommendations in this document are intentionally conservative. The authenticated shell keeps `/` as a redirect into `Featured`, but primary destination routes should otherwise use their canonical paths directly instead of legacy aliases.
 
 ## Navigation Model
 
@@ -67,6 +67,7 @@ It contains:
 
 - A comprehensive list of available events and gigs
 - Neutral browse controls such as filters, sorting, pagination, and category narrowing
+- URL-owned browse state so filters and pagination survive reload, browser history, and shared links
 - Results shown without recommendation framing
 - Entry points into event and gig detail pages
 
@@ -100,6 +101,7 @@ It contains:
 - A direct query input for keyword or semantic search
 - Search results for events and gigs
 - Structured filters that refine explicit search results
+- URL-owned query, filter, and pagination state so search sessions are durable across reload, browser history, and shared links
 - AI enhancement that improves search, such as summaries
 - A clear link or handoff control into AI mode
 - Recent searches when supported
@@ -344,6 +346,7 @@ Mobile navigation is a responsive presentation of the same primary navigation mo
 - The authenticated product has five primary destinations only: `Featured`, `Catalog`, `Search`, `AI`, and `You`.
 - `Avatar Menu` is secondary account navigation and never replaces or duplicates a primary destination.
 - `Featured`, `Catalog`, `Search`, and `AI` are discovery surfaces; `You` is the personal management surface.
+- `Catalog` and `Search` keep their active browse state in URL search params so filters, query text, and pagination survive refresh, history navigation, and shared links.
 - `My Profile` is a dedicated full page reached from the avatar menu, not part of the `You` hub.
 - Collections and applications are subpages under `You`, not top-level tabs.
 - Account and session actions stay in the avatar menu or provider-managed account flow, not inside `You`.
@@ -352,7 +355,9 @@ Mobile navigation is a responsive presentation of the same primary navigation mo
 - Save, apply, confirm, and menu interactions stay as overlays because they are action flows, not canonical destinations.
 - `Featured` is the only page whose defining frame is recommendation and personalization.
 - `Catalog` is the neutral browse surface and must not be framed as a recommendation feed.
+- `Catalog` uses `/catalog` as its canonical app-page route; the legacy `/events` alias is removed.
 - `Search` is the traditional query-first destination. It may offer lightweight AI enhancement and a handoff into AI mode, but it does not own assistant conversation history.
+- `You` applications use `/you/applications` as their canonical route; the legacy `/applications` alias is removed.
 - `AI` is the chat-based, conversation-first destination and owns assistant conversation routes.
 
 ## Scenarios
@@ -436,4 +441,22 @@ GIVEN a user looks at the primary navbar
 WHEN the user chooses the AI destination
 THEN the app opens a chat-based agent surface
 AND that surface is separate from the Search page
+```
+
+### S-PAGES-10: Catalog URL preserves browse state
+
+```
+GIVEN a user applies filters or pagination on Catalog
+WHEN the user reloads the page, navigates with the browser history, or shares the URL
+THEN the same filters and pagination state are restored from the URL
+AND the page continues to render the neutral browse surface
+```
+
+### S-PAGES-11: Search URL preserves query-first state
+
+```
+GIVEN a user enters a search query, applies search filters, or changes pagination on Search
+WHEN the user reloads the page, navigates with the browser history, or shares the URL
+THEN the same query, filters, and pagination state are restored from the URL
+AND the page continues to render the matching search session
 ```

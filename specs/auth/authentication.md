@@ -21,6 +21,10 @@ Every API request includes a Clerk JWT in the `Authorization: Bearer <token>` he
 
 When a user authenticates for the first time, the system creates a `User` record linked to their Clerk ID. Subsequent requests resolve the `User` record via `clerkId`.
 
+### Authenticated Shell Guard
+
+The authenticated client shell uses a shared route guard. Any navigation into an authenticated page tree checks Clerk auth state before page-specific loaders or components run. Unauthenticated visitors are redirected to the sign-in page through the shared parent route rather than through duplicated page-level checks.
+
 ## Scenarios
 
 ### S-AUTH-1: Valid OSU email sign-up
@@ -85,6 +89,15 @@ THEN the system creates a User record with clerkId "clerk_new_user" and the emai
 AND the request proceeds normally
 ```
 
+### S-AUTH-7: Unauthenticated user is blocked from the authenticated shell
+
+```
+GIVEN a visitor is not signed in
+WHEN they navigate to any page inside the authenticated app shell
+THEN the shared client-side auth guard redirects them to "/sign-in"
+AND the child page does not need to redefine its own auth redirect
+```
+
 ## Configuration
 
 ### Clerk Dashboard — Email Domain Allowlist
@@ -104,4 +117,4 @@ This prevents non-OSU users from creating accounts at the Clerk identity layer. 
 
 ## Test Cases
 
-See [`test-cases/auth/authentication.md`](../../test-cases/auth/authentication.md) for the full test case registry (TC-AUTH-001 through TC-AUTH-010), including automated API tests, E2E tests, and manual UI verification cases.
+See [`test-cases/auth/authentication.md`](../../test-cases/auth/authentication.md) for the full test case registry (TC-AUTH-001 through TC-AUTH-011), including automated API tests, E2E tests, and manual UI verification cases.
