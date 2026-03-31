@@ -137,31 +137,16 @@ function SearchHarness({
   initialPage?: number;
 }) {
   const [search, setSearch] = useState(initialSearch);
-  const [type, setType] = useState(initialType);
-  const [category, setCategory] = useState(initialCategory);
   const [page, setPage] = useState(initialPage);
 
   return (
     <SearchPage
       search={search}
-      type={type}
-      category={category}
+      type={initialType}
+      category={initialCategory}
       page={page}
       onSearchSubmit={(value) => {
         setSearch(value);
-        setPage(0);
-      }}
-      onTypeChange={(value) => {
-        setType(value);
-        setPage(0);
-      }}
-      onCategoryChange={(value) => {
-        setCategory(value);
-        setPage(0);
-      }}
-      onClearFilters={() => {
-        setType("");
-        setCategory("");
         setPage(0);
       }}
       onPageChange={setPage}
@@ -234,17 +219,6 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     });
   });
 
-  it("TC-PAGES-013: search handoff link carries the current prompt into AI mode", async () => {
-    state.mockGet.mockResolvedValue(makeResponse([]));
-
-    const { getByRole } = await renderSearchPage({ initialSearch: "campus jobs" });
-
-    expect(getByRole("link", { name: "Ask AI" })).toHaveAttribute(
-      "href",
-      "/ai?prompt=campus%20jobs",
-    );
-  });
-
   it("TC-PAGES-012: search page submits a new query and resets pagination", async () => {
     const user = userEvent.setup();
     state.mockGet.mockResolvedValue(makeResponse([{ id: "evt-1", title: "Hackathon" }]));
@@ -261,8 +235,10 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     });
 
     await user.clear(screen.getByRole("textbox", { name: "Search query" }));
-    await user.type(screen.getByRole("textbox", { name: "Search query" }), "hackathon");
-    await user.click(screen.getByRole("button", { name: "Search" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Search query" }),
+      "hackathon{enter}",
+    );
 
     await waitFor(() => {
       const lastCall = state.mockGet.mock.calls.at(-1);

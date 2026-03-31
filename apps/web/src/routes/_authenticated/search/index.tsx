@@ -45,31 +45,6 @@ function SearchRoute() {
           }),
         })
       }
-      onTypeChange={(value) =>
-        navigate({
-          search: (current) => ({
-            ...current,
-            type: value || undefined,
-            page: undefined,
-          }),
-        })
-      }
-      onCategoryChange={(value) =>
-        navigate({
-          search: (current) => ({
-            ...current,
-            category: value.trim() || undefined,
-            page: undefined,
-          }),
-        })
-      }
-      onClearFilters={() =>
-        navigate({
-          search: (current) => ({
-            q: current.q,
-          }),
-        })
-      }
       onPageChange={(page) =>
         navigate({
           search: (current) => ({
