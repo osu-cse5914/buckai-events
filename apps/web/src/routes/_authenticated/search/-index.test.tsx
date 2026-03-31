@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { render } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { SearchPage } from "@/components/app-pages/search-page";
@@ -135,27 +136,17 @@ function SearchHarness({
   initialCategory?: string;
   initialPage?: number;
 }) {
-  const [type, setType] = useState(initialType);
-  const [category, setCategory] = useState(initialCategory);
+  const [search, setSearch] = useState(initialSearch);
   const [page, setPage] = useState(initialPage);
 
   return (
     <SearchPage
-      search={initialSearch}
-      type={type}
-      category={category}
+      search={search}
+      type={initialType}
+      category={initialCategory}
       page={page}
-      onTypeChange={(value) => {
-        setType(value);
-        setPage(0);
-      }}
-      onCategoryChange={(value) => {
-        setCategory(value);
-        setPage(0);
-      }}
-      onClearFilters={() => {
-        setType("");
-        setCategory("");
+      onSearchSubmit={(value) => {
+        setSearch(value);
         setPage(0);
       }}
       onPageChange={setPage}
@@ -228,14 +219,31 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     });
   });
 
-  it("TC-PAGES-013: search handoff link carries the current prompt into AI mode", async () => {
-    state.mockGet.mockResolvedValue(makeResponse([]));
+  it("TC-PAGES-012: search page submits a new query and resets pagination", async () => {
+    const user = userEvent.setup();
+    state.mockGet.mockResolvedValue(makeResponse([{ id: "evt-1", title: "Hackathon" }]));
 
-    const { getByRole } = await renderSearchPage({ initialSearch: "campus jobs" });
+    await renderSearchPage({
+      initialSearch: "music",
+      initialPage: 2,
+    });
 
-    expect(getByRole("link", { name: "Ask AI" })).toHaveAttribute(
-      "href",
-      "/ai?prompt=campus%20jobs",
+    await waitFor(() => {
+      const lastCall = state.mockGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.search).toBe("music");
+      expect(lastCall?.[0].query.offset).toBe("24");
+    });
+
+    await user.clear(screen.getByRole("textbox", { name: "Search query" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Search query" }),
+      "hackathon{enter}",
     );
+
+    await waitFor(() => {
+      const lastCall = state.mockGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.search).toBe("hackathon");
+      expect(lastCall?.[0].query.offset).toBe("0");
+    });
   });
 });

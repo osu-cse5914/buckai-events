@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { navLinks } from "@/routes/_authenticated";
+import { navLinks, utilityNavLinks } from "@/routes/_authenticated";
 
 const state = vi.hoisted(() => ({
   beforeLoads: {} as Record<string, ((args?: unknown) => unknown) | undefined>,
@@ -29,6 +29,11 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
       { to: "/events", label: "Events" },
       { to: "/gigs", label: "Gigs" },
       { to: "/you", label: "You" },
+    ]);
+
+    expect(utilityNavLinks).toEqual([
+      { to: "/search", label: "Search" },
+      { to: "/ai", label: "Agent" },
     ]);
   });
 
