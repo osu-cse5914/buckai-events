@@ -5,6 +5,7 @@ vi.mock("../lib/prisma");
 
 import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
+import { registerApiErrorHandlers } from "../app";
 import { events, isValidStatusTransition } from "../routes/events";
 
 // --- Test data ---
@@ -14,6 +15,7 @@ const USER_B = { id: "user_b", clerkId: "clerk_b", email: "userb@osu.edu" };
 
 function createTestApp(user = USER_A) {
   const app = new Hono();
+  registerApiErrorHandlers(app);
   app.use("/*", async (c, next) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (c as any).set("user", user);

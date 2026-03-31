@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 
 type ProblemStatus = 400 | 401 | 403 | 404 | 409 | 500;
+const PROBLEM_JSON_CONTENT_TYPE = "application/problem+json; charset=UTF-8";
 
 const DEFAULT_TITLES: Record<ProblemStatus, string> = {
   400: "Invalid request",
@@ -24,6 +25,50 @@ type ProblemOptions = {
   title?: string;
   type?: string;
 };
+
+export class ProblemError extends Error {
+  readonly problem: ProblemOptions;
+
+  constructor(problem: ProblemOptions) {
+    super(problem.detail);
+    this.name = "ProblemError";
+    this.problem = problem;
+  }
+}
+
+export class BadRequestError extends ProblemError {
+  constructor(
+    detail: string,
+    type = "invalid-request",
+    title = "Invalid request",
+  ) {
+    super({ status: 400, detail, type, title });
+  }
+}
+
+export class UnauthorizedError extends ProblemError {
+  constructor(detail = "Authentication is required") {
+    super({ status: 401, detail, type: "unauthorized" });
+  }
+}
+
+export class ForbiddenError extends ProblemError {
+  constructor(detail: string) {
+    super({ status: 403, detail, type: "forbidden" });
+  }
+}
+
+export class NotFoundError extends ProblemError {
+  constructor(detail: string) {
+    super({ status: 404, detail, type: "not-found" });
+  }
+}
+
+export class ConflictError extends ProblemError {
+  constructor(detail: string) {
+    super({ status: 409, detail, type: "conflict" });
+  }
+}
 
 function getProblemType(type: string | undefined, status: ProblemStatus): string {
   if (!type) {
@@ -63,7 +108,21 @@ export function toProblemDetails({
 }
 
 export function problem(c: Context, options: ProblemOptions): Response {
-  return c.json(toProblemDetails(options), options.status);
+  return c.body(JSON.stringify(toProblemDetails(options)), options.status, {
+    "content-type": PROBLEM_JSON_CONTENT_TYPE,
+  });
+}
+
+export function problemFromError(c: Context, error: unknown): Response {
+  if (error instanceof ProblemError) {
+    return problem(c, error.problem);
+  }
+
+  return problem(c, {
+    status: 500,
+    detail: "An unexpected error occurred",
+    type: "internal-error",
+  });
 }
 
 export function badRequest(

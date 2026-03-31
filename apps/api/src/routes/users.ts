@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
-import { notFound } from "../lib/problem-details";
 import {
   parseUserPatchBody,
   readJsonBody,
@@ -11,7 +10,12 @@ import {
   validateUserIdParam,
 } from "../lib/validators";
 import type { AppEnv } from "../lib/types";
-import { getPublicProfile, listOwnApplications } from "../services/users";
+import {
+  getCurrentUserOrThrow,
+  getPublicProfile,
+  listOwnApplications,
+  updateCurrentUser,
+} from "../services/users";
 
 export const users = new Hono<AppEnv>()
   .get("/me/applications", validatePaginationQuery, async (c) => {
@@ -36,10 +40,7 @@ export const users = new Hono<AppEnv>()
   .get("/me", async (c) => {
     const { id } = c.get("user");
     const prisma = getPrisma(c);
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      return notFound(c, "User not found");
-    }
+    const user = await getCurrentUserOrThrow(prisma, id);
     return c.json(user);
   })
   .patch("/me", async (c) => {
@@ -49,7 +50,7 @@ export const users = new Hono<AppEnv>()
       return data;
     }
     const prisma = getPrisma(c);
-    const updated = await prisma.user.update({ where: { id }, data });
+    const updated = await updateCurrentUser(prisma, id, data);
     return c.json(updated);
   })
   .get("/:id", validateUserIdParam, validateStrictPaginationQuery, async (c) => {
@@ -66,9 +67,6 @@ export const users = new Hono<AppEnv>()
       limit,
       offset,
     });
-    if (!profile) {
-      return notFound(c, `User ${targetId} was not found`);
-    }
 
     return c.json(profile);
   });

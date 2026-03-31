@@ -52,6 +52,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(401);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(await res.json()).toMatchObject({
         type: expect.stringContaining("unauthorized"),
         title: "Unauthorized",
@@ -66,6 +67,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(401);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(await res.json()).toMatchObject({
         type: expect.stringContaining("unauthorized"),
         title: "Unauthorized",
@@ -211,6 +213,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       const res = await createTestApp().request("/test");
 
       expect(res.status).toBe(403);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
       expect(await res.json()).toMatchObject({
         type: expect.stringContaining("forbidden"),
         title: "Forbidden",

@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
-import { badRequest } from "../lib/problem-details";
 import {
   parseEventCreateBody,
   parseEventUpdateBody,
@@ -10,14 +9,14 @@ import {
   validateEventIdParam,
   validateEventListQuery,
 } from "../lib/validators";
-import { requireEvent, requireOwnedUserEvent } from "../lib/resources";
 import type { AppEnv } from "../lib/types";
 import {
   createEvent,
-  CREATOR_SELECT,
+  deleteOwnedEvent,
+  getEventByIdOrThrow,
   isValidStatusTransition,
   listEvents,
-  updateEvent,
+  updateOwnedEvent,
 } from "../services/events";
 
 export { isValidStatusTransition } from "../services/events";
@@ -51,18 +50,7 @@ export const events = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const { id } = c.req.valid("param");
 
-    const event = await requireEvent(
-      c,
-      prisma.event.findUnique({
-        where: { id },
-        include: { creator: { select: CREATOR_SELECT } },
-      }),
-    );
-
-    if (event instanceof Response) {
-      return event;
-    }
-
+    const event = await getEventByIdOrThrow(prisma, id);
     return c.json(event);
   })
   .patch("/:id", validateEventIdParam, async (c) => {
@@ -74,26 +62,7 @@ export const events = new Hono<AppEnv>()
       return body;
     }
 
-    const event = await requireEvent(c, prisma.event.findUnique({ where: { id } }));
-    if (event instanceof Response) {
-      return event;
-    }
-
-    const ownershipError = requireOwnedUserEvent(c, event, user.id, "update");
-    if (ownershipError) {
-      return ownershipError;
-    }
-
-    if (body.status && body.status !== event.status) {
-      if (!isValidStatusTransition(event.status, body.status)) {
-        return badRequest(
-          c,
-          `Invalid status transition from ${event.status} to ${body.status}`,
-        );
-      }
-    }
-
-    const updated = await updateEvent(prisma, id, body);
+    const updated = await updateOwnedEvent(prisma, id, user.id, body);
     return c.json(updated);
   })
   .delete("/:id", validateEventIdParam, async (c) => {
@@ -101,16 +70,6 @@ export const events = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const { id } = c.req.valid("param");
 
-    const event = await requireEvent(c, prisma.event.findUnique({ where: { id } }));
-    if (event instanceof Response) {
-      return event;
-    }
-
-    const ownershipError = requireOwnedUserEvent(c, event, user.id, "delete");
-    if (ownershipError) {
-      return ownershipError;
-    }
-
-    await prisma.event.delete({ where: { id } });
+    await deleteOwnedEvent(prisma, id, user.id);
     return c.json({ message: "Event deleted" });
   });
