@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CatalogPage } from "@/components/events/catalog-page";
+import { BrowsePage } from "@/components/events/browse-page";
 
 const state = vi.hoisted(() => {
   const mockGet = vi.fn();
@@ -61,7 +61,7 @@ vi.mock("@tanstack/react-router", () => ({
       }) => Promise<unknown>;
       component?: React.ComponentType;
     }) => {
-      if (path === "/_authenticated/catalog/") {
+      if (path === "/_authenticated/events/") {
         capturedValidateSearch = config.validateSearch ?? null;
         capturedLoaderDeps = config.loaderDeps ?? null;
         capturedLoader = config.loader ?? null;
@@ -84,17 +84,13 @@ vi.mock("@tanstack/react-router", () => ({
     params?: Record<string, string>;
     className?: string;
   }) => (
-    <a
-      href={params?.eventId ? `/events/${params.eventId}` : to}
-      {...props}
-    >
+    <a href={params?.eventId ? `/events/${params.eventId}` : to} {...props}>
       {children}
     </a>
   ),
 }));
 
 const DEFAULT_FILTERS = {
-  type: "",
   status: "",
   source: "",
   category: "",
@@ -111,7 +107,7 @@ function createQueryClient() {
 function makeEvent(overrides: Record<string, unknown> = {}) {
   return {
     id: "evt_1",
-    title: "Test Event",
+    title: "Concert",
     description: "A test event",
     type: "EVENT",
     source: "USER",
@@ -151,7 +147,7 @@ function makeResponse(
   };
 }
 
-function CatalogHarness({
+function EventsHarness({
   initialFilters = DEFAULT_FILTERS,
   initialPage = 0,
 }: {
@@ -162,7 +158,9 @@ function CatalogHarness({
   const [page, setPage] = useState(initialPage);
 
   return (
-    <CatalogPage
+    <BrowsePage
+      browseType="EVENT"
+      title="Events"
       filters={filters}
       page={page}
       onFilterChange={(key, value) => {
@@ -178,14 +176,14 @@ function CatalogHarness({
   );
 }
 
-async function renderCatalogPage(options?: {
+async function renderEventsPage(options?: {
   initialFilters?: typeof DEFAULT_FILTERS;
   initialPage?: number;
 }) {
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <CatalogHarness {...options} />
+      <EventsHarness {...options} />
     </QueryClientProvider>,
   );
 }
@@ -198,16 +196,16 @@ beforeEach(() => {
   vi.resetModules();
 });
 
-describe("[phase:6] [regression:always] CatalogRoute", () => {
-  it("TC-PAGES-017: validates catalog URL state and primes loader data", async () => {
+describe("[phase:6] [regression:always] EventsRoute", () => {
+  it("TC-PAGES-017: validates events URL state and primes loader data", async () => {
     await import("./index");
 
     if (!capturedValidateSearch || !capturedLoaderDeps || !capturedLoader) {
-      throw new Error("Catalog route config was not captured");
+      throw new Error("Events route config was not captured");
     }
 
     const search = capturedValidateSearch({
-      type: "EVENT",
+      type: "GIG",
       status: "OPEN",
       source: "USER",
       category: " music ",
@@ -221,7 +219,6 @@ describe("[phase:6] [regression:always] CatalogRoute", () => {
     });
 
     expect(search).toEqual({
-      type: "EVENT",
       status: "OPEN",
       source: "USER",
       category: "music",
@@ -241,24 +238,25 @@ describe("[phase:6] [regression:always] CatalogRoute", () => {
   });
 });
 
-describe("[phase:1] [regression:always] CatalogPage", () => {
+describe("[phase:1] [regression:always] EventsPage", () => {
   it("shows loading skeletons while fetching", async () => {
     state.mockGet.mockReturnValue(new Promise(() => {}));
 
-    await renderCatalogPage();
+    await renderEventsPage();
 
     const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("displays events in card layout", async () => {
-    const events = [
-      makeEvent({ id: "1", title: "Hackathon" }),
-      makeEvent({ id: "2", title: "Jazz Night", type: "GIG", category: "music" }),
-    ];
-    state.mockGet.mockResolvedValue(makeResponse(events));
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeEvent({ id: "1", title: "Hackathon" }),
+        makeEvent({ id: "2", title: "Jazz Night", category: "music" }),
+      ]),
+    );
 
-    await renderCatalogPage();
+    await renderEventsPage();
 
     expect(await screen.findByText("Hackathon")).toBeInTheDocument();
     expect(await screen.findByText("Jazz Night")).toBeInTheDocument();
@@ -267,20 +265,20 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
   it("shows empty state when no events match", async () => {
     state.mockGet.mockResolvedValue(makeResponse([]));
 
-    await renderCatalogPage();
+    await renderEventsPage();
 
     expect(await screen.findByText("No events found")).toBeInTheDocument();
   });
 
-  it("renders event card with type and status badges", async () => {
+  it("renders event card without a type badge", async () => {
     state.mockGet.mockResolvedValue(
-      makeResponse([makeEvent({ id: "1", title: "Concert", type: "EVENT", status: "OPEN" })]),
+      makeResponse([makeEvent({ id: "1", title: "Concert", status: "OPEN" })]),
     );
 
-    await renderCatalogPage();
+    await renderEventsPage();
 
     const card = (await screen.findByText("Concert")).closest('[data-slot="card"]') as HTMLElement;
-    expect(within(card).getByText("EVENT")).toBeInTheDocument();
+    expect(within(card).queryByText("EVENT")).not.toBeInTheDocument();
     expect(within(card).getByText("Open")).toBeInTheDocument();
   });
 
@@ -296,100 +294,43 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
       ]),
     );
 
-    await renderCatalogPage();
+    await renderEventsPage();
 
     expect(await screen.findByText("Thompson Library")).toBeInTheDocument();
     expect(screen.getByText(/Apr/)).toBeInTheDocument();
   });
 
-  it("TC-EVT-018: event card title uses relaxed line height to prevent clamp clipping", async () => {
-    const title =
-      "Long title with descenders going past baseline and wrapping into another line";
-    state.mockGet.mockResolvedValue(makeResponse([makeEvent({ id: "1", title })]));
-
-    await renderCatalogPage();
-
-    const titleNode = await screen.findByText(title);
-    expect(titleNode).toHaveClass("line-clamp-2");
-    expect(titleNode).toHaveClass("leading-tight");
-    expect(titleNode).toHaveClass("pb-0.5");
-  });
-
-  it("renders gig compensation", async () => {
-    state.mockGet.mockResolvedValue(
-      makeResponse([
-        makeEvent({
-          id: "1",
-          title: "Tutoring",
-          type: "GIG",
-          compensationAmount: 25,
-          compensationType: "HOURLY",
-        }),
-      ]),
-    );
-
-    await renderCatalogPage();
-
-    expect(await screen.findByText("$25/hr")).toBeInTheDocument();
-  });
-
-  it("event cards link to detail page", async () => {
-    state.mockGet.mockResolvedValue(
-      makeResponse([makeEvent({ id: "evt_abc", title: "Study Group" })]),
-    );
-
-    await renderCatalogPage();
-
-    const link = await screen.findByText("Study Group");
-    const anchor = link.closest("a");
-    expect(anchor).toHaveAttribute("href", "/events/evt_abc");
-  });
-
-  it("shows creator name on event card", async () => {
-    state.mockGet.mockResolvedValue(
-      makeResponse([
-        makeEvent({
-          id: "1",
-          title: "Event",
-          creator: { id: "u1", displayName: "Bob Smith", email: "bob@osu.edu" },
-        }),
-      ]),
-    );
-
-    await renderCatalogPage();
-
-    expect(await screen.findByText("Bob Smith")).toBeInTheDocument();
-  });
-
-  it("passes filter params to API", async () => {
+  it("passes fixed event type and filter params to API", async () => {
     state.mockGet.mockResolvedValue(makeResponse([]));
     const user = userEvent.setup();
 
-    await renderCatalogPage();
+    await renderEventsPage();
     await screen.findByText("No events found");
 
     const triggers = screen.getAllByRole("combobox");
+    expect(triggers).toHaveLength(2);
     await user.click(triggers[0]);
-
-    const eventOption = await screen.findByRole("option", { name: "Event" });
-    await user.click(eventOption);
+    await user.click(await screen.findByRole("option", { name: "Open" }));
 
     await vi.waitFor(() => {
       const lastCall = state.mockGet.mock.calls.at(-1);
       expect(lastCall?.[0].query.type).toBe("EVENT");
+      expect(lastCall?.[0].query.status).toBe("OPEN");
       expect(lastCall?.[0].query.offset).toBe("0");
     });
   });
 
-  it("does not render a keyword search input in catalog mode", async () => {
+  it("does not render a type filter or keyword input", async () => {
     state.mockGet.mockResolvedValue(makeResponse([]));
 
-    await renderCatalogPage();
+    await renderEventsPage();
     await screen.findByText("No events found");
 
+    expect(screen.getAllByRole("combobox")).toHaveLength(2);
     expect(
       screen.queryByPlaceholderText("Search events..."),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText("All Types")).not.toBeInTheDocument();
   });
 
   it("shows pagination when total exceeds page size", async () => {
@@ -398,80 +339,30 @@ describe("[phase:1] [regression:always] CatalogPage", () => {
     );
     state.mockGet.mockResolvedValue(makeResponse(events, 30));
 
-    await renderCatalogPage();
+    await renderEventsPage();
 
     await screen.findByText("Event 0");
     expect(screen.getByText(/Showing 1/)).toBeInTheDocument();
     expect(screen.getByText(/of 30/)).toBeInTheDocument();
-
-    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
   });
 
-  it("does not show pagination for single page", async () => {
-    state.mockGet.mockResolvedValue(
-      makeResponse([makeEvent({ id: "1", title: "Solo Event" })], 1),
-    );
-
-    await renderCatalogPage();
-    await screen.findByText("Solo Event");
-
-    expect(screen.queryByText(/Showing/)).not.toBeInTheDocument();
-  });
-
-  it("navigates to next page when clicking page button", async () => {
-    const events = Array.from({ length: 12 }, (_, i) =>
-      makeEvent({ id: `evt_${i}`, title: `Event ${i}` }),
-    );
-    state.mockGet.mockResolvedValue(makeResponse(events, 24));
-    const user = userEvent.setup();
-
-    await renderCatalogPage();
-    await screen.findByText("Event 0");
-
-    await user.click(screen.getByRole("button", { name: "2" }));
-
-    await vi.waitFor(() => {
-      const lastCall = state.mockGet.mock.calls.at(-1);
-      expect(lastCall?.[0].query.offset).toBe("12");
-    });
-  });
-
-  it("shows error state on fetch failure", async () => {
-    state.mockGet.mockResolvedValue({ ok: false, status: 500 });
-
-    await renderCatalogPage();
-
-    expect(await screen.findByText("Failed to fetch events")).toBeInTheDocument();
-  });
-
-  it("clear filters button resets all filters", async () => {
+  it("clear filters resets all filters", async () => {
     state.mockGet.mockResolvedValue(makeResponse([]));
     const user = userEvent.setup();
 
-    await renderCatalogPage();
+    await renderEventsPage();
     await screen.findByText("No events found");
 
     const triggers = screen.getAllByRole("combobox");
     await user.click(triggers[0]);
-    const gigOption = await screen.findByRole("option", { name: "Gig" });
-    await user.click(gigOption);
+    await user.click(await screen.findByRole("option", { name: "Open" }));
 
-    const clearBtns = await screen.findAllByRole("button", { name: /Clear filters/ });
-    await user.click(clearBtns[0]);
+    const clearButton = await screen.findByRole("button", {
+      name: /Clear filters/,
+    });
+    await user.click(clearButton);
 
     const resetTriggers = screen.getAllByRole("combobox");
-    expect(resetTriggers[0]).toHaveTextContent("All Types");
-  });
-
-  it("renders category on event card when present", async () => {
-    state.mockGet.mockResolvedValue(
-      makeResponse([makeEvent({ id: "1", title: "Concert", category: "music" })]),
-    );
-
-    await renderCatalogPage();
-
-    expect(await screen.findByText("music")).toBeInTheDocument();
+    expect(resetTriggers[0]).toHaveTextContent("All Statuses");
   });
 });

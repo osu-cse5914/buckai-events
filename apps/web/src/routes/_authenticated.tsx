@@ -27,7 +27,8 @@ import {
 
 export const navLinks = [
   { to: "/featured", label: "Featured" },
-  { to: "/catalog", label: "Catalog" },
+  { to: "/events", label: "Events" },
+  { to: "/gigs", label: "Gigs" },
   { to: "/you", label: "You" },
 ] as const;
 
@@ -72,7 +73,11 @@ function AuthenticatedLayout() {
             <nav className="hidden items-center gap-1 md:flex">
               {navLinks.map(({ to, label }) => (
                 <Button key={to} variant="ghost" size="sm" asChild>
-                  <Link to={to} activeProps={{ className: "bg-accent" }}>
+                  <Link
+                    to={to}
+                    activeProps={{ className: "bg-accent" }}
+                    activeOptions={{ exact: true }}
+                  >
                     {label}
                   </Link>
                 </Button>
@@ -158,6 +163,7 @@ function AuthenticatedLayout() {
                       <Link
                         to={to}
                         activeProps={{ className: "bg-accent" }}
+                        activeOptions={{ exact: true }}
                         onClick={() => setMobileOpen(false)}
                       >
                         {label}

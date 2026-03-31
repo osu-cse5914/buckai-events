@@ -37,7 +37,7 @@ function EventEditPage() {
       <section className="mx-auto max-w-2xl px-6 py-10 text-center">
         <h1 className="text-2xl font-bold">Event not found</h1>
         <Button asChild className="mt-4">
-          <Link to="/catalog">Back to Catalog</Link>
+          <Link to="/events">Back to Events</Link>
         </Button>
       </section>
     );

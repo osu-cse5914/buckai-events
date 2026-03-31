@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { browsePathForEventType } from "@/lib/event-utils";
 
 export const Route = createFileRoute("/_authenticated/events/new")({
   component: EventCreationPage,
@@ -85,11 +86,11 @@ function EventCreationPage() {
   return (
     <section className="mx-auto max-w-2xl px-6 py-10">
       <Link
-        to="/catalog"
+        to={browsePathForEventType(type)}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeftIcon className="size-4" />
-        Back to Catalog
+        Back to {type === "GIG" ? "Gigs" : "Events"}
       </Link>
 
       <h1 className="mt-6 text-2xl font-bold tracking-tight">
@@ -219,7 +220,7 @@ function EventCreationPage() {
             {mutation.isPending ? "Creating..." : "Create Event"}
           </Button>
           <Button type="button" variant="outline" asChild>
-            <Link to="/catalog">Cancel</Link>
+            <Link to={browsePathForEventType(type)}>Cancel</Link>
           </Button>
         </div>
       </form>

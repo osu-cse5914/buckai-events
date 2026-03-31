@@ -92,7 +92,13 @@ export function EventsEmptyState({
   );
 }
 
-export function EventsGrid({ events }: { events: EventListItem[] }) {
+export function EventsGrid({
+  events,
+  showTypeBadge = true,
+}: {
+  events: EventListItem[];
+  showTypeBadge?: boolean;
+}) {
   return (
     <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {events.map((event) => (
@@ -105,12 +111,14 @@ export function EventsGrid({ events }: { events: EventListItem[] }) {
           <Card className="h-full transition-shadow group-hover:shadow-md">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Badge
-                  variant="secondary"
-                  className={TYPE_STYLES[event.type] ?? ""}
-                >
-                  {event.type}
-                </Badge>
+                {showTypeBadge ? (
+                  <Badge
+                    variant="secondary"
+                    className={TYPE_STYLES[event.type] ?? ""}
+                  >
+                    {event.type}
+                  </Badge>
+                ) : null}
                 <Badge
                   variant="secondary"
                   className={STATUS_STYLES[event.status] ?? ""}
