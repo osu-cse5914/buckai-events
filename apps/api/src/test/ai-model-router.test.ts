@@ -66,15 +66,22 @@ describe("[phase:4] [regression:always] AI model router", () => {
       config,
       adapters,
       env: {
+        GOOGLE_GENERATIVE_AI_API_KEY: "google_test_key",
         OPENAI_COMPATIBLE_API_KEY: "openai_test_key",
       },
     });
 
-    const resolved = router.resolveTask("chatbot");
+    const chatbot = router.resolveTask("chatbot");
+    const tagging = router.resolveTask("tagging");
+    const embedding = router.resolveTask("embedding");
 
-    expect(resolved.provider.id).toBe("openai");
-    expect(resolved.provider.type).toBe("OPENAI_COMPATIBLE");
-    expect(resolved.model.modelId).toBe("gpt-4o");
+    expect(chatbot.provider.id).toBe("openai");
+    expect(chatbot.provider.type).toBe("OPENAI_COMPATIBLE");
+    expect(chatbot.model.modelId).toBe("gpt-4o");
+    expect(tagging.provider.id).toBe("google");
+    expect(tagging.model.id).toBe("gemini-flash");
+    expect(embedding.provider.id).toBe("google");
+    expect(embedding.model.id).toBe("text-embed");
     expect(router.getLanguageModel("chatbot")).toEqual({
       kind: "fake-openai-language-model",
       modelId: "gpt-4o",

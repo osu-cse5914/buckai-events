@@ -46,6 +46,8 @@ export type AIConfig = {
   tasks: Record<string, AITaskConfig>;
 };
 
+export type AIConfigOverrides = Partial<AIConfig>;
+
 export type ResolvedAITask = {
   task: AITaskConfig;
   model: AIModelConfig;
@@ -75,7 +77,8 @@ export type AIProviderAdapters = Partial<
 >;
 
 type CreateAIModelRouterOptions = {
-  config?: AIConfig;
+  config?: AIConfigOverrides;
+  baseConfig?: AIConfig;
   adapters?: AIProviderAdapters;
   env?: AIEnvironment;
 };
@@ -232,10 +235,14 @@ export function createDefaultAIConfig(env?: AIEnvironment): AIConfig {
 
 export function createAIModelRouter({
   config,
+  baseConfig,
   adapters = defaultAdapters,
   env,
 }: CreateAIModelRouterOptions = {}) {
-  const resolvedConfig = config ?? createDefaultAIConfig(env);
+  const resolvedConfig = mergeAIConfig(
+    baseConfig ?? createDefaultAIConfig(env),
+    config,
+  );
 
   function resolveTask(taskId: AITaskId | string): ResolvedAITask {
     const task = resolvedConfig.tasks[taskId];
@@ -301,5 +308,26 @@ export function createAIModelRouter({
     resolveTask,
     getLanguageModel,
     getEmbeddingModel,
+  };
+}
+
+function mergeAIConfig(baseConfig: AIConfig, overrides?: AIConfigOverrides): AIConfig {
+  if (!overrides) {
+    return baseConfig;
+  }
+
+  return {
+    providers: {
+      ...baseConfig.providers,
+      ...overrides.providers,
+    },
+    models: {
+      ...baseConfig.models,
+      ...overrides.models,
+    },
+    tasks: {
+      ...baseConfig.tasks,
+      ...overrides.tasks,
+    },
   };
 }
