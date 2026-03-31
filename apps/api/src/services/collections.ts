@@ -60,6 +60,25 @@ export async function getCollectionForViewer(
   return collection;
 }
 
+export async function createOwnedCollection(
+  prisma: PrismaClient,
+  input: {
+    ownerId: string;
+    data: {
+      name: string;
+      visibility?: "PRIVATE" | "PUBLIC";
+    };
+  },
+) {
+  return prisma.collection.create({
+    data: {
+      userId: input.ownerId,
+      name: input.data.name,
+      visibility: input.data.visibility ?? "PRIVATE",
+    },
+  });
+}
+
 export async function deleteOwnedCollection(
   prisma: PrismaClient,
   input: {
