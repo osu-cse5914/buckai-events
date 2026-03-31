@@ -76,12 +76,12 @@ export function paginated<T>(
   };
 }
 
-export function paginatedMeta<T>(
+export function paginatedMeta<T, TMeta extends PaginationValue & { total: number }>(
   items: T[],
-  pagination: PaginationValue & { total: number },
+  pagination: TMeta,
 ): {
   items: T[];
-  meta: PaginationValue & { total: number };
+  meta: TMeta;
 } {
   return {
     items,

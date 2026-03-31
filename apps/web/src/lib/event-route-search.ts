@@ -32,6 +32,10 @@ export type BrowseRouteSearch = {
   selected?: string;
 };
 
+export type FeaturedRouteSearch = {
+  type?: (typeof EVENT_TYPES)[number];
+};
+
 export type SearchRouteSearch = {
   q?: string;
   type?: (typeof EVENT_TYPES)[number];
@@ -92,6 +96,14 @@ export function validateBrowseSearch(
     source: normalizeEnumValue(search.source, EVENT_SOURCES),
     sort: normalizeEnumValue(search.sort, BROWSE_SORTS),
     selected: normalizeTrimmedString(search.selected),
+  };
+}
+
+export function validateFeaturedSearch(
+  search: Record<string, unknown>,
+): FeaturedRouteSearch {
+  return {
+    type: normalizeEnumValue(search.type, EVENT_TYPES),
   };
 }
 

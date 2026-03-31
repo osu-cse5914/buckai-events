@@ -47,6 +47,10 @@ export type SemanticSearchQuery = PaginationQuery & {
   endDate?: string;
 };
 
+export type RecommendationsQuery = PaginationQuery & {
+  type?: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -139,6 +143,17 @@ export function toEventListInput(query: EventListQuery): EventListInput {
     user: query.user,
     search: query.search,
     sort: query.sort as EventListSort | undefined,
+  };
+}
+
+export function toRecommendationsListInput(query: RecommendationsQuery): {
+  type?: EventType;
+  limit: number;
+  offset: number;
+} {
+  return {
+    ...resolvePaginationQuery(query),
+    type: query.type as EventType | undefined,
   };
 }
 
@@ -570,6 +585,38 @@ export const validatePaginationQuery = validator("query", (value, c) => {
   }
   if (offsetValue !== undefined) {
     output.offset = offsetValue;
+  }
+
+  return output;
+});
+
+export const validateRecommendationsQuery = validator("query", (value, c) => {
+  const pagination = parsePaginationInput(value.limit, value.offset);
+  if (pagination === "invalid") {
+    return badRequest(
+      c,
+      "limit and offset must be numeric",
+      "invalid-query",
+      "Invalid query parameter",
+    );
+  }
+
+  const output: RecommendationsQuery = {};
+  const limitValue = firstQueryValue(value.limit);
+  const offsetValue = firstQueryValue(value.offset);
+  if (limitValue !== undefined) {
+    output.limit = limitValue;
+  }
+  if (offsetValue !== undefined) {
+    output.offset = offsetValue;
+  }
+
+  const typeValue = firstQueryValue(value.type);
+  if (typeValue !== undefined) {
+    if (!isAllowedValue(typeValue, EVENT_TYPES)) {
+      return badRequest(c, "type must be EVENT or GIG");
+    }
+    output.type = typeValue;
   }
 
   return output;

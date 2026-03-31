@@ -43,7 +43,7 @@ function makeInteraction(id: string) {
     userId: "other_user",
     eventId: "evt_unused",
     action: "VIEW",
-    createdAt: new Date("2026-03-20T00:00:00Z"),
+    createdAt: new Date("2099-03-20T00:00:00Z"),
   };
 }
 
@@ -68,7 +68,7 @@ function makeEvent(
     locationName: "Ohio Union",
     locationLatitude: null,
     locationLongitude: null,
-    startAt: new Date("2026-04-10T12:00:00Z"),
+    startAt: new Date("2099-04-10T12:00:00Z"),
     endAt: null,
     compensationAmount: null,
     compensationCurrency: "USD",
@@ -155,7 +155,7 @@ describe("[phase:4] [regression:always] GET /api/v1/recommendations", () => {
           {
             id: "evt_tomorrow",
             category: "tech",
-            startAt: new Date("2026-04-01T12:00:00Z"),
+            startAt: new Date("2099-04-01T12:00:00Z"),
           },
           10,
         ),
@@ -163,7 +163,7 @@ describe("[phase:4] [regression:always] GET /api/v1/recommendations", () => {
           {
             id: "evt_next_month",
             category: "tech",
-            startAt: new Date("2026-05-01T12:00:00Z"),
+            startAt: new Date("2099-05-01T12:00:00Z"),
           },
           10,
         ),
@@ -206,7 +206,7 @@ describe("[phase:4] [regression:always] GET /api/v1/recommendations", () => {
           {
             id: "evt_completed_past",
             status: "COMPLETED",
-            startAt: new Date("2026-03-01T12:00:00Z"),
+            startAt: new Date("2098-03-01T12:00:00Z"),
           },
           99,
         ),
