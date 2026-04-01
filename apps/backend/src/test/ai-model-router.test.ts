@@ -28,6 +28,7 @@ function buildAIConfig(): AIConfig {
         modelId: "gemini-2.5-flash",
         type: "GENERATIVE",
         maxTokens: 1024,
+        contextWindow: 1_000_000,
       },
       "gemini-pro": {
         id: "gemini-pro",
@@ -35,6 +36,7 @@ function buildAIConfig(): AIConfig {
         modelId: "gemini-2.5-pro",
         type: "GENERATIVE",
         maxTokens: 2048,
+        contextWindow: 262_144,
       },
       "text-embed": {
         id: "text-embed",
@@ -42,6 +44,7 @@ function buildAIConfig(): AIConfig {
         modelId: "gemini-embedding-001",
         type: "EMBEDDING",
         dimensions: 768,
+        contextWindow: 131_072,
       },
       gpt4o: {
         id: "gpt4o",
@@ -59,7 +62,6 @@ function buildAIConfig(): AIConfig {
       tagging: {
         id: "tagging",
         modelId: "gemini-flash",
-        systemPrompt: "Classify campus events into structured metadata.",
         temperature: 0.3,
         maxOutputTokens: 300,
       },
@@ -96,6 +98,7 @@ describe("[phase:4] [regression:always] AI model router", () => {
     expect(resolved.task.id).toBe("tagging");
     expect(resolved.model.id).toBe("gemini-flash");
     expect(resolved.model.modelId).toBe("gemini-2.5-flash");
+    expect(resolved.model.contextWindow).toBe(1_000_000);
     expect(resolved.provider.id).toBe("google");
     expect(resolved.provider.type).toBe("GOOGLE");
     expect(router.getLanguageModel("tagging")).toBeDefined();
@@ -145,6 +148,22 @@ describe("[phase:4] [regression:always] AI model router", () => {
       createAIModelRouter({
         env: {
           AI_ROUTER_CONFIG_JSON: "{not-json}",
+        },
+      }),
+    ).toThrow(AIConfigurationError);
+    expect(() =>
+      createAIModelRouter({
+        env: {
+          AI_ROUTER_CONFIG_JSON: JSON.stringify({
+            ...buildAIConfig(),
+            tasks: {
+              ...buildAIConfig().tasks,
+              tagging: {
+                ...buildAIConfig().tasks.tagging,
+                systemPrompt: "should live in code",
+              },
+            },
+          }),
         },
       }),
     ).toThrow(AIConfigurationError);

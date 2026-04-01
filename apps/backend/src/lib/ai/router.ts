@@ -26,12 +26,12 @@ export type AIModelConfig = {
   type: AIModelType;
   maxTokens?: number;
   dimensions?: number;
+  contextWindow?: number;
 };
 
 export type AITaskConfig = {
   id: string;
   modelId: string;
-  systemPrompt?: string;
   temperature?: number;
   maxOutputTokens?: number;
 };
@@ -108,6 +108,7 @@ const aiModelConfigSchema = z
     type: z.enum(AI_MODEL_TYPES),
     maxTokens: z.number().int().positive().optional(),
     dimensions: z.number().int().positive().optional(),
+    contextWindow: z.number().int().positive().optional(),
   })
   .strict();
 
@@ -115,7 +116,6 @@ const aiTaskConfigSchema = z
   .object({
     id: z.string().min(1),
     modelId: z.string().min(1),
-    systemPrompt: z.string().min(1).optional(),
     temperature: z.number().min(0).max(2).optional(),
     maxOutputTokens: z.number().int().positive().optional(),
   })

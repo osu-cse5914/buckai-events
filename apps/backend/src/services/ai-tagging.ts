@@ -30,6 +30,13 @@ const taggingOutputSchema = z.object({
   category: z.string().nullable().optional(),
 });
 
+export const EVENT_TAGGING_SYSTEM_PROMPT = [
+  "You generate structured discovery metadata for Social OSU events.",
+  "Use only the provided event details.",
+  "Return concise, student-facing tags, a category, and a short summary.",
+  "Do not invent facts or add unsupported details.",
+].join(" ");
+
 function buildTaggingPrompt(input: EventTaggingInput) {
   return [
     "Generate event discovery metadata for this event.",
@@ -111,7 +118,7 @@ export async function generateEventTagging(
 
   const { output } = await generateTextImpl({
     model: resolvedRouter.getLanguageModel("tagging"),
-    system: resolvedTask.task.systemPrompt,
+    system: EVENT_TAGGING_SYSTEM_PROMPT,
     temperature: resolvedTask.task.temperature,
     maxOutputTokens: resolvedTask.task.maxOutputTokens,
     prompt: buildTaggingPrompt(input),

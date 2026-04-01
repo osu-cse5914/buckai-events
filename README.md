@@ -73,7 +73,7 @@ Set the required API secrets in `apps/backend/.env`:
 - `DATABASE_URL`: your Neon or local Postgres connection string
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
 - `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used when a router provider entry references it
-- `AI_ROUTER_CONFIG_JSON`: serialized provider/model/task config consumed by the AI router
+- `AI_ROUTER_CONFIG_JSON`: serialized provider/model/task routing and tuning config consumed by the AI router
 - any additional provider secret named by a provider entry's `apiKeyEnvVar`
 
 Optional local overrides:
@@ -84,6 +84,7 @@ Optional local overrides:
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
   - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `OPENAI_PRIMARY_API_KEY`
   - `AI_ROUTER_CONFIG_JSON` can be stored as pretty-printed multiline JSON inside a single quoted env value
+  - system prompts stay in application code, not in `AI_ROUTER_CONFIG_JSON`
 - `apps/web/.env`
   - `VITE_API_URL` defaults to `http://localhost:3001`
   - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key
@@ -111,21 +112,24 @@ Example `AI_ROUTER_CONFIG_JSON`:
       "providerId": "google",
       "modelId": "gemini-2.5-flash",
       "type": "GENERATIVE",
-      "maxTokens": 1024
+      "maxTokens": 1024,
+      "contextWindow": 1000000
     },
     "gemini-pro": {
       "id": "gemini-pro",
       "providerId": "google",
       "modelId": "gemini-2.5-pro",
       "type": "GENERATIVE",
-      "maxTokens": 2048
+      "maxTokens": 2048,
+      "contextWindow": 262144
     },
     "text-embed": {
       "id": "text-embed",
       "providerId": "google",
       "modelId": "gemini-embedding-001",
       "type": "EMBEDDING",
-      "dimensions": 768
+      "dimensions": 768,
+      "contextWindow": 131072
     },
     "gpt4o": {
       "id": "gpt4o",
@@ -143,7 +147,6 @@ Example `AI_ROUTER_CONFIG_JSON`:
     "tagging": {
       "id": "tagging",
       "modelId": "gemini-flash",
-      "systemPrompt": "You classify campus events into structured metadata.",
       "temperature": 0.3,
       "maxOutputTokens": 300
     },

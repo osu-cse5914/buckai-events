@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { AIProviderUnavailableError } from "../lib/ai/router";
-import { generateEventTagging } from "../services/ai-tagging";
+import {
+  EVENT_TAGGING_SYSTEM_PROMPT,
+  generateEventTagging,
+} from "../services/ai-tagging";
 
 describe("[phase:4] [regression:always] AI tagging service", () => {
   it("normalizes structured tagging output to the event schema limits", async () => {
@@ -29,7 +32,6 @@ describe("[phase:4] [regression:always] AI tagging service", () => {
             task: {
               id: "tagging",
               modelId: "gemini-flash",
-              systemPrompt: "test prompt",
               temperature: 0.3,
               maxOutputTokens: 300,
             },
@@ -53,7 +55,7 @@ describe("[phase:4] [regression:always] AI tagging service", () => {
 
     expect(generateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        system: "test prompt",
+        system: EVENT_TAGGING_SYSTEM_PROMPT,
         temperature: 0.3,
         maxOutputTokens: 300,
       }),
