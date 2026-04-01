@@ -462,7 +462,7 @@ describe("[phase:6] [regression:always] Recommendation section endpoints", () =>
         makeEvent(
           {
             id: "evt_past",
-            startAt: new Date("2098-03-01T12:00:00Z"),
+            startAt: new Date("2000-03-01T12:00:00Z"),
           },
           50,
         ),
