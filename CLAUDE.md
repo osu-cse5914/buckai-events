@@ -90,7 +90,7 @@ Tests are behavior-driven: they test what the system does, not how it does it.
 
 ```
 apps/web/          → React frontend (port 5173)
-apps/api/          → Hono API backend (port 3001)
+apps/backend/      → Hono API backend (port 3001)
 specs/             → Behavior specs (source of truth)
 test-cases/        → Test case registry (automated + manual)
 plans/             → Project roadmap and management docs

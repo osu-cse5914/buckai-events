@@ -5,11 +5,11 @@
 The system is a Turborepo monorepo managed with Bun. It contains two applications:
 
 - `apps/web` — React + Vite frontend served as Cloudflare Workers static assets.
-- `apps/api` — Hono REST API deployed to Cloudflare Workers.
+- `apps/backend` — Hono REST API deployed to Cloudflare Workers.
 
 ## Deployment Topology
 
-A single Cloudflare Worker (`social-osu`) serves both the frontend static assets and the API. The worker configuration in `apps/api/wrangler.toml` references `../web/dist` as the static asset directory.
+A single Cloudflare Worker (`social-osu`) serves both the frontend static assets and the API. The worker configuration in `apps/backend/wrangler.toml` references `../web/dist` as the static asset directory.
 
 ```
 Client Browser

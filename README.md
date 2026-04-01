@@ -48,7 +48,7 @@ Development is organized into 7 phases tracked via GitHub Issues and Milestones:
 
 ```text
 apps/web/   React frontend (Vite, default local port 5173)
-apps/api/   Hono API backend (default local port 3001)
+apps/backend/ Hono API backend (default local port 3001)
 specs/      Behavior specs and API contracts
 plans/      Project roadmap and management docs
 ```
@@ -64,11 +64,11 @@ bun install
 Create the local env files:
 
 ```bash
-cp apps/api/.env.example apps/api/.env
+cp apps/backend/.env.example apps/backend/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-Set the required API secrets in `apps/api/.env`:
+Set the required API secrets in `apps/backend/.env`:
 
 - `DATABASE_URL`: your Neon or local Postgres connection string
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
@@ -78,7 +78,7 @@ Set the required API secrets in `apps/api/.env`:
 
 Optional local overrides:
 
-- `apps/api/.env`
+- `apps/backend/.env`
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
@@ -182,7 +182,7 @@ bun run dev
 Notes:
 
 - The web app and local API both use a checked-in development Clerk publishable key by default so a clean clone can boot without extra public-key setup.
-- Authenticated API requests still require `CLERK_SECRET_KEY` in `apps/api/.env`.
+- Authenticated API requests still require `CLERK_SECRET_KEY` in `apps/backend/.env`.
 
 ## Common Commands
 
@@ -209,16 +209,16 @@ First-time Cloudflare setup:
    ```
 2. Set the production database secret.
    ```bash
-   cd apps/api && wrangler secret put DATABASE_URL
+   cd apps/backend && wrangler secret put DATABASE_URL
    ```
 3. Set the production Clerk secret.
    ```bash
-   cd apps/api && wrangler secret put CLERK_SECRET_KEY
+   cd apps/backend && wrangler secret put CLERK_SECRET_KEY
    ```
 4. Set the AI provider secrets used by your router config.
    ```bash
-   cd apps/api && wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
-   cd apps/api && wrangler secret put OPENAI_PRIMARY_API_KEY
+   cd apps/backend && wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+   cd apps/backend && wrangler secret put OPENAI_PRIMARY_API_KEY
    ```
 5. Set `AI_ROUTER_CONFIG_JSON` in your deployment environment to the serialized router config.
 
@@ -235,7 +235,7 @@ Local Cloudflare simulation:
 
 ```bash
 bun --cwd apps/web run build
-cd apps/api && wrangler dev
+cd apps/backend && wrangler dev
 ```
 
 ## References

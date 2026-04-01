@@ -9,8 +9,8 @@
         "turbo": "^2.8.10",
       },
     },
-    "apps/api": {
-      "name": "@social-osu/api",
+    "apps/backend": {
+      "name": "@social-osu/backend",
       "version": "0.0.0",
       "dependencies": {
         "@ai-sdk/google": "^3.0.54",
@@ -74,7 +74,7 @@
       },
       "devDependencies": {
         "@eslint/js": "^10.0.1",
-        "@social-osu/api": "workspace:*",
+        "@social-osu/backend": "workspace:*",
         "@tailwindcss/vite": "^4.2.0",
         "@tanstack/router-cli": "^1.161.1",
         "@tanstack/router-plugin": "^1.161.1",
@@ -664,7 +664,7 @@
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
 
-    "@social-osu/api": ["@social-osu/api@workspace:apps/api"],
+    "@social-osu/backend": ["@social-osu/backend@workspace:apps/backend"],
 
     "@social-osu/docs": ["@social-osu/docs@workspace:apps/docs"],
 

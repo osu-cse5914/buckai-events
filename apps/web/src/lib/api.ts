@@ -5,7 +5,7 @@ import {
   useContext,
 } from "react";
 import { hc } from "hono/client";
-import type { AppType } from "@social-osu/api";
+import type { AppType } from "@social-osu/backend";
 
 export function createApiClient(getToken: () => Promise<string | null>) {
   return hc<AppType>("/", {
