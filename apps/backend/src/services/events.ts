@@ -48,6 +48,7 @@ export type EventCreateInput = {
   title: string;
   description: string;
   type: EventType;
+  imageUrl: string | null;
   location: {
     name: string;
     latitude: number | null;
@@ -80,6 +81,7 @@ export type EventListInput = {
 export type EventUpdateInput = {
   title?: string;
   description?: string;
+  imageUrl?: string | null;
   location?: {
     name?: string;
     latitude?: number | null;
@@ -138,6 +140,7 @@ export async function createEvent(
       description: input.description,
       type: input.type,
       source: "USER",
+      imageUrl: input.imageUrl,
       locationName: input.location.name,
       locationLatitude: input.location.latitude,
       locationLongitude: input.location.longitude,
@@ -218,6 +221,7 @@ export function toEventUpdateData(input: EventUpdateInput) {
 
   if (input.title !== undefined) data.title = input.title;
   if (input.description !== undefined) data.description = input.description;
+  if (input.imageUrl !== undefined) data.imageUrl = input.imageUrl;
   if (input.location?.name !== undefined) data.locationName = input.location.name;
   if (input.location?.latitude !== undefined) {
     data.locationLatitude = input.location.latitude;

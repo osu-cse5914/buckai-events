@@ -201,6 +201,15 @@ export const validateCollectionIdParam = validator("param", (value, c) => {
   return { id };
 });
 
+export const validateConversationIdParam = validator("param", (value, c) => {
+  const id = value.id?.trim();
+  if (!id) {
+    return badRequest(c, "id is required", "invalid-param", "Invalid path parameter");
+  }
+
+  return { id };
+});
+
 export const validateUserIdParam = validator("param", (value, c) => {
   const id = value.id?.trim();
   if (!id) {
@@ -230,6 +239,7 @@ export function parseEventCreateBody(
   const startAt = value.startAt;
   const endAt = value.endAt;
   const compensation = value.compensation;
+  const imageUrl = value.imageUrl;
 
   if (
     typeof title !== "string" ||
@@ -289,6 +299,7 @@ export function parseEventCreateBody(
     title,
     description,
     type: type as EventType,
+    imageUrl: typeof imageUrl === "string" ? imageUrl : null,
     location: {
       name: location.name,
       latitude:
@@ -321,6 +332,9 @@ export function parseEventUpdateBody(
 
   if (value.title !== undefined) output.title = value.title as string;
   if (value.description !== undefined) output.description = value.description as string;
+  if (value.imageUrl !== undefined) {
+    output.imageUrl = typeof value.imageUrl === "string" ? value.imageUrl : null;
+  }
 
   if (isRecord(value.location)) {
     output.location = {};
@@ -660,6 +674,32 @@ export function parseGigApplicationBody(value: unknown): GigApplicationInput {
 }
 
 export const validateGigApplicationJson = validator("json", parseGigApplicationBody);
+
+export function parseSendMessageBody(
+  value: unknown,
+  c: Context,
+): { content: string } | Response {
+  if (!isRecord(value) || typeof value.content !== "string") {
+    return badRequest(
+      c,
+      "content is required",
+      "invalid-body",
+      "Invalid request body",
+    );
+  }
+
+  const content = value.content.trim();
+  if (!content) {
+    return badRequest(
+      c,
+      "content is required",
+      "invalid-body",
+      "Invalid request body",
+    );
+  }
+
+  return { content };
+}
 
 export function parseGigApplicationStatusBody(
   value: unknown,
