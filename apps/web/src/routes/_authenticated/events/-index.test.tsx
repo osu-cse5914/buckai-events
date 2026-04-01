@@ -389,6 +389,52 @@ describe("[phase:6] [regression:always] EventsRoute", () => {
   });
 });
 
+describe("[phase:6] [regression:always] EventsPage attribution", () => {
+  it("TC-EVT-033: shows an external source label in event browse results", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeEvent({
+          id: "evt_osu",
+          title: "Student Org Fair",
+          source: "OSU_API",
+          creatorId: null,
+          creator: undefined,
+        }),
+      ]),
+    );
+
+    await renderEventsPage();
+
+    const row = await screen.findByRole("article", {
+      name: "Student Org Fair listing",
+    });
+    expect(within(row).getByText("OSU")).toBeInTheDocument();
+    expect(within(row).queryByText("Unknown")).not.toBeInTheDocument();
+  });
+
+  it("TC-EVT-034: falls back to creator email in event browse results", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeEvent({
+          id: "evt_email",
+          title: "Hack Night",
+          creator: {
+            id: "user_1",
+            displayName: null,
+            email: "alice@osu.edu",
+          },
+        }),
+      ]),
+    );
+
+    await renderEventsPage();
+
+    const row = await screen.findByRole("article", { name: "Hack Night listing" });
+    expect(within(row).getByText("alice@osu.edu")).toBeInTheDocument();
+    expect(within(row).queryByText("Unknown")).not.toBeInTheDocument();
+  });
+});
+
 describe("[phase:1] [regression:always] EventsPage", () => {
   it("shows loading skeletons while fetching", async () => {
     state.mockGet.mockReturnValue(new Promise(() => {}));

@@ -33,6 +33,28 @@ export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   REJECTED: "Rejected",
 };
 
+const SOURCE_LABELS: Record<string, string> = {
+  USER: "User",
+  OSU_API: "OSU",
+  TICKETMASTER: "Ticketmaster",
+};
+
+type EventAttributionInput = {
+  source: string;
+  creator?: {
+    displayName: string | null;
+    email: string;
+  } | null;
+};
+
+export function formatEventAttribution(event: EventAttributionInput) {
+  if (event.source === "USER") {
+    return event.creator?.displayName ?? event.creator?.email ?? SOURCE_LABELS.USER;
+  }
+
+  return SOURCE_LABELS[event.source] ?? "External";
+}
+
 export function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",

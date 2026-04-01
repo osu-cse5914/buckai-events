@@ -332,3 +332,23 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: A user opens `/gigs` without explicit browse filters
 - **When**: The route loader primes the initial browse batch
 - **Then**: The browse query uses `statusMode=OPEN` and `sort=START_ASC`
+
+## TC-EVT-033: Browse results show external source labels
+
+- **Spec scenario**: S-EVT-4
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Browse results include external events from OSU or Ticketmaster
+- **When**: A user views the shared browse list
+- **Then**: Each external result shows its source label instead of `Unknown`
+
+## TC-EVT-034: Browse results fall back to creator email
+
+- **Spec scenario**: S-EVT-4
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user-created event or gig has a null creator display name but a creator email
+- **When**: A user views the shared browse list
+- **Then**: The result shows the creator email instead of `Unknown`

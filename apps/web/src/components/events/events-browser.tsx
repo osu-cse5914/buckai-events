@@ -26,6 +26,7 @@ import {
   STATUS_STYLES,
   TYPE_STYLES,
   formatDate,
+  formatEventAttribution,
 } from "@/lib/event-utils";
 import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
@@ -379,7 +380,7 @@ export function EventsGrid({
               ) : null}
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground">
-              {event.creator?.displayName ?? "Unknown"}
+              {formatEventAttribution(event)}
             </CardFooter>
           </Card>
         </Link>
@@ -439,7 +440,7 @@ export function EventsList({
               >
                 <div className="min-w-0 space-y-1">
                   <p className="truncate text-sm text-muted-foreground">
-                    {event.creator?.displayName ?? "Unknown"}
+                    {formatEventAttribution(event)}
                   </p>
                   <h2 className="line-clamp-2 text-base font-semibold leading-tight">
                     {event.title}
