@@ -154,7 +154,7 @@ export function BrowsePage({
       ) : null}
       {events.length > 0 || data ? (
         <>
-          <div className="overflow-hidden border bg-background lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
+          <div className="overflow-hidden rounded-2xl border bg-background lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
             <div className="border-b lg:flex lg:min-h-0 lg:flex-col lg:border-r lg:border-b-0">
               <div className="border-b px-4 py-4 sm:px-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
