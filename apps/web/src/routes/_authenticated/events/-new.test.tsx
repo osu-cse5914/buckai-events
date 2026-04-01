@@ -18,6 +18,24 @@ vi.mock("@/lib/api", () => ({
   useApiClient: () => mockApiClient,
 }));
 
+vi.mock("@/components/ui/date-time-picker", () => ({
+  DateTimePicker: ({
+    value,
+    onChange,
+    placeholder,
+    id,
+  }: {
+    value?: Date;
+    onChange: (date: Date | undefined) => void;
+    placeholder?: string;
+    id?: string;
+  }) => (
+    <button id={id} type="button" onClick={() => onChange(value)}>
+      {value ? value.toISOString() : placeholder}
+    </button>
+  ),
+}));
+
 let capturedComponent: React.ComponentType | null = null;
 let capturedValidateSearch:
   | ((search: Record<string, unknown>) => Record<string, unknown>)

@@ -46,11 +46,28 @@ function decodeSseText(payload: string) {
     .join("");
 }
 
+type StreamTextToolStub = {
+  execute: (
+    input: Record<string, unknown>,
+    context: unknown,
+  ) => Promise<unknown>;
+};
+
+type StreamTextStubOptions = Record<string, unknown> & {
+  system?: string;
+  messages?: Array<Record<string, unknown>>;
+  tools: Record<string, StreamTextToolStub> & {
+    searchEvents: StreamTextToolStub;
+    searchGigs: StreamTextToolStub;
+    applyToGig: StreamTextToolStub;
+  };
+};
+
 function createStreamTextStub(
-  run: (options: Record<string, any>) => Promise<string[]> | string[],
+  run: (options: StreamTextStubOptions) => Promise<string[]> | string[],
 ) {
-  return vi.fn((options: Record<string, any>) => {
-    const chunksPromise = Promise.resolve(run(options));
+  return vi.fn((options: Record<string, unknown>) => {
+    const chunksPromise = Promise.resolve(run(options as StreamTextStubOptions));
 
     return {
       textStream: {
