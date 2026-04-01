@@ -1,0 +1,33 @@
+name = "social-osu"
+account_id = "2b7085f62464ab452fbd1c9569cedaef"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "../web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# DATABASE_URL, CLERK_SECRET_KEY, TICKETMASTER_API_KEY,
+# GOOGLE_GENERATIVE_AI_API_KEY, and any additional provider secrets referenced
+# by AI_ROUTER_CONFIG_JSON are stored as encrypted secrets when used.
+# Set the required secrets once after login:
+#   wrangler secret put DATABASE_URL
+#   wrangler secret put CLERK_SECRET_KEY
+#   wrangler secret put TICKETMASTER_API_KEY
+#   wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+#
+# For any additional provider entry, set the secret named by its apiKeyEnvVar.
+# Example:
+#   wrangler secret put OPENAI_PRIMARY_API_KEY
+#
+# AI_ROUTER_CONFIG_JSON is required runtime config for the AI router.
+# Set it per environment in the Cloudflare dashboard, or store it as a secret:
+#   wrangler secret put AI_ROUTER_CONFIG_JSON
+
+[triggers]
+crons = ["*/15 * * * *", "0 */6 * * *"]
+
+[vars]
+CLERK_PUBLISHABLE_KEY = "pk_test_ZHJpdmVuLWVhZ2xlLTI2LmNsZXJrLmFjY291bnRzLmRldiQ"

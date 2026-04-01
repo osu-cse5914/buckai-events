@@ -1,5 +1,5 @@
 {
-  "name": "@social-osu/api",
+  "name": "@social-osu/backend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,8 +11,8 @@
     "start": "bun run dist/index.js",
     "lint": "eslint .",
     "typecheck": "bun run types:worker:check && tsc --noEmit",
-    "types:worker": "wrangler types",
-    "types:worker:check": "wrangler types --check",
+    "types:worker": "env -i HOME=\"$HOME\" PATH=\"$PATH\" SHELL=\"$SHELL\" CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler types",
+    "types:worker:check": "env -i HOME=\"$HOME\" PATH=\"$PATH\" SHELL=\"$SHELL\" CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler types --check",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
@@ -24,11 +24,15 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.54",
+    "@ai-sdk/openai-compatible": "^2.0.37",
     "@clerk/backend": "^3.0.2",
     "@hono/clerk-auth": "^3.1.0",
     "@prisma/adapter-neon": "^7.4.0",
     "@prisma/client": "^7.4.0",
-    "hono": "^4.7.0"
+    "ai": "^6.0.142",
+    "hono": "^4.7.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

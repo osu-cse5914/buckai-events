@@ -13,7 +13,7 @@ MAIN_REPO="${1:-$(git worktree list --porcelain | head -1 | sed 's/^worktree //'
 WORKTREE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 env_files=(
-  "apps/api/.env"
+  "apps/backend/.env"
   "apps/web/.env"
 )
 

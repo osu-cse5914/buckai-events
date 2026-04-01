@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@social-osu/api": "workspace:*",
+    "@social-osu/backend": "workspace:*",
     "@tailwindcss/vite": "^4.2.0",
     "@tanstack/router-cli": "^1.161.1",
     "@tanstack/router-plugin": "^1.161.1",

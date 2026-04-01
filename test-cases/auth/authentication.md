@@ -8,7 +8,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-1
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/auth.test.ts`
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: A user with email `student@osu.edu`
@@ -19,7 +19,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-2
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/auth.test.ts`
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: A user with email `student@buckeyemail.osu.edu`
@@ -30,7 +30,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-3, S-AUTH-3b
 - **Type**: Automated + Manual
-- **Automated in**: `apps/api/src/test/auth.test.ts`
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: A valid JWT for a user whose primary email is a non-OSU domain (e.g. `user@gmail.com`)
@@ -46,7 +46,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-4
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/auth.test.ts`
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: A request with a valid Clerk JWT for user `clerk_abc123`
@@ -57,7 +57,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-5
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/auth.test.ts`
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: A request with no Authorization header OR an invalid JWT
@@ -68,7 +68,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-6
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/auth.test.ts`
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: A valid JWT for clerkId `clerk_new_user` and no User record exists
@@ -103,7 +103,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/auth.test.ts`
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: Two simultaneous first-time requests for the same clerkId

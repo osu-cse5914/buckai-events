@@ -41,14 +41,14 @@ Development is organized into 7 phases tracked via GitHub Issues and Milestones:
 - Backend: Hono on Cloudflare Workers
 - Database: Neon PostgreSQL via Prisma ORM
 - Auth: Clerk (OSU email restricted)
-- AI: Google Gemini via Vercel AI SDK
+- AI: Vercel AI SDK with Google Gemini and OpenAI-compatible provider support
 - CI/CD: GitHub Actions
 
 ## Project Structure
 
 ```text
 apps/web/   React frontend (Vite, default local port 5173)
-apps/api/   Hono API backend (default local port 3001)
+apps/backend/ Hono API backend (default local port 3001)
 specs/      Behavior specs and API contracts
 plans/      Project roadmap and management docs
 ```
@@ -64,24 +64,105 @@ bun install
 Create the local env files:
 
 ```bash
-cp apps/api/.env.example apps/api/.env
+cp apps/backend/.env.example apps/backend/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-Set the required API secrets in `apps/api/.env`:
+Set the required API secrets in `apps/backend/.env`:
 
 - `DATABASE_URL`: your Neon or local Postgres connection string
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
+- `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used when a router provider entry references it
+- `AI_ROUTER_CONFIG_JSON`: serialized provider/model/task routing and tuning config consumed by the AI router
+- any additional provider secret named by a provider entry's `apiKeyEnvVar`
 
 Optional local overrides:
 
-- `apps/api/.env`
+- `apps/backend/.env`
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
+  - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `OPENAI_PRIMARY_API_KEY`
+  - `AI_ROUTER_CONFIG_JSON` can be stored as pretty-printed multiline JSON inside a single quoted env value
+  - system prompts stay in application code, not in `AI_ROUTER_CONFIG_JSON`
 - `apps/web/.env`
   - `VITE_API_URL` defaults to `http://localhost:3001`
   - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key
+
+Example `AI_ROUTER_CONFIG_JSON`:
+
+```json
+{
+  "providers": {
+    "google": {
+      "id": "google",
+      "type": "GOOGLE",
+      "apiKeyEnvVar": "GOOGLE_GENERATIVE_AI_API_KEY"
+    },
+    "openai": {
+      "id": "openai",
+      "type": "OPENAI_COMPATIBLE",
+      "apiKeyEnvVar": "OPENAI_PRIMARY_API_KEY",
+      "baseUrl": "https://example.com/v1"
+    }
+  },
+  "models": {
+    "gemini-flash": {
+      "id": "gemini-flash",
+      "providerId": "google",
+      "modelId": "gemini-2.5-flash",
+      "type": "GENERATIVE",
+      "maxTokens": 1024,
+      "contextWindow": 1000000
+    },
+    "gemini-pro": {
+      "id": "gemini-pro",
+      "providerId": "google",
+      "modelId": "gemini-2.5-pro",
+      "type": "GENERATIVE",
+      "maxTokens": 2048,
+      "contextWindow": 262144
+    },
+    "text-embed": {
+      "id": "text-embed",
+      "providerId": "google",
+      "modelId": "gemini-embedding-001",
+      "type": "EMBEDDING",
+      "dimensions": 768,
+      "contextWindow": 131072
+    },
+    "gpt4o": {
+      "id": "gpt4o",
+      "providerId": "openai",
+      "modelId": "gpt-4o",
+      "type": "GENERATIVE"
+    }
+  },
+  "tasks": {
+    "chatbot": {
+      "id": "chatbot",
+      "modelId": "gpt4o",
+      "temperature": 0.7
+    },
+    "tagging": {
+      "id": "tagging",
+      "modelId": "gemini-flash",
+      "temperature": 0.3,
+      "maxOutputTokens": 300
+    },
+    "title-generation": {
+      "id": "title-generation",
+      "modelId": "gemini-flash",
+      "temperature": 0.5,
+      "maxOutputTokens": 80
+    },
+    "embedding": {
+      "id": "embedding",
+      "modelId": "text-embed"
+    }
+  }
+}
+```
 
 Generate the Prisma client and initialize the database schema:
 
@@ -105,7 +186,7 @@ bun run dev
 Notes:
 
 - The web app and local API both use a checked-in development Clerk publishable key by default so a clean clone can boot without extra public-key setup.
-- Authenticated API requests still require `CLERK_SECRET_KEY` in `apps/api/.env`.
+- Authenticated API requests still require `CLERK_SECRET_KEY` in `apps/backend/.env`.
 
 ## Common Commands
 
@@ -132,12 +213,18 @@ First-time Cloudflare setup:
    ```
 2. Set the production database secret.
    ```bash
-   cd apps/api && wrangler secret put DATABASE_URL
+   cd apps/backend && wrangler secret put DATABASE_URL
    ```
 3. Set the production Clerk secret.
    ```bash
-   cd apps/api && wrangler secret put CLERK_SECRET_KEY
+   cd apps/backend && wrangler secret put CLERK_SECRET_KEY
    ```
+4. Set the AI provider secrets used by your router config.
+   ```bash
+   cd apps/backend && wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+   cd apps/backend && wrangler secret put OPENAI_PRIMARY_API_KEY
+   ```
+5. Set `AI_ROUTER_CONFIG_JSON` in your deployment environment to the serialized router config.
 
 If you deploy against a different Clerk instance than the repo default, set
 `VITE_CLERK_PUBLISHABLE_KEY` in the build environment before `bun run deploy`.
@@ -152,7 +239,7 @@ Local Cloudflare simulation:
 
 ```bash
 bun --cwd apps/web run build
-cd apps/api && wrangler dev
+cd apps/backend && wrangler dev
 ```
 
 ## References

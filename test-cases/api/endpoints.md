@@ -8,7 +8,7 @@ Spec: [`endpoints`](../../specs/api/endpoints.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/app-errors.test.ts`
+- **Automated in**: `apps/backend/src/test/app-errors.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A request targets an API path that is not registered
@@ -19,7 +19,7 @@ Spec: [`endpoints`](../../specs/api/endpoints.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/api/src/test/app-errors.test.ts`
+- **Automated in**: `apps/backend/src/test/app-errors.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A route handler throws an unhandled exception

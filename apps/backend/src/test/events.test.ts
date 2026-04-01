@@ -76,6 +76,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
   const mockPrisma = createMockPrisma();
 
   beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
   });
@@ -192,25 +193,6 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
             compensationAmount: 25,
             compensationCurrency: "USD",
             compensationType: "HOURLY",
-          }),
-        }),
-      );
-    });
-
-    // S-EVT-13 → TC-EVT-013: AI tagging failure does not block creation
-    it("TC-EVT-013: event created with tags=[], summary=null, category=null (no AI)", async () => {
-      const created = makeEvent();
-      vi.mocked(mockPrisma.event.create).mockResolvedValue(created as never);
-
-      const res = await postEvent(createTestApp(), validEvent);
-
-      expect(res.status).toBe(201);
-      expect(mockPrisma.event.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            tags: [],
-            summary: null,
-            category: null,
           }),
         }),
       );

@@ -22,7 +22,7 @@ export default defineConfig({
 
   webServer: [
     {
-      command: "cd apps/api && PORT=3001 bun run dev",
+      command: "cd apps/backend && PORT=3001 bun run dev",
       port: 3001,
       reuseExistingServer: !process.env.CI,
     },
