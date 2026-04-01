@@ -109,7 +109,7 @@ export function BrowsePage({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <section className="flex w-full flex-col gap-8 px-6 py-10">
+    <section className="flex w-full flex-col gap-8 px-6 py-10 lg:h-screen lg:min-h-0 lg:gap-6 lg:overflow-hidden lg:py-6">
       <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
 
       {isLoading ? <EventsLoadingGrid /> : null}
@@ -122,8 +122,8 @@ export function BrowsePage({
       ) : null}
       {events.length > 0 || data ? (
         <>
-          <div className="overflow-hidden border bg-background lg:grid lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
-            <div className="border-b lg:border-r lg:border-b-0">
+          <div className="overflow-hidden border bg-background lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
+            <div className="border-b lg:flex lg:min-h-0 lg:flex-col lg:border-r lg:border-b-0">
               <div className="border-b px-4 py-4 sm:px-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -187,55 +187,55 @@ export function BrowsePage({
                 />
               </div>
 
-              {events.length > 0 ? (
-                <EventsList
-                  events={events}
-                  selectedEventId={selectedEventId}
-                  showTypeBadge={false}
-                  onSelectEvent={onSelectEvent}
-                />
-              ) : (
-                <div className="px-4 py-6 sm:px-5">
-                  <EventsEmptyState
-                    title={`No ${itemLabel} found`}
-                    description={
-                      hasActiveFilters
-                        ? "Try different filters."
-                        : `No ${itemLabel} have been created yet.`
-                    }
+              <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                {events.length > 0 ? (
+                  <EventsList
+                    events={events}
+                    selectedEventId={selectedEventId}
+                    showTypeBadge={false}
+                    onSelectEvent={onSelectEvent}
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="px-4 py-6 sm:px-5">
+                    <EventsEmptyState
+                      title={`No ${itemLabel} found`}
+                      description={
+                        hasActiveFilters
+                          ? "Try different filters."
+                          : `No ${itemLabel} have been created yet.`
+                      }
+                    />
+                  </div>
+                )}
 
-              {hasNextPage ? (
-                <div
-                  ref={loadMoreRef}
-                  className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5"
-                >
-                  {isFetchingNextPage
-                    ? `Loading more ${itemLabel}...`
-                    : "Scroll to load more"}
-                </div>
-              ) : events.length > 0 ? (
-                <div className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5">
-                  End of results
-                </div>
-              ) : null}
+                {hasNextPage ? (
+                  <div
+                    ref={loadMoreRef}
+                    className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5"
+                  >
+                    {isFetchingNextPage
+                      ? `Loading more ${itemLabel}...`
+                      : "Scroll to load more"}
+                  </div>
+                ) : events.length > 0 ? (
+                  <div className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5">
+                    End of results
+                  </div>
+                ) : null}
+              </div>
             </div>
 
-            <div className="hidden min-h-full lg:block">
+            <div className="hidden lg:block lg:min-h-0 lg:overflow-y-auto">
               {selectedEventId && hasSelectedEvent ? (
-                <div className="lg:sticky lg:top-6">
-                  <EventDetailSurface
-                    eventId={selectedEventId}
-                    mode="panel"
-                    browsePath={browseType === "GIG" ? "/gigs" : "/events"}
-                    browseLabel={title}
-                    onDeleteSuccess={onClearSelectedEvent}
-                  />
-                </div>
+                <EventDetailSurface
+                  eventId={selectedEventId}
+                  mode="panel"
+                  browsePath={browseType === "GIG" ? "/gigs" : "/events"}
+                  browseLabel={title}
+                  onDeleteSuccess={onClearSelectedEvent}
+                />
               ) : (
-                <div className="flex min-h-full items-center justify-center px-8 py-12 text-center">
+                <div className="flex h-full items-center justify-center px-8 py-12 text-center">
                   <div>
                     <p className="text-lg font-medium">
                       {events.length > 0
