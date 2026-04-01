@@ -24,7 +24,6 @@ import {
   formatDateLong,
   STATUS_LABELS,
   STATUS_STYLES,
-  TYPE_STYLES,
 } from "@/lib/event-utils";
 import { cn } from "@/lib/utils";
 import {
@@ -293,9 +292,11 @@ export function EventDetailSurface({
 
       <div className={cn(isPageMode ? "mt-6" : "")}>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className={TYPE_STYLES[event.type] ?? ""}>
-            {event.type}
-          </Badge>
+          {isPageMode ? (
+            <Badge variant="secondary">
+              {event.type}
+            </Badge>
+          ) : null}
           <Badge
             variant="secondary"
             className={STATUS_STYLES[event.status] ?? ""}

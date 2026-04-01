@@ -549,6 +549,7 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
       await screen.findByRole("heading", { name: "What to bring" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Laptop")).toBeInTheDocument();
+    expect(screen.queryByText("EVENT")).not.toBeInTheDocument();
     expect(screen.queryByText("Listing details")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Open full page" }),

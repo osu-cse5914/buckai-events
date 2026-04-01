@@ -355,6 +355,7 @@ describe("[phase:6] [regression:always] GigsPage split view", () => {
     expect(
       await screen.findByText("Bring calculus and linear algebra experience."),
     ).toBeInTheDocument();
+    expect(screen.queryByText("GIG")).not.toBeInTheDocument();
     expect(screen.queryByText("Listing details")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Open full page" }),
