@@ -17,7 +17,7 @@
 | TC-PAGES-009 | S-PAGES-9 | AI is exposed as a dedicated chat-based agent destination in primary navigation | Manual | - | 6 | Phase 6+ |
 | TC-PAGES-010 | S-PAGES-1 | Authenticated root redirects to the canonical Featured route | Automated | `apps/web/src/routes/_authenticated/-app-pages.test.tsx` | 6 | Always |
 | TC-PAGES-011 | S-PAGES-9 | The authenticated shell tab bar exposes Featured, Catalog, and You while Search and AI remain separate shell controls | Automated | `apps/web/src/routes/_authenticated/-app-pages.test.tsx` | 6 | Always |
-| TC-PAGES-012 | S-PAGES-8 | Search forwards the current query to semantic search and resets pagination when a new query is submitted | Automated | `apps/web/src/routes/_authenticated/search/-index.test.tsx` | 6 | Always |
+| TC-PAGES-012 | S-PAGES-8 | Search forwards the current query to semantic search and resets pagination after a debounced edit | Automated | `apps/web/src/routes/_authenticated/search/-index.test.tsx` | 6 | Always |
 | TC-PAGES-013 | S-PAGES-8 | Search handoff link carries the current prompt into AI mode | Automated | `apps/web/src/routes/_authenticated/search/-index.test.tsx` | 6 | Always |
 | TC-PAGES-014 | S-PAGES-3 | Your Events page scopes results to the authenticated user | Automated | `apps/web/src/routes/_authenticated/you/events/-index.test.tsx` | 6 | Always |
 | TC-PAGES-017 | S-PAGES-10 | Legacy browse routes restore URL-owned filters and selected listing through route validation and first-batch loader priming | Automated | `apps/web/src/routes/_authenticated/events/-index.test.tsx`, `apps/web/src/routes/_authenticated/gigs/-index.test.tsx` | 6 | Always |

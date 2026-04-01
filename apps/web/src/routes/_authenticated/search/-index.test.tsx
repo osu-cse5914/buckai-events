@@ -161,6 +161,7 @@ beforeEach(() => {
   capturedValidateSearch = null;
   capturedLoaderDeps = null;
   capturedLoader = null;
+  vi.useRealTimers();
   vi.resetModules();
 });
 
@@ -347,7 +348,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     await renderSearchPage({ initialSearch: "campus jazz tonight" });
 
     const handoffLink = await screen.findByRole("link", {
-      name: "Ask BuckAI about this search",
+      name: "Ask BuckAI",
     });
     expect(handoffLink).toHaveAttribute(
       "href",
@@ -355,7 +356,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     );
   });
 
-  it("TC-PAGES-012: search page submits a new query and resets pagination", async () => {
+  it("TC-PAGES-012: search page debounces a new query and resets pagination", async () => {
     const user = userEvent.setup();
     state.mockSemanticSearchGet.mockResolvedValue(
       makeResponse([makeSearchResult({ id: "evt-1", title: "Hackathon" })]),
@@ -375,13 +376,17 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     await user.clear(screen.getByRole("textbox", { name: "Search query" }));
     await user.type(
       screen.getByRole("textbox", { name: "Search query" }),
-      "hackathon{enter}",
+      "hackathon",
+    );
+
+    expect(state.mockSemanticSearchGet.mock.calls.at(-1)?.[0].query.query).toBe(
+      "music",
     );
 
     await waitFor(() => {
       const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
       expect(lastCall?.[0].query.query).toBe("hackathon");
       expect(lastCall?.[0].query.offset).toBe("0");
-    });
+    }, { timeout: 1000 });
   });
 });
