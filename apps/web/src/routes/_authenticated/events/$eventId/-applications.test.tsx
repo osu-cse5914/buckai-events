@@ -51,6 +51,7 @@ vi.mock("@tanstack/react-router", () => ({
     return {
       component: config.component,
       useParams: () => ({ eventId: "evt_1" }),
+      useSearch: () => ({}),
     };
   },
   Link: ({
