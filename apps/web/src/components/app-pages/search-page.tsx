@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { SearchIcon } from "lucide-react";
 import type { SearchRouteSearch } from "@/lib/event-route-search";
 import { toOptionalPage } from "@/lib/event-route-search";
@@ -9,8 +10,18 @@ import {
   EventsList,
   EventsListSkeleton,
   EventsPagination,
-  useEventsQuery,
+  useSearchResultsQuery,
 } from "@/components/events/events-browser";
+import { Button } from "@/components/ui/button";
+
+const TYPE_FILTER_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "EVENT", label: "Events" },
+  { value: "GIG", label: "Gigs" },
+] as const satisfies ReadonlyArray<{
+  value: NonNullable<SearchRouteSearch["type"]> | "";
+  label: string;
+}>;
 
 export function SearchPage({
   search,
@@ -24,18 +35,28 @@ export function SearchPage({
   type: NonNullable<SearchRouteSearch["type"]> | "";
   category: string;
   page: number;
-  onSearchSubmit: (value: string) => void;
+  onSearchSubmit: (value: {
+    search: string;
+    type: NonNullable<SearchRouteSearch["type"]> | "";
+    category: string;
+  }) => void;
   onPageChange: (page: number) => void;
 }) {
   const [query, setQuery] = useState(search);
+  const [draftType, setDraftType] = useState(type);
+  const [draftCategory, setDraftCategory] = useState(category);
 
   useEffect(() => {
     setQuery(search);
-  }, [search]);
+    setDraftType(type);
+    setDraftCategory(category);
+  }, [category, search, type]);
 
   const trimmedSearch = search.trim();
-  const trimmedQuery = query.trim();
   const trimmedCategory = category.trim();
+  const trimmedQuery = query.trim();
+  const trimmedDraftCategory = draftCategory.trim();
+  const hasActiveQuery = Boolean(trimmedSearch);
   const hasStartedSearch = Boolean(trimmedSearch || type || trimmedCategory);
   const detailSearch = hasStartedSearch
     ? {
@@ -47,9 +68,9 @@ export function SearchPage({
       }
     : undefined;
 
-  const { data, isLoading, isError, error } = useEventsQuery(
+  const { data, isLoading, isError, error } = useSearchResultsQuery(
     {
-      search: trimmedSearch || undefined,
+      query: trimmedSearch || undefined,
       type: type || undefined,
       category: trimmedCategory || undefined,
     },
@@ -63,9 +84,13 @@ export function SearchPage({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            onSearchSubmit(trimmedQuery);
+            onSearchSubmit({
+              search: trimmedQuery,
+              type: draftType,
+              category: trimmedDraftCategory,
+            });
           }}
-          className="mx-auto w-full max-w-3xl"
+          className="mx-auto w-full max-w-4xl rounded-[2rem] border bg-background/90 p-4 shadow-sm backdrop-blur"
         >
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
@@ -77,9 +102,47 @@ export function SearchPage({
               className="h-16 rounded-full border-none bg-muted/60 pl-14 pr-6 text-lg shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
             />
           </div>
-          <button type="submit" className="sr-only">
-            Search
-          </button>
+
+          <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Type filter">
+              {TYPE_FILTER_OPTIONS.map((option) => (
+                <Button
+                  key={option.value || "ALL"}
+                  type="button"
+                  variant={draftType === option.value ? "default" : "outline"}
+                  size="sm"
+                  className="rounded-full px-4"
+                  onClick={() => setDraftType(option.value)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+
+            <Input
+              aria-label="Category filter"
+              placeholder="Filter by category"
+              value={draftCategory}
+              onChange={(event) => setDraftCategory(event.target.value)}
+              className="w-full lg:max-w-xs"
+            />
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button type="submit">Update results</Button>
+            {hasActiveQuery ? (
+              <Button asChild variant="outline">
+                <Link
+                  to="/ai"
+                  search={{
+                    prompt: trimmedSearch,
+                  }}
+                >
+                  Ask BuckAI about this search
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </form>
       </div>
 
@@ -115,7 +178,7 @@ export function SearchPage({
               <h2 className="mt-1 text-xl font-semibold tracking-tight">
                 {trimmedSearch
                   ? `Results for "${trimmedSearch}"`
-                  : "Search results"}
+                  : "Filtered results"}
               </h2>
             </div>
 

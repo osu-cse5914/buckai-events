@@ -4,10 +4,12 @@ import {
   currentUserQueryOptions,
   eventDetailQueryOptions,
   eventsListQueryOptions,
+  searchResultsQueryOptions,
   type EventListFilters,
   type EventsResponse,
   type CurrentUser,
   type EventRecord,
+  type SearchResultsFilters,
 } from "./queries";
 
 export type OwnedEventRouteData = {
@@ -74,6 +76,40 @@ export async function loadEventsRouteData({
 
   const data = await queryClient.ensureQueryData(
     eventsListQueryOptions(api, filters, page, pageSize),
+  );
+
+  if (selectedEventId) {
+    await queryClient.ensureQueryData(
+      eventDetailQueryOptions(api, selectedEventId),
+    );
+  }
+
+  return data;
+}
+
+export async function loadSearchRouteData({
+  api,
+  queryClient,
+  filters,
+  page,
+  pageSize,
+  selectedEventId,
+  enabled = true,
+}: {
+  api: ApiClient;
+  queryClient: QueryClient;
+  filters: SearchResultsFilters;
+  page: number;
+  pageSize?: number;
+  selectedEventId?: string;
+  enabled?: boolean;
+}): Promise<EventsResponse | null> {
+  if (!enabled) {
+    return null;
+  }
+
+  const data = await queryClient.ensureQueryData(
+    searchResultsQueryOptions(api, filters, page, pageSize),
   );
 
   if (selectedEventId) {

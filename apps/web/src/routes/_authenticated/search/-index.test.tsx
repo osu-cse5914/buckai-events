@@ -7,15 +7,20 @@ import { SearchPage } from "@/components/app-pages/search-page";
 import type { SearchRouteSearch } from "@/lib/event-route-search";
 
 const state = vi.hoisted(() => {
-  const mockGet = vi.fn();
+  const mockEventsGet = vi.fn();
+  const mockSemanticSearchGet = vi.fn();
   return {
-    mockGet,
-    loadEventsRouteDataMock: vi.fn(),
+    mockEventsGet,
+    mockSemanticSearchGet,
+    loadSearchRouteDataMock: vi.fn(),
     mockApiClient: {
       api: {
         v1: {
           events: {
-            $get: (...args: unknown[]) => mockGet(...args),
+            $get: (...args: unknown[]) => mockEventsGet(...args),
+            "semantic-search": {
+              $get: (...args: unknown[]) => mockSemanticSearchGet(...args),
+            },
           },
         },
       },
@@ -31,8 +36,8 @@ vi.mock("@/lib/api", () => ({
 }));
 
 vi.mock("@/lib/route-loaders", () => ({
-  loadEventsRouteData: (...args: unknown[]) =>
-    state.loadEventsRouteDataMock(...args),
+  loadSearchRouteData: (...args: unknown[]) =>
+    state.loadSearchRouteDataMock(...args),
 }));
 
 let capturedValidateSearch:
@@ -171,16 +176,20 @@ function SearchHarness({
   initialPage?: number;
 }) {
   const [search, setSearch] = useState(initialSearch);
+  const [type, setType] = useState(initialType);
+  const [category, setCategory] = useState(initialCategory);
   const [page, setPage] = useState(initialPage);
 
   return (
     <SearchPage
       search={search}
-      type={initialType}
-      category={initialCategory}
+      type={type}
+      category={category}
       page={page}
       onSearchSubmit={(value) => {
-        setSearch(value);
+        setSearch(value.search);
+        setType(value.type);
+        setCategory(value.category);
         setPage(0);
       }}
       onPageChange={setPage}
@@ -229,11 +238,11 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       category: "music",
       page: 3,
     });
-    expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
+    expect(state.loadSearchRouteDataMock).toHaveBeenCalledWith({
       api: mockApiClient,
       queryClient: {},
       filters: {
-        search: "hackathon",
+        query: "hackathon",
         type: "EVENT",
         category: "music",
       },
@@ -242,19 +251,36 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     });
   });
 
-  it("TC-PAGES-012: passes search text to the events API", async () => {
-    state.mockGet.mockResolvedValue(makeResponse([]));
+  it("TC-PAGES-012: passes search text to the semantic search API", async () => {
+    state.mockSemanticSearchGet.mockResolvedValue(makeResponse([]));
 
     await renderSearchPage({ initialSearch: "hackathon" });
 
     await vi.waitFor(() => {
-      const lastCall = state.mockGet.mock.calls.at(-1);
-      expect(lastCall?.[0].query.search).toBe("hackathon");
+      const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.query).toBe("hackathon");
     });
+    expect(state.mockEventsGet).not.toHaveBeenCalled();
+  });
+
+  it("TC-PAGES-023: uses the structured events listing when only filters are active", async () => {
+    state.mockEventsGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage({
+      initialType: "EVENT",
+      initialCategory: "music",
+    });
+
+    await vi.waitFor(() => {
+      const lastCall = state.mockEventsGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.type).toBe("EVENT");
+      expect(lastCall?.[0].query.category).toBe("music");
+    });
+    expect(state.mockSemanticSearchGet).not.toHaveBeenCalled();
   });
 
   it("TC-PAGES-020: shows a results-shaped skeleton while an active search is loading", async () => {
-    state.mockGet.mockReturnValue(new Promise(() => {}));
+    state.mockSemanticSearchGet.mockReturnValue(new Promise(() => {}));
 
     await renderSearchPage({ initialSearch: "hackathon" });
 
@@ -263,7 +289,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
   });
 
   it("renders search results in the shared listing layout", async () => {
-    state.mockGet.mockResolvedValue(
+    state.mockSemanticSearchGet.mockResolvedValue(
       makeResponse([
         makeSearchResult({ id: "evt_1", title: "Hackathon", type: "EVENT" }),
         makeSearchResult({
@@ -293,7 +319,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
   });
 
   it("TC-PAGES-022: preserves the current search state in detail links", async () => {
-    state.mockGet.mockResolvedValue(
+    state.mockSemanticSearchGet.mockResolvedValue(
       makeResponse([makeSearchResult({ id: "evt_1", title: "Hackathon" })]),
     );
 
@@ -313,9 +339,25 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     );
   });
 
+  it("TC-PAGES-013: exposes an AI handoff link carrying the active prompt", async () => {
+    state.mockSemanticSearchGet.mockResolvedValue(
+      makeResponse([makeSearchResult({ id: "evt_1", title: "Hackathon" })]),
+    );
+
+    await renderSearchPage({ initialSearch: "campus jazz tonight" });
+
+    const handoffLink = await screen.findByRole("link", {
+      name: "Ask BuckAI about this search",
+    });
+    expect(handoffLink).toHaveAttribute(
+      "href",
+      "/ai?prompt=campus+jazz+tonight",
+    );
+  });
+
   it("TC-PAGES-012: search page submits a new query and resets pagination", async () => {
     const user = userEvent.setup();
-    state.mockGet.mockResolvedValue(
+    state.mockSemanticSearchGet.mockResolvedValue(
       makeResponse([makeSearchResult({ id: "evt-1", title: "Hackathon" })]),
     );
 
@@ -325,8 +367,8 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     });
 
     await waitFor(() => {
-      const lastCall = state.mockGet.mock.calls.at(-1);
-      expect(lastCall?.[0].query.search).toBe("music");
+      const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.query).toBe("music");
       expect(lastCall?.[0].query.offset).toBe("24");
     });
 
@@ -337,8 +379,8 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     );
 
     await waitFor(() => {
-      const lastCall = state.mockGet.mock.calls.at(-1);
-      expect(lastCall?.[0].query.search).toBe("hackathon");
+      const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.query).toBe("hackathon");
       expect(lastCall?.[0].query.offset).toBe("0");
     });
   });

@@ -12,7 +12,10 @@ import {
   validateSemanticSearchQuery,
 } from "../lib/validators";
 import type { AppEnv } from "../lib/types";
-import { searchEventsSemantically } from "../services/event-embeddings";
+import {
+  searchEventsSemanticallyPaginated,
+  type PaginatedSemanticSearchResult,
+} from "../services/event-embeddings";
 import {
   createEvent,
   deleteOwnedEvent,
@@ -38,12 +41,13 @@ type SemanticSearchHandler = (
   input: {
     query: string;
     limit: number;
+    offset: number;
     type?: string;
     category?: string;
     startDate?: Date;
     endDate?: Date;
   },
-) => Promise<unknown>;
+) => Promise<PaginatedSemanticSearchResult>;
 
 async function scheduleEventPipeline(
   c: Context<AppEnv>,
@@ -66,13 +70,14 @@ async function handleSemanticSearch(
   input: {
     query: string;
     limit: number;
+    offset: number;
     type?: string;
     category?: string;
     startDate?: Date;
     endDate?: Date;
   },
 ) {
-  return searchEventsSemantically(getPrisma(c), {
+  return searchEventsSemanticallyPaginated(getPrisma(c), {
     ...input,
     env: c.env as unknown as Record<string, string | undefined>,
   });
@@ -117,13 +122,20 @@ export function createEventsRouter({
       const results = await searchSemanticEvents(c, {
         query: query.query ?? "",
         limit: pagination.limit,
+        offset: pagination.offset,
         type: query.type,
         category: query.category,
         startDate: query.startDate ? new Date(query.startDate) : undefined,
         endDate: query.endDate ? new Date(query.endDate) : undefined,
       });
 
-      return c.json(results);
+      return c.json(
+        paginated(results.data, {
+          total: results.total,
+          limit: results.limit,
+          offset: results.offset,
+        }),
+      );
     })
     .get("/", validateEventListQuery, async (c) => {
       const prisma = getPrisma(c);

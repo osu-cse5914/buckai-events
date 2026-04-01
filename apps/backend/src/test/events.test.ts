@@ -6,7 +6,11 @@ vi.mock("../lib/prisma");
 import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
 import { registerApiErrorHandlers } from "../app";
-import { events, isValidStatusTransition } from "../routes/events";
+import {
+  createEventsRouter,
+  events,
+  isValidStatusTransition,
+} from "../routes/events";
 
 // --- Test data ---
 
@@ -22,6 +26,31 @@ function createTestApp(user = USER_A) {
     await next();
   });
   app.route("/events", events);
+  return app;
+}
+
+function createSemanticSearchTestApp({
+  user = USER_A,
+  searchSemanticEvents,
+}: {
+  user?: typeof USER_A;
+  searchSemanticEvents: NonNullable<
+    Parameters<typeof createEventsRouter>[0]
+  >["searchSemanticEvents"];
+}) {
+  const app = new Hono();
+  registerApiErrorHandlers(app);
+  app.use("/*", async (c, next) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c as any).set("user", user);
+    await next();
+  });
+  app.route(
+    "/events",
+    createEventsRouter({
+      searchSemanticEvents,
+    }),
+  );
   return app;
 }
 
@@ -421,6 +450,56 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
           orderBy: { startAt: "desc" },
         }),
       );
+    });
+  });
+
+  describe("[phase:6] [regression:always] GET /events/semantic-search", () => {
+    it("TC-EMBED-012: returns paginated public semantic search results", async () => {
+      const searchSemanticEvents = vi.fn().mockResolvedValue({
+        data: [
+          makeEvent({
+            id: "evt_semantic",
+            title: "Campus Jazz Night",
+            creator: {
+              id: USER_A.id,
+              displayName: null,
+              email: USER_A.email,
+            },
+          }),
+        ],
+        total: 9,
+        limit: 10,
+        offset: 20,
+      });
+
+      const res = await createSemanticSearchTestApp({
+        searchSemanticEvents,
+      }).request("/events/semantic-search?query=live%20music&limit=10&offset=20");
+
+      expect(res.status).toBe(200);
+      expect(searchSemanticEvents).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          query: "live music",
+          limit: 10,
+          offset: 20,
+        }),
+      );
+      const body = (await res.json()) as {
+        data: Array<{ id: string; title: string }>;
+        pagination: { total: number; limit: number; offset: number };
+      };
+      expect(body.data).toEqual([
+        expect.objectContaining({
+          id: "evt_semantic",
+          title: "Campus Jazz Night",
+        }),
+      ]);
+      expect(body.pagination).toEqual({
+        total: 9,
+        limit: 10,
+        offset: 20,
+      });
     });
   });
 

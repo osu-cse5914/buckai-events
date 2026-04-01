@@ -166,11 +166,22 @@ export type EventListFilters = {
   userId?: string;
 };
 
+export type SearchResultsFilters = {
+  query?: string;
+  type?: string;
+  category?: string;
+};
+
 export const queryKeys = {
   profile: ["profile"] as const,
   event: (eventId: string) => ["event", eventId] as const,
   eventsList: (filters: EventListFilters, page: number, pageSize = PAGE_SIZE) =>
     ["events", filters, page, pageSize] as const,
+  searchResults: (
+    filters: SearchResultsFilters,
+    page: number,
+    pageSize = PAGE_SIZE,
+  ) => ["search", filters, page, pageSize] as const,
   infiniteEventsList: (filters: EventListFilters, pageSize = PAGE_SIZE) =>
     ["events", "infinite", filters, pageSize] as const,
   collections: ["collections"] as const,
@@ -242,6 +253,18 @@ export function eventsListQueryOptions(
   });
 }
 
+export function searchResultsQueryOptions(
+  api: ApiClient,
+  filters: SearchResultsFilters,
+  page: number,
+  pageSize = PAGE_SIZE,
+) {
+  return queryOptions<EventsResponse>({
+    queryKey: queryKeys.searchResults(filters, page, pageSize),
+    queryFn: () => fetchSearchResults(api, filters, page, pageSize),
+  });
+}
+
 export async function fetchEventsList(
   api: ApiClient,
   filters: EventListFilters,
@@ -267,6 +290,43 @@ export async function fetchEventsList(
     throw new Error("Failed to fetch events");
   }
   return response.json() as Promise<EventsResponse>;
+}
+
+export async function fetchSearchResults(
+  api: ApiClient,
+  filters: SearchResultsFilters,
+  page: number,
+  pageSize = PAGE_SIZE,
+) {
+  if (filters.query) {
+    const query: Record<string, string> = {
+      query: filters.query,
+      limit: String(pageSize),
+      offset: String(page * pageSize),
+    };
+
+    if (filters.type) query.type = filters.type;
+    if (filters.category) query.category = filters.category;
+
+    const response = await api.api.v1.events["semantic-search"].$get({
+      query,
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch search results");
+    }
+
+    return response.json() as Promise<EventsResponse>;
+  }
+
+  return fetchEventsList(
+    api,
+    {
+      type: filters.type,
+      category: filters.category,
+    },
+    page,
+    pageSize,
+  );
 }
 
 export async function fetchRecommendationsPage(

@@ -9,8 +9,8 @@ info:
     `Authorization` header unless noted otherwise. `GET /api/health` is intentionally unauthenticated.
 
     Most list endpoints return `{ data, pagination }`. Route-specific exceptions are documented inline, such as
-    the embedded `createdEvents` page on public profiles, semantic-search array responses, and the admin pipeline
-    job list.
+    the embedded `createdEvents` page on public profiles, recommendation section responses shaped as `{ items, meta }`,
+    and the admin pipeline job list.
 
 servers:
   - url: https://social-osu.workers.dev
@@ -37,6 +37,8 @@ tags:
     description: Save/bookmark events into named collections
   - name: Interactions
     description: Implicit user signal tracking
+  - name: Recommendations
+    description: Featured recommendation section endpoints
   - name: Conversations
     description: Chatbot message streaming endpoints
 
@@ -470,6 +472,53 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/v1/events/semantic-search:
+    get:
+      tags: [Events]
+      summary: Search future active events semantically
+      operationId: semanticSearchEvents
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: endDate
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 25
+            default: 10
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated semantic search results using the standard event list envelope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/events/{eventId}:
     get:
       tags: [Events]
@@ -792,6 +841,81 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # ──────────────────────────────────────────────
+  # Recommendations
+  # ──────────────────────────────────────────────
+  /api/v1/recommendations:
+    get:
+      tags: [Recommendations]
+      summary: Get the Recommended Featured feed section
+      operationId: getRecommendations
+      parameters:
+        - in: query
+          name: type
+          description: Filter by EVENT or GIG. Omit for blended feed.
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Recommended feed section
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/recommendations/popular:
+    get:
+      tags: [Recommendations]
+      summary: Get the Popular Featured preview section
+      operationId: getPopularRecommendations
+      parameters:
+        - in: query
+          name: type
+          description: Filter by EVENT or GIG. Omit for blended section results.
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Popular recommendation section
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationSectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/recommendations/upcoming:
+    get:
+      tags: [Recommendations]
+      summary: Get the Upcoming Featured preview section
+      operationId: getUpcomingRecommendations
+      parameters:
+        - in: query
+          name: type
+          description: Filter by EVENT or GIG. Omit for blended section results.
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Upcoming recommendation section
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationSectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ──────────────────────────────────────────────
+  # Conversations
+  # ──────────────────────────────────────────────
   /api/v1/conversations/{conversationId}/messages:
     post:
       tags: [Conversations]
@@ -1206,6 +1330,41 @@ components:
           items:
             $ref: '#/components/schemas/EventResponse'
         pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    RecommendationRankingMode:
+      type: string
+      enum: [PERSONALIZED, POPULARITY_FALLBACK]
+
+    RecommendationMeta:
+      allOf:
+        - $ref: '#/components/schemas/Pagination'
+        - type: object
+          required: [rankingMode]
+          properties:
+            rankingMode:
+              $ref: '#/components/schemas/RecommendationRankingMode'
+
+    RecommendationsResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+        meta:
+          $ref: '#/components/schemas/RecommendationMeta'
+
+    RecommendationSectionResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+        meta:
           $ref: '#/components/schemas/Pagination'
 
     PublicProfile:
