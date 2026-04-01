@@ -1,8 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BrowsePage } from "@/components/events/browse-page";
 import { PAGE_SIZE } from "@/lib/queries";
-import { validateBrowseSearch } from "@/lib/event-route-search";
+import {
+  defaultBrowseFiltersForType,
+  validateBrowseSearch,
+} from "@/lib/event-route-search";
 import { loadEventsRouteData } from "@/lib/route-loaders";
+
+const DEFAULT_FILTERS = defaultBrowseFiltersForType("EVENT");
 
 export const Route = createFileRoute("/_authenticated/events/")({
   validateSearch: validateBrowseSearch,
@@ -13,9 +18,10 @@ export const Route = createFileRoute("/_authenticated/events/")({
       queryClient: context.queryClient,
       filters: {
         type: "EVENT",
-        status: deps.status,
+        statusMode: deps.statusMode ?? DEFAULT_FILTERS.statusMode,
         source: deps.source,
         category: deps.category,
+        sort: deps.sort ?? DEFAULT_FILTERS.sort,
       },
       pageSize: PAGE_SIZE,
       selectedEventId: deps.selected,
@@ -33,9 +39,10 @@ function EventsRoute() {
       browseType="EVENT"
       title="Events"
       filters={{
-        status: search.status ?? "",
+        statusMode: search.statusMode ?? DEFAULT_FILTERS.statusMode,
         source: search.source ?? "",
         category: search.category ?? "",
+        sort: search.sort ?? DEFAULT_FILTERS.sort,
       }}
       selectedEventId={search.selected}
       onFilterChange={(key, value) =>

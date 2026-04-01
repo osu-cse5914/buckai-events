@@ -106,9 +106,10 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const DEFAULT_FILTERS = {
-  status: "",
+  statusMode: "ACTIVE",
   source: "",
   category: "",
+  sort: "START_ASC",
 };
 
 function createQueryClient() {
@@ -294,10 +295,11 @@ describe("[phase:6] [regression:always] EventsRoute", () => {
 
     const search = capturedValidateSearch({
       type: "GIG",
-      status: "OPEN",
+      statusMode: "COMPLETED",
       source: "USER",
       category: " music ",
       selected: " evt_9 ",
+      sort: "START_DESC",
       page: "2",
     });
     const deps = capturedLoaderDeps({ search });
@@ -308,21 +310,55 @@ describe("[phase:6] [regression:always] EventsRoute", () => {
     });
 
     expect(search).toEqual({
-      status: "OPEN",
+      statusMode: "COMPLETED",
       source: "USER",
       category: "music",
       selected: "evt_9",
+      sort: "START_DESC",
     });
     expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
       api: mockApiClient,
       queryClient: {},
       filters: {
         type: "EVENT",
-        status: "OPEN",
+        statusMode: "COMPLETED",
         source: "USER",
         category: "music",
+        sort: "START_DESC",
       },
       selectedEventId: "evt_9",
+      pageSize: PAGE_SIZE,
+      page: 0,
+    });
+  });
+
+  it("TC-EVT-031: defaults events browse to active status and soonest-first ordering", async () => {
+    await import("./index");
+
+    if (!capturedValidateSearch || !capturedLoaderDeps || !capturedLoader) {
+      throw new Error("Events route config was not captured");
+    }
+
+    const search = capturedValidateSearch({});
+    const deps = capturedLoaderDeps({ search });
+
+    await capturedLoader({
+      context: { api: mockApiClient, queryClient: {} },
+      deps,
+    });
+
+    expect(search).toEqual({});
+    expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
+      api: mockApiClient,
+      queryClient: {},
+      filters: {
+        type: "EVENT",
+        statusMode: "ACTIVE",
+        source: undefined,
+        category: undefined,
+        sort: "START_ASC",
+      },
+      selectedEventId: undefined,
       pageSize: PAGE_SIZE,
       page: 0,
     });
@@ -403,14 +439,17 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     await screen.findByText("No events found");
 
     const triggers = screen.getAllByRole("combobox");
-    expect(triggers).toHaveLength(2);
+    expect(triggers).toHaveLength(3);
     await user.click(triggers[0]);
-    await user.click(await screen.findByRole("option", { name: "Open" }));
+    await user.click(await screen.findByRole("option", { name: "Completed" }));
+    await user.click(screen.getAllByRole("combobox")[1]);
+    await user.click(await screen.findByRole("option", { name: "Latest first" }));
 
     await vi.waitFor(() => {
       const lastCall = state.mockGet.mock.calls.at(-1);
       expect(lastCall?.[0].query.type).toBe("EVENT");
-      expect(lastCall?.[0].query.status).toBe("OPEN");
+      expect(lastCall?.[0].query.statusMode).toBe("COMPLETED");
+      expect(lastCall?.[0].query.sort).toBe("START_DESC");
       expect(lastCall?.[0].query.offset).toBe("0");
     });
   });
@@ -421,7 +460,7 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     await renderEventsPage();
     await screen.findByText("No events found");
 
-    expect(screen.getAllByRole("combobox")).toHaveLength(2);
+    expect(screen.getAllByRole("combobox")).toHaveLength(3);
     expect(
       screen.queryByPlaceholderText("Search events..."),
     ).not.toBeInTheDocument();
@@ -515,7 +554,8 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     await user.click(clearButton);
 
     const resetTriggers = screen.getAllByRole("combobox");
-    expect(resetTriggers[0]).toHaveTextContent("All Statuses");
+    expect(resetTriggers[0]).toHaveTextContent("Active");
+    expect(resetTriggers[1]).toHaveTextContent("Soonest first");
   });
 });
 

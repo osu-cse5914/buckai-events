@@ -105,9 +105,10 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const DEFAULT_FILTERS = {
-  status: "",
+  statusMode: "OPEN",
   source: "",
   category: "",
+  sort: "START_ASC",
 };
 
 function createQueryClient() {
@@ -245,10 +246,11 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
 
     const search = capturedValidateSearch({
       type: "EVENT",
-      status: "OPEN",
+      statusMode: "CANCELLED",
       source: "USER",
       category: " tutoring ",
       selected: " gig_1 ",
+      sort: "START_DESC",
       page: "3",
     });
     const deps = capturedLoaderDeps({ search });
@@ -259,21 +261,55 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
     });
 
     expect(search).toEqual({
-      status: "OPEN",
+      statusMode: "CANCELLED",
       source: "USER",
       category: "tutoring",
       selected: "gig_1",
+      sort: "START_DESC",
     });
     expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
       api: mockApiClient,
       queryClient: {},
       filters: {
         type: "GIG",
-        status: "OPEN",
+        statusMode: "CANCELLED",
         source: "USER",
         category: "tutoring",
+        sort: "START_DESC",
       },
       selectedEventId: "gig_1",
+      pageSize: PAGE_SIZE,
+      page: 0,
+    });
+  });
+
+  it("TC-EVT-032: defaults gigs browse to open status and soonest-first ordering", async () => {
+    await import("./index");
+
+    if (!capturedValidateSearch || !capturedLoaderDeps || !capturedLoader) {
+      throw new Error("Gigs route config was not captured");
+    }
+
+    const search = capturedValidateSearch({});
+    const deps = capturedLoaderDeps({ search });
+
+    await capturedLoader({
+      context: { api: mockApiClient, queryClient: {} },
+      deps,
+    });
+
+    expect(search).toEqual({});
+    expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
+      api: mockApiClient,
+      queryClient: {},
+      filters: {
+        type: "GIG",
+        statusMode: "OPEN",
+        source: undefined,
+        category: undefined,
+        sort: "START_ASC",
+      },
+      selectedEventId: undefined,
       pageSize: PAGE_SIZE,
       page: 0,
     });
@@ -303,7 +339,7 @@ describe("[phase:1] [regression:always] GigsPage", () => {
 
     expect(await screen.findByText("Tutoring")).toBeInTheDocument();
     expect(screen.queryByText("GIG")).not.toBeInTheDocument();
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getAllByText("Open").length).toBeGreaterThan(0);
     expect(screen.getByText("$25/hr")).toBeInTheDocument();
   });
 
@@ -315,13 +351,15 @@ describe("[phase:1] [regression:always] GigsPage", () => {
     await screen.findByText("No gigs found");
 
     const triggers = screen.getAllByRole("combobox");
-    expect(triggers).toHaveLength(2);
-    await user.click(triggers[1]);
+    expect(triggers).toHaveLength(3);
+    await user.click(triggers[2]);
     await user.click(await screen.findByRole("option", { name: "OSU" }));
 
     await vi.waitFor(() => {
       const lastCall = state.mockGet.mock.calls.at(-1);
       expect(lastCall?.[0].query.type).toBe("GIG");
+      expect(lastCall?.[0].query.statusMode).toBe("OPEN");
+      expect(lastCall?.[0].query.sort).toBe("START_ASC");
       expect(lastCall?.[0].query.source).toBe("OSU_API");
     });
   });

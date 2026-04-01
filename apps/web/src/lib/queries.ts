@@ -124,8 +124,10 @@ export type EventListFilters = {
   search?: string;
   type?: string;
   status?: string;
+  statusMode?: string;
   source?: string;
   category?: string;
+  sort?: string;
   userId?: string;
 };
 
@@ -199,8 +201,10 @@ export async function fetchEventsList(
   if (filters.search) query.search = filters.search;
   if (filters.type) query.type = filters.type;
   if (filters.status) query.status = filters.status;
+  if (filters.statusMode) query.statusMode = filters.statusMode;
   if (filters.source) query.source = filters.source;
   if (filters.category) query.category = filters.category;
+  if (filters.sort) query.sort = filters.sort;
   if (filters.userId) query.user = filters.userId;
 
   const response = await api.api.v1.events.$get({ query });

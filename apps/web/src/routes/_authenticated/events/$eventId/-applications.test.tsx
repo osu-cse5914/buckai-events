@@ -228,3 +228,17 @@ describe("[phase:2] [regression:always] EventDetailPage Gig Applications", () =>
     ).toBeInTheDocument();
   });
 });
+
+describe("[phase:6] [regression:always] EventDetailPage Gig Application Availability", () => {
+  it("TC-APP-016: hides the apply action for a non-open gig", async () => {
+    mockEventGet.mockResolvedValue(
+      okJson(makeEvent({ status: "IN_PROGRESS" })),
+    );
+    mockUserGet.mockResolvedValue(okJson({ id: "user_2", email: "bob@osu.edu" }));
+
+    await renderPage();
+    await screen.findByText("Hackathon");
+
+    expect(screen.queryByRole("button", { name: "Apply" })).not.toBeInTheDocument();
+  });
+});

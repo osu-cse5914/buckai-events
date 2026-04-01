@@ -128,8 +128,8 @@ export async function applyToGig(
 ) {
   const gig = await getGigOrThrow(prisma, input.gigId);
 
-  if (gig.status === "CANCELLED") {
-    throw new BadRequestError("Cannot apply to a cancelled gig");
+  if (gig.status !== "OPEN") {
+    throw new BadRequestError("Cannot apply to a gig that is not open");
   }
 
   if (gig.creatorId === input.applicantId) {

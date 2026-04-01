@@ -5,11 +5,15 @@ import { badRequest } from "./problem-details";
 import {
   COMPENSATION_TYPES,
   EVENT_SOURCES,
+  EVENT_LIST_SORTS,
+  EVENT_LIST_STATUS_MODES,
   EVENT_STATUSES,
   EVENT_TYPES,
   type CompensationType,
   type EventCreateInput,
   type EventListInput,
+  type EventListSort,
+  type EventListStatusMode,
   type EventSource,
   type EventStatus,
   type EventType,
@@ -29,8 +33,10 @@ export type EventListQuery = PaginationQuery & {
   endDate?: string;
   source?: string;
   status?: string;
+  statusMode?: string;
   user?: string;
   search?: string;
+  sort?: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -121,8 +127,10 @@ export function toEventListInput(query: EventListQuery): EventListInput {
     endDate: query.endDate ? new Date(query.endDate) : undefined,
     source: query.source as EventSource | undefined,
     status: query.status as EventStatus | undefined,
+    statusMode: query.statusMode as EventListStatusMode | undefined,
     user: query.user,
     search: query.search,
+    sort: query.sort as EventListSort | undefined,
   };
 }
 
@@ -450,6 +458,21 @@ export const validateEventListQuery = validator("query", (value, c) => {
     output.status = status;
   }
 
+  let statusMode: string | undefined;
+  const statusModeValue = firstQueryValue(value.statusMode);
+  if (statusModeValue !== undefined) {
+    if (!isAllowedValue(statusModeValue, EVENT_LIST_STATUS_MODES)) {
+      return badRequest(
+        c,
+        "statusMode must be ACTIVE, OPEN, IN_PROGRESS, COMPLETED, CANCELLED, or ALL",
+      );
+    }
+    statusMode = statusModeValue;
+  }
+  if (statusMode !== undefined) {
+    output.statusMode = statusMode;
+  }
+
   let startDate: string | undefined;
   const startDateValue = firstQueryValue(value.startDate);
   if (startDateValue !== undefined) {
@@ -489,6 +512,18 @@ export const validateEventListQuery = validator("query", (value, c) => {
   const search = firstQueryValue(value.search);
   if (search !== undefined) {
     output.search = search;
+  }
+
+  let sort: string | undefined;
+  const sortValue = firstQueryValue(value.sort);
+  if (sortValue !== undefined) {
+    if (!isAllowedValue(sortValue, EVENT_LIST_SORTS)) {
+      return badRequest(c, "sort must be START_ASC or START_DESC");
+    }
+    sort = sortValue;
+  }
+  if (sort !== undefined) {
+    output.sort = sort;
   }
 
   return output;

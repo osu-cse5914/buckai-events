@@ -302,3 +302,33 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: A user opens the shared create form from the Gigs browse page
 - **When**: The form renders
 - **Then**: The type selector is not shown and the form remains fixed to gig creation fields and actions
+
+## TC-EVT-030: Event list supports grouped active filtering and configurable sort
+
+- **Spec scenario**: S-EVT-4
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Events exist across OPEN, IN_PROGRESS, COMPLETED, and CANCELLED statuses with different start times
+- **When**: A user sends `GET /events?statusMode=ACTIVE&sort=START_DESC`
+- **Then**: The response filters to OPEN and IN_PROGRESS events and orders them by latest start time first
+
+## TC-EVT-031: Events browse defaults to active status and soonest-first ordering
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens `/events` without explicit browse filters
+- **When**: The route loader primes the initial browse batch
+- **Then**: The browse query uses `statusMode=ACTIVE` and `sort=START_ASC`
+
+## TC-EVT-032: Gigs browse defaults to open status and soonest-first ordering
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens `/gigs` without explicit browse filters
+- **When**: The route loader primes the initial browse batch
+- **Then**: The browse query uses `statusMode=OPEN` and `sort=START_ASC`

@@ -93,15 +93,16 @@ export function EventDetailSurface({
     currentUser.id === event.creatorId &&
     event.source === "USER"
   );
-  const showGigApplication = !!(
+  const showGigApplicationSection = !!(
     event &&
     currentUser &&
     event.type === "GIG" &&
     currentUser.id !== event.creatorId
   );
+  const canApplyToGig = !!(showGigApplicationSection && event?.status === "OPEN");
   const applicationsQuery = useQuery({
     ...currentGigApplicationQueryOptions(api, eventId),
-    enabled: showGigApplication,
+    enabled: showGigApplicationSection,
   });
   const [statusValue, setStatusValue] = useState("");
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
@@ -373,7 +374,7 @@ export function EventDetailSurface({
         </MarkdownContent>
       </div>
 
-      {showGigApplication ? (
+      {showGigApplicationSection ? (
         <>
           <Separator className="my-6" />
           <div className="space-y-4">
@@ -381,61 +382,65 @@ export function EventDetailSurface({
               <div>
                 <h2 className="text-lg font-semibold">Application</h2>
                 <p className="text-sm text-muted-foreground">
-                  Send a short message to the gig owner.
+                  {canApplyToGig
+                    ? "Send a short message to the gig owner."
+                    : "Applications are closed for this gig."}
                 </p>
               </div>
-              <Dialog
-                open={isApplyDialogOpen}
-                onOpenChange={setIsApplyDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button
-                    disabled={
-                      hasApplied ||
-                      applyMutation.isPending ||
-                      applicationsQuery.isLoading
-                    }
-                  >
-                    {hasApplied ? "Applied" : "Apply"}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Apply to this gig</DialogTitle>
-                    <DialogDescription>
-                      Include any context that helps the owner evaluate your
-                      application.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form className="space-y-4" onSubmit={handleApplySubmit}>
-                    <div className="space-y-2">
-                      <Label htmlFor="application-message">
-                        Message (optional)
-                      </Label>
-                      <Textarea
-                        id="application-message"
-                        value={applyMessage}
-                        onChange={(eventValue) =>
-                          setApplyMessage(eventValue.target.value)
-                        }
-                        placeholder="Share relevant experience or availability"
-                      />
-                    </div>
-                    {applyErrorMessage ? (
-                      <p className="text-sm text-destructive">
-                        {applyErrorMessage}
-                      </p>
-                    ) : null}
-                    <DialogFooter>
-                      <Button type="submit" disabled={applyMutation.isPending}>
-                        {applyMutation.isPending
-                          ? "Submitting..."
-                          : "Submit application"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              {canApplyToGig ? (
+                <Dialog
+                  open={isApplyDialogOpen}
+                  onOpenChange={setIsApplyDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      disabled={
+                        hasApplied ||
+                        applyMutation.isPending ||
+                        applicationsQuery.isLoading
+                      }
+                    >
+                      {hasApplied ? "Applied" : "Apply"}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Apply to this gig</DialogTitle>
+                      <DialogDescription>
+                        Include any context that helps the owner evaluate your
+                        application.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form className="space-y-4" onSubmit={handleApplySubmit}>
+                      <div className="space-y-2">
+                        <Label htmlFor="application-message">
+                          Message (optional)
+                        </Label>
+                        <Textarea
+                          id="application-message"
+                          value={applyMessage}
+                          onChange={(eventValue) =>
+                            setApplyMessage(eventValue.target.value)
+                          }
+                          placeholder="Share relevant experience or availability"
+                        />
+                      </div>
+                      {applyErrorMessage ? (
+                        <p className="text-sm text-destructive">
+                          {applyErrorMessage}
+                        </p>
+                      ) : null}
+                      <DialogFooter>
+                        <Button type="submit" disabled={applyMutation.isPending}>
+                          {applyMutation.isPending
+                            ? "Submitting..."
+                            : "Submit application"}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              ) : null}
             </div>
 
             {currentApplication ? (

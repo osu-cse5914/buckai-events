@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { defaultBrowseFiltersForType } from "@/lib/event-route-search";
 import {
   Select,
   SelectContent,
@@ -20,21 +21,16 @@ import {
 } from "@/components/events/events-browser";
 
 type BrowseFilters = {
-  status: string;
+  statusMode: string;
   source: string;
   category: string;
-};
-
-const DEFAULT_FILTERS: BrowseFilters = {
-  status: "",
-  source: "",
-  category: "",
+  sort: string;
 };
 
 export function BrowsePage({
   browseType,
   title,
-  filters = DEFAULT_FILTERS,
+  filters,
   selectedEventId,
   onFilterChange,
   onClearFilters,
@@ -50,7 +46,26 @@ export function BrowsePage({
   onClearSelectedEvent: () => void;
   onSelectEvent: (eventId: string) => void;
 }) {
+  const defaultFilters = defaultBrowseFiltersForType(browseType);
+  const resolvedFilters = filters ?? defaultFilters;
   const itemLabel = browseType === "GIG" ? "gigs" : "events";
+  const statusOptions =
+    browseType === "GIG"
+      ? [
+          { value: "OPEN", label: "Open" },
+          { value: "IN_PROGRESS", label: "In Progress" },
+          { value: "COMPLETED", label: "Completed" },
+          { value: "CANCELLED", label: "Cancelled" },
+          { value: "ALL", label: "All statuses" },
+        ]
+      : [
+          { value: "ACTIVE", label: "Active" },
+          { value: "OPEN", label: "Open" },
+          { value: "IN_PROGRESS", label: "In Progress" },
+          { value: "COMPLETED", label: "Completed" },
+          { value: "CANCELLED", label: "Cancelled" },
+          { value: "ALL", label: "All statuses" },
+        ];
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const {
     data,
@@ -63,9 +78,10 @@ export function BrowsePage({
   } = useInfiniteEventsQuery(
     {
       type: browseType,
-      status: filters.status || undefined,
-      source: filters.source || undefined,
-      category: filters.category.trim() || undefined,
+      statusMode: resolvedFilters.statusMode,
+      source: resolvedFilters.source || undefined,
+      category: resolvedFilters.category.trim() || undefined,
+      sort: resolvedFilters.sort,
     },
   );
   const events = useMemo(
@@ -90,7 +106,11 @@ export function BrowsePage({
   );
   const totalCount = data?.pages[0]?.pagination.total ?? 0;
 
-  const hasActiveFilters = Object.values(filters).some((value) => value !== "");
+  const hasActiveFilters =
+    resolvedFilters.statusMode !== defaultFilters.statusMode ||
+    resolvedFilters.source !== defaultFilters.source ||
+    resolvedFilters.category !== defaultFilters.category ||
+    resolvedFilters.sort !== defaultFilters.sort;
   const hasSelectedEvent = Boolean(
     events.some((event) => event.id === selectedEventId),
   );
@@ -170,27 +190,40 @@ export function BrowsePage({
                   ) : null}
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <Select
-                    value={filters.status || "ALL"}
+                    value={resolvedFilters.statusMode}
                     onValueChange={(value) =>
-                      onFilterChange("status", value === "ALL" ? "" : value)
+                      onFilterChange("statusMode", value)
                     }
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="All Statuses" />
+                      <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ALL">All Statuses</SelectItem>
-                      <SelectItem value="OPEN">Open</SelectItem>
-                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                      <SelectItem value="COMPLETED">Completed</SelectItem>
-                      <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
                   <Select
-                    value={filters.source || "ALL"}
+                    value={resolvedFilters.sort}
+                    onValueChange={(value) => onFilterChange("sort", value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sort" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="START_ASC">Soonest first</SelectItem>
+                      <SelectItem value="START_DESC">Latest first</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={resolvedFilters.source || "ALL"}
                     onValueChange={(value) =>
                       onFilterChange("source", value === "ALL" ? "" : value)
                     }
@@ -210,7 +243,7 @@ export function BrowsePage({
                 <Input
                   className="mt-3"
                   placeholder="Category"
-                  value={filters.category}
+                  value={resolvedFilters.category}
                   onChange={(event) =>
                     startTransition(() =>
                       onFilterChange("category", event.target.value),

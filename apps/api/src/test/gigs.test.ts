@@ -255,6 +255,22 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
     });
   });
 
+  describe("[phase:6] [regression:always] POST /:gigId/applications availability", () => {
+    it("TC-APP-015: cannot apply to a non-open gig (400)", async () => {
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
+        makeGig({ status: "IN_PROGRESS" }) as never,
+      );
+
+      const res = await postApplication(
+        createTestApp(APPLICANT_A),
+        "gig_1",
+      );
+
+      expect(res.status).toBe(400);
+      expect(mockPrisma.application.create).not.toHaveBeenCalled();
+    });
+  });
+
   // ===========================================================================
   // GET /gigs/:gigId/applications (#57)
   // ===========================================================================
