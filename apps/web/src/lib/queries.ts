@@ -69,6 +69,22 @@ export type PaginatedResponse<T> = {
   };
 };
 
+export type ConversationRecord = {
+  id: string;
+  userId: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ConversationMessage = {
+  id: string;
+  conversationId: string;
+  role: "USER" | "ASSISTANT" | "SYSTEM";
+  content: string;
+  createdAt: string;
+};
+
 export type MyApplication = ApplicationSummary & {
   gig: {
     id: string;
@@ -189,6 +205,13 @@ export type SearchResultsFilters = {
 
 export const queryKeys = {
   profile: ["profile"] as const,
+  conversations: (limit = 50, offset = 0) =>
+    ["conversations", limit, offset] as const,
+  conversationMessages: (
+    conversationId: string,
+    limit = 100,
+    offset = 0,
+  ) => ["conversations", conversationId, "messages", limit, offset] as const,
   event: (eventId: string) => ["event", eventId] as const,
   collection: (collectionId: string) => ["collection", collectionId] as const,
   collectionItemsPrefix: (collectionId: string) =>
@@ -242,6 +265,61 @@ export function ownedCollectionsQueryOptions(api: ApiClient) {
         throw new Error("Failed to load collections");
       }
       return res.json() as Promise<OwnedCollectionSummary[]>;
+    },
+  });
+}
+
+export function conversationsQueryOptions(
+  api: ApiClient,
+  limit = 50,
+  offset = 0,
+) {
+  return queryOptions<PaginatedResponse<ConversationRecord>>({
+    queryKey: queryKeys.conversations(limit, offset),
+    queryFn: async () => {
+      const response = await api.api.v1.conversations.$get({
+        query: {
+          limit: String(limit),
+          offset: String(offset),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load conversations");
+      }
+
+      return response.json() as Promise<PaginatedResponse<ConversationRecord>>;
+    },
+  });
+}
+
+export function conversationMessagesQueryOptions(
+  api: ApiClient,
+  conversationId: string,
+  limit = 100,
+  offset = 0,
+) {
+  return queryOptions<PaginatedResponse<ConversationMessage>>({
+    queryKey: queryKeys.conversationMessages(conversationId, limit, offset),
+    queryFn: async () => {
+      const getConversationMessages =
+        api.api.v1.conversations[":id"].messages.$get as (args: {
+          param: { id: string };
+          query: { limit: string; offset: string };
+        }) => Promise<Response>;
+      const response = await getConversationMessages({
+        param: { id: conversationId },
+        query: {
+          limit: String(limit),
+          offset: String(offset),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load messages");
+      }
+
+      return response.json() as Promise<PaginatedResponse<ConversationMessage>>;
     },
   });
 }

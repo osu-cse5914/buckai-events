@@ -43,6 +43,11 @@ export type SearchRouteSearch = {
   page?: number;
 };
 
+export type AiRouteSearch = {
+  conversationId?: string;
+  prompt?: string;
+};
+
 export type CreateEventRouteSearch = {
   type?: (typeof EVENT_TYPES)[number];
 };
@@ -115,6 +120,15 @@ export function validateEventSearch(
     type: normalizeEnumValue(search.type, EVENT_TYPES),
     category: normalizeTrimmedString(search.category),
     page: normalizePage(search.page),
+  };
+}
+
+export function validateAiSearch(
+  search: Record<string, unknown>,
+): AiRouteSearch {
+  return {
+    conversationId: normalizeTrimmedString(search.conversationId),
+    prompt: normalizeTrimmedString(search.prompt),
   };
 }
 

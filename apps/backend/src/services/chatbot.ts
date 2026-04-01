@@ -53,6 +53,9 @@ export const CHATBOT_SYSTEM_PROMPT = [
   "Keep responses concise and student-facing.",
 ].join(" ");
 
+export const CHATBOT_FAILURE_MESSAGE =
+  "I'm having trouble connecting right now. Please try again in a moment.";
+
 type PendingApplyToGigAction = {
   id: string;
   toolName: "applyToGig";
@@ -472,6 +475,7 @@ export function toModelMessages(
 export function createSseTextResponse(input: {
   textStream: AsyncIterable<string>;
   onComplete?: (fullText: string) => Promise<void>;
+  fallbackText?: string;
 }) {
   const encoder = new TextEncoder();
 
@@ -498,6 +502,10 @@ export function createSseTextResponse(input: {
             await input.onComplete(fullText);
           }
         } catch (error) {
+          if (!fullText && input.fallbackText?.trim()) {
+            fullText = input.fallbackText;
+            controller.enqueue(encoder.encode(toSseChunk(input.fallbackText)));
+          }
           console.error("Failed to stream chatbot response", error);
         } finally {
           controller.close();
@@ -825,6 +833,7 @@ export function createChatbotStreamResponse(
   return createSseTextResponse({
     textStream: result.textStream,
     onComplete: input.onComplete,
+    fallbackText: CHATBOT_FAILURE_MESSAGE,
   });
 }
 

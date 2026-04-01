@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { paginated } from "../lib/pagination";
 import { getPrisma } from "../lib/prisma";
+import { generateConversationTitle } from "../services/conversation-titles";
 import {
+  CHATBOT_FAILURE_MESSAGE,
   parsePendingChatAction,
   cancelPendingChatAction,
   createChatbotStreamResponse,
@@ -27,6 +29,7 @@ import {
 import type { AppEnv } from "../lib/types";
 type ConversationsRouteOptions = {
   streamText?: Parameters<typeof createChatbotStreamResponse>[0]["streamText"];
+  generateConversationTitle?: typeof generateConversationTitle;
   searchSemanticEvents?: Parameters<
     typeof createChatbotStreamResponse
   >[0]["searchSemanticEvents"];
@@ -38,6 +41,7 @@ type ConversationsRouteOptions = {
 
 export function createConversationsRouter({
   streamText,
+  generateConversationTitle: generateConversationTitleImpl = generateConversationTitle,
   searchSemanticEvents,
   resolveChatbotModel,
   currentDate = () => new Date(),
@@ -156,29 +160,47 @@ export function createConversationsRouter({
       }
 
       const messages = await listRecentConversationMessages(prisma, id);
+      const shouldGenerateTitle =
+        conversation.title == null && messages.length === 1;
 
-      return createChatbotStreamResponse({
-        messages,
-        prisma,
-        userId: user.id,
-        conversationId: id,
-        env: c.env as unknown as Record<string, string | undefined>,
-        currentDate: currentDate(),
-        streamText,
-        searchSemanticEvents,
-        resolveChatbotModel,
-        onComplete: async (assistantText) => {
-          if (!assistantText.trim()) {
-            return;
-          }
+      try {
+        return createChatbotStreamResponse({
+          messages,
+          prisma,
+          userId: user.id,
+          conversationId: id,
+          env: c.env as unknown as Record<string, string | undefined>,
+          currentDate: currentDate(),
+          streamText,
+          searchSemanticEvents,
+          resolveChatbotModel,
+          onComplete: async (assistantText) => {
+            if (!assistantText.trim()) {
+              return;
+            }
 
-          await createConversationMessage(prisma, {
-            conversationId: id,
-            role: "ASSISTANT",
-            content: assistantText,
-          });
-        },
-      });
+            await createConversationMessage(prisma, {
+              conversationId: id,
+              role: "ASSISTANT",
+              content: assistantText,
+            });
+
+            if (!shouldGenerateTitle) {
+              return;
+            }
+
+            await generateConversationTitleImpl({
+              prisma,
+              conversationId: id,
+              firstMessageContent: body.content,
+              env: c.env as unknown as Record<string, string | undefined>,
+            });
+          },
+        });
+      } catch (error) {
+        console.error("Failed to create chatbot stream response", error);
+        return createStaticSseTextResponse(CHATBOT_FAILURE_MESSAGE);
+      }
     });
 }
 

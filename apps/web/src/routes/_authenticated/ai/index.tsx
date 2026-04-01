@@ -1,14 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AiPage } from "@/components/app-pages/ai-page";
-
-type AiSearch = {
-  prompt?: string;
-};
+import { validateAiSearch } from "@/lib/event-route-search";
 
 export const Route = createFileRoute("/_authenticated/ai/")({
-  validateSearch: (search: Record<string, unknown>): AiSearch => ({
-    prompt: typeof search.prompt === "string" ? search.prompt : undefined,
-  }),
+  validateSearch: validateAiSearch,
   component: AiRoute,
 });
 
@@ -18,11 +13,14 @@ function AiRoute() {
 
   return (
     <AiPage
+      conversationId={search.conversationId}
       prompt={search.prompt ?? ""}
-      onPromptSubmit={(prompt) =>
+      onConversationSelect={(conversationId) =>
         navigate({
-          search: () => ({
-            prompt: prompt.trim() || undefined,
+          search: (current) => ({
+            ...current,
+            conversationId,
+            prompt: undefined,
           }),
         })
       }
