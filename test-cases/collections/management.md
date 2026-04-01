@@ -129,3 +129,23 @@ Spec: [`management`](../../specs/collections/management.md)
   3. View collection details
   4. Delete a collection
 - **Expected**: CRUD operations work from the UI with correct state updates
+
+## TC-COL-013: Save to an existing collection from the browse overlay
+
+- **Spec scenario**: S-COL-3, S-PAGES-6
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user has at least one collection and an event is visible in browse
+- **When**: The user clicks the save action on the browse row and selects a collection from the overlay
+- **Then**: The event is added to the selected collection without navigating away
+
+## TC-COL-014: Create a collection from the save overlay and save the listing
+
+- **Spec scenario**: S-COL-1, S-COL-3, S-PAGES-6
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user has no collections and an event is visible in browse
+- **When**: The user opens the save overlay, creates a new collection, and submits the form
+- **Then**: The collection is created and the event is saved to it without navigating away

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { SearchPage } from "@/components/app-pages/search-page";
+import type { SearchRouteSearch } from "@/lib/event-route-search";
 
 const state = vi.hoisted(() => {
   const mockGet = vi.fn();
@@ -83,13 +84,17 @@ vi.mock("@tanstack/react-router", () => ({
     children: React.ReactNode;
     to: string;
     params?: Record<string, string>;
-    search?: Record<string, string | undefined>;
+    search?: Record<string, string | number | undefined>;
   }) => {
-    const href = params?.eventId
-      ? `/events/${params.eventId}`
-      : search?.prompt
-        ? `${to}?prompt=${encodeURIComponent(search.prompt)}`
-        : to;
+    const hrefBase = params?.eventId ? `/events/${params.eventId}` : to;
+    const query = search
+      ? new URLSearchParams(
+          Object.entries(search).flatMap(([key, value]) =>
+            value == null ? [] : [[key, String(value)]],
+          ),
+        ).toString()
+      : "";
+    const href = query ? `${hrefBase}?${query}` : hrefBase;
     return (
       <a href={href} {...props}>
         {children}
@@ -117,6 +122,35 @@ function makeResponse(data: unknown[] = []) {
   });
 }
 
+function makeSearchResult(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "evt_1",
+    title: "Hackathon",
+    description: "A 24-hour build sprint",
+    type: "EVENT",
+    source: "USER",
+    status: "OPEN",
+    category: "tech",
+    tags: [],
+    imageUrl: null,
+    ticketUrl: null,
+    locationName: "Ohio Union",
+    locationLatitude: null,
+    locationLongitude: null,
+    startAt: "2026-04-01T09:00:00.000Z",
+    endAt: null,
+    compensationAmount: null,
+    compensationCurrency: "USD",
+    compensationType: null,
+    summary: null,
+    creatorId: "user_1",
+    createdAt: "2026-03-01T00:00:00.000Z",
+    updatedAt: "2026-03-01T00:00:00.000Z",
+    creator: { id: "user_1", displayName: "Alice", email: "alice@osu.edu" },
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   capturedValidateSearch = null;
@@ -132,7 +166,7 @@ function SearchHarness({
   initialPage = 0,
 }: {
   initialSearch?: string;
-  initialType?: string;
+  initialType?: NonNullable<SearchRouteSearch["type"]> | "";
   initialCategory?: string;
   initialPage?: number;
 }) {
@@ -156,7 +190,7 @@ function SearchHarness({
 
 async function renderSearchPage(options?: {
   initialSearch?: string;
-  initialType?: string;
+  initialType?: NonNullable<SearchRouteSearch["type"]> | "";
   initialCategory?: string;
   initialPage?: number;
 }) {
@@ -228,9 +262,62 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
+  it("renders search results in the shared listing layout", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeSearchResult({ id: "evt_1", title: "Hackathon", type: "EVENT" }),
+        makeSearchResult({
+          id: "gig_1",
+          title: "Campus Tutor",
+          type: "GIG",
+          compensationAmount: 25,
+          compensationType: "HOURLY",
+          locationName: "Thompson Library",
+        }),
+      ]),
+    );
+
+    await renderSearchPage({ initialSearch: "hackathon" });
+
+    expect(await screen.findByText('Results for "hackathon"')).toBeInTheDocument();
+
+    const eventRow = screen.getByRole("article", { name: "Hackathon listing" });
+    expect(within(eventRow).getByText("EVENT")).toBeInTheDocument();
+    expect(
+      within(eventRow).getByRole("button", { name: "Save to collection" }),
+    ).toBeInTheDocument();
+
+    const gigRow = screen.getByRole("article", { name: "Campus Tutor listing" });
+    expect(within(gigRow).getByText("GIG")).toBeInTheDocument();
+    expect(within(gigRow).getByText("$25/hr")).toBeInTheDocument();
+  });
+
+  it("TC-PAGES-022: preserves the current search state in detail links", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([makeSearchResult({ id: "evt_1", title: "Hackathon" })]),
+    );
+
+    await renderSearchPage({
+      initialSearch: "hackathon",
+      initialType: "EVENT",
+      initialCategory: "music",
+      initialPage: 2,
+    });
+
+    const row = await screen.findByRole("article", { name: "Hackathon listing" });
+    const detailLink = within(row).getByRole("link");
+
+    expect(detailLink).toHaveAttribute(
+      "href",
+      "/events/evt_1?returnTo=search&q=hackathon&type=EVENT&category=music&page=3",
+    );
+  });
+
   it("TC-PAGES-012: search page submits a new query and resets pagination", async () => {
     const user = userEvent.setup();
-    state.mockGet.mockResolvedValue(makeResponse([{ id: "evt-1", title: "Hackathon" }]));
+    state.mockGet.mockResolvedValue(
+      makeResponse([makeSearchResult({ id: "evt-1", title: "Hackathon" })]),
+    );
 
     await renderSearchPage({
       initialSearch: "music",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -108,7 +108,6 @@ vi.mock("@tanstack/react-router", () => ({
 const DEFAULT_FILTERS = {
   statusMode: "ACTIVE",
   source: "",
-  category: "",
   sort: "START_ASC",
 };
 
@@ -297,7 +296,6 @@ describe("[phase:6] [regression:always] EventsRoute", () => {
       type: "GIG",
       statusMode: "COMPLETED",
       source: "USER",
-      category: " music ",
       selected: " evt_9 ",
       sort: "START_DESC",
       page: "2",
@@ -312,7 +310,6 @@ describe("[phase:6] [regression:always] EventsRoute", () => {
     expect(search).toEqual({
       statusMode: "COMPLETED",
       source: "USER",
-      category: "music",
       selected: "evt_9",
       sort: "START_DESC",
     });
@@ -323,7 +320,6 @@ describe("[phase:6] [regression:always] EventsRoute", () => {
         type: "EVENT",
         statusMode: "COMPLETED",
         source: "USER",
-        category: "music",
         sort: "START_DESC",
       },
       selectedEventId: "evt_9",
@@ -355,7 +351,6 @@ describe("[phase:6] [regression:always] EventsRoute", () => {
         type: "EVENT",
         statusMode: "ACTIVE",
         source: undefined,
-        category: undefined,
         sort: "START_ASC",
       },
       selectedEventId: undefined,
@@ -401,16 +396,34 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     expect(await screen.findByText("No events found")).toBeInTheDocument();
   });
 
-  it("renders event rows without a type badge", async () => {
+  it("renders open event rows without a type badge or open badge, and keeps the save action", async () => {
     state.mockGet.mockResolvedValue(
       makeResponse([makeEvent({ id: "1", title: "Concert", status: "OPEN" })]),
     );
 
     await renderEventsPage();
 
-    expect(await screen.findByText("Concert")).toBeInTheDocument();
+    const row = await screen.findByRole("article", { name: "Concert listing" });
+
+    expect(within(row).getByText("Concert")).toBeInTheDocument();
     expect(screen.queryByText("EVENT")).not.toBeInTheDocument();
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(within(row).queryByText("Open")).not.toBeInTheDocument();
+    expect(
+      within(row).getByRole("button", { name: "Save to collection" }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders a closed badge for closed event rows", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeEvent({ id: "1", title: "Concert", status: "COMPLETED" }),
+      ]),
+    );
+
+    await renderEventsPage();
+
+    const row = await screen.findByRole("article", { name: "Concert listing" });
+    expect(within(row).getByText("Closed")).toBeInTheDocument();
   });
 
   it("renders event row with location and date", async () => {
@@ -439,11 +452,12 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     await screen.findByText("No events found");
 
     const triggers = screen.getAllByRole("combobox");
-    expect(triggers).toHaveLength(3);
+    expect(triggers).toHaveLength(2);
     await user.click(triggers[0]);
     await user.click(await screen.findByRole("option", { name: "Completed" }));
-    await user.click(screen.getAllByRole("combobox")[1]);
-    await user.click(await screen.findByRole("option", { name: "Latest first" }));
+    await user.click(
+      screen.getByRole("button", { name: "Sort by latest first" }),
+    );
 
     await vi.waitFor(() => {
       const lastCall = state.mockGet.mock.calls.at(-1);
@@ -454,16 +468,38 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     });
   });
 
+  it("keeps the sort action after the other browse filters", async () => {
+    state.mockGet.mockResolvedValue(makeResponse([]));
+
+    await renderEventsPage();
+    await screen.findByText("No events found");
+
+    const [statusTrigger, sourceTrigger] = screen.getAllByRole("combobox");
+    const sortButton = screen.getByRole("button", {
+      name: "Sort by latest first",
+    });
+
+    expect(
+      statusTrigger.compareDocumentPosition(sourceTrigger) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      sourceTrigger.compareDocumentPosition(sortButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("does not render a type filter or keyword input", async () => {
     state.mockGet.mockResolvedValue(makeResponse([]));
 
     await renderEventsPage();
     await screen.findByText("No events found");
 
-    expect(screen.getAllByRole("combobox")).toHaveLength(3);
+    expect(screen.getAllByRole("combobox")).toHaveLength(2);
     expect(
       screen.queryByPlaceholderText("Search events..."),
     ).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Category")).not.toBeInTheDocument();
     expect(screen.queryByText("All Types")).not.toBeInTheDocument();
   });
 
@@ -555,7 +591,9 @@ describe("[phase:1] [regression:always] EventsPage", () => {
 
     const resetTriggers = screen.getAllByRole("combobox");
     expect(resetTriggers[0]).toHaveTextContent("Active");
-    expect(resetTriggers[1]).toHaveTextContent("Soonest first");
+    expect(
+      screen.getByRole("button", { name: "Sort by latest first" }),
+    ).toBeInTheDocument();
   });
 });
 

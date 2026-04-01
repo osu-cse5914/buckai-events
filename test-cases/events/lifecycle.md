@@ -279,9 +279,9 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Type**: Automated
 - **Phase introduced**: 6
 - **Regression**: Always
-- **Given**: An event description includes Markdown formatting
+- **Given**: An event description includes Markdown formatting, including imported content with malformed emphasis spacing
 - **When**: A user opens the event detail view
-- **Then**: The description renders Markdown structure such as headings, lists, links, emphasis, and line breaks
+- **Then**: The description renders Markdown structure such as headings, lists, links, emphasis, and line breaks without exposing raw Markdown markers
 
 ## TC-EVT-028: Events browse deduplicates overlapping infinite-scroll batches
 

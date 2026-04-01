@@ -79,6 +79,18 @@ export type MyApplication = ApplicationSummary & {
   };
 };
 
+export type OwnedCollectionSummary = {
+  id: string;
+  userId: string;
+  name: string;
+  visibility: "PRIVATE" | "PUBLIC";
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    items: number;
+  };
+};
+
 export const PAGE_SIZE = 12;
 
 export type EventListItem = {
@@ -138,6 +150,7 @@ export const queryKeys = {
     ["events", filters, page, pageSize] as const,
   infiniteEventsList: (filters: EventListFilters, pageSize = PAGE_SIZE) =>
     ["events", "infinite", filters, pageSize] as const,
+  collections: ["collections"] as const,
   myApplications: ["my-applications"] as const,
   gigApplications: (eventId: string) => ["gig-applications", eventId] as const,
   gigApplicationStatus: (eventId: string) =>
@@ -153,6 +166,19 @@ export function currentUserQueryOptions(api: ApiClient) {
         throw new Error("Failed to load profile");
       }
       return res.json() as Promise<CurrentUser>;
+    },
+  });
+}
+
+export function ownedCollectionsQueryOptions(api: ApiClient) {
+  return queryOptions<OwnedCollectionSummary[]>({
+    queryKey: queryKeys.collections,
+    queryFn: async () => {
+      const res = await api.api.v1.collections.$get();
+      if (!res.ok) {
+        throw new Error("Failed to load collections");
+      }
+      return res.json() as Promise<OwnedCollectionSummary[]>;
     },
   });
 }

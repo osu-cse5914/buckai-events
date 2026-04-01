@@ -1,8 +1,11 @@
-import { startTransition, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import { PlusIcon } from "lucide-react";
+import {
+  ArrowDownWideNarrowIcon,
+  ArrowUpNarrowWideIcon,
+  PlusIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { defaultBrowseFiltersForType } from "@/lib/event-route-search";
 import {
   Select,
@@ -23,7 +26,6 @@ import {
 type BrowseFilters = {
   statusMode: string;
   source: string;
-  category: string;
   sort: string;
 };
 
@@ -49,6 +51,10 @@ export function BrowsePage({
   const defaultFilters = defaultBrowseFiltersForType(browseType);
   const resolvedFilters = filters ?? defaultFilters;
   const itemLabel = browseType === "GIG" ? "gigs" : "events";
+  const isSoonestFirst = resolvedFilters.sort === "START_ASC";
+  const SortIcon = isSoonestFirst
+    ? ArrowUpNarrowWideIcon
+    : ArrowDownWideNarrowIcon;
   const statusOptions =
     browseType === "GIG"
       ? [
@@ -80,7 +86,6 @@ export function BrowsePage({
       type: browseType,
       statusMode: resolvedFilters.statusMode,
       source: resolvedFilters.source || undefined,
-      category: resolvedFilters.category.trim() || undefined,
       sort: resolvedFilters.sort,
     },
   );
@@ -109,7 +114,6 @@ export function BrowsePage({
   const hasActiveFilters =
     resolvedFilters.statusMode !== defaultFilters.statusMode ||
     resolvedFilters.source !== defaultFilters.source ||
-    resolvedFilters.category !== defaultFilters.category ||
     resolvedFilters.sort !== defaultFilters.sort;
   const hasSelectedEvent = Boolean(
     events.some((event) => event.id === selectedEventId),
@@ -190,14 +194,14 @@ export function BrowsePage({
                   ) : null}
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-3">
                   <Select
                     value={resolvedFilters.statusMode}
                     onValueChange={(value) =>
                       onFilterChange("statusMode", value)
                     }
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="min-w-0 w-full">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -210,25 +214,12 @@ export function BrowsePage({
                   </Select>
 
                   <Select
-                    value={resolvedFilters.sort}
-                    onValueChange={(value) => onFilterChange("sort", value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Sort" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="START_ASC">Soonest first</SelectItem>
-                      <SelectItem value="START_DESC">Latest first</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select
                     value={resolvedFilters.source || "ALL"}
                     onValueChange={(value) =>
                       onFilterChange("source", value === "ALL" ? "" : value)
                     }
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="min-w-0 w-full">
                       <SelectValue placeholder="All Sources" />
                     </SelectTrigger>
                     <SelectContent>
@@ -238,18 +229,30 @@ export function BrowsePage({
                       <SelectItem value="TICKETMASTER">Ticketmaster</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
 
-                <Input
-                  className="mt-3"
-                  placeholder="Category"
-                  value={resolvedFilters.category}
-                  onChange={(event) =>
-                    startTransition(() =>
-                      onFilterChange("category", event.target.value),
-                    )
-                  }
-                />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 justify-self-end"
+                    aria-label={
+                      isSoonestFirst
+                        ? "Sort by latest first"
+                        : "Sort by soonest first"
+                    }
+                    title={
+                      isSoonestFirst ? "Soonest first" : "Latest first"
+                    }
+                    onClick={() =>
+                      onFilterChange(
+                        "sort",
+                        isSoonestFirst ? "START_DESC" : "START_ASC",
+                      )
+                    }
+                  >
+                    <SortIcon className="size-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">

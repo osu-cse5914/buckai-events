@@ -27,6 +27,8 @@ import {
   TYPE_STYLES,
   formatDate,
 } from "@/lib/event-utils";
+import type { EventDetailRouteSearch } from "@/lib/event-route-search";
+import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,6 +115,68 @@ export function EventsCollectionSkeleton({
             <Skeleton className="h-9 w-9 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function EventsListSkeleton({
+  rows = 6,
+  showHeader = true,
+  showPagination = false,
+}: {
+  rows?: number;
+  showHeader?: boolean;
+  showPagination?: boolean;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-background">
+      {showHeader ? (
+        <div className="border-b px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+            <Skeleton className="h-10 w-10 rounded-full" />
+          </div>
+        </div>
+      ) : null}
+
+      <div className="divide-y">
+        {Array.from({ length: rows }).map((_, index) => (
+          <div key={index} className="px-4 py-4 sm:px-5">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="mt-2 h-5 w-4/5" />
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+                <Skeleton className="mt-3 h-4 w-36" />
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {showPagination ? (
+        <div className="border-t px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-between gap-4">
+            <Skeleton className="h-4 w-32" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-9 w-9 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+            </div>
           </div>
         </div>
       ) : null}
@@ -218,7 +282,7 @@ export function EventsEmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed p-8 text-center">
+    <div className="mt-8 flex flex-col items-center gap-2 px-2 py-4 text-center">
       <p className="text-lg font-medium">{title}</p>
       <p className="max-w-xl text-sm text-muted-foreground">{description}</p>
       {action ? <div className="mt-2">{action}</div> : null}
@@ -299,48 +363,83 @@ export function EventsList({
   events,
   selectedEventId,
   showTypeBadge = true,
+  detailSearch,
   onSelectEvent,
 }: {
   events: EventListItem[];
   selectedEventId?: string;
   showTypeBadge?: boolean;
-  onSelectEvent: (eventId: string) => void;
+  detailSearch?: EventDetailRouteSearch;
+  onSelectEvent?: (eventId: string) => void;
 }) {
   return (
     <div className="divide-y">
       {events.map((event) => {
         const isSelected = selectedEventId === event.id;
+        const showClosedBadge =
+          event.status === "COMPLETED" || event.status === "CANCELLED";
 
         return (
-          <Link
+          <article
             key={event.id}
-            to="/events/$eventId"
-            params={{ eventId: event.id }}
-            onClick={(clickEvent) => {
-              if (!shouldKeepSplitViewSelection(clickEvent)) {
-                return;
-              }
-
-              clickEvent.preventDefault();
-              onSelectEvent(event.id);
-            }}
-            aria-current={isSelected ? "page" : undefined}
+            aria-label={`${event.title} listing`}
             className={cn(
-              "block border-l-2 border-transparent px-4 py-4 transition-colors hover:bg-muted/30 sm:px-5",
+              "border-l-2 border-transparent transition-colors hover:bg-muted/30",
               isSelected ? "border-l-primary bg-muted/30" : "",
             )}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 space-y-1">
-                <p className="truncate text-sm text-muted-foreground">
-                  {event.creator?.displayName ?? "Unknown"}
-                </p>
-                <h2 className="line-clamp-2 text-base font-semibold leading-tight">
-                  {event.title}
-                </h2>
-              </div>
+            <div className="flex items-start gap-3 px-4 py-4 sm:px-5">
+              <Link
+                to="/events/$eventId"
+                params={{ eventId: event.id }}
+                search={detailSearch as never}
+                onClick={(clickEvent) => {
+                  if (!onSelectEvent) {
+                    return;
+                  }
 
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  if (!shouldKeepSplitViewSelection(clickEvent)) {
+                    return;
+                  }
+
+                  clickEvent.preventDefault();
+                  onSelectEvent(event.id);
+                }}
+                aria-current={isSelected ? "page" : undefined}
+                className="min-w-0 flex-1"
+              >
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate text-sm text-muted-foreground">
+                    {event.creator?.displayName ?? "Unknown"}
+                  </p>
+                  <h2 className="line-clamp-2 text-base font-semibold leading-tight">
+                    {event.title}
+                  </h2>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                  {event.type === "GIG" && event.compensationAmount != null ? (
+                    <span className="font-medium text-foreground">
+                      ${event.compensationAmount}
+                      {event.compensationType === "HOURLY" ? "/hr" : " fixed"}
+                    </span>
+                  ) : null}
+                  {event.category ? (
+                    <span className="capitalize">{event.category}</span>
+                  ) : null}
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPinIcon className="size-3.5 shrink-0" />
+                    <span className="truncate">{event.locationName}</span>
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <CalendarIcon className="size-3.5 shrink-0" />
+                  <span>{formatDate(event.startAt)}</span>
+                </div>
+              </Link>
+
+              <div className="flex shrink-0 items-start gap-2">
                 {showTypeBadge ? (
                   <Badge
                     variant="secondary"
@@ -349,36 +448,15 @@ export function EventsList({
                     {event.type}
                   </Badge>
                 ) : null}
-                <Badge
-                  variant="secondary"
-                  className={STATUS_STYLES[event.status] ?? ""}
-                >
-                  {STATUS_LABELS[event.status] ?? event.status}
-                </Badge>
+                {showClosedBadge ? (
+                  <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+                    Closed
+                  </Badge>
+                ) : null}
+                <SaveToCollectionButton eventId={event.id} />
               </div>
             </div>
-
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-              {event.type === "GIG" && event.compensationAmount != null ? (
-                <span className="font-medium text-foreground">
-                  ${event.compensationAmount}
-                  {event.compensationType === "HOURLY" ? "/hr" : " fixed"}
-                </span>
-              ) : null}
-              {event.category ? (
-                <span className="capitalize">{event.category}</span>
-              ) : null}
-              <span className="inline-flex items-center gap-1.5">
-                <MapPinIcon className="size-3.5 shrink-0" />
-                <span className="truncate">{event.locationName}</span>
-              </span>
-            </div>
-
-            <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
-              <CalendarIcon className="size-3.5 shrink-0" />
-              <span>{formatDate(event.startAt)}</span>
-            </div>
-          </Link>
+          </article>
         );
       })}
     </div>
@@ -389,10 +467,12 @@ export function EventsPagination({
   page,
   total,
   onPageChange,
+  className,
 }: {
   page: number;
   total: number;
   onPageChange: (page: number) => void;
+  className?: string;
 }) {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -401,7 +481,7 @@ export function EventsPagination({
   }
 
   return (
-    <div className="mt-8 flex items-center justify-between">
+    <div className={cn("mt-8 flex items-center justify-between", className)}>
       <p className="text-sm text-muted-foreground">
         Showing {page * PAGE_SIZE + 1}–
         {Math.min((page + 1) * PAGE_SIZE, total)} of {total}

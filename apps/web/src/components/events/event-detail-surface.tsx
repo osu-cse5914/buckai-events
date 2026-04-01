@@ -17,6 +17,7 @@ import {
   queryKeys,
   type ApplicationSummary,
 } from "@/lib/queries";
+import type { SearchRouteSearch } from "@/lib/event-route-search";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
@@ -65,8 +66,9 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 type EventDetailSurfaceProps = {
   eventId: string;
   mode?: "page" | "panel";
-  browsePath?: "/events" | "/gigs";
+  browsePath?: "/events" | "/gigs" | "/search";
   browseLabel?: string;
+  browseSearch?: SearchRouteSearch;
   onDeleteSuccess?: () => void;
 };
 
@@ -75,6 +77,7 @@ export function EventDetailSurface({
   mode = "page",
   browsePath,
   browseLabel,
+  browseSearch,
   onDeleteSuccess,
 }: EventDetailSurfaceProps) {
   const api = useApiClient();
@@ -154,8 +157,13 @@ export function EventDetailSurface({
         return;
       }
 
+      const deleteBrowsePath = browsePath ?? browsePathForEventType(event?.type);
+      const deleteBrowseSearch =
+        deleteBrowsePath === "/search" ? browseSearch : undefined;
+
       navigate({
-        to: browsePathForEventType(event?.type),
+        to: deleteBrowsePath,
+        search: deleteBrowseSearch as never,
       });
     },
   });
@@ -249,6 +257,8 @@ export function EventDetailSurface({
   if (!event) {
     const fallbackBrowsePath = browsePath ?? "/events";
     const fallbackBrowseLabel = browseLabel ?? "Events";
+    const fallbackBrowseSearch =
+      fallbackBrowsePath === "/search" ? browseSearch : undefined;
     return (
       <section className={surfaceClassName(mode)}>
         <h1 className="text-2xl font-bold">Event not found</h1>
@@ -258,7 +268,12 @@ export function EventDetailSurface({
         <div className="mt-4 flex items-center gap-3">
           {isPageMode ? (
             <Button asChild>
-              <Link to={fallbackBrowsePath}>Back to {fallbackBrowseLabel}</Link>
+              <Link
+                to={fallbackBrowsePath}
+                search={fallbackBrowseSearch as never}
+              >
+                Back to {fallbackBrowseLabel}
+              </Link>
             </Button>
           ) : null}
           {!isPageMode ? (
@@ -272,8 +287,15 @@ export function EventDetailSurface({
   }
 
   const resolvedBrowsePath = browsePath ?? browsePathForEventType(event.type);
+  const resolvedBrowseSearch =
+    resolvedBrowsePath === "/search" ? browseSearch : undefined;
   const resolvedBrowseLabel =
-    browseLabel ?? (event.type === "GIG" ? "Gigs" : "Events");
+    browseLabel ??
+    (resolvedBrowsePath === "/search"
+      ? "Search results"
+      : event.type === "GIG"
+        ? "Gigs"
+        : "Events");
   const validTransitions = VALID_TRANSITIONS[event.status] || [];
   const currentApplication =
     submittedApplication ?? applicationsQuery.data ?? null;
@@ -284,6 +306,7 @@ export function EventDetailSurface({
       {isPageMode ? (
         <Link
           to={resolvedBrowsePath}
+          search={resolvedBrowseSearch as never}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeftIcon className="size-4" />

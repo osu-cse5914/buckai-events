@@ -3,6 +3,41 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
+function decodeHtmlEntities(value: string) {
+  if (typeof document === "undefined" || !value.includes("&")) {
+    return value;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
+function normalizeMarkdownSource(value: string) {
+  let normalized = value.replace(/\r\n?/g, "\n");
+  const hasEscapedControlCharacters = /\\r\\n|\\n|\\r|\\t/.test(normalized);
+
+  if (hasEscapedControlCharacters) {
+    normalized = normalized
+      .replace(/\\r\\n/g, "\n")
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\n")
+      .replace(/\\t/g, "\t")
+      .replace(/\\([`*_{}\[\]()#+\-.!>])/g, "$1");
+  }
+
+  normalized = decodeHtmlEntities(normalized)
+    .replace(/\*\*\s+([^\n*][^\n]*?[^\s*])\s+\*\*/g, "**$1**")
+    .replace(/\*\*([^\n*][^\n]*?[^\s*])\s+\*\*/g, "**$1**")
+    .replace(/\*\*\s+([^\n*][^\n]*?[^\s*])\*\*/g, "**$1**")
+    .replace(/__\s+([^\n_][^\n]*?[^\s_])\s+__/g, "__$1__")
+    .replace(/__([^\n_][^\n]*?[^\s_])\s+__/g, "__$1__")
+    .replace(/__\s+([^\n_][^\n]*?[^\s_])__/g, "__$1__")
+    .replace(/([^\s])(\[[^[\]]+\]\([^)]+\))/g, "$1 $2");
+
+  return normalized;
+}
+
 export function MarkdownContent({
   children,
   className,
@@ -10,7 +45,7 @@ export function MarkdownContent({
   children: string;
   className?: string;
 }) {
-  const normalizedContent = children.replace(/\r\n?/g, "\n");
+  const normalizedContent = normalizeMarkdownSource(children);
 
   return (
     <div

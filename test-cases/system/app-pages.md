@@ -25,3 +25,4 @@
 | TC-PAGES-019 | S-PAGES-3 | You subpages expose navigation back to the You hub | Automated | `apps/web/src/routes/_authenticated/you/collections/-index.test.tsx` | 6 | Always |
 | TC-PAGES-020 | S-PAGES-8 | Search renders a results-shaped skeleton while an active query is loading | Automated | `apps/web/src/routes/_authenticated/search/-index.test.tsx` | 6 | Always |
 | TC-PAGES-021 | S-PAGES-3 | Your Events renders a You-subpage skeleton while current-user data is loading | Automated | `apps/web/src/routes/_authenticated/you/events/-index.test.tsx` | 6 | Always |
+| TC-PAGES-022 | S-PAGES-8 | Event detail returns to the preserved search results when opened from Search | Automated | `apps/web/src/routes/_authenticated/search/-index.test.tsx`, `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx` | 6 | Always |

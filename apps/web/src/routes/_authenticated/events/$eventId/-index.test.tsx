@@ -49,24 +49,33 @@ vi.mock("@/lib/api", () => ({
 // Mock TanStack Router
 let capturedComponent: React.ComponentType | null = null;
 const mockNavigate = vi.fn();
+let mockRouteSearch: Record<string, unknown> = {};
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (config: { component: React.ComponentType }) => {
+  createFileRoute:
+    () =>
+    (config: {
+      component: React.ComponentType;
+      validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
+    }) => {
     capturedComponent = config.component;
     return {
       component: config.component,
       useParams: () => ({ eventId: "evt_1" }),
+      useSearch: () => mockRouteSearch,
     };
   },
   Link: ({
     children,
     to,
     params,
+    search,
     ...props
   }: {
     children: React.ReactNode;
     to: string;
     params?: Record<string, string>;
+    search?: Record<string, string | number | undefined>;
     className?: string;
   }) => {
     let href = to;
@@ -79,6 +88,16 @@ vi.mock("@tanstack/react-router", () => ({
     }
     if (params?.eventId && to === "/events/$eventId") {
       href = `/events/${params.eventId}`;
+    }
+    if (search) {
+      const query = new URLSearchParams(
+        Object.entries(search).flatMap(([key, value]) =>
+          value == null ? [] : [[key, String(value)]],
+        ),
+      ).toString();
+      if (query) {
+        href = `${href}?${query}`;
+      }
     }
     return (
       <a href={href} {...props}>
@@ -134,6 +153,7 @@ function okJson(data: unknown) {
 beforeEach(() => {
   vi.clearAllMocks();
   capturedComponent = null;
+  mockRouteSearch = {};
   mockMyApplicationsGet.mockResolvedValue(
     okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
   );
@@ -178,6 +198,27 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     expect(screen.getByText("tech")).toBeInTheDocument();
     expect(screen.getByText("A hackathon event")).toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+
+  it("TC-PAGES-022: uses the preserved search results as the back destination", async () => {
+    mockRouteSearch = {
+      returnTo: "search",
+      q: "hackathon",
+      type: "EVENT",
+      category: "music",
+      page: 3,
+    };
+    mockEventGet.mockResolvedValue(okJson(makeEvent()));
+    mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
+
+    await renderPage();
+
+    expect(
+      await screen.findByRole("link", { name: "Back to Search results" }),
+    ).toHaveAttribute(
+      "href",
+      "/search?q=hackathon&type=EVENT&category=music&page=3",
+    );
   });
 
   it("TC-EVT-027: renders markdown formatting in the event description", async () => {

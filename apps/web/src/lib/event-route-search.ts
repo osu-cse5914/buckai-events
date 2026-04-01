@@ -22,14 +22,12 @@ export type BrowseSort = (typeof BROWSE_SORTS)[number];
 export type BrowseFiltersState = {
   statusMode: BrowseStatusMode;
   source: string;
-  category: string;
   sort: BrowseSort;
 };
 
 export type BrowseRouteSearch = {
   statusMode?: BrowseStatusMode;
   source?: (typeof EVENT_SOURCES)[number];
-  category?: string;
   sort?: BrowseSort;
   selected?: string;
 };
@@ -43,6 +41,10 @@ export type SearchRouteSearch = {
 
 export type CreateEventRouteSearch = {
   type?: (typeof EVENT_TYPES)[number];
+};
+
+export type EventDetailRouteSearch = SearchRouteSearch & {
+  returnTo?: "search";
 };
 
 function normalizeTrimmedString(value: unknown) {
@@ -88,7 +90,6 @@ export function validateBrowseSearch(
       normalizeEnumValue(search.statusMode, BROWSE_STATUS_MODES) ??
       (legacyStatus as BrowseStatusMode | undefined),
     source: normalizeEnumValue(search.source, EVENT_SOURCES),
-    category: normalizeTrimmedString(search.category),
     sort: normalizeEnumValue(search.sort, BROWSE_SORTS),
     selected: normalizeTrimmedString(search.selected),
   };
@@ -113,6 +114,17 @@ export function validateCreateEventSearch(
   };
 }
 
+export function validateEventDetailSearch(
+  search: Record<string, unknown>,
+): EventDetailRouteSearch {
+  const baseSearch = validateEventSearch(search);
+
+  return {
+    ...baseSearch,
+    returnTo: search.returnTo === "search" ? "search" : undefined,
+  };
+}
+
 export function hasStartedEventSearch(search: SearchRouteSearch) {
   return Boolean(search.q || search.type || search.category);
 }
@@ -131,7 +143,6 @@ export function defaultBrowseFiltersForType(
   return {
     statusMode: type === "GIG" ? "OPEN" : "ACTIVE",
     source: "",
-    category: "",
     sort: "START_ASC",
   };
 }

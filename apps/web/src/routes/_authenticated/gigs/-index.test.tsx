@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -107,7 +107,6 @@ vi.mock("@tanstack/react-router", () => ({
 const DEFAULT_FILTERS = {
   statusMode: "OPEN",
   source: "",
-  category: "",
   sort: "START_ASC",
 };
 
@@ -248,7 +247,6 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
       type: "EVENT",
       statusMode: "CANCELLED",
       source: "USER",
-      category: " tutoring ",
       selected: " gig_1 ",
       sort: "START_DESC",
       page: "3",
@@ -263,7 +261,6 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
     expect(search).toEqual({
       statusMode: "CANCELLED",
       source: "USER",
-      category: "tutoring",
       selected: "gig_1",
       sort: "START_DESC",
     });
@@ -274,7 +271,6 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
         type: "GIG",
         statusMode: "CANCELLED",
         source: "USER",
-        category: "tutoring",
         sort: "START_DESC",
       },
       selectedEventId: "gig_1",
@@ -306,7 +302,6 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
         type: "GIG",
         statusMode: "OPEN",
         source: undefined,
-        category: undefined,
         sort: "START_ASC",
       },
       selectedEventId: undefined,
@@ -330,17 +325,33 @@ describe("[phase:1] [regression:always] GigsPage", () => {
     );
   });
 
-  it("renders gig rows without a type badge and keeps compensation", async () => {
+  it("renders open gig rows without a type badge or open badge, and keeps compensation", async () => {
     state.mockGet.mockResolvedValue(
       makeResponse([makeGig({ id: "1", title: "Tutoring" })]),
     );
 
     await renderGigsPage();
 
-    expect(await screen.findByText("Tutoring")).toBeInTheDocument();
+    const row = await screen.findByRole("article", { name: "Tutoring listing" });
+
+    expect(within(row).getByText("Tutoring")).toBeInTheDocument();
     expect(screen.queryByText("GIG")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Open").length).toBeGreaterThan(0);
-    expect(screen.getByText("$25/hr")).toBeInTheDocument();
+    expect(within(row).queryByText("Open")).not.toBeInTheDocument();
+    expect(
+      within(row).getByRole("button", { name: "Save to collection" }),
+    ).toBeInTheDocument();
+    expect(within(row).getByText("$25/hr")).toBeInTheDocument();
+  });
+
+  it("renders a closed badge for closed gig rows", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([makeGig({ id: "1", title: "Tutoring", status: "CANCELLED" })]),
+    );
+
+    await renderGigsPage();
+
+    const row = await screen.findByRole("article", { name: "Tutoring listing" });
+    expect(within(row).getByText("Closed")).toBeInTheDocument();
   });
 
   it("passes fixed gig type and source filters to API", async () => {
@@ -351,8 +362,8 @@ describe("[phase:1] [regression:always] GigsPage", () => {
     await screen.findByText("No gigs found");
 
     const triggers = screen.getAllByRole("combobox");
-    expect(triggers).toHaveLength(3);
-    await user.click(triggers[2]);
+    expect(triggers).toHaveLength(2);
+    await user.click(triggers[1]);
     await user.click(await screen.findByRole("option", { name: "OSU" }));
 
     await vi.waitFor(() => {

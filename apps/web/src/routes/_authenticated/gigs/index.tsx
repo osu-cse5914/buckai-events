@@ -20,7 +20,6 @@ export const Route = createFileRoute("/_authenticated/gigs/")({
         type: "GIG",
         statusMode: deps.statusMode ?? DEFAULT_FILTERS.statusMode,
         source: deps.source,
-        category: deps.category,
         sort: deps.sort ?? DEFAULT_FILTERS.sort,
       },
       pageSize: PAGE_SIZE,
@@ -41,7 +40,6 @@ function GigsRoute() {
       filters={{
         statusMode: search.statusMode ?? DEFAULT_FILTERS.statusMode,
         source: search.source ?? "",
-        category: search.category ?? "",
         sort: search.sort ?? DEFAULT_FILTERS.sort,
       }}
       selectedEventId={search.selected}

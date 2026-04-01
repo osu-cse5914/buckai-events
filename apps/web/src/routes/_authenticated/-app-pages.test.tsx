@@ -33,7 +33,7 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
 
     expect(utilityNavLinks).toEqual([
       { to: "/search", label: "Search" },
-      { to: "/ai", label: "Agent" },
+      { to: "/ai", label: "BuckAI" },
     ]);
   });
 
