@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { SearchIcon, SparklesIcon } from "lucide-react";
 import type { SearchRouteSearch } from "@/lib/event-route-search";
@@ -44,36 +44,71 @@ export function SearchPage({
   }) => void;
   onPageChange: (page: number) => void;
 }) {
-  const [query, setQuery] = useState(search);
-  const [draftType, setDraftType] = useState(type);
+  const queryInputRef = useRef<HTMLInputElement>(null);
+  const pendingSearchUpdateRef = useRef<number | null>(null);
 
   useEffect(() => {
-    setQuery(search);
-    setDraftType(type);
-  }, [search, type]);
+    const queryInput = queryInputRef.current;
 
-  useEffect(() => {
-    const nextSearch = query.trim();
-    const currentSearch = search.trim();
-
-    if (nextSearch === currentSearch && draftType === type) {
+    if (!queryInput || queryInput.value === search) {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      onSearchSubmit({
-        search: nextSearch,
-        type: draftType,
-        category,
-      });
-    }, SEARCH_UPDATE_DEBOUNCE_MS);
+    queryInput.value = search;
+  }, [search]);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [category, draftType, onSearchSubmit, query, search, type]);
+  useEffect(() => {
+    return () => {
+      if (pendingSearchUpdateRef.current == null) {
+        return;
+      }
+
+      window.clearTimeout(pendingSearchUpdateRef.current);
+    };
+  }, []);
+
+  function submitSearch(
+    nextSearch: string,
+    nextType: NonNullable<SearchRouteSearch["type"]> | "",
+  ) {
+    onSearchSubmit({
+      search: nextSearch.trim(),
+      type: nextType,
+      category,
+    });
+  }
+
+  function clearPendingSearchUpdate() {
+    if (pendingSearchUpdateRef.current == null) {
+      return;
+    }
+
+    window.clearTimeout(pendingSearchUpdateRef.current);
+    pendingSearchUpdateRef.current = null;
+  }
+
+  function submitCurrentSearch(nextType = type) {
+    clearPendingSearchUpdate();
+    submitSearch(queryInputRef.current?.value ?? search, nextType);
+  }
+
+  function scheduleSearchUpdate() {
+    const nextSearch = queryInputRef.current?.value ?? "";
+
+    clearPendingSearchUpdate();
+
+    if (nextSearch.trim() === search.trim()) {
+      return;
+    }
+
+    pendingSearchUpdateRef.current = window.setTimeout(() => {
+      pendingSearchUpdateRef.current = null;
+      submitSearch(nextSearch, type);
+    }, SEARCH_UPDATE_DEBOUNCE_MS);
+  }
 
   const trimmedSearch = search.trim();
   const trimmedCategory = category.trim();
-  const trimmedQuery = query.trim();
   const hasActiveQuery = Boolean(trimmedSearch);
   const hasStartedSearch = Boolean(trimmedSearch || type || trimmedCategory);
   const detailSearch = hasStartedSearch
@@ -102,11 +137,7 @@ export function SearchPage({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            onSearchSubmit({
-              search: trimmedQuery,
-              type: draftType,
-              category,
-            });
+            submitCurrentSearch();
           }}
           className="mx-auto w-full max-w-4xl"
         >
@@ -115,8 +146,9 @@ export function SearchPage({
             <Input
               aria-label="Search query"
               placeholder="Search events and gigs"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              defaultValue={search}
+              onChange={scheduleSearchUpdate}
+              ref={queryInputRef}
               className="h-16 rounded-full border-none bg-muted/60 pl-14 pr-6 text-lg shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
             />
           </div>
@@ -162,10 +194,10 @@ export function SearchPage({
                     <Button
                       key={option.value || "ALL"}
                       type="button"
-                      variant={draftType === option.value ? "default" : "outline"}
+                      variant={type === option.value ? "default" : "outline"}
                       size="sm"
                       className="rounded-full px-4"
-                      onClick={() => setDraftType(option.value)}
+                      onClick={() => submitCurrentSearch(option.value)}
                     >
                       {option.label}
                     </Button>
