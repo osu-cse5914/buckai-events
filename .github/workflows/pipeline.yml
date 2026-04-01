@@ -101,7 +101,7 @@ jobs:
           name: web-dist
           path: apps/web/dist
 
-      - run: bun --cwd apps/api wrangler deploy
+      - run: bun --cwd apps/backend wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
@@ -130,7 +130,7 @@ jobs:
       - name: Upload preview version
         id: deploy
         run: |
-          OUTPUT=$(bun --cwd apps/api wrangler versions upload 2>&1)
+          OUTPUT=$(bun --cwd apps/backend wrangler versions upload 2>&1)
           echo "$OUTPUT"
           URL=$(echo "$OUTPUT" | grep -o 'https://[^ ]*\.workers\.dev' | tail -1)
           echo "url=$URL" >> $GITHUB_OUTPUT
