@@ -21,6 +21,9 @@ export type SemanticSearchInput = {
   category?: string;
   startDate?: Date;
   endDate?: Date;
+  minCompensation?: number;
+  maxCompensation?: number;
+  compensationType?: string;
   env?: AIEnvironment;
   embedQuery?: (query: string) => Promise<number[]>;
 };
@@ -207,6 +210,21 @@ export async function searchEventsSemantically(
   if (input.endDate) {
     whereClauses.push(
       Prisma.sql`e."startAt" <= ${input.endDate.toISOString()}`,
+    );
+  }
+  if (input.minCompensation !== undefined) {
+    whereClauses.push(
+      Prisma.sql`e."compensationAmount" >= ${input.minCompensation}`,
+    );
+  }
+  if (input.maxCompensation !== undefined) {
+    whereClauses.push(
+      Prisma.sql`e."compensationAmount" <= ${input.maxCompensation}`,
+    );
+  }
+  if (input.compensationType) {
+    whereClauses.push(
+      Prisma.sql`e."compensationType" = ${input.compensationType}`,
     );
   }
 

@@ -93,6 +93,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
   const mockPrisma = createMockPrisma();
 
   beforeEach(() => {
+    vi.resetAllMocks();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
   });

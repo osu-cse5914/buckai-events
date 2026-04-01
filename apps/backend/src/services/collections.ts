@@ -171,6 +171,13 @@ export async function addItemToOwnedCollection(
     },
   });
 
+  await prisma.collection.update({
+    where: { id: input.collectionId },
+    data: {
+      name: collection.name,
+    },
+  });
+
   return {
     item,
     interaction: {
@@ -215,6 +222,13 @@ export async function removeItemFromOwnedCollection(
         collectionId: input.collectionId,
         eventId: input.eventId,
       },
+    },
+  });
+
+  await prisma.collection.update({
+    where: { id: input.collectionId },
+    data: {
+      name: collection.name,
     },
   });
 }

@@ -8,6 +8,7 @@ import { withRequestResources } from "./middleware/request-resources";
 import { admin } from "./routes/admin";
 import { auth } from "./routes/auth";
 import { collections } from "./routes/collections";
+import { conversations } from "./routes/conversations";
 import { events } from "./routes/events";
 import { gigs } from "./routes/gigs";
 import { health } from "./routes/health";
@@ -57,7 +58,8 @@ export function createApiApp() {
     .route("/api/v1/gigs", gigs)
     .route("/api/v1/interactions", interactions)
     .route("/api/v1/social", social)
-    .route("/api/v1/collections", collections);
+    .route("/api/v1/collections", collections)
+    .route("/api/v1/conversations", conversations);
 
   return registerApiErrorHandlers(routedApp);
 }
