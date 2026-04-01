@@ -91,6 +91,21 @@ export type OwnedCollectionSummary = {
   };
 };
 
+export type CollectionDetail = {
+  id: string;
+  userId: string;
+  name: string;
+  visibility: "PRIVATE" | "PUBLIC";
+  createdAt: string;
+  updatedAt: string;
+  items: Array<{
+    id: string;
+    collectionId: string;
+    eventId: string;
+    event: EventListItem;
+  }>;
+};
+
 export const PAGE_SIZE = 12;
 
 export type EventListItem = {
@@ -175,6 +190,14 @@ export type SearchResultsFilters = {
 export const queryKeys = {
   profile: ["profile"] as const,
   event: (eventId: string) => ["event", eventId] as const,
+  collection: (collectionId: string) => ["collection", collectionId] as const,
+  collectionItemsPrefix: (collectionId: string) =>
+    ["collection", collectionId, "items"] as const,
+  collectionItems: (
+    collectionId: string,
+    page: number,
+    pageSize = PAGE_SIZE,
+  ) => ["collection", collectionId, "items", page, pageSize] as const,
   eventsList: (filters: EventListFilters, page: number, pageSize = PAGE_SIZE) =>
     ["events", filters, page, pageSize] as const,
   searchResults: (
@@ -237,6 +260,56 @@ export function eventDetailQueryOptions(api: ApiClient, eventId: string) {
         throw new Error("Failed to load event");
       }
       return res.json() as Promise<EventRecord>;
+    },
+  });
+}
+
+export function collectionDetailQueryOptions(
+  api: ApiClient,
+  collectionId: string,
+) {
+  return queryOptions<CollectionDetail | null>({
+    queryKey: queryKeys.collection(collectionId),
+    queryFn: async () => {
+      const res = await api.api.v1.collections[":id"].$get({
+        param: { id: collectionId },
+      });
+      if (res.status === 404) {
+        return null;
+      }
+      if (!res.ok) {
+        throw new Error("Failed to load collection");
+      }
+      return res.json() as Promise<CollectionDetail>;
+    },
+  });
+}
+
+export function collectionItemsQueryOptions(
+  api: ApiClient,
+  collectionId: string,
+  page: number,
+  pageSize = PAGE_SIZE,
+) {
+  return queryOptions<PaginatedResponse<EventListItem>>({
+    queryKey: queryKeys.collectionItems(collectionId, page, pageSize),
+    queryFn: async () => {
+      const getCollectionItems =
+        api.api.v1.collections[":id"].items.$get as (args: {
+          param: { id: string };
+          query: { limit: string; offset: string };
+        }) => Promise<Response>;
+      const res = await getCollectionItems({
+        param: { id: collectionId },
+        query: {
+          limit: String(pageSize),
+          offset: String(page * pageSize),
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to load collection items");
+      }
+      return res.json() as Promise<PaginatedResponse<EventListItem>>;
     },
   });
 }

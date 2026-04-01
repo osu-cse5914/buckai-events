@@ -75,6 +75,25 @@ function removeCollectionItem(app: Hono, id: string, eventId: string) {
   });
 }
 
+function listCollectionItems(
+  app: Hono,
+  id: string,
+  query?: { limit?: number; offset?: number },
+) {
+  const params = new URLSearchParams();
+  if (query?.limit !== undefined) {
+    params.set("limit", String(query.limit));
+  }
+  if (query?.offset !== undefined) {
+    params.set("offset", String(query.offset));
+  }
+
+  const search = params.toString();
+  return app.request(
+    `/collections/${id}/items${search ? `?${search}` : ""}`,
+  );
+}
+
 // --- Tests ---
 
 describe("[phase:2] [regression:always] Collection management API", () => {
@@ -496,5 +515,109 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       detail: "Only the owner can delete this collection",
     });
     expect(mockPrisma.collection.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe("[phase:6] [regression:always] Collection items API", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+  });
+
+  it("TC-COL-016: lists collection items with pagination for the owner", async () => {
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue({
+      id: "col1",
+      userId: USER_A.id,
+      visibility: "PRIVATE",
+    } as never);
+    vi.mocked(mockPrisma.collectionItem.findMany).mockResolvedValue(
+      [
+        {
+          id: "item2",
+          collectionId: "col1",
+          eventId: "evt2",
+          event: {
+            id: "evt2",
+            title: "Open Mic",
+          },
+        },
+      ] as never,
+    );
+    vi.mocked(mockPrisma.collectionItem.count).mockResolvedValue(3 as never);
+
+    const res = await listCollectionItems(createTestApp(USER_A), "col1", {
+      limit: 1,
+      offset: 1,
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.collectionItem.findMany).toHaveBeenCalledWith({
+      where: { collectionId: "col1" },
+      include: {
+        event: {
+          include: {
+            creator: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 1,
+      skip: 1,
+    });
+    expect(await res.json()).toEqual({
+      data: [
+        {
+          id: "evt2",
+          title: "Open Mic",
+        },
+      ],
+      pagination: { total: 3, limit: 1, offset: 1 },
+    });
+  });
+
+  it("lists collection items for another user when the collection is public", async () => {
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue({
+      id: "col1",
+      userId: USER_A.id,
+      visibility: "PUBLIC",
+    } as never);
+    vi.mocked(mockPrisma.collectionItem.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.collectionItem.count).mockResolvedValue(0 as never);
+
+    const res = await listCollectionItems(createTestApp(USER_B), "col1");
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      data: [],
+      pagination: { total: 0, limit: 20, offset: 0 },
+    });
+  });
+
+  it("returns 404 when another user requests items for a private collection", async () => {
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue({
+      id: "col1",
+      userId: USER_A.id,
+      visibility: "PRIVATE",
+    } as never);
+
+    const res = await listCollectionItems(createTestApp(USER_B), "col1");
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("not-found"),
+      title: "Resource not found",
+      status: 404,
+      detail: "Collection not found",
+    });
+    expect(mockPrisma.collectionItem.findMany).not.toHaveBeenCalled();
   });
 });

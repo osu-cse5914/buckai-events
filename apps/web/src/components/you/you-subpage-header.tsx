@@ -8,10 +8,14 @@ export function YouSubpageHeader({
   title,
   description,
   action,
+  backTo = "/you",
+  backLabel = "Back to You",
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  backTo?: "/you" | "/you/collections";
+  backLabel?: string;
 }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -22,9 +26,9 @@ export function YouSubpageHeader({
           asChild
           className="-ml-3 w-fit px-3 text-muted-foreground"
         >
-          <Link to="/you">
+          <Link to={backTo}>
             <ArrowLeftIcon className="size-4" />
-            Back to You
+            {backLabel}
           </Link>
         </Button>
 
