@@ -281,7 +281,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Regression**: Always
 - **Given**: An event description includes Markdown formatting
 - **When**: A user opens the event detail view
-- **Then**: The description renders Markdown structure such as headings, lists, and links
+- **Then**: The description renders Markdown structure such as headings, lists, links, emphasis, and line breaks
 
 ## TC-EVT-028: Events browse deduplicates overlapping infinite-scroll batches
 

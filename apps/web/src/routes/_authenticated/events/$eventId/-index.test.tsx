@@ -185,13 +185,13 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       okJson(
         makeEvent({
           description:
-            "## Schedule\n\n- **Build overnight**\n- Demo in the morning\n\nVisit [docs](https://example.com)",
+            "## Schedule\r\n\r\n- **Build overnight**\r\n- Demo in the morning\r\n\r\nVisit [docs](https://example.com)\r\nNext line",
         }),
       ),
     );
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
 
-    await renderPage();
+    const view = await renderPage();
 
     expect(
       await screen.findByRole("heading", { name: "Schedule" }),
@@ -202,6 +202,8 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     expect(
       screen.getByRole("link", { name: "docs" }),
     ).toHaveAttribute("href", "https://example.com");
+    expect(view.container.querySelector("br")).not.toBeNull();
+    expect(view.container.textContent).toContain("Next line");
   });
 
   it("TC-EVT-019: displays tags when present", async () => {

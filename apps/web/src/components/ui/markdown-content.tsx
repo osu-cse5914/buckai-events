@@ -10,6 +10,8 @@ export function MarkdownContent({
   children: string;
   className?: string;
 }) {
+  const normalizedContent = children.replace(/\r\n?/g, "\n");
+
   return (
     <div
       className={cn(
@@ -20,7 +22,7 @@ export function MarkdownContent({
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
-          a: ({ href, ...props }) => {
+          a: ({ node: _node, href, ...props }) => {
             const isExternal = typeof href === "string"
               ? /^(https?:)?\/\//.test(href)
               : false;
@@ -34,9 +36,27 @@ export function MarkdownContent({
               />
             );
           },
+          p: ({ node: _node, className: paragraphClassName, ...props }) => (
+            <p
+              className={cn("whitespace-pre-line", paragraphClassName)}
+              {...props}
+            />
+          ),
+          strong: ({ node: _node, className: strongClassName, ...props }) => (
+            <strong
+              className={cn("font-bold text-foreground", strongClassName)}
+              {...props}
+            />
+          ),
+          em: ({ node: _node, className: emphasisClassName, ...props }) => (
+            <em
+              className={cn("italic", emphasisClassName)}
+              {...props}
+            />
+          ),
         }}
       >
-        {children}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );
