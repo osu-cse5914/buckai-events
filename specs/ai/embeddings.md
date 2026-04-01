@@ -119,6 +119,15 @@ LIMIT $limit;
 
 The chatbot's `searchEvents` and `searchGigs` tools use semantic search when a free-text `query` parameter is provided. If only structured filters are provided (category, date range), standard SQL filtering is used without embeddings.
 
+### Public Search Endpoint
+
+The authenticated app also exposes semantic search through `GET /api/v1/events/semantic-search`.
+
+- Query params: `query`, `type?`, `category?`, `startDate?`, `endDate?`, `limit`, `offset`
+- Eligibility filters remain the same as chatbot semantic search: only future `OPEN` and `IN_PROGRESS` events
+- The public response follows the same `{ data, pagination }` envelope used by `GET /api/v1/events`
+- Similarity scores remain internal and are not exposed in the Search page response contract
+
 ## Scenarios
 
 ### S-EMBED-1: Embedding generated on event creation
@@ -191,6 +200,24 @@ WHEN event E is deleted
 THEN the EventEmbedding row is also deleted (ON DELETE CASCADE)
 ```
 
+### S-EMBED-9: Public semantic search uses the standard event pagination envelope
+
+```
+GIVEN semantic search finds matching future events
+WHEN a client calls GET /events/semantic-search with query, limit, and offset
+THEN the response uses the same { data, pagination } shape as GET /events
+AND the results remain ordered by semantic similarity
+```
+
+### S-EMBED-10: Public semantic search preserves total count across pages
+
+```
+GIVEN semantic search finds more matches than fit on one page
+WHEN a client requests a later page using offset
+THEN the response returns only that page of events
+AND pagination.total still reflects the full semantic match count
+```
+
 ## Test Cases
 
-See [`test-cases/ai/embeddings.md`](../../test-cases/ai/embeddings.md) for the full test case registry (TC-EMBED-001 through TC-EMBED-011), including automated generation/search tests and manual semantic search verification.
+See [`test-cases/ai/embeddings.md`](../../test-cases/ai/embeddings.md) for the full test case registry (TC-EMBED-001 through TC-EMBED-013), including automated generation/search tests, public pagination coverage, and manual semantic search verification.

@@ -28,6 +28,17 @@ export type SemanticSearchInput = {
   embedQuery?: (query: string) => Promise<number[]>;
 };
 
+export type PaginatedSemanticSearchInput = SemanticSearchInput & {
+  offset: number;
+};
+
+export type PaginatedSemanticSearchResult = {
+  data: Array<Record<string, unknown>>;
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 type EmbedLike = typeof embed;
 
 function buildEmbeddingProviderOptions(task: ResolvedAITask) {
@@ -120,6 +131,70 @@ async function embedTextValue(
   return assertEmbeddingDimensions(result.embedding, task.model.dimensions);
 }
 
+async function resolveQueryEmbedding(input: SemanticSearchInput) {
+  return (
+    input.embedQuery?.(input.query) ??
+    embedTextValue(input.query, {
+      env: input.env,
+    })
+  );
+}
+
+function buildSemanticSearchWhereClauses(input: Omit<SemanticSearchInput, "limit">) {
+  const whereClauses = [
+    Prisma.sql`e.status IN ('OPEN', 'IN_PROGRESS')`,
+    Prisma.sql`e."startAt" > NOW()`,
+  ];
+
+  if (input.type) {
+    whereClauses.push(Prisma.sql`e.type = ${input.type}`);
+  }
+  if (input.category) {
+    whereClauses.push(Prisma.sql`e.category = ${input.category}`);
+  }
+  if (input.startDate) {
+    whereClauses.push(
+      Prisma.sql`e."startAt" >= ${input.startDate.toISOString()}`,
+    );
+  }
+  if (input.endDate) {
+    whereClauses.push(
+      Prisma.sql`e."startAt" <= ${input.endDate.toISOString()}`,
+    );
+  }
+  if (input.minCompensation !== undefined) {
+    whereClauses.push(
+      Prisma.sql`e."compensationAmount" >= ${input.minCompensation}`,
+    );
+  }
+  if (input.maxCompensation !== undefined) {
+    whereClauses.push(
+      Prisma.sql`e."compensationAmount" <= ${input.maxCompensation}`,
+    );
+  }
+  if (input.compensationType) {
+    whereClauses.push(
+      Prisma.sql`e."compensationType" = ${input.compensationType}`,
+    );
+  }
+
+  return whereClauses;
+}
+
+function parseTotalCount(value: unknown) {
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+  if (typeof value === "string") {
+    return Number.parseInt(value, 10);
+  }
+
+  return 0;
+}
+
 export async function generateEventEmbedding(
   input: EventEmbeddingSource,
   {
@@ -183,50 +258,9 @@ export async function searchEventsSemantically(
   prisma: PrismaClient,
   input: SemanticSearchInput,
 ) {
-  const queryEmbedding =
-    input.embedQuery?.(input.query) ??
-    embedTextValue(input.query, {
-      env: input.env,
-    });
-  const vector = await queryEmbedding;
+  const vector = await resolveQueryEmbedding(input);
   const vectorLiteral = `[${vector.join(",")}]`;
-
-  const whereClauses = [
-    Prisma.sql`e.status IN ('OPEN', 'IN_PROGRESS')`,
-    Prisma.sql`e."startAt" > NOW()`,
-  ];
-
-  if (input.type) {
-    whereClauses.push(Prisma.sql`e.type = ${input.type}`);
-  }
-  if (input.category) {
-    whereClauses.push(Prisma.sql`e.category = ${input.category}`);
-  }
-  if (input.startDate) {
-    whereClauses.push(
-      Prisma.sql`e."startAt" >= ${input.startDate.toISOString()}`,
-    );
-  }
-  if (input.endDate) {
-    whereClauses.push(
-      Prisma.sql`e."startAt" <= ${input.endDate.toISOString()}`,
-    );
-  }
-  if (input.minCompensation !== undefined) {
-    whereClauses.push(
-      Prisma.sql`e."compensationAmount" >= ${input.minCompensation}`,
-    );
-  }
-  if (input.maxCompensation !== undefined) {
-    whereClauses.push(
-      Prisma.sql`e."compensationAmount" <= ${input.maxCompensation}`,
-    );
-  }
-  if (input.compensationType) {
-    whereClauses.push(
-      Prisma.sql`e."compensationType" = ${input.compensationType}`,
-    );
-  }
+  const whereClauses = buildSemanticSearchWhereClauses(input);
 
   return prisma.$queryRaw<
     Array<Record<string, unknown> & { similarity: number }>
@@ -262,4 +296,65 @@ export async function searchEventsSemantically(
     ORDER BY similarity DESC
     LIMIT ${input.limit}
   `);
+}
+
+export async function searchEventsSemanticallyPaginated(
+  prisma: PrismaClient,
+  input: PaginatedSemanticSearchInput,
+): Promise<PaginatedSemanticSearchResult> {
+  const vector = await resolveQueryEmbedding(input);
+  const vectorLiteral = `[${vector.join(",")}]`;
+  const whereClauses = buildSemanticSearchWhereClauses(input);
+  const matches = await prisma.$queryRaw<
+    Array<{ id: string; totalCount: number | bigint | string }>
+  >(Prisma.sql`
+    SELECT
+      e.id,
+      COUNT(*) OVER() AS "totalCount"
+    FROM "Event" e
+    INNER JOIN "EventEmbedding" ee ON ee."eventId" = e.id
+    WHERE ${Prisma.join(whereClauses, " AND ")}
+    ORDER BY (1 - (ee.embedding <=> ${vectorLiteral}::vector))::double precision DESC
+    LIMIT ${input.limit}
+    OFFSET ${input.offset}
+  `);
+
+  if (matches.length === 0) {
+    return {
+      data: [],
+      total: 0,
+      limit: input.limit,
+      offset: input.offset,
+    };
+  }
+
+  const orderedIds = matches.map((row) => row.id);
+  const events = await prisma.event.findMany({
+    where: {
+      id: {
+        in: orderedIds,
+      },
+    },
+    include: {
+      creator: {
+        select: {
+          id: true,
+          displayName: true,
+          email: true,
+        },
+      },
+    },
+  });
+  const order = new Map(orderedIds.map((id, index) => [id, index]));
+
+  return {
+    data: events.sort(
+      (left, right) =>
+        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+    ),
+    total: parseTotalCount(matches[0]?.totalCount),
+    limit: input.limit,
+    offset: input.offset,
+  };
 }

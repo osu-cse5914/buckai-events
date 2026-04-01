@@ -15,7 +15,7 @@ Successful single-resource responses return the resource directly:
 }
 ```
 
-Most paginated list endpoints return a list plus pagination metadata:
+Event-list endpoints return a list plus pagination metadata shaped as `{ data, pagination }`:
 
 ```json
 {
@@ -24,10 +24,23 @@ Most paginated list endpoints return a list plus pagination metadata:
 }
 ```
 
+Recommendation endpoints return section items plus metadata shaped as `{ items, meta }`:
+
+```json
+{
+  "items": [{ "id": "evt_123", "title": "Hack Night" }],
+  "meta": {
+    "total": 100,
+    "limit": 20,
+    "offset": 0,
+    "rankingMode": "PERSONALIZED"
+  }
+}
+```
+
 Route-specific exceptions:
 
 - `GET /api/v1/users/:id` embeds `createdEvents` as `{ items, meta }`
-- `GET /api/v1/events/semantic-search` returns a bare array of matches
 - `GET /api/v1/admin/ai-pipeline/jobs` returns a bare array of jobs
 
 Error responses use RFC 7807 Problem Details with the appropriate HTTP status
@@ -92,7 +105,7 @@ default 10, max 25; `GET /api/v1/admin/ai-pipeline/jobs` uses `limit` default
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/v1/events` | List events. Filters: `type`, `category`, `startDate`, `endDate`, `source`, `status`, `statusMode`, `user`, `search`, `sort`, `limit`, `offset` |
-| GET | `/api/v1/events/semantic-search` | Search events semantically. Params: required `query`; optional `type`, `category`, `startDate`, `endDate`, `limit` |
+| GET | `/api/v1/events/semantic-search` | Semantic event search. Filters: `query`, `type`, `category`, `startDate`, `endDate`, `limit`, `offset`. Returns the same `{ data, pagination }` envelope as `/api/v1/events` |
 | POST | `/api/v1/events` | Create an event or gig |
 | GET | `/api/v1/events/:id` | Get a single event with full detail |
 | PATCH | `/api/v1/events/:id` | Update event (owner only; forbidden for external events) |
@@ -126,6 +139,13 @@ default 10, max 25; `GET /api/v1/admin/ai-pipeline/jobs` uses `limit` default
 |--------|------|-------------|
 | POST | `/api/v1/interactions` | Record a user interaction |
 
+## Recommendations
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/recommendations` | Get the `Recommended` Featured feed section. Params: `limit`, `offset`, `type`. Response `meta` also includes `rankingMode` |
+| GET | `/api/v1/recommendations/popular` | Get the `Popular` Featured preview section. Params: `limit`, `offset`, `type` |
+| GET | `/api/v1/recommendations/upcoming` | Get the `Upcoming` Featured preview section. Params: `limit`, `offset`, `type` |
 ## Conversations
 
 | Method | Path | Description |

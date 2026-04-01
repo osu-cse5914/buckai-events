@@ -115,3 +115,23 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 - **Given**: The embedding task is configured with dimensions `768`
 - **When**: The provider returns a vector with a different length
 - **Then**: The embedding service fails before writing an invalid vector to the database
+
+## TC-EMBED-012: Semantic search endpoint returns paginated public results
+
+- **Spec scenario**: S-EMBED-9
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Phase 6+
+- **Given**: Semantic search finds matching future `OPEN` or `IN_PROGRESS` events
+- **When**: A client calls `GET /api/v1/events/semantic-search` with `query`, `limit`, and `offset`
+- **Then**: The response uses the public `{ data, pagination }` shape used by `/api/v1/events`
+
+## TC-EMBED-013: Semantic search pagination preserves total count
+
+- **Spec scenario**: S-EMBED-10
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Phase 6+
+- **Given**: Semantic search finds more matches than fit in one page
+- **When**: A client requests a later page with `offset`
+- **Then**: The endpoint returns the requested page while preserving the total match count in pagination metadata

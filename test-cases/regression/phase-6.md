@@ -24,6 +24,12 @@ All automated cases from Phase 0 through Phase 5, plus:
 - **TC-FEED-013**: Featured fallback banner is scoped to recommendations
 - **TC-FEED-014**: Featured load more paginates only recommended results
 - **TC-FEED-015**: Featured sections handle partial empty and error states
+- **TC-EMBED-012**: Semantic search endpoint returns paginated public results
+- **TC-EMBED-013**: Semantic search pagination preserves total count
+- **TC-PAGES-012**: Search forwards active queries to semantic search and resets pagination on submit
+- **TC-PAGES-013**: Search handoff link carries the current prompt into AI mode
+- **TC-PAGES-023**: Search falls back to the structured events listing for filter-only sessions
+- **TC-PAGES-024**: AI landing preserves and allows editing a carried prompt draft
 
 ## Manual checklist — Full system
 

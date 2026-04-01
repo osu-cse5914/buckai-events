@@ -113,7 +113,7 @@ It contains:
 - Structured filters that refine explicit search results
 - URL-owned query, filter, and pagination state so search sessions are durable across reload, browser history, and shared links
 - AI enhancement that improves search, such as summaries or refinement help
-- A clear link or handoff control into AI mode
+- A clear link or handoff control into AI mode that can carry the current prompt
 - Recent searches when supported
 
 `Search` is distinct from `Featured` because the user drives the session with an explicit query instead of consuming a recommendation feed.
@@ -125,6 +125,7 @@ It contains:
 It contains:
 
 - A chat-based agent entry point for natural-language event and gig discovery
+- A prompt-aware landing state when the user arrives from Search before a conversation is created
 - A new-conversation entry point
 - Conversation history or recent conversations when supported
 - Assistant responses that can surface structured event and gig results
@@ -188,6 +189,7 @@ It does not contain:
 - **Route recommendation**: `/ai`
 - **Belongs on this page**:
   - Entry point to start a new chat-based agent session
+  - An editable prompt draft when Search hands a query into AI mode before chat starts
   - Recent or pinned conversations when supported
   - Agent-centric empty-state guidance
   - Sidebar or list navigation for prior conversations when supported
@@ -478,4 +480,13 @@ GIVEN a user enters a search query, applies search filters, or changes paginatio
 WHEN the user reloads the page, navigates with the browser history, or shares the URL
 THEN the same query, filters, and pagination state are restored from the URL
 AND the page continues to render the matching search session
+```
+
+### S-PAGES-12: AI landing preserves a carried search prompt
+
+```
+GIVEN a user hands a Search query into AI mode
+WHEN the AI landing page opens before a conversation exists
+THEN the carried prompt is visible to the user
+AND the user can edit that prompt in-place before continuing
 ```

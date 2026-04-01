@@ -20,6 +20,8 @@ import {
   type EventListFilters,
   type EventListItem,
   type EventsResponse,
+  searchResultsQueryOptions,
+  type SearchResultsFilters,
 } from "@/lib/queries";
 import {
   STATUS_LABELS,
@@ -53,6 +55,21 @@ export function useEventsQuery(
 
   return useQuery<EventsResponse>({
     ...eventsListQueryOptions(api, filters, page, pageSize),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useSearchResultsQuery(
+  filters: SearchResultsFilters,
+  page: number,
+  enabled = true,
+  pageSize = PAGE_SIZE,
+) {
+  const api = useApiClient();
+
+  return useQuery<EventsResponse>({
+    ...searchResultsQueryOptions(api, filters, page, pageSize),
     enabled,
     placeholderData: keepPreviousData,
   });

@@ -6,17 +6,17 @@ import {
   toPageIndex,
   validateEventSearch,
 } from "@/lib/event-route-search";
-import { loadEventsRouteData } from "@/lib/route-loaders";
+import { loadSearchRouteData } from "@/lib/route-loaders";
 
 export const Route = createFileRoute("/_authenticated/search/")({
   validateSearch: validateEventSearch,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
-    loadEventsRouteData({
+    loadSearchRouteData({
       api: context.api,
       queryClient: context.queryClient,
       filters: {
-        search: deps.q,
+        query: deps.q,
         type: deps.type,
         category: deps.category,
       },
@@ -38,9 +38,10 @@ function SearchRoute() {
       page={toPageIndex(search.page ?? 1)}
       onSearchSubmit={(value) =>
         navigate({
-          search: (current) => ({
-            ...current,
-            q: value.trim() || undefined,
+          search: () => ({
+            q: value.search || undefined,
+            type: value.type || undefined,
+            category: value.category || undefined,
             page: undefined,
           }),
         })
