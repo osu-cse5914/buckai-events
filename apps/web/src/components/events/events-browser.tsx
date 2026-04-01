@@ -81,9 +81,9 @@ export function useInfiniteEventsQuery(
   });
 }
 
-export function EventsLoadingGrid() {
+export function EventsLoadingGrid({ className }: { className?: string } = {}) {
   return (
-    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={cn("mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
       {Array.from({ length: 6 }).map((_, index) => (
         <Card key={index}>
           <CardHeader>
@@ -126,13 +126,22 @@ export function EventsListSkeleton({
   rows = 6,
   showHeader = true,
   showPagination = false,
+  framed = true,
+  className,
 }: {
   rows?: number;
   showHeader?: boolean;
   showPagination?: boolean;
+  framed?: boolean;
+  className?: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border bg-background">
+    <div
+      className={cn(
+        framed ? "overflow-hidden rounded-2xl border bg-background" : "",
+        className,
+      )}
+    >
       {showHeader ? (
         <div className="border-b px-4 py-4 sm:px-5">
           <div className="flex items-center justify-between gap-3">
@@ -264,9 +273,20 @@ export function EventsBrowseSkeleton() {
   );
 }
 
-export function EventsErrorState({ message }: { message: string }) {
+export function EventsErrorState({
+  message,
+  className,
+}: {
+  message: string;
+  className?: string;
+}) {
   return (
-    <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+    <div
+      className={cn(
+        "mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive",
+        className,
+      )}
+    >
       {message}
     </div>
   );
@@ -276,13 +296,20 @@ export function EventsEmptyState({
   title,
   description,
   action,
+  className,
 }: {
   title: string;
   description: string;
   action?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="mt-8 flex flex-col items-center gap-2 px-2 py-4 text-center">
+    <div
+      className={cn(
+        "mt-8 flex flex-col items-center gap-2 px-2 py-4 text-center",
+        className,
+      )}
+    >
       <p className="text-lg font-medium">{title}</p>
       <p className="max-w-xl text-sm text-muted-foreground">{description}</p>
       {action ? <div className="mt-2">{action}</div> : null}
@@ -293,12 +320,14 @@ export function EventsEmptyState({
 export function EventsGrid({
   events,
   showTypeBadge = true,
+  className,
 }: {
   events: EventListItem[];
   showTypeBadge?: boolean;
+  className?: string;
 }) {
   return (
-    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={cn("mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
       {events.map((event) => (
         <Link
           key={event.id}

@@ -77,6 +77,8 @@ export function createMockPrisma(): PrismaClient {
     },
     interaction: {
       create: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
     },
     follow: {
       findUnique: vi.fn(),

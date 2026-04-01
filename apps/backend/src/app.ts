@@ -13,6 +13,7 @@ import { events } from "./routes/events";
 import { gigs } from "./routes/gigs";
 import { health } from "./routes/health";
 import { interactions } from "./routes/interactions";
+import { recommendations } from "./routes/recommendations";
 import { social } from "./routes/social";
 import { users } from "./routes/users";
 
@@ -57,6 +58,7 @@ export function createApiApp() {
     .route("/api/v1/events", events)
     .route("/api/v1/gigs", gigs)
     .route("/api/v1/interactions", interactions)
+    .route("/api/v1/recommendations", recommendations)
     .route("/api/v1/social", social)
     .route("/api/v1/collections", collections)
     .route("/api/v1/conversations", conversations);

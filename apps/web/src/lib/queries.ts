@@ -113,7 +113,7 @@ export type EventListItem = {
   compensationCurrency: string | null;
   compensationType: string | null;
   summary: string | null;
-  creatorId: string;
+  creatorId: string | null;
   createdAt: string;
   updatedAt: string;
   creator?: {
@@ -126,6 +126,29 @@ export type EventListItem = {
 export type EventsResponse = {
   data: EventListItem[];
   pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+};
+
+export type RecommendationRankingMode =
+  | "PERSONALIZED"
+  | "POPULARITY_FALLBACK";
+
+export type RecommendationsResponse = {
+  items: EventListItem[];
+  meta: {
+    total: number;
+    limit: number;
+    offset: number;
+    rankingMode: RecommendationRankingMode;
+  };
+};
+
+export type RecommendationSectionResponse = {
+  items: EventListItem[];
+  meta: {
     total: number;
     limit: number;
     offset: number;
@@ -151,6 +174,12 @@ export const queryKeys = {
   infiniteEventsList: (filters: EventListFilters, pageSize = PAGE_SIZE) =>
     ["events", "infinite", filters, pageSize] as const,
   collections: ["collections"] as const,
+  recommendationsFeed: (type: string, pageSize = PAGE_SIZE) =>
+    ["recommendations", "recommended", type, pageSize] as const,
+  recommendationsPopular: (type: string, limit: number) =>
+    ["recommendations", "popular", type, limit] as const,
+  recommendationsUpcoming: (type: string, limit: number) =>
+    ["recommendations", "upcoming", type, limit] as const,
   myApplications: ["my-applications"] as const,
   gigApplications: (eventId: string) => ["gig-applications", eventId] as const,
   gigApplicationStatus: (eventId: string) =>
@@ -238,6 +267,93 @@ export async function fetchEventsList(
     throw new Error("Failed to fetch events");
   }
   return response.json() as Promise<EventsResponse>;
+}
+
+export async function fetchRecommendationsPage(
+  api: ApiClient,
+  {
+    type,
+    limit = PAGE_SIZE,
+    offset = 0,
+  }: {
+    type?: string;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const query: Record<string, string> = {
+    limit: String(limit),
+    offset: String(offset),
+  };
+
+  if (type) {
+    query.type = type;
+  }
+
+  const response = await api.api.v1.recommendations.$get({ query });
+  if (!response.ok) {
+    throw new Error("Failed to fetch recommendations");
+  }
+
+  return response.json() as Promise<RecommendationsResponse>;
+}
+
+export async function fetchPopularRecommendationsPage(
+  api: ApiClient,
+  {
+    type,
+    limit = PAGE_SIZE,
+    offset = 0,
+  }: {
+    type?: string;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const query: Record<string, string> = {
+    limit: String(limit),
+    offset: String(offset),
+  };
+
+  if (type) {
+    query.type = type;
+  }
+
+  const response = await api.api.v1.recommendations.popular.$get({ query });
+  if (!response.ok) {
+    throw new Error("Failed to fetch popular recommendations");
+  }
+
+  return response.json() as Promise<RecommendationSectionResponse>;
+}
+
+export async function fetchUpcomingRecommendationsPage(
+  api: ApiClient,
+  {
+    type,
+    limit = PAGE_SIZE,
+    offset = 0,
+  }: {
+    type?: string;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const query: Record<string, string> = {
+    limit: String(limit),
+    offset: String(offset),
+  };
+
+  if (type) {
+    query.type = type;
+  }
+
+  const response = await api.api.v1.recommendations.upcoming.$get({ query });
+  if (!response.ok) {
+    throw new Error("Failed to fetch upcoming recommendations");
+  }
+
+  return response.json() as Promise<RecommendationSectionResponse>;
 }
 
 export function myApplicationsQueryOptions(
