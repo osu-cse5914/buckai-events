@@ -7,8 +7,6 @@ export type WorkerBindings = Env & {
   CLERK_SECRET_KEY: string;
   TICKETMASTER_API_KEY?: string;
   AI_ROUTER_CONFIG_JSON: string;
-  GOOGLE_GENERATIVE_AI_API_KEY?: string;
-  OPENAI_COMPATIBLE_API_KEY?: string;
 };
 
 export type AppEnv = {

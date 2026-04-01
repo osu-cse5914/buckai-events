@@ -74,6 +74,7 @@ Set the required API secrets in `apps/api/.env`:
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
 - `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used when a router provider entry references it
 - `AI_ROUTER_CONFIG_JSON`: serialized provider/model/task config consumed by the AI router
+- any additional provider secret named by a provider entry's `apiKeyEnvVar`
 
 Optional local overrides:
 
@@ -81,7 +82,7 @@ Optional local overrides:
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
-  - `OPENAI_COMPATIBLE_API_KEY` is required only when your router config references an `OPENAI_COMPATIBLE` provider
+  - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `OPENAI_PRIMARY_API_KEY`
 - `apps/web/.env`
   - `VITE_API_URL` defaults to `http://localhost:3001`
   - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key
@@ -99,7 +100,7 @@ Example `AI_ROUTER_CONFIG_JSON`:
     "openai": {
       "id": "openai",
       "type": "OPENAI_COMPATIBLE",
-      "apiKeyEnvVar": "OPENAI_COMPATIBLE_API_KEY",
+      "apiKeyEnvVar": "OPENAI_PRIMARY_API_KEY",
       "baseUrl": "https://example.com/v1"
     }
   },
@@ -217,7 +218,7 @@ First-time Cloudflare setup:
 4. Set the AI provider secrets used by your router config.
    ```bash
    cd apps/api && wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
-   cd apps/api && wrangler secret put OPENAI_COMPATIBLE_API_KEY
+   cd apps/api && wrangler secret put OPENAI_PRIMARY_API_KEY
    ```
 5. Set `AI_ROUTER_CONFIG_JSON` in your deployment environment to the serialized router config.
 

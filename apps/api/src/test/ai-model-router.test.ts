@@ -17,7 +17,7 @@ function buildAIConfig(): AIConfig {
       openai: {
         id: "openai",
         type: "OPENAI_COMPATIBLE",
-        apiKeyEnvVar: "OPENAI_COMPATIBLE_API_KEY",
+        apiKeyEnvVar: "OPENAI_PRIMARY_API_KEY",
         baseUrl: "https://example.com/v1",
       },
     },
@@ -81,7 +81,7 @@ function buildEnv(config = buildAIConfig()) {
   return {
     AI_ROUTER_CONFIG_JSON: JSON.stringify(config),
     GOOGLE_GENERATIVE_AI_API_KEY: "google_test_key",
-    OPENAI_COMPATIBLE_API_KEY: "openai_test_key",
+    OPENAI_PRIMARY_API_KEY: "openai_test_key",
   };
 }
 
@@ -109,7 +109,7 @@ describe("[phase:4] [regression:always] AI model router", () => {
       config,
       env: {
         GOOGLE_GENERATIVE_AI_API_KEY: "google_test_key",
-        OPENAI_COMPATIBLE_API_KEY: "openai_test_key",
+        OPENAI_PRIMARY_API_KEY: "openai_test_key",
       },
     });
 
