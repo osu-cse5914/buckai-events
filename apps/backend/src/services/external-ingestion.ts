@@ -87,15 +87,19 @@ export type ExternalEventCandidate = {
   endAt: Date | null;
 };
 
+type ExternalEventPipelineScheduleInput = {
+  eventId: string;
+  stages: Array<"TAGGING" | "EMBEDDING">;
+  trigger: "EVENT_CREATE" | "EVENT_UPDATE";
+};
+
 export type ExternalSyncOptions = {
   ticketmasterApiKey?: string;
   fetchImpl?: FetchLike;
   now?: Date;
-  scheduleEventPipeline?: (input: {
-    eventId: string;
-    stages: Array<"TAGGING" | "EMBEDDING">;
-    trigger: "EVENT_CREATE" | "EVENT_UPDATE";
-  }) => Promise<unknown> | unknown;
+  scheduleEventPipeline?: (
+    input: ExternalEventPipelineScheduleInput,
+  ) => Promise<unknown> | unknown;
 };
 
 export type ExternalSyncSourceSummary = {
@@ -300,6 +304,24 @@ function toExternalEventData(candidate: ExternalEventCandidate) {
   };
 }
 
+async function scheduleExternalEventPipeline(
+  scheduleEventPipeline: ExternalSyncOptions["scheduleEventPipeline"],
+  input: ExternalEventPipelineScheduleInput,
+) {
+  if (!scheduleEventPipeline) {
+    return;
+  }
+
+  try {
+    await scheduleEventPipeline(input);
+  } catch (error) {
+    console.error(
+      `Failed to schedule external event pipeline for event ${input.eventId}`,
+      error,
+    );
+  }
+}
+
 export async function syncExternalSource(
   prisma: PrismaClient,
   source: EventSource,
@@ -328,7 +350,7 @@ export async function syncExternalSource(
       const created = await prisma.event.create({
         data: toExternalEventData(candidate),
       });
-      await scheduleEventPipeline?.({
+      await scheduleExternalEventPipeline(scheduleEventPipeline, {
         eventId: created.id,
         stages: ["TAGGING", "EMBEDDING"],
         trigger: "EVENT_CREATE",
@@ -361,7 +383,7 @@ export async function syncExternalSource(
         endAt: candidate.endAt,
       },
     });
-    await scheduleEventPipeline?.({
+    await scheduleExternalEventPipeline(scheduleEventPipeline, {
       eventId: updated.id,
       stages: ["EMBEDDING"],
       trigger: "EVENT_UPDATE",
