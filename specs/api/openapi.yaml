@@ -4,63 +4,236 @@ info:
   version: 1.0.0
   description: |
     REST API for Social OSU, an AI-powered campus discovery platform for The Ohio State University students.
-    Aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers
-    personalized recommendations, and provides an agentic LLM chatbot for event discovery.
 
-    Authentication is handled via Clerk (restricted to @osu.edu and @buckeyemail.osu.edu).
-    All endpoints require a valid Clerk JWT in the Authorization header.
-    Successful responses return resources directly. Paginated responses return `{ items, meta }`.
-    Error responses use RFC 7807 Problem Details (`application/problem+json`).
+    Authenticated application endpoints are exposed under `/api/v1` and require a valid Clerk JWT in the
+    `Authorization` header unless noted otherwise. `GET /api/health` is intentionally unauthenticated.
+
+    Most list endpoints return `{ data, pagination }`. Route-specific exceptions are documented inline, such as
+    the embedded `createdEvents` page on public profiles, semantic-search array responses, and the admin pipeline
+    job list.
 
 servers:
-  - url: https://social-osu.workers.dev/api/v1
+  - url: https://social-osu.workers.dev
     description: Production
-  - url: http://localhost:3001/api/v1
+  - url: http://localhost:3001
     description: Local development
 
 tags:
+  - name: System
+    description: Operational system endpoints
+  - name: Auth
+    description: Authenticated request-context endpoints
   - name: Users
-    description: User profile management and user-scoped relationship endpoints
+    description: User profile and user-scoped endpoints
   - name: Admin
     description: Admin-only operational endpoints
   - name: Social
     description: Social feed endpoints
   - name: Events
-    description: Event CRUD, listing, and filtering
+    description: Event CRUD, listing, and semantic search
   - name: Gigs
     description: Gig application endpoints
   - name: Collections
     description: Save/bookmark events into named collections
   - name: Interactions
-    description: Implicit user signal tracking for recommendations
-  - name: Recommendations
-    description: Personalized event/gig feed
+    description: Implicit user signal tracking
   - name: Conversations
-    description: Chatbot conversation and message history
+    description: Chatbot message streaming endpoints
 
 security:
   - bearerAuth: []
 
 paths:
-  # ──────────────────────────────────────────────
-  # Users
-  # ──────────────────────────────────────────────
-  /users/me:
+  /api/health:
+    get:
+      tags: [System]
+      summary: Get API health
+      operationId: getApiHealth
+      security: []
+      responses:
+        '200':
+          description: API health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get authenticated request-context user
+      operationId: getAuthenticatedContextUser
+      responses:
+        '200':
+          description: Authenticated user attached by middleware
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticatedUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users/me:
     get:
       tags: [Users]
       summary: Get authenticated user's profile
       operationId: getCurrentUser
       responses:
         '200':
-          description: User profile
+          description: Authenticated user profile
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_User'
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Users]
+      summary: Update authenticated user's profile
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatchRequest'
+      responses:
+        '200':
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /admin/external-ingestion/sync:
+  /api/v1/users/me/applications:
+    get:
+      tags: [Users]
+      summary: List the authenticated user's gig applications
+      operationId: listCurrentUserApplications
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated application history with gig summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMyApplicationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users/{id}:
+    get:
+      tags: [Users]
+      summary: Get a user's public profile
+      operationId: getPublicProfile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Public profile with embedded created-events page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/users/{id}/follow:
+    post:
+      tags: [Users]
+      summary: Follow another user
+      operationId: followUser
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '201':
+          description: Follow relationship created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Users]
+      summary: Unfollow a user
+      operationId: unfollowUser
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: Follow relationship removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/users/{id}/followers:
+    get:
+      tags: [Users]
+      summary: List follower profiles for a user
+      operationId: listFollowers
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated follower profiles ordered by follow time descending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFollowProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users/{id}/following:
+    get:
+      tags: [Users]
+      summary: List profiles followed by a user
+      operationId: listFollowing
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated followed-user profiles ordered by follow time descending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFollowProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/admin/external-ingestion/sync:
     post:
       tags: [Admin]
       summary: Trigger a synchronous external event sync
@@ -71,7 +244,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_ExternalSyncSummary'
+                $ref: '#/components/schemas/ExternalSyncSummary'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -79,133 +252,79 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-    patch:
-      tags: [Users]
-      summary: Update profile fields
-      operationId: updateCurrentUser
+  /api/v1/admin/ai-pipeline/jobs:
+    get:
+      tags: [Admin]
+      summary: List recent AI pipeline jobs
+      operationId: listAiPipelineJobs
+      parameters:
+        - $ref: '#/components/parameters/AdminJobsLimit'
+      responses:
+        '200':
+          description: Recent AI pipeline jobs ordered by createdAt descending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminPipelineJob'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/admin/ai-pipeline/events/{eventId}/rerun:
+    post:
+      tags: [Admin]
+      summary: Queue an AI pipeline rerun for a single event
+      operationId: rerunAiPipelineForEvent
+      parameters:
+        - $ref: '#/components/parameters/EventId'
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserRequest'
+              $ref: '#/components/schemas/AiPipelineRerunRequest'
       responses:
-        '200':
-          description: Updated user profile
+        '202':
+          description: Queued pipeline job
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: '#/components/schemas/AdminPipelineJob'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
-  /users/{userId}:
-    get:
-      tags: [Users]
-      summary: Get public profile of a user
-      operationId: getPublicProfile
-      parameters:
-        - $ref: '#/components/parameters/UserId'
-      responses:
-        '200':
-          description: Public profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse_PublicProfile'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /users/{userId}/follow:
+  /api/v1/admin/ai-pipeline/backfill:
     post:
-      tags: [Users]
-      summary: Follow a user
-      operationId: followUser
-      parameters:
-        - $ref: '#/components/parameters/UserId'
+      tags: [Admin]
+      summary: Queue an embedding backfill job
+      operationId: createEmbeddingBackfillJob
       responses:
-        '201':
-          description: Follow created
+        '202':
+          description: Queued backfill job
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Follow'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: '#/components/schemas/AdminPipelineJob'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
-    delete:
-      tags: [Users]
-      summary: Unfollow a user
-      operationId: unfollowUser
-      parameters:
-        - $ref: '#/components/parameters/UserId'
-      responses:
-        '204':
-          description: Unfollowed
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /users/{userId}/followers:
-    get:
-      tags: [Users]
-      summary: List a user's followers
-      operationId: listFollowers
-      parameters:
-        - $ref: '#/components/parameters/UserId'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Paginated follower list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_PublicProfile'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /users/{userId}/following:
-    get:
-      tags: [Users]
-      summary: List users that a user follows
-      operationId: listFollowing
-      parameters:
-        - $ref: '#/components/parameters/UserId'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Paginated following list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_PublicProfile'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ──────────────────────────────────────────────
-  # Social Feed
-  # ──────────────────────────────────────────────
-  /social/feed:
+  /api/v1/social/feed:
     get:
       tags: [Social]
-      summary: Get events from followed users
+      summary: Get the social feed from followed users
       operationId: getSocialFeed
       parameters:
         - $ref: '#/components/parameters/Limit'
@@ -216,17 +335,64 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse_SocialFeedItem'
+                $ref: '#/components/schemas/PaginatedSocialFeedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  # ──────────────────────────────────────────────
-  # Events
-  # ──────────────────────────────────────────────
-  /events:
+  /api/v1/events/semantic-search:
     get:
       tags: [Events]
-      summary: List events with filters
+      summary: Search events semantically
+      operationId: semanticSearchEvents
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 25
+            default: 10
+      responses:
+        '200':
+          description: Ranked semantic-search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SemanticSearchResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/events:
+    get:
+      tags: [Events]
+      summary: List events
       operationId: listEvents
       parameters:
         - in: query
@@ -241,12 +407,10 @@ paths:
           name: startDate
           schema:
             type: string
-            format: date
         - in: query
           name: endDate
           schema:
             type: string
-            format: date
         - in: query
           name: source
           schema:
@@ -255,12 +419,22 @@ paths:
           name: status
           schema:
             $ref: '#/components/schemas/EventStatus'
-        - $ref: '#/components/parameters/EventUser'
         - in: query
-          name: search
-          description: Full-text search on title and description
+          name: statusMode
+          schema:
+            $ref: '#/components/schemas/EventStatusMode'
+        - in: query
+          name: user
           schema:
             type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: sort
+          schema:
+            $ref: '#/components/schemas/EventSort'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
       responses:
@@ -269,10 +443,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse_Event'
+                $ref: '#/components/schemas/PaginatedEventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       tags: [Events]
       summary: Create an event or gig
@@ -282,23 +457,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateEventRequest'
+              $ref: '#/components/schemas/EventCreateRequest'
       responses:
         '201':
-          description: Event created
+          description: Created event
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Event'
+                $ref: '#/components/schemas/EventResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /events/{eventId}:
+  /api/v1/events/{eventId}:
     get:
       tags: [Events]
-      summary: Get single event with full detail
+      summary: Get a single event
       operationId: getEvent
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -308,15 +483,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Event'
+                $ref: '#/components/schemas/EventResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-
     patch:
       tags: [Events]
-      summary: Update event (owner only; forbidden for external events)
+      summary: Update an owned event
       operationId: updateEvent
       parameters:
         - $ref: '#/components/parameters/EventId'
@@ -325,14 +499,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateEventRequest'
+              $ref: '#/components/schemas/EventUpdateRequest'
       responses:
         '200':
-          description: Event updated
+          description: Updated event
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Event'
+                $ref: '#/components/schemas/EventResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -341,16 +515,19 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
     delete:
       tags: [Events]
-      summary: Delete event (owner only; forbidden for external events)
+      summary: Delete an owned event
       operationId: deleteEvent
       parameters:
         - $ref: '#/components/parameters/EventId'
       responses:
-        '204':
+        '200':
           description: Event deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteEventResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -358,18 +535,34 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  # ──────────────────────────────────────────────
-  # Gig Applications
-  # ──────────────────────────────────────────────
-  #needs further functionality to get a specific gig application, and also more functionality for submitting an application to a gig such as adding relevant fields
-  /gigs/{gigId}/applications:
+  /api/v1/gigs/{gigId}/applications:
+    get:
+      tags: [Gigs]
+      summary: List applications for a gig
+      operationId: listGigApplications
+      parameters:
+        - $ref: '#/components/parameters/GigId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated applications visible to the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGigApplicationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     post:
       tags: [Gigs]
       summary: Apply to a gig
-      description: |
-        gigId is an Event ID. The system validates that the event has type = GIG.
-        Returns 400 if the event is not a gig. Returns 403 if the user owns the gig.
-      operationId: createApplication
+      operationId: applyToGig
       parameters:
         - $ref: '#/components/parameters/GigId'
       requestBody:
@@ -377,14 +570,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateApplicationRequest'
+              $ref: '#/components/schemas/GigApplicationRequest'
       responses:
         '201':
-          description: Application created
+          description: Created application
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Application'
+                $ref: '#/components/schemas/GigApplication'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -396,34 +589,11 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-    get:
-      tags: [Gigs]
-      summary: List applications for a gig
-      description: Gig owner sees all applications. Applicant sees only their own.
-      operationId: listApplications
-      parameters:
-        - $ref: '#/components/parameters/GigId'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Paginated application list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_Application'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /gigs/{gigId}/applications/{appId}:
+  /api/v1/gigs/{gigId}/applications/{appId}:
     patch:
       tags: [Gigs]
-      summary: Update application status (gig owner only)
-      operationId: updateApplication
+      summary: Update gig application status
+      operationId: updateGigApplicationStatus
       parameters:
         - $ref: '#/components/parameters/GigId'
         - $ref: '#/components/parameters/AppId'
@@ -432,14 +602,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateApplicationRequest'
+              $ref: '#/components/schemas/GigApplicationStatusRequest'
       responses:
         '200':
-          description: Application updated
+          description: Updated application
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Application'
+                $ref: '#/components/schemas/GigApplication'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -449,24 +619,22 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  # ──────────────────────────────────────────────
-  # Collections
-  # ──────────────────────────────────────────────
-  /collections:
+  /api/v1/collections:
     get:
       tags: [Collections]
-      summary: List authenticated user's collections
+      summary: List the authenticated user's collections
       operationId: listCollections
       responses:
         '200':
-          description: User's collections ordered by updatedAt descending
+          description: Collection summaries ordered by updatedAt descending
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_CollectionArray'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionSummary'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       tags: [Collections]
       summary: Create a collection
@@ -476,41 +644,40 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCollectionRequest'
+              $ref: '#/components/schemas/CollectionCreateRequest'
       responses:
         '201':
-          description: Collection created
+          description: Created collection
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Collection'
+                $ref: '#/components/schemas/Collection'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /collections/{collectionId}:
+  /api/v1/collections/{collectionId}:
     get:
       tags: [Collections]
-      summary: Get collection with items (respects visibility)
+      summary: Get a collection visible to the caller
       operationId: getCollection
       parameters:
         - $ref: '#/components/parameters/CollectionId'
       responses:
         '200':
-          description: Collection with items
+          description: Collection with collection items and expanded events
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_CollectionWithItems'
+                $ref: '#/components/schemas/CollectionWithItems'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-
     patch:
       tags: [Collections]
-      summary: Update collection (owner only)
+      summary: Update an owned collection
       operationId: updateCollection
       parameters:
         - $ref: '#/components/parameters/CollectionId'
@@ -519,14 +686,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCollectionRequest'
+              $ref: '#/components/schemas/CollectionPatchRequest'
       responses:
         '200':
-          description: Collection updated
+          description: Updated collection
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Collection'
+                $ref: '#/components/schemas/Collection'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -535,10 +702,9 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
     delete:
       tags: [Collections]
-      summary: Delete collection and all items (owner only)
+      summary: Delete an owned collection
       operationId: deleteCollection
       parameters:
         - $ref: '#/components/parameters/CollectionId'
@@ -552,30 +718,10 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /collections/{collectionId}/items:
-    get:
-      tags: [Collections]
-      summary: List events in a collection
-      operationId: listCollectionItems
-      parameters:
-        - $ref: '#/components/parameters/CollectionId'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Paginated events in collection
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_Event'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
+  /api/v1/collections/{collectionId}/items:
     post:
       tags: [Collections]
-      summary: Add event to collection
+      summary: Add an event to a collection
       operationId: addCollectionItem
       parameters:
         - $ref: '#/components/parameters/CollectionId'
@@ -584,18 +730,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [eventId]
-              properties:
-                eventId:
-                  type: string
+              $ref: '#/components/schemas/CollectionItemCreateRequest'
       responses:
         '201':
-          description: Event added to collection
+          description: Created collection item
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_CollectionItem'
+                $ref: '#/components/schemas/CollectionItem'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -607,17 +749,17 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /collections/{collectionId}/items/{eventId}:
+  /api/v1/collections/{collectionId}/items/{eventId}:
     delete:
       tags: [Collections]
-      summary: Remove event from collection
+      summary: Remove an event from a collection
       operationId: removeCollectionItem
       parameters:
         - $ref: '#/components/parameters/CollectionId'
         - $ref: '#/components/parameters/EventId'
       responses:
         '204':
-          description: Event removed from collection
+          description: Collection item deleted
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -625,10 +767,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  # ──────────────────────────────────────────────
-  # Interactions
-  # ──────────────────────────────────────────────
-  /interactions:
+  /api/v1/interactions:
     post:
       tags: [Interactions]
       summary: Record a user interaction
@@ -641,11 +780,11 @@ paths:
               $ref: '#/components/schemas/CreateInteractionRequest'
       responses:
         '201':
-          description: Interaction recorded
+          description: Recorded interaction
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse_Interaction'
+                $ref: '#/components/schemas/InteractionRecord'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -653,95 +792,11 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  # ──────────────────────────────────────────────
-  # Recommendations
-  # ──────────────────────────────────────────────
-  /recommendations:
-    get:
-      tags: [Recommendations]
-      summary: Get personalized event/gig feed
-      operationId: getRecommendations
-      parameters:
-        - in: query
-          name: type
-          description: Filter by EVENT or GIG. Omit for blended feed.
-          schema:
-            $ref: '#/components/schemas/EventType'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Personalized feed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_Event'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  # ──────────────────────────────────────────────
-  # Conversations
-  # ──────────────────────────────────────────────
-  /conversations:
-    get:
-      tags: [Conversations]
-      summary: List user's conversations
-      operationId: listConversations
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Conversations ordered by updatedAt descending
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_Conversation'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
+  /api/v1/conversations/{conversationId}/messages:
     post:
       tags: [Conversations]
-      summary: Create a new conversation
-      operationId: createConversation
-      responses:
-        '201':
-          description: Conversation created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse_Conversation'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /conversations/{conversationId}/messages:
-    get:
-      tags: [Conversations]
-      summary: Get message history
-      operationId: listMessages
-      parameters:
-        - $ref: '#/components/parameters/ConversationId'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Messages ordered by createdAt ascending
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_Message'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags: [Conversations]
-      summary: Send a message; returns streamed LLM response
-      description: |
-        Sends a user message and returns the chatbot's response via SSE streaming.
-        The Content-Type of the response is text/event-stream.
-      operationId: sendMessage
+      summary: Send a message to an existing conversation
+      operationId: sendConversationMessage
       parameters:
         - $ref: '#/components/parameters/ConversationId'
       requestBody:
@@ -752,7 +807,7 @@ paths:
               $ref: '#/components/schemas/SendMessageRequest'
       responses:
         '200':
-          description: Streamed SSE response
+          description: Streamed server-sent-event response
           content:
             text/event-stream:
               schema:
@@ -764,14 +819,16 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-# ════════════════════════════════════════════════
-# Components
-# ════════════════════════════════════════════════
 components:
-  # ── Parameters ────────────────────────────────
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   parameters:
     UserId:
-      name: userId
+      name: id
       in: path
       required: true
       schema:
@@ -788,7 +845,7 @@ components:
       name: gigId
       in: path
       required: true
-      description: An Event ID. System validates the event has type = GIG.
+      description: Event ID validated to have `type = GIG`
       schema:
         type: string
 
@@ -806,20 +863,12 @@ components:
       schema:
         type: string
 
-    EventUser:
-      name: user
-      in: query
-      description: Filter events to those created by the specified user ID.
-      schema:
-        type: string
-
     ConversationId:
       name: conversationId
       in: path
       required: true
       schema:
         type: string
-
 
     Limit:
       name: limit
@@ -838,9 +887,81 @@ components:
         minimum: 0
         default: 0
 
-  # ── Schemas ───────────────────────────────────
+    AdminJobsLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 25
+        default: 10
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
   schemas:
-    # ── Enums ──
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: true
+
+    UserRole:
+      type: string
+      enum: [USER, ADMIN]
+
     EventType:
       type: string
       enum: [EVENT, GIG]
@@ -849,13 +970,17 @@ components:
       type: string
       enum: [OSU_API, TICKETMASTER, USER]
 
-    UserRole:
-      type: string
-      enum: [USER, ADMIN]
-
     EventStatus:
       type: string
       enum: [OPEN, IN_PROGRESS, COMPLETED, CANCELLED]
+
+    EventStatusMode:
+      type: string
+      enum: [ACTIVE, OPEN, IN_PROGRESS, COMPLETED, CANCELLED, ALL]
+
+    EventSort:
+      type: string
+      enum: [START_ASC, START_DESC]
 
     AppStatus:
       type: string
@@ -865,10 +990,6 @@ components:
       type: string
       enum: [VIEW, SAVE, CLICK, APPLY, DISMISS]
 
-    MessageRole:
-      type: string
-      enum: [USER, ASSISTANT, SYSTEM]
-
     CollectionVisibility:
       type: string
       enum: [PRIVATE, PUBLIC]
@@ -877,42 +998,23 @@ components:
       type: string
       enum: [FIXED, HOURLY]
 
+    EventPipelineTrigger:
+      type: string
+      enum: [EVENT_CREATE, EVENT_UPDATE, ADMIN_RERUN, EMBEDDING_BACKFILL]
 
-    # ── Value Objects ──
-    Location:
-      type: object
-      required: [name]
-      properties:
-        name:
-          type: string
-          maxLength: 500
-        latitude:
-          type: number
-          format: double
-          minimum: -90
-          maximum: 90
-        longitude:
-          type: number
-          format: double
-          minimum: -180
-          maximum: 180
+    EventPipelineJobStatus:
+      type: string
+      enum: [QUEUED, RUNNING, SUCCEEDED, PARTIAL, FAILED]
 
-    Compensation:
-      type: object
-      required: [amount, type]
-      properties:
-        amount:
-          type: number
-          format: double
-          minimum: 0
-        currency:
-          type: string
-          default: USD
-        type:
-          $ref: '#/components/schemas/CompensationType'
+    EventPipelineRunStatus:
+      type: string
+      enum: [QUEUED, RUNNING, SUCCEEDED, SKIPPED, FAILED]
 
-    # ── Pagination Meta ──
-    PaginationMeta:
+    EventPipelineStage:
+      type: string
+      enum: [TAGGING, EMBEDDING]
+
+    Pagination:
       type: object
       required: [total, limit, offset]
       properties:
@@ -924,10 +1026,36 @@ components:
         offset:
           type: integer
 
-    # ── Entity Schemas ──
-    User:
+    HealthCheck:
       type: object
-      required: [id, clerkId, email, role, interests, followerCount, followingCount, createdAt, updatedAt]
+      required: [status, service, timestamp]
+      properties:
+        status:
+          type: string
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    AuthenticatedUser:
+      type: object
+      required: [id, clerkId, email, role]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    UserProfile:
+      type: object
+      required:
+        [id, clerkId, email, role, interests, followerCount, followingCount, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -940,16 +1068,12 @@ components:
           $ref: '#/components/schemas/UserRole'
         displayName:
           type: string
-          maxLength: 100
           nullable: true
         major:
           type: string
-          maxLength: 100
           nullable: true
         gradYear:
           type: integer
-          minimum: 2000
-          maximum: 2100
           nullable: true
         interests:
           type: array
@@ -957,10 +1081,8 @@ components:
             type: string
         followerCount:
           type: integer
-          minimum: 0
         followingCount:
           type: integer
-          minimum: 0
         createdAt:
           type: string
           format: date-time
@@ -968,9 +1090,128 @@ components:
           type: string
           format: date-time
 
+    EventCreator:
+      type: object
+      required: [id, displayName, email]
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+
+    EventResponse:
+      type: object
+      required:
+        [id, title, description, type, source, tags, locationName, startAt, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        type:
+          $ref: '#/components/schemas/EventType'
+        source:
+          $ref: '#/components/schemas/EventSource'
+        externalId:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        ticketUrl:
+          type: string
+          format: uri
+          nullable: true
+        externalUrl:
+          type: string
+          format: uri
+          nullable: true
+        locationName:
+          type: string
+        locationLatitude:
+          type: number
+          format: double
+          nullable: true
+        locationLongitude:
+          type: number
+          format: double
+          nullable: true
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+          nullable: true
+        compensationAmount:
+          type: number
+          format: double
+          nullable: true
+        compensationCurrency:
+          type: string
+          nullable: true
+        compensationType:
+          allOf:
+            - $ref: '#/components/schemas/CompensationType'
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        creatorId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        creator:
+          allOf:
+            - $ref: '#/components/schemas/EventCreator'
+          nullable: true
+
+    SemanticSearchResult:
+      allOf:
+        - $ref: '#/components/schemas/EventResponse'
+        - type: object
+          required: [similarity]
+          properties:
+            similarity:
+              type: number
+              format: double
+
+    PaginatedEventResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
     PublicProfile:
       type: object
-      required: [id, interests, followerCount, followingCount, isFollowing, createdAt]
+      required:
+        [id, interests, followerCount, followingCount, isFollowing, createdAt, createdEvents]
       properties:
         id:
           type: string
@@ -993,82 +1234,67 @@ components:
           type: integer
         isFollowing:
           type: boolean
-          description: Whether the authenticated user follows this user
-        createdEvents:
-          type: array
-          items:
-            $ref: '#/components/schemas/Event'
-          description: User's OPEN and IN_PROGRESS events
         createdAt:
           type: string
           format: date-time
+        createdEvents:
+          $ref: '#/components/schemas/EmbeddedCreatedEvents'
 
-    Event:
+    EmbeddedCreatedEvents:
       type: object
-      required: [id, title, description, type, source, location, startAt, status, createdAt, updatedAt]
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+        meta:
+          $ref: '#/components/schemas/Pagination'
+
+    FollowProfile:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        major:
+          type: string
+          nullable: true
+        gradYear:
+          type: integer
+          nullable: true
+
+    PaginatedFollowProfileResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowProfile'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    GigSummary:
+      type: object
+      required: [id, title, status, startAt, locationName]
       properties:
         id:
           type: string
         title:
           type: string
-          maxLength: 200
-        description:
+        status:
           type: string
-          maxLength: 5000
-        summary:
-          type: string
-          maxLength: 500
-          nullable: true
-        type:
-          $ref: '#/components/schemas/EventType'
-        source:
-          $ref: '#/components/schemas/EventSource'
-        externalId:
-          type: string
-          nullable: true
-        category:
-          type: string
-          nullable: true
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 20
-        imageUrl:
-          type: string
-          format: uri
-          nullable: true
-        ticketUrl:
-          type: string
-          format: uri
-          nullable: true
-        location:
-          $ref: '#/components/schemas/Location'
         startAt:
           type: string
           format: date-time
-        endAt:
+        locationName:
           type: string
-          format: date-time
-          nullable: true
-        compensation:
-          allOf:
-            - $ref: '#/components/schemas/Compensation'
-          nullable: true
-        status:
-          $ref: '#/components/schemas/EventStatus'
-        creatorId:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
 
-    Application:
+    GigApplication:
       type: object
       required: [id, gigId, applicantId, status, createdAt, updatedAt]
       properties:
@@ -1080,7 +1306,6 @@ components:
           type: string
         message:
           type: string
-          maxLength: 1000
           nullable: true
         status:
           $ref: '#/components/schemas/AppStatus'
@@ -1090,6 +1315,59 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    GigApplicant:
+      type: object
+      required: [id, displayName, email]
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+
+    GigApplicationWithApplicant:
+      allOf:
+        - $ref: '#/components/schemas/GigApplication'
+        - type: object
+          required: [applicant]
+          properties:
+            applicant:
+              $ref: '#/components/schemas/GigApplicant'
+
+    PaginatedGigApplicationResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GigApplicationWithApplicant'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    MyApplication:
+      allOf:
+        - $ref: '#/components/schemas/GigApplication'
+        - type: object
+          required: [gig]
+          properties:
+            gig:
+              $ref: '#/components/schemas/GigSummary'
+
+    PaginatedMyApplicationResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MyApplication'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
 
     Collection:
       type: object
@@ -1101,7 +1379,6 @@ components:
           type: string
         name:
           type: string
-          maxLength: 100
         visibility:
           $ref: '#/components/schemas/CollectionVisibility'
         createdAt:
@@ -1111,15 +1388,21 @@ components:
           type: string
           format: date-time
 
-    CollectionWithItems:
+    CollectionCounts:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: integer
+
+    CollectionSummary:
       allOf:
         - $ref: '#/components/schemas/Collection'
         - type: object
+          required: [_count]
           properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/Event'
+            _count:
+              $ref: '#/components/schemas/CollectionCounts'
 
     CollectionItem:
       type: object
@@ -1135,7 +1418,78 @@ components:
           type: string
           format: date-time
 
-    Interaction:
+    CollectionItemWithEvent:
+      allOf:
+        - $ref: '#/components/schemas/CollectionItem'
+        - type: object
+          required: [event]
+          properties:
+            event:
+              $ref: '#/components/schemas/EventResponse'
+
+    CollectionWithItems:
+      allOf:
+        - $ref: '#/components/schemas/Collection'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/CollectionItemWithEvent'
+
+    SocialFeedEventPreview:
+      type: object
+      required: [id, title, source, type, status]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        source:
+          $ref: '#/components/schemas/EventSource'
+        type:
+          $ref: '#/components/schemas/EventType'
+        status:
+          $ref: '#/components/schemas/EventStatus'
+
+    SocialFeedActor:
+      type: object
+      required: [id, displayName]
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+
+    SocialFeedItem:
+      type: object
+      required: [event, action, actor, actionAt]
+      properties:
+        event:
+          $ref: '#/components/schemas/SocialFeedEventPreview'
+        action:
+          type: string
+          enum: [created, saved]
+        actor:
+          $ref: '#/components/schemas/SocialFeedActor'
+        actionAt:
+          type: string
+          format: date-time
+
+    PaginatedSocialFeedResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialFeedItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    InteractionRecord:
       type: object
       required: [id, userId, eventId, action, createdAt]
       properties:
@@ -1151,245 +1505,20 @@ components:
           type: string
           format: date-time
 
-    Conversation:
-      type: object
-      required: [id, userId, createdAt, updatedAt]
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        title:
-          type: string
-          maxLength: 200
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    Message:
-      type: object
-      required: [id, conversationId, role, content, createdAt]
-      properties:
-        id:
-          type: string
-        conversationId:
-          type: string
-        role:
-          $ref: '#/components/schemas/MessageRole'
-        content:
-          type: string
-          maxLength: 10000
-        createdAt:
-          type: string
-          format: date-time
-
-
-    Follow:
-      type: object
-      required: [id, followerId, followeeId, createdAt]
-      properties:
-        id:
-          type: string
-        followerId:
-          type: string
-        followeeId:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-
-    SocialFeedItem:
-      type: object
-      required: [event, action, actor, actionAt]
-      properties:
-        event:
-          $ref: '#/components/schemas/Event'
-        action:
-          type: string
-          enum: [created, saved]
-        actor:
-          type: object
-          required: [id, displayName]
-          properties:
-            id:
-              type: string
-            displayName:
-              type: string
-              nullable: true
-        actionAt:
-          type: string
-          format: date-time
-
-    # ── Request Schemas ──
-    UpdateUserRequest:
-      type: object
-      minProperties: 1
-      properties:
-        displayName:
-          type: string
-          maxLength: 100
-        major:
-          type: string
-          maxLength: 100
-        gradYear:
-          type: integer
-          minimum: 2000
-          maximum: 2100
-        interests:
-          type: array
-          items:
-            type: string
-      additionalProperties: false
-
-    CreateEventRequest:
-      type: object
-      required: [title, description, type, location, startAt]
-      properties:
-        title:
-          type: string
-          maxLength: 200
-        description:
-          type: string
-          maxLength: 5000
-        type:
-          $ref: '#/components/schemas/EventType'
-        location:
-          $ref: '#/components/schemas/Location'
-        startAt:
-          type: string
-          format: date-time
-        endAt:
-          type: string
-          format: date-time
-        compensation:
-          $ref: '#/components/schemas/Compensation'
-        category:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 20
-        imageUrl:
-          type: string
-          format: uri
-      additionalProperties: false
-
-    UpdateEventRequest:
-      type: object
-      minProperties: 1
-      properties:
-        title:
-          type: string
-          maxLength: 200
-        description:
-          type: string
-          maxLength: 5000
-        location:
-          $ref: '#/components/schemas/Location'
-        startAt:
-          type: string
-          format: date-time
-        endAt:
-          type: string
-          format: date-time
-        compensation:
-          $ref: '#/components/schemas/Compensation'
-        category:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-        imageUrl:
-          type: string
-          format: uri
-        status:
-          $ref: '#/components/schemas/EventStatus'
-      additionalProperties: false
-
-    CreateApplicationRequest:
-      type: object
-      properties:
-        message:
-          type: string
-          maxLength: 1000
-      additionalProperties: false
-
-    UpdateApplicationRequest:
-      type: object
-      required: [status]
-      properties:
-        status:
-          type: string
-          enum: [ACCEPTED, REJECTED]
-      additionalProperties: false
-
-    CreateCollectionRequest:
-      type: object
-      required: [name]
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        visibility:
-          $ref: '#/components/schemas/CollectionVisibility'
-      additionalProperties: false
-
-    UpdateCollectionRequest:
-      type: object
-      minProperties: 1
-      properties:
-        name:
-          type: string
-          maxLength: 100
-        visibility:
-          $ref: '#/components/schemas/CollectionVisibility'
-      additionalProperties: false
-
-    CreateInteractionRequest:
-      type: object
-      required: [eventId, action]
-      properties:
-        eventId:
-          type: string
-        action:
-          $ref: '#/components/schemas/InteractionType'
-      additionalProperties: false
-
-    SendMessageRequest:
-      type: object
-      required: [content]
-      properties:
-        content:
-          type: string
-          maxLength: 10000
-      additionalProperties: false
-
     ExternalSyncSourceSummary:
       type: object
       required: [fetched, created, updated, skipped, completed]
       properties:
         fetched:
           type: integer
-          minimum: 0
         created:
           type: integer
-          minimum: 0
         updated:
           type: integer
-          minimum: 0
         skipped:
           type: integer
-          minimum: 0
         completed:
           type: integer
-          minimum: 0
 
     ExternalSyncSummary:
       type: object
@@ -1410,193 +1539,269 @@ components:
             ticketmaster:
               $ref: '#/components/schemas/ExternalSyncSourceSummary'
 
-    # ── Response Shapes ──
-    SuccessResponse_User:
-      allOf:
-        - $ref: '#/components/schemas/User'
-
-    SuccessResponse_PublicProfile:
-      allOf:
-        - $ref: '#/components/schemas/PublicProfile'
-
-    SuccessResponse_ExternalSyncSummary:
-      allOf:
-        - $ref: '#/components/schemas/ExternalSyncSummary'
-
-    SuccessResponse_Event:
-      allOf:
-        - $ref: '#/components/schemas/Event'
-
-    SuccessResponse_Application:
-      allOf:
-        - $ref: '#/components/schemas/Application'
-
-    SuccessResponse_Collection:
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-
-    SuccessResponse_CollectionWithItems:
-      allOf:
-        - $ref: '#/components/schemas/CollectionWithItems'
-
-    SuccessResponse_CollectionArray:
-      type: array
-      items:
-        $ref: '#/components/schemas/Collection'
-
-    SuccessResponse_CollectionItem:
-      allOf:
-        - $ref: '#/components/schemas/CollectionItem'
-
-    SuccessResponse_Interaction:
-      allOf:
-        - $ref: '#/components/schemas/Interaction'
-
-    SuccessResponse_Conversation:
-      allOf:
-        - $ref: '#/components/schemas/Conversation'
-
-    SuccessResponse_Follow:
-      allOf:
-        - $ref: '#/components/schemas/Follow'
-
-
-    PaginatedResponse_Event:
+    AdminPipelineEventRef:
       type: object
-      required: [items, meta]
+      required: [id, title]
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Event'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
-
-    PaginatedResponse_Application:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Application'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
-
-    PaginatedResponse_PublicProfile:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/PublicProfile'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
-
-    PaginatedResponse_SocialFeedItem:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/SocialFeedItem'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
-
-    PaginatedResponse_Conversation:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Conversation'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
-
-    PaginatedResponse_Message:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Message'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
-
-
-    # ── Error (RFC 7807 Problem Details) ──
-    ErrorResponse:
-      type: object
-      required: [type, title, status, detail]
-      properties:
-        type:
+        id:
           type: string
-          format: uri
         title:
           type: string
+
+    AdminPipelineRun:
+      type: object
+      required: [id, eventId, stage, status]
+      properties:
+        id:
+          type: string
+        eventId:
+          type: string
+        stage:
+          $ref: '#/components/schemas/EventPipelineStage'
         status:
+          $ref: '#/components/schemas/EventPipelineRunStatus'
+        textHash:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        event:
+          allOf:
+            - $ref: '#/components/schemas/AdminPipelineEventRef'
+          nullable: true
+
+    AdminPipelineJob:
+      type: object
+      required: [id, trigger, status, stages, runs]
+      properties:
+        id:
+          type: string
+        trigger:
+          $ref: '#/components/schemas/EventPipelineTrigger'
+        status:
+          $ref: '#/components/schemas/EventPipelineJobStatus'
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventPipelineStage'
+        error:
+          type: string
+          nullable: true
+        requestedByUserId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminPipelineRun'
+
+    LocationInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+      additionalProperties: false
+
+    CompensationInput:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: double
+          nullable: true
+        currency:
+          type: string
+        type:
+          allOf:
+            - $ref: '#/components/schemas/CompensationType'
+          nullable: true
+      additionalProperties: false
+
+    UserPatchRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        major:
+          type: string
+        gradYear:
           type: integer
-          minimum: 100
-          maximum: 599
-        detail:
+        interests:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+
+    EventCreateRequest:
+      type: object
+      required: [title, description, type, location, startAt]
+      properties:
+        title:
           type: string
-        instance:
+        description:
           type: string
-          format: uri-reference
-      additionalProperties: true
+        type:
+          $ref: '#/components/schemas/EventType'
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        location:
+          $ref: '#/components/schemas/LocationInput'
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+          nullable: true
+        compensation:
+          allOf:
+            - $ref: '#/components/schemas/CompensationInput'
+          nullable: true
+      additionalProperties: false
 
-  # ── Responses ─────────────────────────────────
-  responses:
-    BadRequest:
-      description: Invalid request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    EventUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+          nullable: true
+        location:
+          $ref: '#/components/schemas/LocationInput'
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        compensation:
+          $ref: '#/components/schemas/CompensationInput'
+      additionalProperties: false
 
-    Unauthorized:
-      description: Missing or invalid JWT
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    GigApplicationRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          nullable: true
+      additionalProperties: false
 
-    Forbidden:
-      description: Not allowed to perform this action
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    GigApplicationStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ACCEPTED, REJECTED]
+      additionalProperties: false
 
-    NotFound:
-      description: Resource not found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    CollectionCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/CollectionVisibility'
+      additionalProperties: false
 
-    Conflict:
-      description: Duplicate resource
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    CollectionPatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/CollectionVisibility'
+      additionalProperties: false
 
-    InternalError:
-      description: Unexpected server error
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    CollectionItemCreateRequest:
+      type: object
+      required: [eventId]
+      properties:
+        eventId:
+          type: string
+      additionalProperties: false
 
-  # ── Security ──────────────────────────────────
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Clerk-issued JWT. Restricted to @osu.edu and @buckeyemail.osu.edu accounts.
+    CreateInteractionRequest:
+      type: object
+      required: [eventId, action]
+      properties:
+        eventId:
+          type: string
+        action:
+          $ref: '#/components/schemas/InteractionType'
+      additionalProperties: false
+
+    SendMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+      additionalProperties: false
+
+    AiPipelineRerunRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [EMBEDDING, FULL_PIPELINE]
+      additionalProperties: false
+
+    DeleteEventResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string

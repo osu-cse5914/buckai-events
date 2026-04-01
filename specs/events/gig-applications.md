@@ -32,9 +32,24 @@ Applying creates an Interaction with action `APPLY`.
 
 The gig owner can list all applications for their gig. Each application shows the applicant's profile, message, and status.
 
+Applicants can also view `GET /gigs/:gigId/applications`, but only see their
+own application for that gig. A user who neither owns the gig nor applied to it
+receives 403.
+
+### Current User Application History
+
+`GET /users/me/applications` returns the authenticated user's applications
+across gigs, ordered by newest first. Each item includes the application plus a
+compact gig summary.
+
 ### Accepting / Rejecting
 
 The gig owner can accept or reject any PENDING application. Accepting one application does not affect other applications — the owner can accept multiple applicants. The gig remains OPEN until the owner manually changes its status.
+
+### Availability
+
+Applications are accepted only while a gig is `OPEN`. Requests against gigs in
+`IN_PROGRESS`, `COMPLETED`, or `CANCELLED` return 400.
 
 ## Scenarios
 
@@ -116,7 +131,23 @@ THEN the API responds with 400 Bad Request
 AND the application status remains ACCEPTED
 ```
 
+### S-APP-10: Current user lists their applications
+
+```
+GIVEN the authenticated user has applied to multiple gigs
+WHEN the client sends GET /users/me/applications
+THEN the response contains the user's applications ordered by createdAt descending
+AND each item includes a gig summary with id, title, status, startAt, and locationName
+```
+
+### S-APP-11: Cannot apply to a non-open gig
+
+```
+GIVEN gig G has status IN_PROGRESS or COMPLETED
+WHEN user B sends POST /gigs/G/applications
+THEN the API responds with 400 Bad Request
+```
+
 ## Test Cases
 
-See [`test-cases/events/gig-applications.md`](../../test-cases/events/gig-applications.md) for the full test case registry (TC-APP-001 through TC-APP-012), including automated API tests and manual UI cases for the apply, manage, and review flows.
-
+See [`test-cases/events/gig-applications.md`](../../test-cases/events/gig-applications.md) for the full test case registry (TC-APP-001 through TC-APP-018), including automated API tests and manual UI cases for the apply, manage, and review flows.

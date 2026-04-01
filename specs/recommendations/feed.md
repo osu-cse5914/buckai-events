@@ -1,10 +1,12 @@
 # Recommendation Feed
 
+**Status**: Planned. The shipped API does not currently mount `GET /recommendations`.
+
 ## Overview
 
 The recommendation feed is the primary discovery surface. It presents a blended list of events and gigs ranked by the recommendation model (currently interim heuristic ranking — see [model.md](../recommendations/model.md)). Users can filter by type.
 
-## Endpoint
+## Planned Endpoint
 
 `GET /recommendations` returns the personalized feed.
 

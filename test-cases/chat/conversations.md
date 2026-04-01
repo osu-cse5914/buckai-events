@@ -2,6 +2,8 @@
 
 Spec: [`conversations`](../../specs/chat/conversations.md)
 
+Status: Planned/partial. The current shipped backend only exposes `POST /conversations/:id/messages`; the create/list/history cases below remain future-facing and are not active regression coverage yet.
+
 ---
 
 ## TC-CONV-001: Create a conversation

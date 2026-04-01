@@ -1,5 +1,7 @@
 # Conversations
 
+**Status**: Partial. The shipped backend currently mounts only `POST /conversations/:id/messages`. Conversation create/list/history endpoints and a dedicated chat UI are not mounted today; the full conversation-management surface below remains planned.
+
 ## Overview
 
 Conversations persist the chatbot's message history. Each user can have multiple conversations. Messages are stored with their role (USER, ASSISTANT, SYSTEM) and loaded as context for the LLM.

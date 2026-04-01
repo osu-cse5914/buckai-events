@@ -123,7 +123,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 - **Phase introduced**: 5
 - **Regression**: Always
 - **Given**: User A owns conversation C
-- **When**: User B sends `GET /conversations/C/messages`
+- **When**: User B sends `POST /conversations/C/messages`
 - **Then**: The API responds with 404 Not Found
 
 ## TC-AUTHZ-013: Non-admin cannot trigger manual external sync

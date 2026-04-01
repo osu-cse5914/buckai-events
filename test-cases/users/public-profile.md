@@ -32,7 +32,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 - **Regression**: Always
 - **Given**: User B created 3 events (2 OPEN, 1 CANCELLED)
 - **When**: User A sends `GET /api/v1/users/B`
-- **Then**: The response includes only the 2 OPEN events
+- **Then**: The response includes only the 2 active events in `createdEvents.items`
 
 ## TC-PUB-004: isFollowing is true
 
@@ -66,7 +66,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 ## TC-PUB-008: Non-numeric pagination params return 400
 
-- **Spec scenario**: —
+- **Spec scenario**: S-PUB-7
 - **Type**: Automated
 - **Phase introduced**: 1
 - **Regression**: Always
