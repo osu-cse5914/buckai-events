@@ -344,3 +344,159 @@ describe("[phase:4] [regression:always] GET /api/v1/recommendations", () => {
     expect(body.meta.rankingMode).toBe("POPULARITY_FALLBACK");
   });
 });
+
+describe("[phase:6] [regression:always] Recommendation section endpoints", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+    vi.mocked(getAuth).mockReturnValue({ userId: CURRENT_USER.clerkId } as never);
+    vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(CURRENT_USER as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.interaction.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.interaction.count).mockResolvedValue(1 as never);
+  });
+
+  it("TC-FEED-007: orders the popular section by popularity then start time", async () => {
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
+      [
+        makeEvent({ id: "evt_most_popular_later" }, 30),
+        makeEvent(
+          {
+            id: "evt_most_popular_earlier",
+            startAt: new Date("2099-04-01T12:00:00Z"),
+          },
+          30,
+        ),
+        makeEvent({ id: "evt_less_popular" }, 5),
+      ] as never,
+    );
+
+    const res = await app.request(makeAuthRequest("/api/v1/recommendations/popular"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      items: Array<{ id: string }>;
+      meta: { total: number; limit: number; offset: number };
+    };
+    expect(body.items.map((item) => item.id)).toEqual([
+      "evt_most_popular_earlier",
+      "evt_most_popular_later",
+      "evt_less_popular",
+    ]);
+    expect(body.meta).toMatchObject({
+      total: 3,
+      limit: 20,
+      offset: 0,
+    });
+  });
+
+  it("TC-FEED-008: orders the upcoming section by start time then popularity", async () => {
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
+      [
+        makeEvent({ id: "evt_later_more_popular" }, 20),
+        makeEvent(
+          {
+            id: "evt_soon_less_popular",
+            startAt: new Date("2099-04-01T12:00:00Z"),
+          },
+          5,
+        ),
+        makeEvent(
+          {
+            id: "evt_same_time_more_popular",
+            startAt: new Date("2099-04-01T12:00:00Z"),
+          },
+          15,
+        ),
+      ] as never,
+    );
+
+    const res = await app.request(makeAuthRequest("/api/v1/recommendations/upcoming"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: Array<{ id: string }> };
+    expect(body.items.map((item) => item.id)).toEqual([
+      "evt_same_time_more_popular",
+      "evt_soon_less_popular",
+      "evt_later_more_popular",
+    ]);
+  });
+
+  it("TC-FEED-009: popular and upcoming respect type filters", async () => {
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
+      [
+        makeEvent({ id: "evt_event", type: "EVENT", category: "music" }, 4),
+        makeEvent({ id: "evt_gig", type: "GIG", category: "music" }, 8),
+      ] as never,
+    );
+
+    const popularRes = await app.request(
+      makeAuthRequest("/api/v1/recommendations/popular?type=EVENT"),
+    );
+    const upcomingRes = await app.request(
+      makeAuthRequest("/api/v1/recommendations/upcoming?type=GIG"),
+    );
+
+    expect(popularRes.status).toBe(200);
+    expect(upcomingRes.status).toBe(200);
+
+    const popularBody = (await popularRes.json()) as {
+      items: Array<{ type: string }>;
+    };
+    const upcomingBody = (await upcomingRes.json()) as {
+      items: Array<{ type: string }>;
+    };
+
+    expect(popularBody.items.every((item) => item.type === "EVENT")).toBe(true);
+    expect(upcomingBody.items.every((item) => item.type === "GIG")).toBe(true);
+  });
+
+  it("TC-FEED-010: popular and upcoming exclude dismissed and ineligible items", async () => {
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
+      [
+        makeEvent({ id: "evt_keep", category: "music" }, 6),
+        makeEvent({ id: "evt_dismissed", category: "music" }, 10),
+        makeEvent(
+          {
+            id: "evt_past",
+            startAt: new Date("2098-03-01T12:00:00Z"),
+          },
+          50,
+        ),
+        makeEvent(
+          {
+            id: "evt_cancelled",
+            status: "CANCELLED",
+          },
+          50,
+        ),
+      ] as never,
+    );
+    vi.mocked(mockPrisma.interaction.findMany).mockResolvedValue(
+      [{ eventId: "evt_dismissed" }] as never,
+    );
+
+    const popularRes = await app.request(
+      makeAuthRequest("/api/v1/recommendations/popular"),
+    );
+    const upcomingRes = await app.request(
+      makeAuthRequest("/api/v1/recommendations/upcoming"),
+    );
+
+    expect(popularRes.status).toBe(200);
+    expect(upcomingRes.status).toBe(200);
+
+    const popularBody = (await popularRes.json()) as {
+      items: Array<{ id: string }>;
+    };
+    const upcomingBody = (await upcomingRes.json()) as {
+      items: Array<{ id: string }>;
+    };
+
+    expect(popularBody.items.map((item) => item.id)).toEqual(["evt_keep"]);
+    expect(upcomingBody.items.map((item) => item.id)).toEqual(["evt_keep"]);
+  });
+});

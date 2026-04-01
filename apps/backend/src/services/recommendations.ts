@@ -23,6 +23,23 @@ type RecommendationCandidate = Prisma.EventGetPayload<{
   include: typeof RECOMMENDATION_EVENT_INCLUDE;
 }>;
 
+type RecommendationListResult = {
+  items: Array<ReturnType<typeof stripInteractionCounts>>;
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+type RecommendationContext = {
+  user: {
+    id: string;
+    interests: string[];
+  };
+  dismissedEventIds: Set<string>;
+  userInteractionCount: number;
+  candidates: RecommendationCandidate[];
+};
+
 function isEligibleCandidate(
   candidate: RecommendationCandidate,
   {
@@ -76,10 +93,44 @@ function compareRecommendationCandidates(
   return left.id.localeCompare(right.id);
 }
 
-export async function listRecommendations(
+function comparePopularRecommendationCandidates(
+  left: RecommendationCandidate,
+  right: RecommendationCandidate,
+) {
+  const popularityDiff = right.interactions.length - left.interactions.length;
+  if (popularityDiff !== 0) {
+    return popularityDiff;
+  }
+
+  const recencyDiff = left.startAt.getTime() - right.startAt.getTime();
+  if (recencyDiff !== 0) {
+    return recencyDiff;
+  }
+
+  return left.id.localeCompare(right.id);
+}
+
+function compareUpcomingRecommendationCandidates(
+  left: RecommendationCandidate,
+  right: RecommendationCandidate,
+) {
+  const recencyDiff = left.startAt.getTime() - right.startAt.getTime();
+  if (recencyDiff !== 0) {
+    return recencyDiff;
+  }
+
+  const popularityDiff = right.interactions.length - left.interactions.length;
+  if (popularityDiff !== 0) {
+    return popularityDiff;
+  }
+
+  return left.id.localeCompare(right.id);
+}
+
+async function loadRecommendationContext(
   prisma: PrismaClient,
   input: RecommendationListInput,
-) {
+): Promise<RecommendationContext> {
   const now = input.now ?? new Date();
   const [user, dismissedInteractions, userInteractionCount, rawCandidates] =
     await Promise.all([
@@ -118,30 +169,94 @@ export async function listRecommendations(
     throw new NotFoundError("User not found");
   }
 
-  const dismissedEventIds = new Set(
-    dismissedInteractions.map((interaction) => interaction.eventId),
-  );
-  const rankedCandidates = rawCandidates
+  return {
+    user,
+    dismissedEventIds: new Set(
+      dismissedInteractions.map((interaction) => interaction.eventId),
+    ),
+    userInteractionCount,
+    candidates: rawCandidates,
+  };
+}
+
+function rankRecommendationCandidates(
+  candidates: RecommendationCandidate[],
+  input: RecommendationListInput,
+  dismissedEventIds: Set<string>,
+  compare: (left: RecommendationCandidate, right: RecommendationCandidate) => number,
+) {
+  const now = input.now ?? new Date();
+
+  return candidates
     .filter((candidate) => isEligibleCandidate(candidate, { now, type: input.type }))
     .filter((candidate) => !dismissedEventIds.has(candidate.id))
-    .sort((left, right) =>
-      compareRecommendationCandidates(left, right, user.interests),
-    );
+    .sort(compare);
+}
 
-  const pagedCandidates = rankedCandidates.slice(
-    input.offset,
-    input.offset + input.limit,
+function paginateRecommendationCandidates(
+  candidates: RecommendationCandidate[],
+  input: RecommendationListInput,
+): RecommendationListResult {
+  const pagedCandidates = candidates.slice(input.offset, input.offset + input.limit);
+
+  return {
+    items: pagedCandidates.map(stripInteractionCounts),
+    total: candidates.length,
+    limit: input.limit,
+    offset: input.offset,
+  };
+}
+
+export async function listRecommendations(
+  prisma: PrismaClient,
+  input: RecommendationListInput,
+) {
+  const context = await loadRecommendationContext(prisma, input);
+  const rankedCandidates = rankRecommendationCandidates(
+    context.candidates,
+    input,
+    context.dismissedEventIds,
+    (left, right) =>
+      compareRecommendationCandidates(left, right, context.user.interests),
   );
+  const result = paginateRecommendationCandidates(rankedCandidates, input);
   const rankingMode: RecommendationRankingMode =
-    user.interests.length === 0 && userInteractionCount === 0
+    context.user.interests.length === 0 && context.userInteractionCount === 0
       ? "POPULARITY_FALLBACK"
       : "PERSONALIZED";
 
   return {
-    items: pagedCandidates.map(stripInteractionCounts),
-    total: rankedCandidates.length,
-    limit: input.limit,
-    offset: input.offset,
+    ...result,
     rankingMode,
   };
+}
+
+export async function listPopularRecommendations(
+  prisma: PrismaClient,
+  input: RecommendationListInput,
+) {
+  const context = await loadRecommendationContext(prisma, input);
+  const rankedCandidates = rankRecommendationCandidates(
+    context.candidates,
+    input,
+    context.dismissedEventIds,
+    comparePopularRecommendationCandidates,
+  );
+
+  return paginateRecommendationCandidates(rankedCandidates, input);
+}
+
+export async function listUpcomingRecommendations(
+  prisma: PrismaClient,
+  input: RecommendationListInput,
+) {
+  const context = await loadRecommendationContext(prisma, input);
+  const rankedCandidates = rankRecommendationCandidates(
+    context.candidates,
+    input,
+    context.dismissedEventIds,
+    compareUpcomingRecommendationCandidates,
+  );
+
+  return paginateRecommendationCandidates(rankedCandidates, input);
 }

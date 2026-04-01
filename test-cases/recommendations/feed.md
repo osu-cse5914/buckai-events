@@ -61,7 +61,99 @@ Spec: [`feed`](../../specs/recommendations/feed.md)
 - **Steps**:
   1. Sign in as a user with interests set
   2. Navigate to the recommendations/home page
-  3. Verify events appear in a personalized order
-  4. Toggle between "All", "Events", and "Gigs" filters
-  5. Scroll to trigger pagination
-- **Expected**: Feed renders correctly with filtering and pagination; personalized order is visible
+  3. Verify the page renders the `Recommended`, `Popular`, and `Upcoming` sections
+  4. Verify the `Recommended` section appears in a personalized order
+  5. Toggle between "All", "Events", and "Gigs" filters
+  6. Verify all three sections update with the active filter
+  7. Use `Load more` in the `Recommended` section only
+- **Expected**: The sectioned Featured page renders correctly, filtering applies across all sections, and only the `Recommended` section paginates
+
+## TC-FEED-007: Popular recommendations endpoint ordering
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A requests `GET /api/v1/recommendations/popular`
+- **Then**: Eligible items are ordered by popularity, then nearer upcoming time, then stable id
+
+## TC-FEED-008: Upcoming recommendations endpoint ordering
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A requests `GET /api/v1/recommendations/upcoming`
+- **Then**: Eligible items are ordered by soonest upcoming time, then popularity, then stable id
+
+## TC-FEED-009: Section endpoints respect type filters
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A requests the `popular` or `upcoming` section with `type=EVENT` or `type=GIG`
+- **Then**: The section response contains only items of the requested type
+
+## TC-FEED-010: Section endpoints exclude dismissed and ineligible items
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A has dismissed an item and some items are past or closed
+- **Then**: `popular` and `upcoming` exclude dismissed, past, and non-open/non-in-progress items
+
+## TC-FEED-011: Featured page renders the sectioned layout
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The recommendations section queries succeed
+- **Then**: The page renders `Recommended`, `Popular`, and `Upcoming` sections with the shared Featured framing
+
+## TC-FEED-012: Featured filter updates all sections
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user changes the Featured type filter
+- **Then**: `Recommended`, `Popular`, and `Upcoming` refetch using the active type
+
+## TC-FEED-013: Featured fallback banner is scoped to recommendations
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The personalized section reports `POPULARITY_FALLBACK`
+- **Then**: The page shows the fallback banner without requiring `Popular` or `Upcoming` metadata
+
+## TC-FEED-014: Featured load more paginates only recommended results
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The `Recommended` section has another page
+- **Then**: `Load more` appends only `Recommended` items and does not page `Popular` or `Upcoming`
+
+## TC-FEED-015: Featured sections handle partial empty and error states
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: One section errors or returns no items while others succeed
+- **Then**: The page keeps rendering the remaining sections and shows a safe section-level empty or error state

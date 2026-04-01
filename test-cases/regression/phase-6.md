@@ -14,6 +14,15 @@ All automated cases from Phase 0 through Phase 5, plus:
 
 - **TC-API-001**: Unknown API route returns RFC 7807 not-found response
 - **TC-API-002**: Uncaught handler error returns RFC 7807 internal-error response
+- **TC-FEED-007**: Popular recommendations endpoint ordering
+- **TC-FEED-008**: Upcoming recommendations endpoint ordering
+- **TC-FEED-009**: Section endpoints respect type filters
+- **TC-FEED-010**: Section endpoints exclude dismissed and ineligible items
+- **TC-FEED-011**: Featured page renders the sectioned layout
+- **TC-FEED-012**: Featured filter updates all sections
+- **TC-FEED-013**: Featured fallback banner is scoped to recommendations
+- **TC-FEED-014**: Featured load more paginates only recommended results
+- **TC-FEED-015**: Featured sections handle partial empty and error states
 
 ## Manual checklist — Full system
 
