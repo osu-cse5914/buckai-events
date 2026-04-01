@@ -25,3 +25,14 @@ Spec: [`endpoints`](../../specs/api/endpoints.md)
 - **Given**: A route handler throws an unhandled exception
 - **When**: The request is processed by the Hono app
 - **Then**: The API responds with 500 Internal Server Error using RFC 7807 Problem Details and `application/problem+json`
+
+## TC-API-003: Versioned API routes can mount under a parent prefix
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/app-routing.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The versioned API router is mounted under a parent path
+- **When**: A request targets a versioned endpoint through that parent mount
+- **Then**: The request reaches the versioned route handlers without the child routers hardcoding `/api/v1`
