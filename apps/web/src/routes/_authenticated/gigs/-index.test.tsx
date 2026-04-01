@@ -1,20 +1,26 @@
 import { useState } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BrowsePage } from "@/components/events/browse-page";
+import { PAGE_SIZE } from "@/lib/queries";
 
 const state = vi.hoisted(() => {
   const mockGet = vi.fn();
+  const mockEventDetailGet = vi.fn();
   return {
     mockGet,
+    mockEventDetailGet,
     loadEventsRouteDataMock: vi.fn(),
     mockApiClient: {
       api: {
         v1: {
           events: {
             $get: (...args: unknown[]) => mockGet(...args),
+            ":id": {
+              $get: (...args: unknown[]) => mockEventDetailGet(...args),
+            },
           },
         },
       },
@@ -83,6 +89,7 @@ vi.mock("@tanstack/react-router", () => ({
     to: string;
     params?: Record<string, string>;
     className?: string;
+    onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
   }) => (
     <a href={params?.eventId ? `/events/${params.eventId}` : to} {...props}>
       {children}
@@ -136,49 +143,73 @@ function makeGig(overrides: Record<string, unknown> = {}) {
 function makeResponse(
   gigs: ReturnType<typeof makeGig>[] = [],
   total?: number,
+  offset = 0,
+  limit = PAGE_SIZE,
 ) {
   return {
     ok: true,
     json: () =>
       Promise.resolve({
         data: gigs,
-        pagination: { total: total ?? gigs.length, limit: 12, offset: 0 },
+        pagination: { total: total ?? gigs.length, limit, offset },
       }),
   };
 }
 
+function okJson(data: unknown) {
+  return {
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve(data),
+  };
+}
+
+function stubDesktopMedia() {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query === "(min-width: 1024px)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+}
+
 function GigsHarness({
   initialFilters = DEFAULT_FILTERS,
-  initialPage = 0,
+  initialSelectedEventId,
 }: {
   initialFilters?: typeof DEFAULT_FILTERS;
-  initialPage?: number;
+  initialSelectedEventId?: string;
 }) {
   const [filters, setFilters] = useState(initialFilters);
-  const [page, setPage] = useState(initialPage);
+  const [selectedEventId, setSelectedEventId] = useState(initialSelectedEventId);
 
   return (
     <BrowsePage
       browseType="GIG"
       title="Gigs"
       filters={filters}
-      page={page}
+      selectedEventId={selectedEventId}
       onFilterChange={(key, value) => {
         setFilters((current) => ({ ...current, [key]: value }));
-        setPage(0);
+        setSelectedEventId(undefined);
       }}
       onClearFilters={() => {
         setFilters(DEFAULT_FILTERS);
-        setPage(0);
+        setSelectedEventId(undefined);
       }}
-      onPageChange={setPage}
+      onClearSelectedEvent={() => setSelectedEventId(undefined)}
+      onSelectEvent={setSelectedEventId}
     />
   );
 }
 
 async function renderGigsPage(options?: {
   initialFilters?: typeof DEFAULT_FILTERS;
-  initialPage?: number;
+  initialSelectedEventId?: string;
 }) {
   const queryClient = createQueryClient();
   return render(
@@ -193,11 +224,12 @@ beforeEach(() => {
   capturedValidateSearch = null;
   capturedLoaderDeps = null;
   capturedLoader = null;
+  vi.unstubAllGlobals();
   vi.resetModules();
 });
 
 describe("[phase:6] [regression:always] GigsRoute", () => {
-  it("validates gigs URL state and primes loader data with fixed GIG type", async () => {
+  it("TC-PAGES-017: validates gigs URL state and primes the initial browse batch with fixed GIG type", async () => {
     await import("./index");
 
     if (!capturedValidateSearch || !capturedLoaderDeps || !capturedLoader) {
@@ -209,6 +241,7 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
       status: "OPEN",
       source: "USER",
       category: " tutoring ",
+      selected: " gig_1 ",
       page: "3",
     });
     const deps = capturedLoaderDeps({ search });
@@ -222,7 +255,7 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
       status: "OPEN",
       source: "USER",
       category: "tutoring",
-      page: 3,
+      selected: "gig_1",
     });
     expect(state.loadEventsRouteDataMock).toHaveBeenCalledWith({
       api: mockApiClient,
@@ -233,7 +266,9 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
         source: "USER",
         category: "tutoring",
       },
-      page: 2,
+      selectedEventId: "gig_1",
+      pageSize: PAGE_SIZE,
+      page: 0,
     });
   });
 });
@@ -248,17 +283,17 @@ describe("[phase:1] [regression:always] GigsPage", () => {
     expect(await screen.findByText("No gigs found")).toBeInTheDocument();
   });
 
-  it("renders gig cards without a type badge and keeps compensation", async () => {
+  it("renders gig rows without a type badge and keeps compensation", async () => {
     state.mockGet.mockResolvedValue(
       makeResponse([makeGig({ id: "1", title: "Tutoring" })]),
     );
 
     await renderGigsPage();
 
-    const card = (await screen.findByText("Tutoring")).closest('[data-slot="card"]') as HTMLElement;
-    expect(within(card).queryByText("GIG")).not.toBeInTheDocument();
-    expect(within(card).getByText("Open")).toBeInTheDocument();
-    expect(within(card).getByText("$25/hr")).toBeInTheDocument();
+    expect(await screen.findByText("Tutoring")).toBeInTheDocument();
+    expect(screen.queryByText("GIG")).not.toBeInTheDocument();
+    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getByText("$25/hr")).toBeInTheDocument();
   });
 
   it("passes fixed gig type and source filters to API", async () => {
@@ -277,6 +312,44 @@ describe("[phase:1] [regression:always] GigsPage", () => {
       const lastCall = state.mockGet.mock.calls.at(-1);
       expect(lastCall?.[0].query.type).toBe("GIG");
       expect(lastCall?.[0].query.source).toBe("OSU_API");
+    });
+  });
+});
+
+describe("[phase:6] [regression:always] GigsPage split view", () => {
+  it("TC-EVT-025: selecting a gig on desktop renders its details in the right pane", async () => {
+    stubDesktopMedia();
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeGig({ id: "1", title: "Tutoring" }),
+        makeGig({ id: "2", title: "Stage Crew" }),
+      ]),
+    );
+    state.mockEventDetailGet.mockResolvedValue(
+      okJson(
+        makeGig({
+          id: "1",
+          title: "Tutoring",
+          description: "Bring calculus and linear algebra experience.",
+          summary: "Help with exams.",
+        }),
+      ),
+    );
+
+    await renderGigsPage();
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("link", { name: /Tutoring/i }));
+
+    expect(
+      await screen.findByText("Bring calculus and linear algebra experience."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open full page" })).toHaveAttribute(
+      "href",
+      "/events/1",
+    );
+    expect(state.mockEventDetailGet).toHaveBeenCalledWith({
+      param: { id: "1" },
     });
   });
 });

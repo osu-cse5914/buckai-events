@@ -15,6 +15,7 @@ import {
   EventsPagination,
   useEventsQuery,
 } from "@/components/events/events-browser";
+import { YouSubpageHeader } from "@/components/you/you-subpage-header";
 
 function useCurrentUser() {
   const api = useApiClient();
@@ -44,8 +45,9 @@ export function YouEventsPage() {
   if (isLoadingUser || isLoadingEvents) {
     return (
       <section className="mx-auto max-w-5xl px-6 py-10">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
+            <div className="h-8 w-32 rounded bg-muted" />
             <div className="h-8 w-48 rounded bg-muted" />
             <div className="h-4 w-72 rounded bg-muted" />
           </div>
@@ -72,12 +74,15 @@ export function YouEventsPage() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-10">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Events</h1>
-        <Button asChild>
-          <Link to="/events/new">Create Event</Link>
-        </Button>
-      </div>
+      <YouSubpageHeader
+        title="Your Events"
+        description="Manage the events and gigs you created."
+        action={
+          <Button asChild>
+            <Link to="/events/new">Create Event</Link>
+          </Button>
+        }
+      />
 
       {isError ? (
         <EventsErrorState

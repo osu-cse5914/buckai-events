@@ -1,10 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BrowsePage } from "@/components/events/browse-page";
-import {
-  toOptionalPage,
-  toPageIndex,
-  validateBrowseSearch,
-} from "@/lib/event-route-search";
+import { PAGE_SIZE } from "@/lib/queries";
+import { validateBrowseSearch } from "@/lib/event-route-search";
 import { loadEventsRouteData } from "@/lib/route-loaders";
 
 export const Route = createFileRoute("/_authenticated/gigs/")({
@@ -20,7 +17,9 @@ export const Route = createFileRoute("/_authenticated/gigs/")({
         source: deps.source,
         category: deps.category,
       },
-      page: toPageIndex(deps.page ?? 1),
+      pageSize: PAGE_SIZE,
+      selectedEventId: deps.selected,
+      page: 0,
     }),
   component: GigsRoute,
 });
@@ -38,22 +37,30 @@ function GigsRoute() {
         source: search.source ?? "",
         category: search.category ?? "",
       }}
-      page={toPageIndex(search.page ?? 1)}
+      selectedEventId={search.selected}
       onFilterChange={(key, value) =>
         navigate({
           search: (current) => ({
             ...current,
             [key]: value || undefined,
-            page: undefined,
+            selected: undefined,
           }),
         })
       }
       onClearFilters={() => navigate({ search: {} })}
-      onPageChange={(page) =>
+      onClearSelectedEvent={() =>
         navigate({
           search: (current) => ({
             ...current,
-            page: toOptionalPage(page),
+            selected: undefined,
+          }),
+        })
+      }
+      onSelectEvent={(eventId) =>
+        navigate({
+          search: (current) => ({
+            ...current,
+            selected: eventId,
           }),
         })
       }

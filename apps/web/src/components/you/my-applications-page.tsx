@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { YouSubpageHeader } from "@/components/you/you-subpage-header";
 
 function useMyApplications() {
   const api = useApiClient();
@@ -32,7 +33,8 @@ export function MyApplicationsPage() {
   if (isLoading) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-10">
-        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="mt-4 h-8 w-48" />
         <div className="mt-6 grid gap-4">
           {Array.from({ length: 3 }).map((_, index) => (
             <Card key={index}>
@@ -63,7 +65,10 @@ export function MyApplicationsPage() {
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="text-2xl font-bold tracking-tight">Applications</h1>
+      <YouSubpageHeader
+        title="Applications"
+        description="Track the gigs you have applied to and their latest status."
+      />
 
       {data && data.data.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed p-8 text-center">

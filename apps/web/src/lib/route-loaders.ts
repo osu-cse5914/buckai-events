@@ -56,17 +56,31 @@ export async function loadEventsRouteData({
   queryClient,
   filters,
   page,
+  pageSize,
+  selectedEventId,
   enabled = true,
 }: {
   api: ApiClient;
   queryClient: QueryClient;
   filters: EventListFilters;
   page: number;
+  pageSize?: number;
+  selectedEventId?: string;
   enabled?: boolean;
 }): Promise<EventsResponse | null> {
   if (!enabled) {
     return null;
   }
 
-  return queryClient.ensureQueryData(eventsListQueryOptions(api, filters, page));
+  const data = await queryClient.ensureQueryData(
+    eventsListQueryOptions(api, filters, page, pageSize),
+  );
+
+  if (selectedEventId) {
+    await queryClient.ensureQueryData(
+      eventDetailQueryOptions(api, selectedEventId),
+    );
+  }
+
+  return data;
 }

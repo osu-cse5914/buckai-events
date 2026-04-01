@@ -1,4 +1,4 @@
-import { startTransition } from "react";
+import { startTransition, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,13 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EventDetailSurface } from "@/components/events/event-detail-surface";
 import {
   EventsEmptyState,
   EventsErrorState,
-  EventsGrid,
+  EventsList,
   EventsLoadingGrid,
-  EventsPagination,
-  useEventsQuery,
+  useInfiniteEventsQuery,
 } from "@/components/events/events-browser";
 
 type BrowseFilters = {
@@ -33,90 +33,84 @@ export function BrowsePage({
   browseType,
   title,
   filters = DEFAULT_FILTERS,
-  page = 0,
+  selectedEventId,
   onFilterChange,
   onClearFilters,
-  onPageChange,
+  onClearSelectedEvent,
+  onSelectEvent,
 }: {
   browseType: "EVENT" | "GIG";
   title: string;
   filters?: BrowseFilters;
-  page?: number;
+  selectedEventId?: string;
   onFilterChange: (key: keyof BrowseFilters, value: string) => void;
   onClearFilters: () => void;
-  onPageChange: (page: number) => void;
+  onClearSelectedEvent: () => void;
+  onSelectEvent: (eventId: string) => void;
 }) {
   const itemLabel = browseType === "GIG" ? "gigs" : "events";
-  const { data, isLoading, isError, error } = useEventsQuery(
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteEventsQuery(
     {
       type: browseType,
       status: filters.status || undefined,
       source: filters.source || undefined,
       category: filters.category.trim() || undefined,
     },
-    page,
   );
+  const events = useMemo(
+    () => data?.pages.flatMap((pageData) => pageData.data) ?? [],
+    [data],
+  );
+  const totalCount = data?.pages[0]?.pagination.total ?? 0;
 
   const hasActiveFilters = Object.values(filters).some((value) => value !== "");
+  const hasSelectedEvent = Boolean(
+    events.some((event) => event.id === selectedEventId),
+  );
+
+  useEffect(() => {
+    if (!selectedEventId || isLoading || hasSelectedEvent || !data) {
+      return;
+    }
+
+    onClearSelectedEvent();
+  }, [
+    data,
+    hasSelectedEvent,
+    isLoading,
+    onClearSelectedEvent,
+    selectedEventId,
+  ]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage) {
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries[0]?.isIntersecting || isFetchingNextPage) {
+        return;
+      }
+
+      void fetchNextPage();
+    });
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
+    <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
       <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <Select
-          value={filters.status || "ALL"}
-          onValueChange={(value) =>
-            onFilterChange("status", value === "ALL" ? "" : value)
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All Statuses</SelectItem>
-            <SelectItem value="OPEN">Open</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.source || "ALL"}
-          onValueChange={(value) =>
-            onFilterChange("source", value === "ALL" ? "" : value)
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="All Sources" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All Sources</SelectItem>
-            <SelectItem value="USER">User</SelectItem>
-            <SelectItem value="OSU_API">OSU</SelectItem>
-            <SelectItem value="TICKETMASTER">Ticketmaster</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Input
-          placeholder="Category"
-          value={filters.category}
-          onChange={(event) =>
-            startTransition(() =>
-              onFilterChange("category", event.target.value),
-            )
-          }
-        />
-      </div>
-
-      {hasActiveFilters ? (
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={onClearFilters}>
-            Clear filters
-          </Button>
-        </div>
-      ) : null}
 
       {isLoading ? <EventsLoadingGrid /> : null}
       {isError ? (
@@ -126,24 +120,140 @@ export function BrowsePage({
           }
         />
       ) : null}
-      {data && data.data.length === 0 ? (
-        <EventsEmptyState
-          title={`No ${itemLabel} found`}
-          description={
-            hasActiveFilters
-              ? "Try different filters."
-              : `No ${itemLabel} have been created yet.`
-          }
-        />
-      ) : null}
-      {data && data.data.length > 0 ? (
+      {events.length > 0 || data ? (
         <>
-          <EventsGrid events={data.data} showTypeBadge={false} />
-          <EventsPagination
-            page={page}
-            total={data.pagination.total}
-            onPageChange={onPageChange}
-          />
+          <div className="overflow-hidden border bg-background lg:grid lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
+            <div className="border-b lg:border-r lg:border-b-0">
+              <div className="border-b px-4 py-4 sm:px-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {totalCount} {itemLabel} found
+                    </p>
+                  </div>
+                  {hasActiveFilters ? (
+                    <Button variant="ghost" size="sm" onClick={onClearFilters}>
+                      Clear filters
+                    </Button>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <Select
+                    value={filters.status || "ALL"}
+                    onValueChange={(value) =>
+                      onFilterChange("status", value === "ALL" ? "" : value)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Statuses</SelectItem>
+                      <SelectItem value="OPEN">Open</SelectItem>
+                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                      <SelectItem value="COMPLETED">Completed</SelectItem>
+                      <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={filters.source || "ALL"}
+                    onValueChange={(value) =>
+                      onFilterChange("source", value === "ALL" ? "" : value)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Sources" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Sources</SelectItem>
+                      <SelectItem value="USER">User</SelectItem>
+                      <SelectItem value="OSU_API">OSU</SelectItem>
+                      <SelectItem value="TICKETMASTER">Ticketmaster</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Input
+                  className="mt-3"
+                  placeholder="Category"
+                  value={filters.category}
+                  onChange={(event) =>
+                    startTransition(() =>
+                      onFilterChange("category", event.target.value),
+                    )
+                  }
+                />
+              </div>
+
+              {events.length > 0 ? (
+                <EventsList
+                  events={events}
+                  selectedEventId={selectedEventId}
+                  showTypeBadge={false}
+                  onSelectEvent={onSelectEvent}
+                />
+              ) : (
+                <div className="px-4 py-6 sm:px-5">
+                  <EventsEmptyState
+                    title={`No ${itemLabel} found`}
+                    description={
+                      hasActiveFilters
+                        ? "Try different filters."
+                        : `No ${itemLabel} have been created yet.`
+                    }
+                  />
+                </div>
+              )}
+
+              {hasNextPage ? (
+                <div
+                  ref={loadMoreRef}
+                  className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5"
+                >
+                  {isFetchingNextPage
+                    ? `Loading more ${itemLabel}...`
+                    : "Scroll to load more"}
+                </div>
+              ) : events.length > 0 ? (
+                <div className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5">
+                  End of results
+                </div>
+              ) : null}
+            </div>
+
+            <div className="hidden min-h-full lg:block">
+              {selectedEventId && hasSelectedEvent ? (
+                <div className="lg:sticky lg:top-6">
+                  <EventDetailSurface
+                    eventId={selectedEventId}
+                    mode="panel"
+                    browsePath={browseType === "GIG" ? "/gigs" : "/events"}
+                    browseLabel={title}
+                    onDeleteSuccess={onClearSelectedEvent}
+                  />
+                </div>
+              ) : (
+                <div className="flex min-h-full items-center justify-center px-8 py-12 text-center">
+                  <div>
+                    <p className="text-lg font-medium">
+                      {events.length > 0
+                        ? "Choose a listing"
+                        : `No ${itemLabel} to preview`}
+                    </p>
+                    <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                      {events.length > 0
+                        ? `Select an ${
+                            browseType === "GIG" ? "gig" : "event"
+                          } from the list to inspect its details in this pane.`
+                        : "Adjust filters or create a new listing to populate this view."}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </>
       ) : null}
     </section>

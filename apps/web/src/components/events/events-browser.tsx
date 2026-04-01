@@ -1,6 +1,10 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import {
   CalendarIcon,
   ChevronLeftIcon,
@@ -9,8 +13,10 @@ import {
 } from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import {
+  fetchEventsList,
   eventsListQueryOptions,
   PAGE_SIZE,
+  queryKeys,
   type EventListFilters,
   type EventListItem,
   type EventsResponse,
@@ -32,18 +38,44 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 export function useEventsQuery(
   filters: EventListFilters,
   page: number,
   enabled = true,
+  pageSize = PAGE_SIZE,
 ) {
   const api = useApiClient();
 
   return useQuery<EventsResponse>({
-    ...eventsListQueryOptions(api, filters, page),
+    ...eventsListQueryOptions(api, filters, page, pageSize),
     enabled,
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useInfiniteEventsQuery(
+  filters: EventListFilters,
+  enabled = true,
+  pageSize = PAGE_SIZE,
+) {
+  const api = useApiClient();
+
+  return useInfiniteQuery<EventsResponse>({
+    queryKey: queryKeys.infiniteEventsList(filters, pageSize),
+    enabled,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      fetchEventsList(api, filters, pageParam as number, pageSize),
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce(
+        (count, currentPage) => count + currentPage.data.length,
+        0,
+      );
+
+      return loaded < lastPage.pagination.total ? allPages.length : undefined;
+    },
   });
 }
 
@@ -161,6 +193,96 @@ export function EventsGrid({
   );
 }
 
+export function EventsList({
+  events,
+  selectedEventId,
+  showTypeBadge = true,
+  onSelectEvent,
+}: {
+  events: EventListItem[];
+  selectedEventId?: string;
+  showTypeBadge?: boolean;
+  onSelectEvent: (eventId: string) => void;
+}) {
+  return (
+    <div className="divide-y">
+      {events.map((event) => {
+        const isSelected = selectedEventId === event.id;
+
+        return (
+          <Link
+            key={event.id}
+            to="/events/$eventId"
+            params={{ eventId: event.id }}
+            onClick={(clickEvent) => {
+              if (!shouldKeepSplitViewSelection(clickEvent)) {
+                return;
+              }
+
+              clickEvent.preventDefault();
+              onSelectEvent(event.id);
+            }}
+            aria-current={isSelected ? "page" : undefined}
+            className={cn(
+              "block border-l-2 border-transparent px-4 py-4 transition-colors hover:bg-muted/30 sm:px-5",
+              isSelected ? "border-l-primary bg-muted/30" : "",
+            )}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <p className="truncate text-sm text-muted-foreground">
+                  {event.creator?.displayName ?? "Unknown"}
+                </p>
+                <h2 className="line-clamp-2 text-base font-semibold leading-tight">
+                  {event.title}
+                </h2>
+              </div>
+
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                {showTypeBadge ? (
+                  <Badge
+                    variant="secondary"
+                    className={TYPE_STYLES[event.type] ?? ""}
+                  >
+                    {event.type}
+                  </Badge>
+                ) : null}
+                <Badge
+                  variant="secondary"
+                  className={STATUS_STYLES[event.status] ?? ""}
+                >
+                  {STATUS_LABELS[event.status] ?? event.status}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+              {event.type === "GIG" && event.compensationAmount != null ? (
+                <span className="font-medium text-foreground">
+                  ${event.compensationAmount}
+                  {event.compensationType === "HOURLY" ? "/hr" : " fixed"}
+                </span>
+              ) : null}
+              {event.category ? (
+                <span className="capitalize">{event.category}</span>
+              ) : null}
+              <span className="inline-flex items-center gap-1.5">
+                <MapPinIcon className="size-3.5 shrink-0" />
+                <span className="truncate">{event.locationName}</span>
+              </span>
+            </div>
+
+            <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <CalendarIcon className="size-3.5 shrink-0" />
+              <span>{formatDate(event.startAt)}</span>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 export function EventsPagination({
   page,
   total,
@@ -215,4 +337,16 @@ export function EventsPagination({
       </div>
     </div>
   );
+}
+
+function shouldKeepSplitViewSelection(event: MouseEvent<HTMLAnchorElement>) {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return false;
+  }
+
+  if (typeof window === "undefined" || !("matchMedia" in window)) {
+    return false;
+  }
+
+  return window.matchMedia("(min-width: 1024px)").matches;
 }

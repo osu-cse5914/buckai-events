@@ -11,7 +11,7 @@ export type BrowseRouteSearch = {
   status?: (typeof EVENT_STATUSES)[number];
   source?: (typeof EVENT_SOURCES)[number];
   category?: string;
-  page?: number;
+  selected?: string;
 };
 
 export type SearchRouteSearch = {
@@ -61,7 +61,7 @@ export function validateBrowseSearch(
     status: normalizeEnumValue(search.status, EVENT_STATUSES),
     source: normalizeEnumValue(search.source, EVENT_SOURCES),
     category: normalizeTrimmedString(search.category),
-    page: normalizePage(search.page),
+    selected: normalizeTrimmedString(search.selected),
   };
 }
 
