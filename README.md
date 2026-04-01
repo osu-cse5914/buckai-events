@@ -83,6 +83,7 @@ Optional local overrides:
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
   - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `OPENAI_PRIMARY_API_KEY`
+  - `AI_ROUTER_CONFIG_JSON` can be stored as pretty-printed multiline JSON inside a single quoted env value
 - `apps/web/.env`
   - `VITE_API_URL` defaults to `http://localhost:3001`
   - `VITE_CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key
