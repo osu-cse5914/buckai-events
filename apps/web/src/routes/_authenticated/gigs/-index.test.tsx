@@ -311,6 +311,54 @@ describe("[phase:6] [regression:always] GigsRoute", () => {
   });
 });
 
+describe("[phase:6] [regression:always] GigsPage attribution", () => {
+  it("TC-EVT-033: shows an external source label in gig browse results", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeGig({
+          id: "gig_tm",
+          title: "Festival Setup",
+          source: "TICKETMASTER",
+          creatorId: null,
+          creator: undefined,
+        }),
+      ]),
+    );
+
+    await renderGigsPage();
+
+    const row = await screen.findByRole("article", {
+      name: "Festival Setup listing",
+    });
+    expect(within(row).getByText("Ticketmaster")).toBeInTheDocument();
+    expect(within(row).queryByText("Unknown")).not.toBeInTheDocument();
+  });
+
+  it("TC-EVT-034: falls back to creator email in gig browse results", async () => {
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeGig({
+          id: "gig_email",
+          title: "Band Rehearsal",
+          creator: {
+            id: "user_1",
+            displayName: null,
+            email: "alice@osu.edu",
+          },
+        }),
+      ]),
+    );
+
+    await renderGigsPage();
+
+    const row = await screen.findByRole("article", {
+      name: "Band Rehearsal listing",
+    });
+    expect(within(row).getByText("alice@osu.edu")).toBeInTheDocument();
+    expect(within(row).queryByText("Unknown")).not.toBeInTheDocument();
+  });
+});
+
 describe("[phase:1] [regression:always] GigsPage", () => {
   it("shows gig-specific copy", async () => {
     state.mockGet.mockResolvedValue(makeResponse([]));
