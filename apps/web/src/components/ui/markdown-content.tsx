@@ -23,7 +23,7 @@ function normalizeMarkdownSource(value: string) {
       .replace(/\\n/g, "\n")
       .replace(/\\r/g, "\n")
       .replace(/\\t/g, "\t")
-      .replace(/\\([`*_{}\[\]()#+\-.!>])/g, "$1");
+      .replace(/\\([`*_{}[\]()#+.!>-])/g, "$1");
   }
 
   normalized = decodeHtmlEntities(normalized)
@@ -57,7 +57,7 @@ export function MarkdownContent({
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
-          a: ({ node: _node, href, ...props }) => {
+          a: ({ href, ...props }) => {
             const isExternal = typeof href === "string"
               ? /^(https?:)?\/\//.test(href)
               : false;
@@ -71,19 +71,19 @@ export function MarkdownContent({
               />
             );
           },
-          p: ({ node: _node, className: paragraphClassName, ...props }) => (
+          p: ({ className: paragraphClassName, ...props }) => (
             <p
               className={cn("whitespace-pre-line", paragraphClassName)}
               {...props}
             />
           ),
-          strong: ({ node: _node, className: strongClassName, ...props }) => (
+          strong: ({ className: strongClassName, ...props }) => (
             <strong
               className={cn("font-bold text-foreground", strongClassName)}
               {...props}
             />
           ),
-          em: ({ node: _node, className: emphasisClassName, ...props }) => (
+          em: ({ className: emphasisClassName, ...props }) => (
             <em
               className={cn("italic", emphasisClassName)}
               {...props}
