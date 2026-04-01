@@ -82,9 +82,10 @@ function createStreamTextStub(
 }
 
 function createStreamTextErrorStub(error: Error) {
-  return vi.fn(() => ({
+  return vi.fn((_options: Record<string, unknown>) => ({
     textStream: {
       async *[Symbol.asyncIterator]() {
+        yield* [];
         throw error;
       },
     },

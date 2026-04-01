@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => {
@@ -15,28 +14,7 @@ const state = vi.hoisted(() => {
     messagesGet,
     messagesPost,
     routeSearch: {} as Record<string, unknown>,
-    setRouteSearch: null as null | ((
-      updater: (
-        current: Record<string, unknown>,
-      ) => Record<string, unknown>,
-    ) => void),
-    navigate: vi.fn(
-      (options: {
-        search?:
-          | Record<string, unknown>
-          | ((current: Record<string, unknown>) => Record<string, unknown>);
-      }) => {
-        const nextSearch = options.search;
-
-        if (!shared.setRouteSearch || nextSearch === undefined) {
-          return;
-        }
-
-        shared.setRouteSearch((current) =>
-          typeof nextSearch === "function" ? nextSearch(current) : nextSearch,
-        );
-      },
-    ),
+    navigate: vi.fn(),
     mockApiClient: {
       api: {
         v1: {
@@ -172,21 +150,23 @@ async function renderAiRoute(search: Record<string, unknown> = {}) {
 
   const Component = capturedComponent;
   const queryClient = createQueryClient();
-
-  function TestRouter() {
-    const [routeSearch, setRouteSearch] = useState(search);
-    state.routeSearch = routeSearch;
-    state.setRouteSearch = (updater) =>
-      setRouteSearch((current) => updater(current));
-
-    return <Component />;
-  }
-
-  return render(
+  const renderResult = render(
     <QueryClientProvider client={queryClient}>
-      <TestRouter />
+      <Component />
     </QueryClientProvider>,
   );
+
+  return {
+    ...renderResult,
+    rerenderRoute(nextSearch: Record<string, unknown>) {
+      state.routeSearch = nextSearch;
+      renderResult.rerender(
+        <QueryClientProvider client={queryClient}>
+          <Component />
+        </QueryClientProvider>,
+      );
+    },
+  };
 }
 
 beforeEach(() => {
@@ -194,9 +174,26 @@ beforeEach(() => {
   capturedComponent = null;
   capturedValidateSearch = null;
   state.routeSearch = {};
-  state.setRouteSearch = null;
   vi.resetModules();
 });
+
+function getNextSearchFromNavigateCall() {
+  const lastCall = state.navigate.mock.lastCall?.[0] as
+    | {
+        search?:
+          | Record<string, unknown>
+          | ((current: Record<string, unknown>) => Record<string, unknown>);
+      }
+    | undefined;
+
+  if (!lastCall?.search) {
+    throw new Error("Expected navigate to be called with search");
+  }
+
+  return typeof lastCall.search === "function"
+    ? lastCall.search(state.routeSearch)
+    : lastCall.search;
+}
 
 describe("[phase:5] [regression:always] AI Route", () => {
   it("validates optional AI route search state", async () => {
@@ -275,7 +272,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
       ),
     );
 
-    await renderAiRoute({ conversationId: "conv_2" });
+    const route = await renderAiRoute({ conversationId: "conv_2" });
 
     expect(
       await screen.findByRole("button", { name: /Most recent/ }),
@@ -289,6 +286,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
     expect(state.navigate).toHaveBeenCalledWith({
       search: expect.any(Function),
     });
+    route.rerenderRoute(getNextSearchFromNavigateCall());
     expect(
       await screen.findByText(
         "Here are a few quieter options from earlier this week.",
@@ -340,7 +338,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
       ),
     );
 
-    await renderAiRoute({ prompt: "find music tonight" });
+    const route = await renderAiRoute({ prompt: "find music tonight" });
 
     const input = await screen.findByLabelText("Message");
     expect(input).toHaveValue("find music tonight");
@@ -350,6 +348,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
     await waitFor(() => {
       expect(state.conversationsPost).toHaveBeenCalledTimes(1);
     });
+    route.rerenderRoute(getNextSearchFromNavigateCall());
     await waitFor(() => {
       expect(state.messagesPost).toHaveBeenCalledWith({
         param: { id: "conv_new" },

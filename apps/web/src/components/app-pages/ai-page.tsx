@@ -5,7 +5,6 @@ import { useApiClient } from "@/lib/api";
 import {
   conversationMessagesQueryOptions,
   conversationsQueryOptions,
-  queryKeys,
   type ConversationMessage,
 } from "@/lib/queries";
 import { cn } from "@/lib/utils";

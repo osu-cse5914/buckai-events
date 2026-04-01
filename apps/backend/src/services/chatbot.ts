@@ -503,7 +503,6 @@ export function createSseTextResponse(input: {
           }
         } catch (error) {
           if (!fullText && input.fallbackText?.trim()) {
-            fullText = input.fallbackText;
             controller.enqueue(encoder.encode(toSseChunk(input.fallbackText)));
           }
           console.error("Failed to stream chatbot response", error);
