@@ -16,6 +16,12 @@ import {
   listOwnApplications,
   updateCurrentUser,
 } from "../services/users";
+import {
+  followUser,
+  unfollowUser,
+  listFollowers,
+  listFollowing,
+} from "../services/social";
 
 export const users = new Hono<AppEnv>()
   .get("/me/applications", validatePaginationQuery, async (c) => {
@@ -69,4 +75,32 @@ export const users = new Hono<AppEnv>()
     });
 
     return c.json(profile);
+  })
+  .post("/:id/follow", validateUserIdParam, async (c) => {
+    const { id: followerId } = c.get("user");
+    const { id: followeeId } = c.req.valid("param");
+    const prisma = getPrisma(c);
+    await followUser(prisma, { followerId, followeeId });
+    return c.json({}, 201);
+  })
+  .delete("/:id/follow", validateUserIdParam, async (c) => {
+    const { id: followerId } = c.get("user");
+    const { id: followeeId } = c.req.valid("param");
+    const prisma = getPrisma(c);
+    await unfollowUser(prisma, { followerId, followeeId });
+    return c.body(null, 204);
+  })
+  .get("/:id/followers", validateUserIdParam, validatePaginationQuery, async (c) => {
+    const { id: userId } = c.req.valid("param");
+    const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
+    const prisma = getPrisma(c);
+    const result = await listFollowers(prisma, { userId, limit, offset });
+    return c.json(paginated(result.data, { total: result.total, limit: result.limit, offset: result.offset }));
+  })
+  .get("/:id/following", validateUserIdParam, validatePaginationQuery, async (c) => {
+    const { id: userId } = c.req.valid("param");
+    const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
+    const prisma = getPrisma(c);
+    const result = await listFollowing(prisma, { userId, limit, offset });
+    return c.json(paginated(result.data, { total: result.total, limit: result.limit, offset: result.offset }));
   });

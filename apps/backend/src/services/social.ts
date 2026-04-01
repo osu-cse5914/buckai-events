@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import type { PrismaClient } from "@prisma/client";
+import { BadRequestError, ConflictError, NotFoundError } from "../lib/problem-details";
 
 export type ListSocialFeedInput = {
   viewerId: string;
@@ -115,5 +116,107 @@ export async function listSocialFeed(
     total: typeof totalValue === "bigint" ? Number(totalValue) : totalValue,
     limit: input.limit,
     offset: input.offset,
+  };
+}
+
+export type FollowInput = {
+  followerId: string;
+  followeeId: string;
+};
+
+export type ListFollowInput = {
+  userId: string;
+  limit: number;
+  offset: number;
+};
+
+export async function followUser(prisma: PrismaClient, input: FollowInput) {
+  const { followerId, followeeId } = input;
+
+  if (followerId === followeeId) {
+    throw new BadRequestError("You cannot follow yourself");
+  }
+
+  const targetUser = await prisma.user.findUnique({ where: { id: followeeId } });
+  if (!targetUser) {
+    throw new NotFoundError(`User ${followeeId} was not found`);
+  }
+
+  const existing = await prisma.follow.findUnique({
+    where: { followerId_followeeId: { followerId, followeeId } },
+  });
+  if (existing) {
+    throw new ConflictError("You are already following this user");
+  }
+
+  await prisma.$transaction([
+    prisma.follow.create({ data: { followerId, followeeId } }),
+    prisma.user.update({ where: { id: followeeId }, data: { followerCount: { increment: 1 } } }),
+    prisma.user.update({ where: { id: followerId }, data: { followingCount: { increment: 1 } } }),
+  ]);
+}
+
+export async function unfollowUser(prisma: PrismaClient, input: FollowInput) {
+  const { followerId, followeeId } = input;
+
+  const existing = await prisma.follow.findUnique({
+    where: { followerId_followeeId: { followerId, followeeId } },
+  });
+  if (!existing) {
+    throw new NotFoundError("You are not following this user");
+  }
+
+  await prisma.$transaction([
+    prisma.follow.delete({ where: { followerId_followeeId: { followerId, followeeId } } }),
+    prisma.user.update({ where: { id: followeeId }, data: { followerCount: { decrement: 1 } } }),
+    prisma.user.update({ where: { id: followerId }, data: { followingCount: { decrement: 1 } } }),
+  ]);
+}
+
+export async function listFollowers(prisma: PrismaClient, input: ListFollowInput) {
+  const { userId, limit, offset } = input;
+
+  const [follows, total] = await Promise.all([
+    prisma.follow.findMany({
+      where: { followeeId: userId },
+      include: {
+        follower: { select: { id: true, displayName: true, major: true, gradYear: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.follow.count({ where: { followeeId: userId } }),
+  ]);
+
+  return {
+    data: follows.map((f) => f.follower),
+    total,
+    limit,
+    offset,
+  };
+}
+
+export async function listFollowing(prisma: PrismaClient, input: ListFollowInput) {
+  const { userId, limit, offset } = input;
+
+  const [follows, total] = await Promise.all([
+    prisma.follow.findMany({
+      where: { followerId: userId },
+      include: {
+        followee: { select: { id: true, displayName: true, major: true, gradYear: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.follow.count({ where: { followerId: userId } }),
+  ]);
+
+  return {
+    data: follows.map((f) => f.followee),
+    total,
+    limit,
+    offset,
   };
 }
