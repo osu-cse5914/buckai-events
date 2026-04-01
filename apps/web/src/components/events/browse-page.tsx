@@ -109,7 +109,7 @@ export function BrowsePage({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
+    <section className="flex w-full flex-col gap-8 px-6 py-10">
       <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
 
       {isLoading ? <EventsLoadingGrid /> : null}
