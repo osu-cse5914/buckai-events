@@ -488,7 +488,8 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
         makeEvent({
           id: "1",
           title: "Hackathon",
-          description: "Detailed hackathon description",
+          description:
+            "### What to bring\n\n- Laptop\n- Charger",
           summary: "Build all night.",
         }),
       ),
@@ -500,8 +501,9 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
     await user.click(await screen.findByRole("link", { name: /Hackathon/i }));
 
     expect(
-      await screen.findByText("Detailed hackathon description"),
+      await screen.findByRole("heading", { name: "What to bring" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Laptop")).toBeInTheDocument();
     expect(screen.queryByText("Listing details")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Open full page" }),

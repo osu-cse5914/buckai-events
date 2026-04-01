@@ -272,3 +272,13 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: The events browse page has more results than the first loaded batch
 - **When**: The user scrolls the list until the load-more sentinel enters view
 - **Then**: The next batch loads into the same list without rendering pagination controls
+
+## TC-EVT-027: Event description markdown renders in detail view
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An event description includes Markdown formatting
+- **When**: A user opens the event detail view
+- **Then**: The description renders Markdown structure such as headings, lists, and links

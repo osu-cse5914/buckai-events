@@ -180,6 +180,28 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     expect(screen.getByText("Alice")).toBeInTheDocument();
   });
 
+  it("TC-EVT-027: renders markdown formatting in the event description", async () => {
+    mockEventGet.mockResolvedValue(
+      okJson(
+        makeEvent({
+          description:
+            "## Schedule\n\n- Build overnight\n- Demo in the morning\n\nVisit [docs](https://example.com)",
+        }),
+      ),
+    );
+    mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
+
+    await renderPage();
+
+    expect(
+      await screen.findByRole("heading", { name: "Schedule" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Build overnight")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "docs" }),
+    ).toHaveAttribute("href", "https://example.com");
+  });
+
   it("TC-EVT-019: displays tags when present", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));

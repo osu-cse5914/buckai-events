@@ -50,6 +50,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -366,9 +367,9 @@ export function EventDetailSurface({
 
       <div>
         <h2 className="text-lg font-semibold">Description</h2>
-        <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+        <MarkdownContent className="mt-2">
           {event.description}
-        </p>
+        </MarkdownContent>
       </div>
 
       {showGigApplication ? (
