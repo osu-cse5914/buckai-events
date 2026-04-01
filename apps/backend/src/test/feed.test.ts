@@ -150,6 +150,54 @@ describe("[phase:3] [regression:always] GET /api/v1/social/feed", () => {
     expect(body.pagination.total).toBe(0);
   });
 
+  it("TC-SFEED-004: orders feed items by action timestamp descending", async () => {
+    vi.mocked(mockPrisma.$queryRaw)
+      .mockResolvedValueOnce([
+        makeFeedItem({
+          event: {
+            id: "evt_2",
+            title: "Later saved event",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+          action: "saved",
+          actor: { id: "user_c", displayName: "User C" },
+          actionAt: "2026-03-02T12:00:00.000Z",
+        }),
+        makeFeedItem({
+          event: {
+            id: "evt_1",
+            title: "Earlier created event",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+          action: "created",
+          actor: { id: "user_b", displayName: "User B" },
+          actionAt: "2026-03-01T12:00:00.000Z",
+        }),
+      ] as never)
+      .mockResolvedValueOnce([{ total: 2 }] as never);
+
+    const res = await app.request(makeAuthRequest("/api/v1/social/feed"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: Array<{ event: { id: string }; actionAt: string }>;
+    };
+
+    expect(body.data).toHaveLength(2);
+    expect(body.data[0]).toMatchObject({
+      event: { id: "evt_2" },
+      actionAt: "2026-03-02T12:00:00.000Z",
+    });
+    expect(body.data[1]).toMatchObject({
+      event: { id: "evt_1" },
+      actionAt: "2026-03-01T12:00:00.000Z",
+    });
+  });
+
   it("TC-SFEED-005: returns an empty feed when the user follows nobody", async () => {
     vi.mocked(mockPrisma.$queryRaw)
       .mockResolvedValueOnce([] as never)
@@ -217,5 +265,105 @@ describe("[phase:3] [regression:always] GET /api/v1/social/feed", () => {
     const body = (await res.json()) as { data: Array<unknown> };
 
     expect(body.data).toEqual([]);
+  });
+
+  it("TC-SFEED-008: emits one created item when the same actor created and saved the same event", async () => {
+    vi.mocked(mockPrisma.$queryRaw)
+      .mockResolvedValueOnce([
+        makeFeedItem({
+          event: {
+            id: "evt_same",
+            title: "Hack Night",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+          action: "created",
+          actor: { id: "user_b", displayName: "User B" },
+          actionAt: "2026-03-01T12:00:00.000Z",
+        }),
+        makeFeedItem({
+          event: {
+            id: "evt_same",
+            title: "Hack Night",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+          action: "saved",
+          actor: { id: "user_b", displayName: "User B" },
+          actionAt: "2026-03-01T13:00:00.000Z",
+        }),
+      ] as never)
+      .mockResolvedValueOnce([{ total: 2 }] as never);
+
+    const res = await app.request(makeAuthRequest("/api/v1/social/feed"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: Array<{
+        action: string;
+        actor: { id: string };
+        event: { id: string };
+      }>;
+    };
+
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({
+      action: "created",
+      actor: { id: "user_b" },
+      event: { id: "evt_same" },
+    });
+  });
+
+  it("TC-SFEED-009: deduplicates multiple PUBLIC saves of the same event and keeps the most recent save time", async () => {
+    vi.mocked(mockPrisma.$queryRaw)
+      .mockResolvedValueOnce([
+        makeFeedItem({
+          event: {
+            id: "evt_saved_twice",
+            title: "Career Fair",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+          action: "saved",
+          actor: { id: "user_b", displayName: "User B" },
+          actionAt: "2026-03-01T15:00:00.000Z",
+        }),
+        makeFeedItem({
+          event: {
+            id: "evt_saved_twice",
+            title: "Career Fair",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+          action: "saved",
+          actor: { id: "user_b", displayName: "User B" },
+          actionAt: "2026-03-01T14:00:00.000Z",
+        }),
+      ] as never)
+      .mockResolvedValueOnce([{ total: 2 }] as never);
+
+    const res = await app.request(makeAuthRequest("/api/v1/social/feed"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: Array<{
+        action: string;
+        actor: { id: string };
+        event: { id: string };
+        actionAt: string;
+      }>;
+    };
+
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({
+      action: "saved",
+      actor: { id: "user_b" },
+      event: { id: "evt_saved_twice" },
+      actionAt: "2026-03-01T15:00:00.000Z",
+    });
   });
 });

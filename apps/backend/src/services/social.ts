@@ -18,6 +18,45 @@ type SocialFeedRow = {
   actionAt: string;
 };
 
+function toTimestamp(value: string): number {
+  return new Date(value).getTime();
+}
+
+function getEventId(event: Record<string, unknown>): string {
+  return typeof event.id === "string" ? event.id : "";
+}
+
+function dedupeFeedRows(rows: SocialFeedRow[]): SocialFeedRow[] {
+  const deduped = new Map<string, SocialFeedRow>();
+
+  for (const row of rows) {
+    const key = `${row.actor.id}:${getEventId(row.event)}`;
+    const existing = deduped.get(key);
+
+    if (!existing) {
+      deduped.set(key, row);
+      continue;
+    }
+
+    if (existing.action === "created") {
+      continue;
+    }
+
+    if (row.action === "created") {
+      deduped.set(key, row);
+      continue;
+    }
+
+    if (toTimestamp(row.actionAt) > toTimestamp(existing.actionAt)) {
+      deduped.set(key, row);
+    }
+  }
+
+  return [...deduped.values()].sort(
+    (a, b) => toTimestamp(b.actionAt) - toTimestamp(a.actionAt),
+  );
+}
+
 export async function listSocialFeed(
   prisma: PrismaClient,
   input: ListSocialFeedInput,
@@ -110,9 +149,10 @@ export async function listSocialFeed(
   );
 
   const totalValue = countRows[0]?.total ?? 0;
+  const dedupedRows = dedupeFeedRows(rows);
 
   return {
-    data: rows,
+    data: dedupedRows,
     total: typeof totalValue === "bigint" ? Number(totalValue) : totalValue,
     limit: input.limit,
     offset: input.offset,
