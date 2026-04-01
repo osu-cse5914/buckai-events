@@ -46,24 +46,31 @@ export function createApiApp() {
   // In production both are served from the same CF Worker origin.
   app.use("/api/*", cors({ origin: "http://localhost:5173" }));
 
-  app.use("/api/v1/*", withRequestResources);
-  app.use("/api/v1/*", clerkMiddleware());
-  app.use("/api/v1/*", requireAuth);
-
   const routedApp = app
     .route("/api", health)
-    .route("/api/v1/auth", auth)
-    .route("/api/v1/admin", admin)
-    .route("/api/v1/users", users)
-    .route("/api/v1/events", events)
-    .route("/api/v1/gigs", gigs)
-    .route("/api/v1/interactions", interactions)
-    .route("/api/v1/recommendations", recommendations)
-    .route("/api/v1/social", social)
-    .route("/api/v1/collections", collections)
-    .route("/api/v1/conversations", conversations);
+    .route("/api/v1", createVersionedApiRouter());
 
   return registerApiErrorHandlers(routedApp);
+}
+
+export function createVersionedApiRouter() {
+  const api = appFactory.createApp();
+
+  api.use("*", withRequestResources);
+  api.use("*", clerkMiddleware());
+  api.use("*", requireAuth);
+
+  return api
+    .route("/auth", auth)
+    .route("/admin", admin)
+    .route("/users", users)
+    .route("/events", events)
+    .route("/gigs", gigs)
+    .route("/interactions", interactions)
+    .route("/recommendations", recommendations)
+    .route("/social", social)
+    .route("/collections", collections)
+    .route("/conversations", conversations);
 }
 
 export const app = createApiApp();

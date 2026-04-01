@@ -14,6 +14,7 @@ All automated cases from Phase 0 through Phase 5, plus:
 
 - **TC-API-001**: Unknown API route returns RFC 7807 not-found response
 - **TC-API-002**: Uncaught handler error returns RFC 7807 internal-error response
+- **TC-API-003**: Versioned API routes can mount under a parent prefix
 - **TC-FEED-007**: Popular recommendations endpoint ordering
 - **TC-FEED-008**: Upcoming recommendations endpoint ordering
 - **TC-FEED-009**: Section endpoints respect type filters
