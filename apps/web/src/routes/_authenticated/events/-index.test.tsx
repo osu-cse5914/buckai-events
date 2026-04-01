@@ -502,10 +502,10 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
     expect(
       await screen.findByText("Detailed hackathon description"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open full page" })).toHaveAttribute(
-      "href",
-      "/events/1",
-    );
+    expect(screen.queryByText("Listing details")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Open full page" }),
+    ).not.toBeInTheDocument();
     expect(state.mockEventDetailGet).toHaveBeenCalledWith({
       param: { id: "1" },
     });

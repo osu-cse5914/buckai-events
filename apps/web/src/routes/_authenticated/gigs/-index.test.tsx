@@ -344,10 +344,10 @@ describe("[phase:6] [regression:always] GigsPage split view", () => {
     expect(
       await screen.findByText("Bring calculus and linear algebra experience."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open full page" })).toHaveAttribute(
-      "href",
-      "/events/1",
-    );
+    expect(screen.queryByText("Listing details")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Open full page" }),
+    ).not.toBeInTheDocument();
     expect(state.mockEventDetailGet).toHaveBeenCalledWith({
       param: { id: "1" },
     });

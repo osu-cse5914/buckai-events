@@ -288,20 +288,9 @@ export function EventDetailSurface({
           <ArrowLeftIcon className="size-4" />
           Back to {resolvedBrowseLabel}
         </Link>
-      ) : (
-        <div className="flex items-center justify-between gap-3 border-b pb-4">
-          <p className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Listing details
-          </p>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/events/$eventId" params={{ eventId: event.id }}>
-              Open full page
-            </Link>
-          </Button>
-        </div>
-      )}
+      ) : null}
 
-      <div className={cn(isPageMode ? "mt-6" : "mt-5")}>
+      <div className={cn(isPageMode ? "mt-6" : "")}>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className={TYPE_STYLES[event.type] ?? ""}>
             {event.type}
