@@ -43,3 +43,35 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 - **Given**: No event exists with id `"nonexistent"`
 - **When**: User A sends `POST /interactions` with `{ eventId: "nonexistent", action: "VIEW" }`
 - **Then**: The API responds with 404 Not Found
+
+## TC-INT-005: Record a view from the event detail page
+
+- **Spec scenario**: S-INT-1
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A opens event E in the full detail page
+- **When**: The event detail surface finishes loading
+- **Then**: The web app sends `POST /interactions` with `{ eventId: E, action: "VIEW" }`
+- **And**: A query refetch while the same detail view stays open does not send a duplicate VIEW
+
+## TC-INT-006: Record a view from the split-view preview pane
+
+- **Spec scenario**: S-INT-1
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: User A is browsing events in the desktop split-view layout
+- **When**: User A selects event E and the preview pane opens
+- **Then**: The web app sends `POST /interactions` with `{ eventId: E, action: "VIEW" }`
+
+## TC-INT-007: Record a click on the ticket link
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Event E has a `ticketUrl` and User A is on its detail page
+- **When**: User A clicks the ticket link CTA
+- **Then**: The web app sends `POST /interactions` with `{ eventId: E, action: "CLICK" }`
+- **And**: The outbound ticket link still opens even if interaction tracking fails

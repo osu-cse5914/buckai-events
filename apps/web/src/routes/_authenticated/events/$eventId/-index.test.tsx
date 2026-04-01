@@ -11,6 +11,10 @@ const mockGigApplicationsGet = vi.fn();
 const mockGigApplicationsPost = vi.fn();
 const mockMyApplicationsGet = vi.fn();
 const mockUserGet = vi.fn();
+const mockInteractionsPost = vi.fn();
+const mockCollectionsGet = vi.fn();
+const mockCollectionsPost = vi.fn();
+const mockCollectionItemPost = vi.fn();
 const mockApiClient = {
   api: {
     v1: {
@@ -34,6 +38,18 @@ const mockApiClient = {
           $get: (...args: unknown[]) => mockUserGet(...args),
           applications: {
             $get: (...args: unknown[]) => mockMyApplicationsGet(...args),
+          },
+        },
+      },
+      interactions: {
+        $post: (...args: unknown[]) => mockInteractionsPost(...args),
+      },
+      collections: {
+        $get: (...args: unknown[]) => mockCollectionsGet(...args),
+        $post: (...args: unknown[]) => mockCollectionsPost(...args),
+        ":id": {
+          items: {
+            $post: (...args: unknown[]) => mockCollectionItemPost(...args),
           },
         },
       },
@@ -146,8 +162,12 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
 const mockCreatorUser = { id: "user_1", email: "alice@osu.edu" };
 const mockOtherUser = { id: "user_2", email: "bob@osu.edu" };
 
-function okJson(data: unknown) {
-  return { ok: true, status: 200, json: () => Promise.resolve(data) };
+function okJson(data: unknown, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: () => Promise.resolve(data),
+  };
 }
 
 beforeEach(() => {
@@ -157,6 +177,10 @@ beforeEach(() => {
   mockMyApplicationsGet.mockResolvedValue(
     okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
   );
+  mockInteractionsPost.mockResolvedValue(okJson({}, 201));
+  mockCollectionsGet.mockResolvedValue(okJson([]));
+  mockCollectionsPost.mockResolvedValue(okJson({}, 201));
+  mockCollectionItemPost.mockResolvedValue(okJson({}, 201));
   vi.resetModules();
 });
 
@@ -165,11 +189,12 @@ async function renderPage() {
   if (!capturedComponent) throw new Error("Component not captured");
   const Component = capturedComponent;
   const queryClient = createQueryClient();
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <Component />
     </QueryClientProvider>,
   );
+  return { queryClient, ...view };
 }
 
 describe("[phase:1] [regression:always] EventDetailPage", () => {
@@ -283,6 +308,100 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     expect(await screen.findByText(/\$25/)).toBeInTheDocument();
     expect(screen.getByText(/per hour/i)).toBeInTheDocument();
+  });
+
+  it("TC-INT-005: records a VIEW when the detail page loads and does not duplicate it on refetch", async () => {
+    mockEventGet.mockResolvedValue(okJson(makeEvent()));
+    mockUserGet.mockResolvedValue(okJson(mockOtherUser));
+
+    const { queryClient } = await renderPage();
+
+    await screen.findByText("Hackathon");
+    await vi.waitFor(() => {
+      expect(mockInteractionsPost).toHaveBeenCalledWith({
+        json: { eventId: "evt_1", action: "VIEW" },
+      });
+    });
+
+    mockInteractionsPost.mockClear();
+
+    await queryClient.invalidateQueries({ queryKey: ["event", "evt_1"] });
+
+    await vi.waitFor(() => {
+      expect(mockEventGet).toHaveBeenCalledTimes(2);
+    });
+    expect(mockInteractionsPost).not.toHaveBeenCalled();
+  });
+
+  it("TC-COL-015: detail surface lets the user save to an existing collection", async () => {
+    mockEventGet.mockResolvedValue(okJson(makeEvent()));
+    mockUserGet.mockResolvedValue(okJson(mockOtherUser));
+    mockCollectionsGet.mockResolvedValue(
+      okJson([
+        {
+          id: "col_1",
+          userId: "user_2",
+          name: "Favorites",
+          visibility: "PRIVATE",
+          createdAt: "2025-03-01T00:00:00.000Z",
+          updatedAt: "2025-03-02T00:00:00.000Z",
+          _count: { items: 2 },
+        },
+      ]),
+    );
+
+    const user = userEvent.setup();
+
+    await renderPage();
+    await screen.findByText("Hackathon");
+
+    await user.click(screen.getByRole("button", { name: "Save to collection" }));
+    await user.click(await screen.findByRole("button", { name: /Favorites/i }));
+
+    await vi.waitFor(() => {
+      expect(mockCollectionItemPost).toHaveBeenCalledWith({
+        param: { id: "col_1" },
+        json: { eventId: "evt_1" },
+      });
+    });
+    expect(
+      screen.getByRole("button", { name: "Saved to Favorites" }),
+    ).toBeInTheDocument();
+  });
+
+  it("TC-INT-007: clicking the ticket CTA records CLICK", async () => {
+    mockEventGet.mockResolvedValue(
+      okJson(
+        makeEvent({
+          ticketUrl: "https://tickets.example.com/hackathon",
+        }),
+      ),
+    );
+    mockUserGet.mockResolvedValue(okJson(mockOtherUser));
+    const user = userEvent.setup();
+
+    await renderPage();
+
+    const ticketLink = await screen.findByRole("link", { name: "Get tickets" });
+    await vi.waitFor(() => {
+      expect(mockInteractionsPost).toHaveBeenCalledWith({
+        json: { eventId: "evt_1", action: "VIEW" },
+      });
+    });
+
+    mockInteractionsPost.mockClear();
+
+    await user.click(ticketLink);
+
+    expect(ticketLink).toHaveAttribute(
+      "href",
+      "https://tickets.example.com/hackathon",
+    );
+    await vi.waitFor(() => {
+      expect(mockInteractionsPost).toHaveBeenCalledWith({
+        json: { eventId: "evt_1", action: "CLICK" },
+      });
+    });
   });
 
   it("TC-EVT-019: creator sees Edit, Delete, and Status change actions", async () => {
