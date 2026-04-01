@@ -209,3 +209,13 @@ Spec: [`management`](../../specs/collections/management.md)
 - **Given**: Another user's collection is public
 - **When**: The viewer opens the collection detail page
 - **Then**: The saved events are visible without owner-only management actions
+
+## TC-COL-021: Save overlay empty state hides inline collection creation
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user opens the save overlay without any existing collections
+- **When**: The overlay finishes loading
+- **Then**: The empty state is shown without inline collection-name input or create action controls

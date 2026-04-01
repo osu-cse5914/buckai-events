@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GlobeIcon, LockIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { GlobeIcon, LockIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import {
   ownedCollectionsQueryOptions,
@@ -30,6 +30,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   YouSubpageHeader,
   YouSubpageHeaderSkeleton,
@@ -68,6 +78,46 @@ function CollectionVisibilityBadge({
   );
 }
 
+function CollectionsPageSkeleton() {
+  return (
+    <section
+      className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10"
+      aria-busy="true"
+      aria-label="Collections loading"
+    >
+      <YouSubpageHeaderSkeleton action={<Skeleton className="size-9 rounded-md" />} />
+
+      <div className="grid gap-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={index} className="gap-4">
+            <CardHeader className="gap-3">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+                <CardTitle>
+                  <Skeleton className="h-8 w-40 max-w-full" />
+                </CardTitle>
+              </div>
+
+              <CardAction className="flex flex-wrap gap-2">
+                <Skeleton className="h-8 w-24 rounded-md" />
+                <Skeleton className="h-8 w-28 rounded-md" />
+                <Skeleton className="h-8 w-20 rounded-md" />
+              </CardAction>
+            </CardHeader>
+
+            <CardContent>
+              <Skeleton className="h-4 w-48 max-w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function YouCollectionsPage() {
   const api = useApiClient();
   const queryClient = useQueryClient();
@@ -88,6 +138,12 @@ export function YouCollectionsPage() {
     null,
   );
 
+  function resetCreateState() {
+    setCreateName("");
+    setCreateVisibility("PRIVATE");
+    setCreateErrorMessage(null);
+  }
+
   const createMutation = useMutation({
     mutationFn: async ({
       name,
@@ -106,9 +162,7 @@ export function YouCollectionsPage() {
     },
     onSuccess: () => {
       setIsCreateOpen(false);
-      setCreateName("");
-      setCreateVisibility("PRIVATE");
-      setCreateErrorMessage(null);
+      resetCreateState();
       queryClient.invalidateQueries({ queryKey: queryKeys.collections });
     },
     onError: (mutationError) => {
@@ -248,6 +302,17 @@ export function YouCollectionsPage() {
     });
   }
 
+  function handleCreateOpenChange(nextOpen: boolean) {
+    setIsCreateOpen(nextOpen);
+
+    if (!nextOpen) {
+      resetCreateState();
+      return;
+    }
+
+    setCreateErrorMessage(null);
+  }
+
   function beginRename(collection: OwnedCollectionSummary) {
     setEditingCollectionId(collection.id);
     setEditingName(collection.name);
@@ -272,11 +337,7 @@ export function YouCollectionsPage() {
   }
 
   if (isLoading) {
-    return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
-        <YouSubpageHeaderSkeleton />
-      </section>
-    );
+    return <CollectionsPageSkeleton />;
   }
 
   if (error) {
@@ -302,86 +363,86 @@ export function YouCollectionsPage() {
         title="Collections"
         description="Manage the collections that organize your saved listings."
         action={(
-          <Button
-            type="button"
-            onClick={() => {
-              setIsCreateOpen((current) => !current);
-              setCreateErrorMessage(null);
-            }}
-          >
-            Create Collection
-          </Button>
+          <Sheet open={isCreateOpen} onOpenChange={handleCreateOpenChange}>
+            <SheetTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                aria-label="Create Collection"
+                title="Create Collection"
+              >
+                <PlusIcon />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent className="sm:max-w-md">
+              <form className="flex h-full flex-col" onSubmit={handleCreateSubmit}>
+                <SheetHeader>
+                  <SheetTitle>New collection</SheetTitle>
+                  <SheetDescription>
+                    Create a collection to organize your saved events and gigs.
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="flex flex-1 flex-col gap-5 px-4 pb-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" htmlFor="collection-name">
+                      Collection name
+                    </label>
+                    <Input
+                      id="collection-name"
+                      value={createName}
+                      onChange={(event) => setCreateName(event.target.value)}
+                      placeholder="Saved listings"
+                      disabled={createMutation.isPending}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Visibility</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant={createVisibility === "PRIVATE" ? "default" : "outline"}
+                        onClick={() => setCreateVisibility("PRIVATE")}
+                        disabled={createMutation.isPending}
+                      >
+                        Private
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={createVisibility === "PUBLIC" ? "default" : "outline"}
+                        onClick={() => setCreateVisibility("PUBLIC")}
+                        disabled={createMutation.isPending}
+                      >
+                        Public
+                      </Button>
+                    </div>
+                  </div>
+
+                  {createErrorMessage ? (
+                    <p className="text-sm text-destructive">{createErrorMessage}</p>
+                  ) : null}
+                </div>
+
+                <SheetFooter className="border-t pt-4 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleCreateOpenChange(false)}
+                    disabled={createMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createMutation.isPending}>
+                    Save collection
+                  </Button>
+                </SheetFooter>
+              </form>
+            </SheetContent>
+          </Sheet>
         )}
       />
-
-      {isCreateOpen ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>New collection</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={handleCreateSubmit}>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="collection-name">
-                  Collection name
-                </label>
-                <Input
-                  id="collection-name"
-                  value={createName}
-                  onChange={(event) => setCreateName(event.target.value)}
-                  placeholder="Saved listings"
-                  disabled={createMutation.isPending}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Visibility</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant={createVisibility === "PRIVATE" ? "default" : "outline"}
-                    onClick={() => setCreateVisibility("PRIVATE")}
-                    disabled={createMutation.isPending}
-                  >
-                    Private
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={createVisibility === "PUBLIC" ? "default" : "outline"}
-                    onClick={() => setCreateVisibility("PUBLIC")}
-                    disabled={createMutation.isPending}
-                  >
-                    Public
-                  </Button>
-                </div>
-              </div>
-
-              {createErrorMessage ? (
-                <p className="text-sm text-destructive">{createErrorMessage}</p>
-              ) : null}
-
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" disabled={createMutation.isPending}>
-                  Save collection
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsCreateOpen(false);
-                    setCreateName("");
-                    setCreateVisibility("PRIVATE");
-                    setCreateErrorMessage(null);
-                  }}
-                  disabled={createMutation.isPending}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      ) : null}
 
       {actionErrorMessage ? (
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">

@@ -21,8 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 async function readErrorMessage(res: Response, fallback: string) {
   try {
@@ -43,7 +41,6 @@ export function SaveToCollectionButton({
   const api = useApiClient();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState("");
   const [savedCollectionName, setSavedCollectionName] = useState<string | null>(
     null,
   );
@@ -84,7 +81,6 @@ export function SaveToCollectionButton({
       setSavedCollectionName(collectionName);
       setErrorMessage(null);
       setOpen(false);
-      setNewCollectionName("");
       queryClient.invalidateQueries({ queryKey: queryKeys.collections });
       queryClient.invalidateQueries({
         queryKey: queryKeys.collection(collectionId),
@@ -100,36 +96,8 @@ export function SaveToCollectionButton({
     },
   });
 
-  const createCollectionMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const res = await api.api.v1.collections.$post({
-        json: { name },
-      });
-
-      if (!res.ok) {
-        throw new Error(
-          await readErrorMessage(res, "Failed to create collection"),
-        );
-      }
-
-      return res.json() as Promise<OwnedCollectionSummary>;
-    },
-    onSuccess: (collection) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.collections });
-      saveMutation.mutate({
-        collectionId: collection.id,
-        collectionName: collection.name,
-      });
-    },
-    onError: (error) => {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to create collection",
-      );
-    },
-  });
-
   const collections = collectionsQuery.data ?? [];
-  const isMutating = saveMutation.isPending || createCollectionMutation.isPending;
+  const isMutating = saveMutation.isPending;
 
   function handleSaveToCollection(collection: OwnedCollectionSummary) {
     setErrorMessage(null);
@@ -137,19 +105,6 @@ export function SaveToCollectionButton({
       collectionId: collection.id,
       collectionName: collection.name,
     });
-  }
-
-  function handleCreateAndSave(submitEvent: React.FormEvent<HTMLFormElement>) {
-    submitEvent.preventDefault();
-    const trimmedName = newCollectionName.trim();
-
-    if (!trimmedName) {
-      setErrorMessage("Collection name is required.");
-      return;
-    }
-
-    setErrorMessage(null);
-    createCollectionMutation.mutate(trimmedName);
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -160,7 +115,6 @@ export function SaveToCollectionButton({
       return;
     }
 
-    setNewCollectionName("");
     setErrorMessage(null);
   }
 
@@ -193,7 +147,7 @@ export function SaveToCollectionButton({
         <DialogHeader>
           <DialogTitle>Save to collection</DialogTitle>
           <DialogDescription>
-            Choose a collection for this listing or create a new one.
+            Choose a collection for this listing.
           </DialogDescription>
         </DialogHeader>
 
@@ -228,25 +182,9 @@ export function SaveToCollectionButton({
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No collections yet. Create one below to save this listing.
+              No collections yet. Create one from the Collections page first.
             </p>
           )}
-
-          <form className="space-y-2" onSubmit={handleCreateAndSave}>
-            <Label htmlFor={`new-collection-${eventId}`}>New collection</Label>
-            <div className="flex gap-2">
-              <Input
-                id={`new-collection-${eventId}`}
-                value={newCollectionName}
-                placeholder="Saved"
-                onChange={(event) => setNewCollectionName(event.target.value)}
-                disabled={isMutating}
-              />
-              <Button type="submit" disabled={isMutating}>
-                Create & Save
-              </Button>
-            </div>
-          </form>
 
           {errorMessage ? (
             <p className="text-sm text-destructive">{errorMessage}</p>

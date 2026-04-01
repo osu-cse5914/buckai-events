@@ -273,6 +273,10 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
     const user = userEvent.setup();
 
     expect(await screen.findByRole("heading", { name: "Music" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to Collections" })).toHaveAttribute(
+      "href",
+      "/you/collections",
+    );
     expect(screen.getByText("2 saved items")).toBeInTheDocument();
 
     const card = screen.getByLabelText("Hackathon saved event");
@@ -341,6 +345,10 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
     await renderPage();
 
     expect(await screen.findByRole("heading", { name: "Must See" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to Collections" })).toHaveAttribute(
+      "href",
+      "/you/collections",
+    );
     expect(screen.getByText("Public collection")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove from collection" })).not.toBeInTheDocument();
   });

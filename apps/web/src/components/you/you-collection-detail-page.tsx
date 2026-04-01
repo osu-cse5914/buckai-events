@@ -17,7 +17,6 @@ import {
   formatDate,
 } from "@/lib/event-utils";
 import {
-  EventsCollectionSkeleton,
   EventsEmptyState,
   EventsPagination,
 } from "@/components/events/events-browser";
@@ -29,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   YouSubpageHeader,
   YouSubpageHeaderSkeleton,
@@ -123,6 +123,64 @@ function CollectionEventCard({
   );
 }
 
+function CollectionDetailPageSkeleton() {
+  return (
+    <section
+      className="mx-auto max-w-5xl px-6 py-10"
+      aria-busy="true"
+      aria-label="Collection detail loading"
+    >
+      <YouSubpageHeaderSkeleton />
+
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <Skeleton className="h-6 w-36 rounded-full" />
+        <Skeleton className="h-5 w-24" />
+      </div>
+
+      <div className="mt-8 space-y-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={index} className="gap-4">
+            <CardHeader className="gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-14 rounded-full" />
+                  </div>
+                  <CardTitle>
+                    <Skeleton className="h-8 w-64 max-w-full" />
+                  </CardTitle>
+                </div>
+
+                <Skeleton className="h-8 w-44 rounded-md" />
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-52" />
+              </div>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="mt-6 flex items-center justify-between gap-4">
+        <Skeleton className="h-4 w-32" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function YouCollectionDetailPage({
   collectionId,
 }: {
@@ -176,12 +234,7 @@ export function YouCollectionDetailPage({
   });
 
   if (isLoadingUser || isLoadingCollection || (collection && isLoadingItems)) {
-    return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
-        <YouSubpageHeaderSkeleton />
-        <EventsCollectionSkeleton showPagination />
-      </section>
-    );
+    return <CollectionDetailPageSkeleton />;
   }
 
   if (collectionError) {
@@ -213,6 +266,8 @@ export function YouCollectionDetailPage({
     <section className="mx-auto max-w-5xl px-6 py-10">
       <YouSubpageHeader
         title={collection.name}
+        backTo="/you/collections"
+        backLabel="Back to Collections"
         description={
           isOwner
             ? "Review the events and gigs you saved here."

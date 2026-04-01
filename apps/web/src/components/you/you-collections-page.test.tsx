@@ -137,8 +137,11 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
     const user = userEvent.setup();
 
     expect(await screen.findByText("Music")).toBeInTheDocument();
+    expect(screen.queryByText("Create Collection")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Create Collection" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "New collection" })).toBeInTheDocument();
     await user.type(screen.getByLabelText("Collection name"), "Must See");
     await user.click(screen.getByRole("button", { name: "Public" }));
     await user.click(screen.getByRole("button", { name: "Save collection" }));
