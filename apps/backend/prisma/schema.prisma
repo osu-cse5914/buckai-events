@@ -31,6 +31,7 @@ model User {
   conversations Conversation[]
   followers     Follow[]       @relation("followee")
   following     Follow[]       @relation("follower")
+  eventPipelineJobs EventPipelineJob[]
 }
 
 // ─── Event ──────────────────────────────────────────────────────────────────────
@@ -67,6 +68,7 @@ model Event {
   collectionItems CollectionItem[]
   interactions    Interaction[]
   embedding       EventEmbedding?
+  pipelineRuns    EventPipelineRun[]
 
   @@index([creatorId])
 }
@@ -189,6 +191,45 @@ model EventEmbedding {
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
+model EventPipelineJob {
+  id                String                 @id @default(cuid())
+  trigger           EventPipelineTrigger
+  status            EventPipelineJobStatus @default(QUEUED)
+  stages            String[]
+  error             String?
+  requestedByUserId String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  startedAt         DateTime?
+  finishedAt        DateTime?
+
+  requestedBy User?               @relation(fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  runs        EventPipelineRun[]
+
+  @@index([requestedByUserId])
+}
+
+model EventPipelineRun {
+  id         String                 @id @default(cuid())
+  jobId      String
+  eventId    String
+  stage      EventPipelineStage
+  status     EventPipelineRunStatus @default(QUEUED)
+  textHash   String?
+  error      String?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  job   EventPipelineJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  event Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, eventId, stage])
+  @@index([jobId])
+  @@index([eventId])
+}
+
 // ─── Enums ──────────────────────────────────────────────────────────────────────
 
 enum UserRole {
@@ -242,4 +283,32 @@ enum CollectionVisibility {
 enum CompensationType {
   FIXED
   HOURLY
+}
+
+enum EventPipelineTrigger {
+  EVENT_CREATE
+  EVENT_UPDATE
+  ADMIN_RERUN
+  EMBEDDING_BACKFILL
+}
+
+enum EventPipelineJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  PARTIAL
+  FAILED
+}
+
+enum EventPipelineRunStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  SKIPPED
+  FAILED
+}
+
+enum EventPipelineStage {
+  TAGGING
+  EMBEDDING
 }
