@@ -98,6 +98,86 @@ export function EventsLoadingGrid() {
   );
 }
 
+export function EventsBrowseSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-background lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
+      <div className="border-b lg:flex lg:min-h-0 lg:flex-col lg:border-r lg:border-b-0">
+        <div className="border-b px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-between gap-3">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+
+          <Skeleton className="mt-3 h-10 w-full" />
+        </div>
+
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="border-b px-4 py-4 sm:px-5"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-5 w-4/5" />
+                </div>
+
+                <div className="flex shrink-0 gap-2">
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+
+              <Skeleton className="mt-3 h-4 w-36" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="hidden lg:block lg:min-h-0 lg:overflow-hidden">
+        <div className="px-6 py-6 lg:px-8 lg:py-8">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-6 w-16 rounded-full" />
+          </div>
+
+          <Skeleton className="mt-3 h-10 w-3/4" />
+          <Skeleton className="mt-2 h-4 w-24" />
+          <Skeleton className="mt-3 h-4 w-full" />
+
+          <div className="my-6 h-px bg-border" />
+
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-5 w-36" />
+          </div>
+
+          <div className="my-6 h-px bg-border" />
+
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/5" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function EventsErrorState({ message }: { message: string }) {
   return (
     <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">

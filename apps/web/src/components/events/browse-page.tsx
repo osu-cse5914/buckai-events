@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/select";
 import { EventDetailSurface } from "@/components/events/event-detail-surface";
 import {
+  EventsBrowseSkeleton,
   EventsEmptyState,
   EventsErrorState,
   EventsList,
-  EventsLoadingGrid,
   useInfiniteEventsQuery,
 } from "@/components/events/events-browser";
 
@@ -144,7 +144,7 @@ export function BrowsePage({
         </Button>
       </div>
 
-      {isLoading ? <EventsLoadingGrid /> : null}
+      {isLoading ? <EventsBrowseSkeleton /> : null}
       {isError ? (
         <EventsErrorState
           message={
