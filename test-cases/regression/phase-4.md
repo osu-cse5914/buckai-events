@@ -37,6 +37,8 @@ All automated cases from prior regression suites.
 - **TC-EMBED-006**: Embedding failure does not block event creation
 - **TC-EMBED-007**: Backfill generates missing embeddings
 - **TC-EMBED-008**: Event deletion cascades to embedding
+- **TC-EMBED-010**: Embedding generation requests configured dimensions
+- **TC-EMBED-011**: Embedding generation rejects mismatched vector lengths
 
 #### Phase 4 — External Ingestion
 

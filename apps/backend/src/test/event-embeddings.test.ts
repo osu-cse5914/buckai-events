@@ -1,12 +1,96 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockPrisma } from "./helpers/prisma";
-import { searchEventsSemantically } from "../services/event-embeddings";
+import {
+  generateEventEmbedding,
+  searchEventsSemantically,
+} from "../services/event-embeddings";
+
+const embeddingEnv = {
+  AI_ROUTER_CONFIG_JSON: JSON.stringify({
+    providers: {
+      openrouter: {
+        id: "openrouter",
+        type: "OPENAI_COMPATIBLE",
+        apiKeyEnvVar: "OPENROUTER_API_KEY",
+        baseUrl: "https://openrouter.ai/api/v1",
+      },
+    },
+    models: {
+      "text-embed": {
+        id: "text-embed",
+        providerId: "openrouter",
+        modelId: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+        type: "EMBEDDING",
+        dimensions: 768,
+      },
+    },
+    tasks: {
+      embedding: {
+        id: "embedding",
+        modelId: "text-embed",
+      },
+    },
+  }),
+  OPENROUTER_API_KEY: "test-key",
+} as const;
 
 describe("[phase:4] [regression:always] Event semantic search", () => {
   const mockPrisma = createMockPrisma();
 
   beforeEach(() => {
     vi.resetAllMocks();
+  });
+
+  it("TC-EMBED-010: requests configured dimensions when generating an event embedding", async () => {
+    const embedImpl = vi.fn().mockResolvedValue({
+      embedding: Array.from({ length: 768 }, (_, index) => index / 1000),
+    });
+
+    await generateEventEmbedding(
+      {
+        title: "Ringling Bros. and Barnum & Bailey",
+        description: "Circus arts performance night",
+        category: "arts",
+        tags: ["circus", "performance"],
+      },
+      {
+        env: embeddingEnv,
+        embedImpl,
+      },
+    );
+
+    expect(embedImpl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        value:
+          "Ringling Bros. and Barnum & Bailey. Circus arts performance night. Category: arts. Tags: circus, performance",
+        providerOptions: {
+          openrouter: {
+            dimensions: 768,
+          },
+        },
+      }),
+    );
+  });
+
+  it("TC-EMBED-011: rejects vectors whose length does not match the configured dimensions", async () => {
+    const embedImpl = vi.fn().mockResolvedValue({
+      embedding: Array.from({ length: 2048 }, (_, index) => index / 1000),
+    });
+
+    await expect(
+      generateEventEmbedding(
+        {
+          title: "Ringling Bros. and Barnum & Bailey",
+          description: "Circus arts performance night",
+          category: "arts",
+          tags: ["circus", "performance"],
+        },
+        {
+          env: embeddingEnv,
+          embedImpl,
+        },
+      ),
+    ).rejects.toThrow("expected 768 dimensions, received 2048");
   });
 
   it("TC-EMBED-004: returns ranked semantic search results", async () => {
