@@ -89,13 +89,13 @@ beforeEach(() => {
 });
 
 describe("[phase:6] [regression:always] EventCreationPage", () => {
-  it("preselects gig creation when the route search requests GIG", async () => {
+  it("TC-EVT-029: hides the type selector and fixes gig creation from route state", async () => {
     await renderCreationPage({ type: "GIG" });
 
     expect(
       await screen.findByRole("heading", { name: "Create Gig" }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Type")).toHaveTextContent("Gig");
+    expect(screen.queryByLabelText("Type")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Amount ($)")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create Gig" })).toBeInTheDocument();
   });

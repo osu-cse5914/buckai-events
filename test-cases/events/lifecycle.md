@@ -292,3 +292,13 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: Two loaded browse batches contain the same event ID
 - **When**: The user scrolls to load the next batch
 - **Then**: The browse list renders that event only once and still shows the new unique results
+
+## TC-EVT-029: Create form fixes listing type from route context
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens the shared create form from the Gigs browse page
+- **When**: The form renders
+- **Then**: The type selector is not shown and the form remains fixed to gig creation fields and actions

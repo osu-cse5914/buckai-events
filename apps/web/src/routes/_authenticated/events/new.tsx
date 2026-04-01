@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
@@ -8,13 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { browsePathForEventType } from "@/lib/event-utils";
 
@@ -28,20 +22,16 @@ function EventCreationPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const search = Route.useSearch();
+  const type: "EVENT" | "GIG" = search.type ?? "EVENT";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<"EVENT" | "GIG">(search.type ?? "EVENT");
   const [locationName, setLocationName] = useState("");
   const [startAt, setStartAt] = useState<Date | undefined>(undefined);
   const [endAt, setEndAt] = useState<Date | undefined>(undefined);
   const [compAmount, setCompAmount] = useState("");
   const [compType, setCompType] = useState<"FIXED" | "HOURLY">("FIXED");
   const [validationError, setValidationError] = useState("");
-
-  useEffect(() => {
-    setType(search.type ?? "EVENT");
-  }, [search.type]);
 
   const mutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
@@ -128,19 +118,6 @@ function EventCreationPage() {
             maxLength={5000}
             rows={4}
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="type">Type</Label>
-          <Select value={type} onValueChange={(v) => setType(v as "EVENT" | "GIG")}>
-            <SelectTrigger id="type" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="EVENT">Event</SelectItem>
-              <SelectItem value="GIG">Gig</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="space-y-2">
