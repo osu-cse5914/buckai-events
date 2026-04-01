@@ -77,11 +77,45 @@ export type ConversationRecord = {
   updatedAt: string;
 };
 
+export type ConversationSearchResultItem = {
+  id: string;
+  title: string | null;
+  description: string | null;
+  summary: string | null;
+  type: string | null;
+  category: string | null;
+  tags: string[];
+  imageUrl: string | null;
+  location: {
+    name: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  };
+  startAt: string | null;
+  endAt: string | null;
+  compensation: {
+    amount: number | null;
+    currency: string | null;
+    type: string | null;
+  } | null;
+  similarity?: number;
+};
+
+export type ConversationSearchResultsPart = {
+  type: "search-results";
+  toolName: "searchEvents" | "searchGigs";
+  total: number;
+  items: ConversationSearchResultItem[];
+};
+
+export type ConversationMessagePart = ConversationSearchResultsPart;
+
 export type ConversationMessage = {
   id: string;
   conversationId: string;
   role: "USER" | "ASSISTANT" | "SYSTEM";
   content: string;
+  parts?: ConversationMessagePart[] | null;
   createdAt: string;
 };
 

@@ -174,8 +174,8 @@ export function createConversationsRouter({
           streamText,
           searchSemanticEvents,
           resolveChatbotModel,
-          onComplete: async (assistantText) => {
-            if (!assistantText.trim()) {
+          onComplete: async ({ assistantText, parts }) => {
+            if (!assistantText.trim() && !parts.length) {
               return;
             }
 
@@ -183,6 +183,7 @@ export function createConversationsRouter({
               conversationId: id,
               role: "ASSISTANT",
               content: assistantText,
+              parts,
             });
 
             if (!shouldGenerateTitle) {

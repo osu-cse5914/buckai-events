@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -103,7 +103,12 @@ function sseResponse(chunks: string[]) {
         const encoder = new TextEncoder();
 
         for (const chunk of chunks) {
-          controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+          const event = chunk
+            .split("\n")
+            .map((line) => `data: ${line}\n`)
+            .join("")
+            .concat("\n");
+          controller.enqueue(encoder.encode(event));
         }
 
         controller.close();
@@ -135,6 +140,7 @@ function makeMessage(overrides: Record<string, unknown> = {}) {
     conversationId: "conv_1",
     role: "USER",
     content: "hello",
+    parts: null,
     createdAt: "2026-04-01T11:00:00.000Z",
     ...overrides,
   };
@@ -295,6 +301,13 @@ describe("[phase:5] [regression:always] AI Route", () => {
   });
 
   it("TC-CHAT-011: creates a conversation on first send and renders the streamed reply", async () => {
+    const multilineAssistantReply = [
+      "Yes! I found several fitness events on campus. Here are the top matches:",
+      "",
+      "1. **Group Fitness Classes**",
+      "- RPAC / North Rec",
+    ].join("\n");
+
     state.conversationsGet
       .mockImplementationOnce(() => Promise.resolve(jsonResponse(paginated([]))))
       .mockImplementationOnce(() =>
@@ -315,7 +328,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
       jsonResponse(makeConversation({ id: "conv_new", title: null }), 201),
     );
     state.messagesPost.mockResolvedValue(
-      sseResponse(["I found a few", " music events for tonight."]),
+      sseResponse([multilineAssistantReply]),
     );
     state.messagesGet.mockImplementation(() =>
       Promise.resolve(
@@ -331,7 +344,34 @@ describe("[phase:5] [regression:always] AI Route", () => {
               id: "msg_assistant_new",
               conversationId: "conv_new",
               role: "ASSISTANT",
-              content: "I found a few music events for tonight.",
+              content: multilineAssistantReply,
+              parts: [
+                {
+                  type: "search-results",
+                  toolName: "searchEvents",
+                  total: 1,
+                  items: [
+                    {
+                      id: "evt_fitness_1",
+                      title: "Group Fitness Classes",
+                      description: "Free recreation classes for students.",
+                      summary: "Join guided campus workouts.",
+                      type: "EVENT",
+                      category: "fitness",
+                      tags: ["fitness"],
+                      imageUrl: null,
+                      location: {
+                        name: "RPAC / North Rec",
+                        latitude: null,
+                        longitude: null,
+                      },
+                      startAt: "2026-04-02T18:00:00.000Z",
+                      endAt: null,
+                      compensation: null,
+                    },
+                  ],
+                },
+              ],
             }),
           ]),
         ),
@@ -355,6 +395,13 @@ describe("[phase:5] [regression:always] AI Route", () => {
         json: { content: "find music tonight" },
       });
     });
-    expect(await screen.findByText("I found a few music events for tonight.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Group Fitness Classes", { selector: "strong" }),
+    ).toBeInTheDocument();
+    const eventCard = screen.getByRole("link", {
+      name: /Group Fitness Classes/i,
+    });
+    expect(eventCard).toHaveAttribute("href", "/events/evt_fitness_1");
+    expect(within(eventCard).getByText("RPAC / North Rec")).toBeInTheDocument();
   });
 });

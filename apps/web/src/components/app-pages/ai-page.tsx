@@ -1,18 +1,31 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LoaderCircleIcon, MessageSquarePlusIcon, SparklesIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  LoaderCircleIcon,
+  MapPinIcon,
+  MessageSquarePlusIcon,
+  SendHorizontalIcon,
+} from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import {
   conversationMessagesQueryOptions,
   conversationsQueryOptions,
   type ConversationMessage,
+  type ConversationSearchResultsPart,
 } from "@/lib/queries";
+import { formatDate, TYPE_STYLES } from "@/lib/event-utils";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 const CONVERSATION_LIMIT = 50;
 const MESSAGE_LIMIT = 100;
+const INITIAL_BUCKAI_MESSAGE =
+  "Hi, I'm BuckAI. I can help you find events, gigs, and campus activity around Social OSU. Ask for recommendations, what's happening tonight, or help narrowing down options.";
 
 async function readErrorMessage(res: Response, fallback: string) {
   try {
@@ -37,16 +50,23 @@ async function readSseText(
   let fullText = "";
 
   function flushBuffer() {
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
+    const normalizedBuffer = buffer.replace(/\r\n/g, "\n");
+    const events = normalizedBuffer.split("\n\n");
+    buffer = events.pop() ?? "";
 
-    for (const rawLine of lines) {
-      const line = rawLine.replace(/\r$/, "");
-      if (!line.startsWith("data: ")) {
+    for (const rawEvent of events) {
+      const dataLines = rawEvent
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) =>
+          line.startsWith("data: ") ? line.slice("data: ".length) : line.slice(5),
+        );
+
+      if (!dataLines.length) {
         continue;
       }
 
-      const chunk = line.slice("data: ".length);
+      const chunk = dataLines.join("\n");
       fullText += chunk;
       onChunk(chunk);
     }
@@ -62,19 +82,130 @@ async function readSseText(
     }
   }
 
-  if (buffer.startsWith("data: ")) {
-    const chunk = buffer.slice("data: ".length).replace(/\r$/, "");
-    fullText += chunk;
-    onChunk(chunk);
+  if (buffer.startsWith("data:")) {
+    const trailingDataLines = buffer
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .filter((line) => line.startsWith("data:"))
+      .map((line) =>
+        line.startsWith("data: ") ? line.slice("data: ".length) : line.slice(5),
+      );
+
+    if (trailingDataLines.length) {
+      const chunk = trailingDataLines.join("\n");
+      fullText += chunk;
+      onChunk(chunk);
+    }
   }
 
   return fullText;
+}
+
+function normalizeAssistantText(value: string) {
+  return value.replace(/\r\n/g, "\n").trim();
+}
+
+function formatCompensation(
+  compensation: ConversationSearchResultsPart["items"][number]["compensation"],
+) {
+  if (compensation?.amount == null) {
+    return null;
+  }
+
+  const amount = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: compensation.currency ?? "USD",
+    maximumFractionDigits: Number.isInteger(compensation.amount) ? 0 : 2,
+  }).format(compensation.amount);
+
+  return compensation.type === "HOURLY" ? `${amount}/hr` : amount;
+}
+
+function SearchResultsCards({
+  part,
+}: {
+  part: ConversationSearchResultsPart;
+}) {
+  if (!part.items.length) {
+    return null;
+  }
+
+  const resultLabel = part.toolName === "searchGigs" ? "gigs" : "events";
+
+  return (
+    <div className="space-y-2">
+      <p className="px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {part.total} matching {resultLabel}
+      </p>
+
+      <div className="grid gap-3">
+        {part.items.map((item) => {
+          const compensation = formatCompensation(item.compensation);
+
+          return (
+            <a key={item.id} href={`/events/${item.id}`} className="block">
+              <Card className="gap-0 rounded-2xl border-border/70 py-0 shadow-none transition-colors hover:bg-accent/20">
+                <CardContent className="space-y-3 px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.type ? (
+                      <Badge
+                        variant="secondary"
+                        className={TYPE_STYLES[item.type] ?? ""}
+                      >
+                        {item.type}
+                      </Badge>
+                    ) : null}
+                    {item.category ? (
+                      <Badge variant="outline" className="capitalize">
+                        {item.category}
+                      </Badge>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="font-semibold text-foreground">{item.title}</p>
+                    {item.summary || item.description ? (
+                      <p className="line-clamp-2 text-sm text-muted-foreground">
+                        {item.summary ?? item.description}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    {item.startAt ? (
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="size-3.5 shrink-0" />
+                        <span>{formatDate(item.startAt)}</span>
+                      </div>
+                    ) : null}
+                    {item.location.name ? (
+                      <div className="flex items-center gap-2">
+                        <MapPinIcon className="size-3.5 shrink-0" />
+                        <span className="truncate">{item.location.name}</span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {compensation ? (
+                    <p className="text-sm font-medium text-foreground">
+                      {compensation}
+                    </p>
+                  ) : null}
+                </CardContent>
+              </Card>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 type DisplayMessage = {
   id: string;
   role: ConversationMessage["role"];
   content: string;
+  parts?: ConversationMessage["parts"];
   pending?: boolean;
 };
 
@@ -155,6 +286,7 @@ export function AiPage({
             id: "pending-user",
             role: "USER" as const,
             content: pendingUserMessage,
+            parts: null,
             pending: true,
           },
         ]
@@ -165,6 +297,7 @@ export function AiPage({
             id: "pending-assistant",
             role: "ASSISTANT" as const,
             content: streamingAssistantMessage,
+            parts: null,
             pending: true,
           },
         ]
@@ -175,10 +308,22 @@ export function AiPage({
             id: "assistant-notice",
             role: "ASSISTANT" as const,
             content: assistantNotice,
+            parts: null,
           },
         ]
       : []),
   ];
+  const conversationCount =
+    conversationsQuery.data?.pagination.total ??
+    conversationsQuery.data?.data.length ??
+    0;
+  const activeConversation =
+    conversationsQuery.data?.data.find(
+      (conversation) => conversation.id === activeConversationId,
+    ) ?? null;
+  const activeConversationTitle = activeConversationId
+    ? activeConversation?.title ?? "New chat"
+    : "Start a new chat";
 
   async function refreshConversationState(targetConversationId: string) {
     await queryClient.invalidateQueries({
@@ -281,12 +426,14 @@ export function AiPage({
         setStreamingAssistantMessage((current) => current + chunk);
       });
       const refreshedMessages = await refreshConversationState(targetConversationId);
+      const normalizedAssistantText = normalizeAssistantText(assistantText);
       const persistedAssistantMessage = refreshedMessages.data.some(
         (message) =>
-          message.role === "ASSISTANT" && message.content === assistantText,
+          message.role === "ASSISTANT" &&
+          normalizeAssistantText(message.content) === normalizedAssistantText,
       );
 
-      if (assistantText.trim() && !persistedAssistantMessage) {
+      if (normalizedAssistantText && !persistedAssistantMessage) {
         setAssistantNotice(assistantText);
       }
     } catch (error) {
@@ -303,49 +450,50 @@ export function AiPage({
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="flex items-center justify-between gap-3">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-orange-700">
-            <SparklesIcon className="size-3.5" />
-            BuckAI
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">AI</h1>
-          <p className="text-sm text-muted-foreground">
-            Ask about events, gigs, and campus activity on Social OSU.
-          </p>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleNewConversation}
-          disabled={isSending || isCreatingConversation}
-        >
-          {isCreatingConversation ? (
-            <LoaderCircleIcon className="size-4 animate-spin" />
-          ) : (
-            <MessageSquarePlusIcon className="size-4" />
-          )}
-          New conversation
-        </Button>
+    <section className="flex w-full flex-col gap-8 px-6 py-10 lg:h-screen lg:min-h-0 lg:gap-6 lg:overflow-hidden lg:py-6">
+      <div className="min-w-0">
+        <h1 className="text-3xl font-bold tracking-tight">Ask BuckAI</h1>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="overflow-hidden rounded-3xl border bg-background">
-          <div className="border-b px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              Conversations
-            </p>
+      <div className="overflow-hidden rounded-2xl border bg-background lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
+        <aside className="border-b lg:flex lg:min-h-0 lg:flex-col lg:border-r lg:border-b-0">
+          <div className="border-b px-4 py-4 sm:px-5">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {conversationCount} conversation{conversationCount === 1 ? "" : "s"}
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight">
+                  Recent chats
+                </h2>
+              </div>
+
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="shrink-0"
+                aria-label="New conversation"
+                title="New conversation"
+                onClick={handleNewConversation}
+                disabled={isSending || isCreatingConversation}
+              >
+                {isCreatingConversation ? (
+                  <LoaderCircleIcon className="size-4 animate-spin" />
+                ) : (
+                  <MessageSquarePlusIcon className="size-4" />
+                )}
+              </Button>
+            </div>
           </div>
 
-          <div className="flex max-h-[560px] flex-col overflow-y-auto p-2">
+          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             {conversationsQuery.isLoading ? (
-              <p className="px-3 py-4 text-sm text-muted-foreground">
+              <p className="px-4 py-4 text-sm text-muted-foreground sm:px-5">
                 Loading conversations...
               </p>
             ) : conversationsQuery.error ? (
-              <p className="px-3 py-4 text-sm text-destructive">
+              <p className="px-4 py-4 text-sm text-destructive sm:px-5">
                 {conversationsQuery.error instanceof Error
                   ? conversationsQuery.error.message
                   : "Failed to load conversations"}
@@ -359,10 +507,10 @@ export function AiPage({
                     key={conversation.id}
                     type="button"
                     className={cn(
-                      "rounded-2xl px-3 py-3 text-left transition-colors",
+                      "w-full border-b px-4 py-4 text-left transition-colors last:border-b-0 sm:px-5",
                       isActive
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-accent/60",
+                        ? "bg-accent/50 text-accent-foreground"
+                        : "hover:bg-muted/40",
                     )}
                     disabled={isSending}
                     onClick={() => {
@@ -381,86 +529,108 @@ export function AiPage({
                 );
               })
             ) : (
-              <p className="px-3 py-4 text-sm text-muted-foreground">
+              <p className="px-4 py-4 text-sm text-muted-foreground sm:px-5">
                 No conversations yet. Start a new one below.
               </p>
             )}
           </div>
         </aside>
 
-        <div className="flex min-h-[560px] flex-col overflow-hidden rounded-3xl border bg-background">
-          <div className="border-b px-5 py-4">
-            <p className="text-sm font-medium">
-              {activeConversationId ? "Conversation" : "Start a new chat"}
+        <div className="flex min-h-[32rem] flex-col lg:min-h-0">
+          <div className="border-b px-4 py-4 sm:px-5">
+            <p className="text-sm text-muted-foreground">
+              {activeConversationId ? "Conversation" : "Draft"}
             </p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight">
+              {activeConversationTitle}
+            </h2>
           </div>
 
-          <div className="flex flex-1 flex-col">
-            <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              {!activeConversationId && !displayedMessages.length ? (
-                <div className="rounded-3xl border border-dashed bg-muted/30 px-5 py-8 text-sm text-muted-foreground">
-                  Ask BuckAI to find events, discover gigs, or help with campus plans.
-                </div>
-              ) : messagesQuery.isLoading && !displayedMessages.length ? (
+          <div className="flex flex-1 flex-col lg:min-h-0">
+            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
+              {messagesQuery.isLoading && !displayedMessages.length ? (
                 <p className="text-sm text-muted-foreground">
                   Loading conversation...
                 </p>
               ) : displayedMessages.length ? (
-                displayedMessages.map((message) => (
-                  <article
-                    key={message.id}
-                    className={cn(
-                      "max-w-3xl rounded-3xl px-4 py-3 text-sm shadow-sm",
-                      message.role === "USER"
-                        ? "ml-auto bg-orange-500 text-white"
-                        : "mr-auto border bg-muted/30 text-foreground",
-                      message.pending && "opacity-80",
-                    )}
-                  >
-                    <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.16em] opacity-70">
-                      {message.role === "USER" ? "You" : "BuckAI"}
-                    </p>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </article>
-                ))
+                displayedMessages.map((message) =>
+                  message.role === "USER" ? (
+                    <article
+                      key={message.id}
+                      className={cn(
+                        "ml-auto w-fit max-w-[85%] rounded-2xl bg-primary px-4 py-3 text-sm text-primary-foreground sm:max-w-xl",
+                        message.pending && "opacity-80",
+                      )}
+                    >
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    </article>
+                  ) : (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "mr-auto flex max-w-[85%] flex-col gap-3 sm:max-w-2xl",
+                        message.pending && "opacity-80",
+                      )}
+                    >
+                      {message.content ? (
+                        <article className="w-fit max-w-full rounded-2xl border bg-muted/30 px-4 py-3 text-sm text-foreground">
+                          <MarkdownContent className="text-sm [&_p]:whitespace-pre-line">
+                            {message.content}
+                          </MarkdownContent>
+                        </article>
+                      ) : null}
+
+                      {message.parts?.map((part, index) => (
+                        <SearchResultsCards
+                          key={`${message.id}-${part.type}-${index}`}
+                          part={part}
+                        />
+                      ))}
+                    </div>
+                  ),
+                )
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  This conversation does not have any messages yet.
-                </p>
+                <article className="mr-auto w-fit max-w-[85%] rounded-2xl border bg-muted/30 px-4 py-3 text-sm text-foreground sm:max-w-xl">
+                  <MarkdownContent className="text-sm [&_p]:whitespace-pre-line">
+                    {INITIAL_BUCKAI_MESSAGE}
+                  </MarkdownContent>
+                </article>
               )}
             </div>
 
-            <div className="border-t px-5 py-4">
+            <div className="border-t px-4 py-4 sm:px-5">
               <form className="space-y-3" onSubmit={handleSend}>
-                <label htmlFor="ai-message" className="text-sm font-medium">
+                <label htmlFor="ai-message" className="sr-only">
                   Message
                 </label>
-                <Textarea
-                  id="ai-message"
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                  placeholder="Ask about events, gigs, or campus activities"
-                  rows={4}
-                  disabled={isSending}
-                />
+                <div className="rounded-2xl border bg-muted/20 p-3">
+                  <Textarea
+                    id="ai-message"
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    placeholder="Ask about events, gigs, or campus activities"
+                    rows={4}
+                    disabled={isSending}
+                    className="min-h-24 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
+                  />
+                </div>
 
                 {errorMessage ? (
                   <p className="text-sm text-destructive">{errorMessage}</p>
                 ) : null}
 
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    Responses stream as they arrive.
-                  </p>
-
-                  <Button type="submit" disabled={!draft.trim() || isSending}>
+                <div className="flex items-center justify-end gap-3">
+                  <Button
+                    type="submit"
+                    size="icon"
+                    aria-label="Send"
+                    title="Send"
+                    disabled={!draft.trim() || isSending}
+                  >
                     {isSending ? (
-                      <>
-                        <LoaderCircleIcon className="size-4 animate-spin" />
-                        Sending...
-                      </>
+                      <LoaderCircleIcon className="size-4 animate-spin" />
                     ) : (
-                      "Send"
+                      <SendHorizontalIcon className="size-4" />
                     )}
                   </Button>
                 </div>

@@ -1,5 +1,6 @@
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { NotFoundError } from "../lib/problem-details";
+import type { ChatMessagePart } from "./chat-message-parts";
 
 export const CHATBOT_CONTEXT_WINDOW_LIMIT = 20;
 
@@ -64,6 +65,7 @@ export async function createConversationMessage(
     conversationId: string;
     role: "USER" | "ASSISTANT" | "SYSTEM";
     content: string;
+    parts?: ChatMessagePart[];
   },
 ) {
   const message = await prisma.message.create({
@@ -71,6 +73,11 @@ export async function createConversationMessage(
       conversationId: input.conversationId,
       role: input.role,
       content: input.content,
+      ...(input.parts?.length
+        ? {
+            parts: input.parts as Prisma.InputJsonValue,
+          }
+        : {}),
     },
   });
 

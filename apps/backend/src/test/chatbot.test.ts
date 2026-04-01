@@ -33,6 +33,7 @@ function createMessage(overrides: Record<string, unknown> = {}) {
     conversationId: "conv_1",
     role: "USER",
     content: "hello",
+    parts: null,
     createdAt: new Date("2026-04-01T12:00:00.000Z"),
     ...overrides,
   };
@@ -82,7 +83,7 @@ function createStreamTextStub(
 }
 
 function createStreamTextErrorStub(error: Error) {
-  return vi.fn((_options: Record<string, unknown>) => ({
+  return vi.fn(() => ({
     textStream: {
       async *[Symbol.asyncIterator]() {
         yield* [];
@@ -242,6 +243,34 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
     expect(mockPrisma.event.findMany).toHaveBeenCalled();
     expect(mockPrisma.event.count).toHaveBeenCalled();
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          conversationId: "conv_1",
+          role: "ASSISTANT",
+          content: "I found a few music events this weekend.",
+          parts: [
+            expect.objectContaining({
+              type: "search-results",
+              toolName: "searchEvents",
+              total: 1,
+              items: [
+                expect.objectContaining({
+                  id: "evt_music_1",
+                  title: "Battle of the Bands",
+                  type: "EVENT",
+                  category: "music",
+                  location: expect.objectContaining({
+                    name: "Ohio Union",
+                  }),
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
   });
 
   it("TC-CONV-003: first message streams a response and triggers conversation title generation", async () => {
@@ -355,6 +384,35 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
         minCompensation: 20,
         compensationType: "HOURLY",
         limit: 5,
+      }),
+    );
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          conversationId: "conv_1",
+          role: "ASSISTANT",
+          content: "I found a tutoring gig that matches that pay range.",
+          parts: [
+            expect.objectContaining({
+              type: "search-results",
+              toolName: "searchGigs",
+              total: 1,
+              items: [
+                expect.objectContaining({
+                  id: "gig_1",
+                  title: "Physics Tutor",
+                  type: "GIG",
+                  compensation: expect.objectContaining({
+                    amount: 25,
+                    currency: "USD",
+                    type: "HOURLY",
+                  }),
+                }),
+              ],
+            }),
+          ],
+        }),
       }),
     );
   });
