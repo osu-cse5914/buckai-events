@@ -139,10 +139,59 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.unstubAllGlobals();
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  // S-ING-1 → TC-ING-001
+  it("TC-ING-001: creates a new OSU event with placeholder AI fields and queues tagging", async () => {
+    const scheduleEventPipeline = vi.fn();
+
+    stubExternalFetch({
+      osuEvents: [makeOsuEvent()],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(
+      makeStoredExternalEvent({
+        title: "Group Fitness Classes",
+        description: "**Try a group fitness class...**",
+        locationName: "RPAC/North Rec (check schedule)",
+      }) as never,
+    );
+
+    const result = await syncExternalEvents(mockPrisma, {
+      ticketmasterApiKey: "ticketmaster_test_key",
+      scheduleEventPipeline,
+    });
+
+    expect(result.sources.osu.created).toBe(1);
+    expect(mockPrisma.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          source: "OSU_API",
+          externalId: "https://studentlife.osu.edu/Events.aspx?e=83306",
+          title: "Group Fitness Classes",
+          description: "**Try a group fitness class...**",
+          locationName: "RPAC/North Rec (check schedule)",
+          externalUrl: "https://studentlife.osu.edu/Events.aspx?e=83306",
+          tags: [],
+          summary: null,
+          category: null,
+          creatorId: null,
+          status: "OPEN",
+        }),
+      }),
+    );
+    expect(scheduleEventPipeline).toHaveBeenCalledWith({
+      eventId: "evt_external_1",
+      stages: ["TAGGING", "EMBEDDING"],
+      trigger: "EVENT_CREATE",
+    });
   });
 
   // S-ING-2 → TC-ING-002
@@ -176,6 +225,63 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
       }),
     );
     expect(mockPrisma.event.create).not.toHaveBeenCalled();
+  });
+
+  // S-ING-7 → TC-ING-008
+  it("TC-ING-008: preserves existing tags, summary, and category when an external event updates", async () => {
+    const scheduleEventPipeline = vi.fn();
+
+    stubExternalFetch({
+      osuEvents: [
+        makeOsuEvent({
+          itemHash: "def456",
+          title: "Updated Fitness Classes",
+          content: "Updated body copy",
+        }),
+      ],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
+      makeStoredExternalEvent({
+        tags: ["music", "jazz"],
+        summary: "Original summary",
+        category: "music",
+      }) as never,
+    );
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.event.update).mockResolvedValue(
+      makeStoredExternalEvent({
+        title: "Updated Fitness Classes",
+        description: "Updated body copy",
+        sourceHash: "def456",
+        tags: ["music", "jazz"],
+        summary: "Original summary",
+        category: "music",
+      }) as never,
+    );
+
+    await syncExternalEvents(mockPrisma, {
+      ticketmasterApiKey: "ticketmaster_test_key",
+      scheduleEventPipeline,
+    });
+
+    const updateArgs = vi.mocked(mockPrisma.event.update).mock.calls[0]?.[0] as {
+      data: Record<string, unknown>;
+    };
+
+    expect(updateArgs.data).toMatchObject({
+      title: "Updated Fitness Classes",
+      description: "Updated body copy",
+      sourceHash: "def456",
+    });
+    expect(updateArgs.data).not.toHaveProperty("tags");
+    expect(updateArgs.data).not.toHaveProperty("summary");
+    expect(updateArgs.data).not.toHaveProperty("category");
+    expect(scheduleEventPipeline).toHaveBeenCalledWith({
+      eventId: "evt_external_1",
+      stages: ["EMBEDDING"],
+      trigger: "EVENT_UPDATE",
+    });
   });
 
   // S-ING-2a → TC-ING-003
@@ -238,6 +344,46 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
           status: "OPEN",
         }),
       }),
+    );
+  });
+
+  // S-ING-6 → TC-ING-007
+  it("TC-ING-007: still creates the external event when AI pipeline scheduling fails", async () => {
+    const scheduleEventPipeline = vi
+      .fn()
+      .mockRejectedValue(new Error("AI unavailable"));
+
+    stubExternalFetch({
+      osuEvents: [makeOsuEvent()],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(
+      makeStoredExternalEvent({
+        title: "Group Fitness Classes",
+        description: "**Try a group fitness class...**",
+      }) as never,
+    );
+
+    const result = await syncExternalEvents(mockPrisma, {
+      ticketmasterApiKey: "ticketmaster_test_key",
+      scheduleEventPipeline,
+    });
+
+    expect(result.sources.osu.created).toBe(1);
+    expect(mockPrisma.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tags: [],
+          summary: null,
+          category: null,
+        }),
+      }),
+    );
+    expect(console.error).toHaveBeenCalledWith(
+      "Failed to schedule external event pipeline for event evt_external_1",
+      expect.any(Error),
     );
   });
 
