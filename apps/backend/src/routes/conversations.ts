@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { paginated } from "../lib/pagination";
 import { getPrisma } from "../lib/prisma";
 import {
   parsePendingChatAction,
@@ -9,13 +10,21 @@ import {
   interpretPendingActionDecision,
 } from "../services/chatbot";
 import {
+  createConversation,
   createConversationMessage,
   getConversationForUserOrThrow,
+  listConversationMessagesForUser,
   listRecentConversationMessages,
+  listUserConversations,
 } from "../services/conversations";
-import { readJsonBody, validateConversationIdParam, parseSendMessageBody } from "../lib/validators";
+import {
+  parseSendMessageBody,
+  readJsonBody,
+  resolvePaginationQuery,
+  validateConversationIdParam,
+  validatePaginationQuery,
+} from "../lib/validators";
 import type { AppEnv } from "../lib/types";
-
 type ConversationsRouteOptions = {
   streamText?: Parameters<typeof createChatbotStreamResponse>[0]["streamText"];
   searchSemanticEvents?: Parameters<
@@ -33,10 +42,60 @@ export function createConversationsRouter({
   resolveChatbotModel,
   currentDate = () => new Date(),
 }: ConversationsRouteOptions = {}) {
-  return new Hono<AppEnv>().post(
-    "/:id/messages",
-    validateConversationIdParam,
-    async (c) => {
+  return new Hono<AppEnv>()
+    .post("/", async (c) => {
+      const user = c.get("user");
+      const prisma = getPrisma(c);
+      const conversation = await createConversation(prisma, user.id);
+
+      return c.json(conversation, 201);
+    })
+    .get("/", validatePaginationQuery, async (c) => {
+      const user = c.get("user");
+      const prisma = getPrisma(c);
+      const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
+
+      const result = await listUserConversations(prisma, {
+        userId: user.id,
+        limit,
+        offset,
+      });
+
+      return c.json(
+        paginated(result.data, {
+          total: result.total,
+          limit: result.limit,
+          offset: result.offset,
+        }),
+      );
+    })
+    .get(
+      "/:id/messages",
+      validateConversationIdParam,
+      validatePaginationQuery,
+      async (c) => {
+        const user = c.get("user");
+        const prisma = getPrisma(c);
+        const { id } = c.req.valid("param");
+        const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
+
+        const result = await listConversationMessagesForUser(prisma, {
+          conversationId: id,
+          userId: user.id,
+          limit,
+          offset,
+        });
+
+        return c.json(
+          paginated(result.data, {
+            total: result.total,
+            limit: result.limit,
+            offset: result.offset,
+          }),
+        );
+      },
+    )
+    .post("/:id/messages", validateConversationIdParam, async (c) => {
       const user = c.get("user");
       const prisma = getPrisma(c);
       const { id } = c.req.valid("param");
@@ -120,8 +179,7 @@ export function createConversationsRouter({
           });
         },
       });
-    },
-  );
+    });
 }
 
 export const conversations = createConversationsRouter();
