@@ -136,3 +136,14 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 - **When**: The sync finishes
 - **Then**: OSU events are still fetched and ingested
 - **And**: Ticketmaster is skipped with zero summary counters
+
+## TC-ING-014: External sync queues the AI pipeline for created and updated events
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: External sync creates one event and updates another
+- **When**: The sync finishes
+- **Then**: A full pipeline job is queued for the newly created event
+- **And**: An embedding-only pipeline job is queued for the updated event

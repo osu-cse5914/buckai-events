@@ -6,6 +6,7 @@ import { ensureClerkPublishableKey } from "./lib/clerk";
 import { runWithPrisma } from "./lib/worker-runtime";
 import type { WorkerBindings } from "./lib/types";
 import { syncExternalEvents } from "./services/external-ingestion";
+import { createEventPipelineJob } from "./services/event-pipeline";
 
 export const AUTO_COMPLETE_CRON = "*/15 * * * *";
 export const EXTERNAL_INGESTION_CRON = "0 */6 * * *";
@@ -51,6 +52,15 @@ const worker = {
         runWithPrisma(env.DATABASE_URL, (prisma) =>
           syncExternalEvents(prisma, {
             ticketmasterApiKey: env.TICKETMASTER_API_KEY,
+            scheduleEventPipeline: (input) =>
+              createEventPipelineJob(prisma, {
+                eventIds: [input.eventId],
+                stages: input.stages,
+                trigger: input.trigger,
+                connectionString: env.DATABASE_URL,
+                env: env as unknown as Record<string, string | undefined>,
+                dispatch: (task) => ctx.waitUntil(task),
+              }),
           }),
         ),
       );

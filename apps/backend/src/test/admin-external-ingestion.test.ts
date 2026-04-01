@@ -99,9 +99,12 @@ describe("[phase:6] [regression:always] POST /api/v1/admin/external-ingestion/sy
     );
 
     expect(res.status).toBe(200);
-    expect(mockSyncExternalEvents).toHaveBeenCalledWith(mockPrisma, {
-      ticketmasterApiKey: "ticketmaster_test_key",
-    });
+    expect(mockSyncExternalEvents).toHaveBeenCalledWith(
+      mockPrisma,
+      expect.objectContaining({
+        ticketmasterApiKey: "ticketmaster_test_key",
+      }),
+    );
     expect(await res.json()).toMatchObject({
       startedAt: "2026-03-31T12:00:00.000Z",
       finishedAt: "2026-03-31T12:00:02.000Z",

@@ -42,14 +42,14 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function createTestApp(enqueueEventTagging = vi.fn()) {
+function createTestApp(scheduleEventPipeline = vi.fn()) {
   const app = new Hono();
   app.use("/*", async (c, next) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (c as any).set("user", USER);
     await next();
   });
-  app.route("/events", createEventsRouter({ enqueueEventTagging }));
+  app.route("/events", createEventsRouter({ scheduleEventPipeline }));
   return app;
 }
 
@@ -72,11 +72,11 @@ describe("[phase:4] [regression:always] Event AI tagging", () => {
 
   it("TC-EVT-012: schedules AI tagging after a successful event create", async () => {
     const created = makeEvent();
-    const enqueueEventTagging = vi.fn();
+    const scheduleEventPipeline = vi.fn();
 
     vi.mocked(mockPrisma.event.create).mockResolvedValue(created as never);
 
-    const res = await postEvent(createTestApp(enqueueEventTagging), {
+    const res = await postEvent(createTestApp(scheduleEventPipeline), {
       title: "Jazz Night at the Union",
       description: "Live jazz performance featuring student musicians",
       type: "EVENT",
@@ -85,25 +85,25 @@ describe("[phase:4] [regression:always] Event AI tagging", () => {
     });
 
     expect(res.status).toBe(201);
-    expect(enqueueEventTagging).toHaveBeenCalledWith(
+    expect(scheduleEventPipeline).toHaveBeenCalledWith(
       expect.anything(),
-      created.id,
       expect.objectContaining({
-        title: "Jazz Night at the Union",
-        description: "Live jazz performance featuring student musicians",
+        eventId: created.id,
+        trigger: "EVENT_CREATE",
+        stages: ["TAGGING", "EMBEDDING"],
       }),
     );
   });
 
   it("TC-EVT-013: returns 201 and preserves empty AI fields when background tagging setup fails", async () => {
     const created = makeEvent();
-    const enqueueEventTagging = vi.fn(() => {
+    const scheduleEventPipeline = vi.fn(() => {
       throw new Error("AI unavailable");
     });
 
     vi.mocked(mockPrisma.event.create).mockResolvedValue(created as never);
 
-    const res = await postEvent(createTestApp(enqueueEventTagging), {
+    const res = await postEvent(createTestApp(scheduleEventPipeline), {
       title: "Jazz Night at the Union",
       description: "Live jazz performance featuring student musicians",
       type: "EVENT",
@@ -119,6 +119,33 @@ describe("[phase:4] [regression:always] Event AI tagging", () => {
           summary: null,
           category: null,
         }),
+      }),
+    );
+  });
+
+  it("TC-EMBED-002: schedules an embedding refresh after a successful content update", async () => {
+    const existing = makeEvent();
+    const updated = makeEvent({ description: "Updated lineup and venue details" });
+    const scheduleEventPipeline = vi.fn();
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(existing as never);
+    vi.mocked(mockPrisma.event.update).mockResolvedValue(updated as never);
+
+    const res = await createTestApp(scheduleEventPipeline).request(`/events/${existing.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: "Updated lineup and venue details",
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(scheduleEventPipeline).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        eventId: existing.id,
+        trigger: "EVENT_UPDATE",
+        stages: ["EMBEDDING"],
       }),
     );
   });

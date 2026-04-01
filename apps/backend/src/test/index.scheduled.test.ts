@@ -65,9 +65,9 @@ describe("[phase:4] [regression:always] Scheduled worker dispatch", () => {
 
     expect(syncExternalEvents).toHaveBeenCalledWith(
       {},
-      {
+      expect.objectContaining({
         ticketmasterApiKey: "ticketmaster_secret",
-      },
+      }),
     );
     expect(autoCompleteEvents).not.toHaveBeenCalled();
     expect(waitUntil).toHaveBeenCalledTimes(1);

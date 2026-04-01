@@ -17,3 +17,10 @@
 | TC-DBG-009 | S-DBG-7 | Non-admin does not see the external sync control | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
 | TC-DBG-010 | S-DBG-8 | Successful external sync shows returned counts | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
 | TC-DBG-011 | S-DBG-9 | Failed external sync shows an error state | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
+| TC-DBG-012 | — | Admin sees AI pipeline controls and recent job status | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
+| TC-DBG-013 | — | Admin can queue a full AI pipeline rerun for an event | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
+| TC-DBG-014 | — | Admin can trigger the missing-embeddings backfill job | Automated | `apps/web/src/routes/_authenticated/debug/-index.test.tsx` | 6 | Always |
+| TC-DBG-015 | — | Non-admin cannot list AI pipeline jobs | Automated | `apps/backend/src/test/admin-ai-pipeline.test.ts` | 6 | Always |
+| TC-DBG-016 | — | Admin can list recent AI pipeline jobs | Automated | `apps/backend/src/test/admin-ai-pipeline.test.ts` | 6 | Always |
+| TC-DBG-017 | — | Admin can create a rerun job for an event | Automated | `apps/backend/src/test/admin-ai-pipeline.test.ts` | 6 | Always |
+| TC-DBG-018 | — | Admin can create an embedding backfill job | Automated | `apps/backend/src/test/admin-ai-pipeline.test.ts` | 6 | Always |

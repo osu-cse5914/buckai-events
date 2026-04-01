@@ -91,6 +91,11 @@ export type ExternalSyncOptions = {
   ticketmasterApiKey?: string;
   fetchImpl?: FetchLike;
   now?: Date;
+  scheduleEventPipeline?: (input: {
+    eventId: string;
+    stages: Array<"TAGGING" | "EMBEDDING">;
+    trigger: "EVENT_CREATE" | "EVENT_UPDATE";
+  }) => Promise<unknown> | unknown;
 };
 
 export type ExternalSyncSourceSummary = {
@@ -300,6 +305,7 @@ export async function syncExternalSource(
   source: EventSource,
   candidates: ExternalEventCandidate[],
   now = new Date(),
+  scheduleEventPipeline?: ExternalSyncOptions["scheduleEventPipeline"],
 ) {
   const dedupedCandidates = dedupeCandidates(candidates);
   const fetchedIds = new Set(dedupedCandidates.map((candidate) => candidate.externalId));
@@ -319,8 +325,13 @@ export async function syncExternalSource(
     });
 
     if (!existing) {
-      await prisma.event.create({
+      const created = await prisma.event.create({
         data: toExternalEventData(candidate),
+      });
+      await scheduleEventPipeline?.({
+        eventId: created.id,
+        stages: ["TAGGING", "EMBEDDING"],
+        trigger: "EVENT_CREATE",
       });
       summary.created += 1;
       continue;
@@ -331,7 +342,7 @@ export async function syncExternalSource(
       continue;
     }
 
-    await prisma.event.update({
+    const updated = await prisma.event.update({
       where: {
         id: existing.id,
       },
@@ -349,6 +360,11 @@ export async function syncExternalSource(
         startAt: candidate.startAt,
         endAt: candidate.endAt,
       },
+    });
+    await scheduleEventPipeline?.({
+      eventId: updated.id,
+      stages: ["EMBEDDING"],
+      trigger: "EVENT_UPDATE",
     });
     summary.updated += 1;
   }
@@ -386,7 +402,12 @@ export async function syncExternalSource(
 
 export async function syncExternalEvents(
   prisma: PrismaClient,
-  { ticketmasterApiKey, fetchImpl = fetch, now = new Date() }: ExternalSyncOptions,
+  {
+    ticketmasterApiKey,
+    fetchImpl = fetch,
+    now = new Date(),
+    scheduleEventPipeline,
+  }: ExternalSyncOptions,
 ) : Promise<ExternalSyncSummary> {
   const startedAt = new Date();
   const normalizedTicketmasterApiKey = ticketmasterApiKey?.trim();
@@ -403,12 +424,19 @@ export async function syncExternalEvents(
     ticketmasterCandidatesPromise,
   ]);
 
-  const osu = await syncExternalSource(prisma, "OSU_API", osuCandidates, now);
+  const osu = await syncExternalSource(
+    prisma,
+    "OSU_API",
+    osuCandidates,
+    now,
+    scheduleEventPipeline,
+  );
   const ticketmaster = await syncExternalSource(
     prisma,
     "TICKETMASTER",
     ticketmasterCandidates,
     now,
+    scheduleEventPipeline,
   );
 
   return {

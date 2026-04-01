@@ -5,6 +5,9 @@ import { navLinks } from "@/routes/_authenticated";
 
 const mockHealthGet = vi.fn();
 const mockExternalSyncPost = vi.fn();
+const mockPipelineJobsGet = vi.fn();
+const mockPipelineRerunPost = vi.fn();
+const mockPipelineBackfillPost = vi.fn();
 let currentUser = {
   id: "db_user_abc123",
   role: "USER",
@@ -32,6 +35,21 @@ const mockApiClient = {
         "external-ingestion": {
           sync: {
             $post: (...args: unknown[]) => mockExternalSyncPost(...args),
+          },
+        },
+        "ai-pipeline": {
+          jobs: {
+            $get: (...args: unknown[]) => mockPipelineJobsGet(...args),
+          },
+          events: {
+            ":id": {
+              rerun: {
+                $post: (...args: unknown[]) => mockPipelineRerunPost(...args),
+              },
+            },
+          },
+          backfill: {
+            $post: (...args: unknown[]) => mockPipelineBackfillPost(...args),
           },
         },
       },
@@ -75,6 +93,10 @@ describe("[phase:1] [regression:always] Debug Page", () => {
       id: "db_user_abc123",
       role: "USER",
     };
+    mockPipelineJobsGet.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([]),
+    });
   });
 
   it("TC-DBG-001: keeps debug out of the primary navigation model", () => {
@@ -245,5 +267,102 @@ describe("[phase:6] [regression:always] Debug Page admin sync", () => {
     await waitFor(() => {
       expect(screen.getByText("Sync failed")).toBeInTheDocument();
     });
+  });
+
+  it("TC-DBG-012: admin sees AI pipeline controls and recent jobs", async () => {
+    currentUser = {
+      id: "db_user_abc123",
+      role: "ADMIN",
+    };
+    mockPipelineJobsGet.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve([
+          {
+            id: "job_1",
+            trigger: "EVENT_CREATE",
+            status: "SUCCEEDED",
+            stages: ["TAGGING", "EMBEDDING"],
+            runs: [
+              {
+                id: "run_1",
+                eventId: "evt_1",
+                stage: "EMBEDDING",
+                status: "SUCCEEDED",
+                event: { id: "evt_1", title: "Jazz Night" },
+              },
+            ],
+          },
+        ]),
+    });
+
+    render(<DebugPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Refresh AI Pipeline Jobs" })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: "Rerun Full Pipeline" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Backfill Missing Embeddings" })).toBeInTheDocument();
+    expect(screen.getByText("Jazz Night")).toBeInTheDocument();
+    expect(screen.getAllByText("SUCCEEDED")).not.toHaveLength(0);
+  });
+
+  it("TC-DBG-013: admin can rerun the full pipeline for an event", async () => {
+    const user = userEvent.setup();
+    currentUser = {
+      id: "db_user_abc123",
+      role: "ADMIN",
+    };
+    mockPipelineRerunPost.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          id: "job_rerun_1",
+          trigger: "ADMIN_RERUN",
+          status: "QUEUED",
+        }),
+    });
+
+    render(<DebugPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Rerun Full Pipeline" })).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByPlaceholderText("Enter event ID"), "evt_1");
+    await user.click(screen.getByRole("button", { name: "Rerun Full Pipeline" }));
+
+    expect(mockPipelineRerunPost).toHaveBeenCalledWith({
+      param: { id: "evt_1" },
+      json: { mode: "FULL_PIPELINE" },
+    });
+  });
+
+  it("TC-DBG-014: admin can trigger an embedding backfill job", async () => {
+    const user = userEvent.setup();
+    currentUser = {
+      id: "db_user_abc123",
+      role: "ADMIN",
+    };
+    mockPipelineBackfillPost.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          id: "job_backfill_1",
+          trigger: "EMBEDDING_BACKFILL",
+          status: "QUEUED",
+        }),
+    });
+
+    render(<DebugPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Backfill Missing Embeddings" })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Backfill Missing Embeddings" }));
+
+    expect(mockPipelineBackfillPost).toHaveBeenCalled();
   });
 });

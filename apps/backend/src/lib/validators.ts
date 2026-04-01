@@ -39,6 +39,14 @@ export type EventListQuery = PaginationQuery & {
   sort?: string;
 };
 
+export type SemanticSearchQuery = PaginationQuery & {
+  query?: string;
+  type?: string;
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -548,6 +556,66 @@ export const validatePaginationQuery = validator("query", (value, c) => {
   }
   if (offsetValue !== undefined) {
     output.offset = offsetValue;
+  }
+
+  return output;
+});
+
+export const validateSemanticSearchQuery = validator("query", (value, c) => {
+  const pagination = parsePaginationInput(value.limit, undefined, {
+    defaultLimit: 10,
+    maxLimit: 25,
+  });
+  if (pagination === "invalid") {
+    return badRequest(
+      c,
+      "limit must be numeric",
+      "invalid-query",
+      "Invalid query parameter",
+    );
+  }
+
+  const query = firstQueryValue(value.query);
+  if (!query?.trim()) {
+    return badRequest(c, "query is required", "invalid-query", "Invalid query parameter");
+  }
+
+  const output: SemanticSearchQuery = {
+    query,
+  };
+
+  const limitValue = firstQueryValue(value.limit);
+  if (limitValue !== undefined) {
+    output.limit = limitValue;
+  }
+
+  const typeValue = firstQueryValue(value.type);
+  if (typeValue !== undefined) {
+    if (!isAllowedValue(typeValue, EVENT_TYPES)) {
+      return badRequest(c, "type must be EVENT or GIG");
+    }
+    output.type = typeValue;
+  }
+
+  const categoryValue = firstQueryValue(value.category);
+  if (categoryValue !== undefined) {
+    output.category = categoryValue;
+  }
+
+  const startDateValue = firstQueryValue(value.startDate);
+  if (startDateValue !== undefined) {
+    if (!parseDateValue(startDateValue)) {
+      return badRequest(c, "startDate must be a valid date");
+    }
+    output.startDate = startDateValue;
+  }
+
+  const endDateValue = firstQueryValue(value.endDate);
+  if (endDateValue !== undefined) {
+    if (!parseDateValue(endDateValue)) {
+      return badRequest(c, "endDate must be a valid date");
+    }
+    output.endDate = endDateValue;
   }
 
   return output;

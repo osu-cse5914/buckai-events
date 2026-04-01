@@ -241,6 +241,56 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
     );
   });
 
+  it("TC-ING-014: queues the event pipeline for new and updated external events", async () => {
+    const scheduleEventPipeline = vi.fn();
+
+    stubExternalFetch({
+      osuEvents: [makeOsuEvent({ itemHash: "def456", content: "Updated body copy" })],
+      ticketmasterPages: [
+        {
+          _embedded: {
+            events: [makeTicketmasterEvent()],
+          },
+          page: {
+            totalPages: 1,
+            number: 0,
+          },
+        },
+      ],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique)
+      .mockResolvedValueOnce(makeStoredExternalEvent() as never)
+      .mockResolvedValueOnce(null as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.event.update).mockResolvedValue(
+      makeStoredExternalEvent({ sourceHash: "def456" }) as never,
+    );
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(
+      makeStoredExternalEvent({
+        id: "evt_external_2",
+        source: "TICKETMASTER",
+        externalId: "tm_67890",
+      }) as never,
+    );
+
+    await syncExternalEvents(mockPrisma, {
+      ticketmasterApiKey: "ticketmaster_test_key",
+      scheduleEventPipeline,
+    });
+
+    expect(scheduleEventPipeline).toHaveBeenCalledWith({
+      eventId: "evt_external_1",
+      stages: ["EMBEDDING"],
+      trigger: "EVENT_UPDATE",
+    });
+    expect(scheduleEventPipeline).toHaveBeenCalledWith({
+      eventId: "evt_external_2",
+      stages: ["TAGGING", "EMBEDDING"],
+      trigger: "EVENT_CREATE",
+    });
+  });
+
   // S-ING-4 → TC-ING-005
   it("TC-ING-005: marks disappeared past external events as COMPLETED", async () => {
     stubExternalFetch({});
