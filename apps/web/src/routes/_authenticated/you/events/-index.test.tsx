@@ -96,6 +96,9 @@ describe("[phase:6] [regression:always] YouEventsPage", () => {
       "href",
       "/you",
     );
+    expect(
+      screen.queryByRole("link", { name: /create event/i }),
+    ).not.toBeInTheDocument();
     expect(mockEventsGet).toHaveBeenCalledWith({
       query: {
         limit: "12",

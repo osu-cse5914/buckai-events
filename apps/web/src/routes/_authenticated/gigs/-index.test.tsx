@@ -83,18 +83,25 @@ vi.mock("@tanstack/react-router", () => ({
     children,
     to,
     params,
+    search,
     ...props
   }: {
     children: React.ReactNode;
     to: string;
     params?: Record<string, string>;
+    search?: Record<string, string>;
     className?: string;
     onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
-  }) => (
-    <a href={params?.eventId ? `/events/${params.eventId}` : to} {...props}>
-      {children}
-    </a>
-  ),
+  }) => {
+    const href = params?.eventId ? `/events/${params.eventId}` : to;
+    const query = search ? new URLSearchParams(search).toString() : "";
+
+    return (
+      <a href={query ? `${href}?${query}` : href} {...props}>
+        {children}
+      </a>
+    );
+  },
 }));
 
 const DEFAULT_FILTERS = {
@@ -281,6 +288,10 @@ describe("[phase:1] [regression:always] GigsPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Gigs" })).toBeInTheDocument();
     expect(await screen.findByText("No gigs found")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create gig" })).toHaveAttribute(
+      "href",
+      "/events/new?type=GIG",
+    );
   });
 
   it("renders gig rows without a type badge and keeps compensation", async () => {

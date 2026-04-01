@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
+import { validateCreateEventSearch } from "@/lib/event-route-search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { browsePathForEventType } from "@/lib/event-utils";
 
 export const Route = createFileRoute("/_authenticated/events/new")({
+  validateSearch: validateCreateEventSearch,
   component: EventCreationPage,
 });
 
@@ -25,16 +27,21 @@ function EventCreationPage() {
   const api = useApiClient();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const search = Route.useSearch();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<"EVENT" | "GIG">("EVENT");
+  const [type, setType] = useState<"EVENT" | "GIG">(search.type ?? "EVENT");
   const [locationName, setLocationName] = useState("");
   const [startAt, setStartAt] = useState<Date | undefined>(undefined);
   const [endAt, setEndAt] = useState<Date | undefined>(undefined);
   const [compAmount, setCompAmount] = useState("");
   const [compType, setCompType] = useState<"FIXED" | "HOURLY">("FIXED");
   const [validationError, setValidationError] = useState("");
+
+  useEffect(() => {
+    setType(search.type ?? "EVENT");
+  }, [search.type]);
 
   const mutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
@@ -94,7 +101,7 @@ function EventCreationPage() {
       </Link>
 
       <h1 className="mt-6 text-2xl font-bold tracking-tight">
-        Create Event
+        Create {type === "GIG" ? "Gig" : "Event"}
       </h1>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
@@ -217,7 +224,9 @@ function EventCreationPage() {
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "Creating..." : "Create Event"}
+            {mutation.isPending
+              ? "Creating..."
+              : `Create ${type === "GIG" ? "Gig" : "Event"}`}
           </Button>
           <Button type="button" variant="outline" asChild>
             <Link to={browsePathForEventType(type)}>Cancel</Link>

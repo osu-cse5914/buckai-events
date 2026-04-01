@@ -21,6 +21,10 @@ export type SearchRouteSearch = {
   page?: number;
 };
 
+export type CreateEventRouteSearch = {
+  type?: (typeof EVENT_TYPES)[number];
+};
+
 function normalizeTrimmedString(value: unknown) {
   if (typeof value !== "string") {
     return undefined;
@@ -73,6 +77,14 @@ export function validateEventSearch(
     type: normalizeEnumValue(search.type, EVENT_TYPES),
     category: normalizeTrimmedString(search.category),
     page: normalizePage(search.page),
+  };
+}
+
+export function validateCreateEventSearch(
+  search: Record<string, unknown>,
+): CreateEventRouteSearch {
+  return {
+    type: normalizeEnumValue(search.type, EVENT_TYPES),
   };
 }
 
