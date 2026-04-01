@@ -185,7 +185,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       okJson(
         makeEvent({
           description:
-            "## Schedule\n\n- Build overnight\n- Demo in the morning\n\nVisit [docs](https://example.com)",
+            "## Schedule\n\n- **Build overnight**\n- Demo in the morning\n\nVisit [docs](https://example.com)",
         }),
       ),
     );
@@ -196,7 +196,9 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     expect(
       await screen.findByRole("heading", { name: "Schedule" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Build overnight")).toBeInTheDocument();
+    expect(
+      screen.getByText("Build overnight", { selector: "strong" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "docs" }),
     ).toHaveAttribute("href", "https://example.com");
