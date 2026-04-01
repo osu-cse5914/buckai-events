@@ -9,9 +9,13 @@ import { PAGE_SIZE } from "@/lib/queries";
 const state = vi.hoisted(() => {
   const mockGet = vi.fn();
   const mockEventDetailGet = vi.fn();
+  const mockUserGet = vi.fn();
+  const mockInteractionsPost = vi.fn();
   return {
     mockGet,
     mockEventDetailGet,
+    mockUserGet,
+    mockInteractionsPost,
     loadEventsRouteDataMock: vi.fn(),
     mockApiClient: {
       api: {
@@ -20,6 +24,27 @@ const state = vi.hoisted(() => {
             $get: (...args: unknown[]) => mockGet(...args),
             ":id": {
               $get: (...args: unknown[]) => mockEventDetailGet(...args),
+            },
+          },
+          users: {
+            me: {
+              $get: (...args: unknown[]) => mockUserGet(...args),
+            },
+          },
+          interactions: {
+            $post: (...args: unknown[]) => mockInteractionsPost(...args),
+          },
+          collections: {
+            $get: vi.fn().mockResolvedValue({
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve([]),
+            }),
+            $post: vi.fn(),
+            ":id": {
+              items: {
+                $post: vi.fn(),
+              },
             },
           },
         },
@@ -164,10 +189,10 @@ function makeResponse(
   };
 }
 
-function okJson(data: unknown) {
+function okJson(data: unknown, status = 200) {
   return {
-    ok: true,
-    status: 200,
+    ok: status >= 200 && status < 300,
+    status,
     json: () => Promise.resolve(data),
   };
 }
@@ -280,6 +305,10 @@ beforeEach(() => {
   capturedLoaderDeps = null;
   capturedLoader = null;
   intersectionObserverCallback = null;
+  state.mockUserGet.mockResolvedValue(
+    okJson({ id: "user_2", email: "bob@osu.edu" }),
+  );
+  state.mockInteractionsPost.mockResolvedValue(okJson({}, 201));
   vi.unstubAllGlobals();
   vi.resetModules();
 });
@@ -634,6 +663,31 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
     ).not.toBeInTheDocument();
     expect(state.mockEventDetailGet).toHaveBeenCalledWith({
       param: { id: "1" },
+    });
+  });
+
+  it("TC-INT-006: selecting an event on desktop records a VIEW interaction", async () => {
+    stubDesktopMedia();
+    state.mockGet.mockResolvedValue(
+      makeResponse([
+        makeEvent({ id: "1", title: "Hackathon" }),
+        makeEvent({ id: "2", title: "Jazz Night" }),
+      ]),
+    );
+    state.mockEventDetailGet.mockResolvedValue(
+      okJson(makeEvent({ id: "1", title: "Hackathon" })),
+    );
+
+    await renderEventsPage();
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("link", { name: /Hackathon/i }));
+
+    await screen.findByText("A test event");
+    await vi.waitFor(() => {
+      expect(state.mockInteractionsPost).toHaveBeenCalledWith({
+        json: { eventId: "1", action: "VIEW" },
+      });
     });
   });
 });

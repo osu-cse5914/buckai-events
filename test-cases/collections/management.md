@@ -149,3 +149,13 @@ Spec: [`management`](../../specs/collections/management.md)
 - **Given**: The user has no collections and an event is visible in browse
 - **When**: The user opens the save overlay, creates a new collection, and submits the form
 - **Then**: The collection is created and the event is saved to it without navigating away
+
+## TC-COL-015: Save from the event detail surface
+
+- **Spec scenario**: S-COL-3
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user is on an event detail page and has at least one collection
+- **When**: The user opens the save overlay from the detail surface and selects a collection
+- **Then**: The event is added to the selected collection with visible success feedback

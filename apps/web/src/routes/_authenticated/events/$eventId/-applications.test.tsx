@@ -8,6 +8,7 @@ const mockGigApplicationsGet = vi.fn();
 const mockGigApplicationsPost = vi.fn();
 const mockMyApplicationsGet = vi.fn();
 const mockUserGet = vi.fn();
+const mockInteractionsPost = vi.fn();
 const mockApiClient = {
   api: {
     v1: {
@@ -31,6 +32,18 @@ const mockApiClient = {
           $get: (...args: unknown[]) => mockUserGet(...args),
           applications: {
             $get: (...args: unknown[]) => mockMyApplicationsGet(...args),
+          },
+        },
+      },
+      interactions: {
+        $post: (...args: unknown[]) => mockInteractionsPost(...args),
+      },
+      collections: {
+        $get: vi.fn().mockResolvedValue(okJson([])),
+        $post: vi.fn(),
+        ":id": {
+          items: {
+            $post: vi.fn(),
           },
         },
       },
@@ -119,8 +132,12 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function okJson(data: unknown) {
-  return { ok: true, status: 200, json: () => Promise.resolve(data) };
+function okJson(data: unknown, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: () => Promise.resolve(data),
+  };
 }
 
 beforeEach(() => {
@@ -129,6 +146,7 @@ beforeEach(() => {
   mockMyApplicationsGet.mockResolvedValue(
     okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
   );
+  mockInteractionsPost.mockResolvedValue(okJson({}, 201));
   vi.resetModules();
 });
 

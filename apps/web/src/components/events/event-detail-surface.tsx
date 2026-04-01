@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   CalendarIcon,
+  ExternalLinkIcon,
   MapPinIcon,
   PencilIcon,
   TrashIcon,
   UserIcon,
 } from "lucide-react";
 import { useApiClient } from "@/lib/api";
+import { recordInteraction } from "@/lib/interactions";
 import {
   currentGigApplicationQueryOptions,
   currentUserQueryOptions,
@@ -49,9 +51,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
 import { Label } from "@/components/ui/label";
 import { MarkdownContent } from "@/components/ui/markdown-content";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -118,6 +127,7 @@ export function EventDetailSurface({
   );
   const [submittedApplication, setSubmittedApplication] =
     useState<ApplicationSummary | null>(null);
+  const lastRecordedViewEventId = useRef<string | null>(null);
 
   const statusMutation = useMutation({
     mutationFn: async (status: string) => {
@@ -215,6 +225,22 @@ export function EventDetailSurface({
       );
     },
   });
+
+  useEffect(() => {
+    if (!event?.id || error || isLoading) {
+      return;
+    }
+
+    if (lastRecordedViewEventId.current === event.id) {
+      return;
+    }
+
+    lastRecordedViewEventId.current = event.id;
+    recordInteraction(api, {
+      eventId: event.id,
+      action: "VIEW",
+    });
+  }, [api, error, event?.id, isLoading]);
 
   function handleStatusChange(newStatus: string) {
     if (!newStatus) {
@@ -315,31 +341,40 @@ export function EventDetailSurface({
       ) : null}
 
       <div className={cn(isPageMode ? "mt-6" : "")}>
-        <div className="flex items-center gap-2">
-          {isPageMode ? (
-            <Badge variant="secondary">
-              {event.type}
-            </Badge>
-          ) : null}
-          <Badge
-            variant="secondary"
-            className={STATUS_STYLES[event.status] ?? ""}
-          >
-            {STATUS_LABELS[event.status] ?? event.status}
-          </Badge>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              {isPageMode ? (
+                <Badge variant="secondary">
+                  {event.type}
+                </Badge>
+              ) : null}
+              <Badge
+                variant="secondary"
+                className={STATUS_STYLES[event.status] ?? ""}
+              >
+                {STATUS_LABELS[event.status] ?? event.status}
+              </Badge>
+            </div>
+
+            <h1 className="mt-3 text-3xl font-bold tracking-tight">{event.title}</h1>
+
+            {event.category ? (
+              <p className="mt-1 text-sm capitalize text-muted-foreground">
+                {event.category}
+              </p>
+            ) : null}
+
+            {event.summary ? (
+              <p className="mt-2 text-muted-foreground">{event.summary}</p>
+            ) : null}
+          </div>
+
+          <SaveToCollectionButton
+            eventId={event.id}
+            className="mt-0.5 size-9 rounded-full border"
+          />
         </div>
-
-        <h1 className="mt-3 text-3xl font-bold tracking-tight">{event.title}</h1>
-
-        {event.category ? (
-          <p className="mt-1 text-sm capitalize text-muted-foreground">
-            {event.category}
-          </p>
-        ) : null}
-
-        {event.summary ? (
-          <p className="mt-2 text-muted-foreground">{event.summary}</p>
-        ) : null}
       </div>
 
       <Separator className="my-6" />
@@ -396,6 +431,33 @@ export function EventDetailSurface({
           {event.description}
         </MarkdownContent>
       </div>
+
+      {event.ticketUrl ? (
+        <>
+          <Separator className="my-6" />
+          <div className="flex flex-wrap items-center gap-3">
+            <Button asChild>
+              <a
+                href={event.ticketUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => {
+                  recordInteraction(api, {
+                    eventId: event.id,
+                    action: "CLICK",
+                  });
+                }}
+              >
+                <ExternalLinkIcon className="mr-2 size-4" />
+                Get tickets
+              </a>
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Opens the ticket page in a new tab.
+            </p>
+          </div>
+        </>
+      ) : null}
 
       {showGigApplicationSection ? (
         <>
