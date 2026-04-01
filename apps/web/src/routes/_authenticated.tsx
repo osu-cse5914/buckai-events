@@ -36,7 +36,7 @@ export const navLinks = [
 
 export const utilityNavLinks = [
   { to: "/search", label: "Search" },
-  { to: "/ai", label: "Agent" },
+  { to: "/ai", label: "BuckAI" },
 ] as const;
 
 export const Route = createFileRoute("/_authenticated")({

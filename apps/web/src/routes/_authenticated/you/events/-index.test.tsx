@@ -80,6 +80,15 @@ async function renderYouEventsPage() {
 }
 
 describe("[phase:6] [regression:always] YouEventsPage", () => {
+  it("TC-PAGES-021: shows a You-subpage skeleton while owned events are loading", async () => {
+    mockUsersMeGet.mockReturnValue(new Promise(() => {}));
+
+    await renderYouEventsPage();
+
+    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
   it("TC-PAGES-014: requests only the current user's events", async () => {
     mockUsersMeGet.mockResolvedValue(okJson({ id: "user_me" }));
     mockEventsGet.mockResolvedValue(
@@ -92,6 +101,13 @@ describe("[phase:6] [regression:always] YouEventsPage", () => {
     await renderYouEventsPage();
     await screen.findByText("No events yet");
 
+    expect(screen.getByRole("link", { name: "Back to You" })).toHaveAttribute(
+      "href",
+      "/you",
+    );
+    expect(
+      screen.queryByRole("link", { name: /create event/i }),
+    ).not.toBeInTheDocument();
     expect(mockEventsGet).toHaveBeenCalledWith({
       query: {
         limit: "12",

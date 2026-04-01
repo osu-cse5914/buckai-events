@@ -404,6 +404,8 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
         "/events?type=INVALID",
         "/events?source=INVALID",
         "/events?status=INVALID",
+        "/events?statusMode=INVALID",
+        "/events?sort=INVALID",
         "/events?startDate=not-a-date",
         "/events?endDate=not-a-date",
       ];
@@ -415,6 +417,27 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
         expect(mockPrisma.event.findMany).not.toHaveBeenCalled();
         expect(mockPrisma.event.count).not.toHaveBeenCalled();
       }
+    });
+  });
+
+  describe("[phase:6] [regression:always] GET /events browse defaults", () => {
+    it("TC-EVT-030: supports grouped active filtering and configurable start-time sorting", async () => {
+      vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+      vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
+
+      const res = await createTestApp().request(
+        "/events?statusMode=ACTIVE&sort=START_DESC",
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: { in: ["OPEN", "IN_PROGRESS"] },
+          }),
+          orderBy: { startAt: "desc" },
+        }),
+      );
     });
   });
 

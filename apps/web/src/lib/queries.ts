@@ -79,6 +79,18 @@ export type MyApplication = ApplicationSummary & {
   };
 };
 
+export type OwnedCollectionSummary = {
+  id: string;
+  userId: string;
+  name: string;
+  visibility: "PRIVATE" | "PUBLIC";
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    items: number;
+  };
+};
+
 export const PAGE_SIZE = 12;
 
 export type EventListItem = {
@@ -124,16 +136,21 @@ export type EventListFilters = {
   search?: string;
   type?: string;
   status?: string;
+  statusMode?: string;
   source?: string;
   category?: string;
+  sort?: string;
   userId?: string;
 };
 
 export const queryKeys = {
   profile: ["profile"] as const,
   event: (eventId: string) => ["event", eventId] as const,
-  eventsList: (filters: EventListFilters, page: number) =>
-    ["events", filters, page] as const,
+  eventsList: (filters: EventListFilters, page: number, pageSize = PAGE_SIZE) =>
+    ["events", filters, page, pageSize] as const,
+  infiniteEventsList: (filters: EventListFilters, pageSize = PAGE_SIZE) =>
+    ["events", "infinite", filters, pageSize] as const,
+  collections: ["collections"] as const,
   myApplications: ["my-applications"] as const,
   gigApplications: (eventId: string) => ["gig-applications", eventId] as const,
   gigApplicationStatus: (eventId: string) =>
@@ -149,6 +166,19 @@ export function currentUserQueryOptions(api: ApiClient) {
         throw new Error("Failed to load profile");
       }
       return res.json() as Promise<CurrentUser>;
+    },
+  });
+}
+
+export function ownedCollectionsQueryOptions(api: ApiClient) {
+  return queryOptions<OwnedCollectionSummary[]>({
+    queryKey: queryKeys.collections,
+    queryFn: async () => {
+      const res = await api.api.v1.collections.$get();
+      if (!res.ok) {
+        throw new Error("Failed to load collections");
+      }
+      return res.json() as Promise<OwnedCollectionSummary[]>;
     },
   });
 }
@@ -175,29 +205,39 @@ export function eventsListQueryOptions(
   api: ApiClient,
   filters: EventListFilters,
   page: number,
+  pageSize = PAGE_SIZE,
 ) {
   return queryOptions<EventsResponse>({
-    queryKey: queryKeys.eventsList(filters, page),
-    queryFn: async () => {
-      const query: Record<string, string> = {
-        limit: String(PAGE_SIZE),
-        offset: String(page * PAGE_SIZE),
-      };
-
-      if (filters.search) query.search = filters.search;
-      if (filters.type) query.type = filters.type;
-      if (filters.status) query.status = filters.status;
-      if (filters.source) query.source = filters.source;
-      if (filters.category) query.category = filters.category;
-      if (filters.userId) query.user = filters.userId;
-
-      const response = await api.api.v1.events.$get({ query });
-      if (!response.ok) {
-        throw new Error("Failed to fetch events");
-      }
-      return response.json() as Promise<EventsResponse>;
-    },
+    queryKey: queryKeys.eventsList(filters, page, pageSize),
+    queryFn: () => fetchEventsList(api, filters, page, pageSize),
   });
+}
+
+export async function fetchEventsList(
+  api: ApiClient,
+  filters: EventListFilters,
+  page: number,
+  pageSize = PAGE_SIZE,
+) {
+  const query: Record<string, string> = {
+    limit: String(pageSize),
+    offset: String(page * pageSize),
+  };
+
+  if (filters.search) query.search = filters.search;
+  if (filters.type) query.type = filters.type;
+  if (filters.status) query.status = filters.status;
+  if (filters.statusMode) query.statusMode = filters.statusMode;
+  if (filters.source) query.source = filters.source;
+  if (filters.category) query.category = filters.category;
+  if (filters.sort) query.sort = filters.sort;
+  if (filters.userId) query.user = filters.userId;
+
+  const response = await api.api.v1.events.$get({ query });
+  if (!response.ok) {
+    throw new Error("Failed to fetch events");
+  }
+  return response.json() as Promise<EventsResponse>;
 }
 
 export function myApplicationsQueryOptions(

@@ -151,3 +151,43 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 - **Given**: The authenticated user has applied to multiple gigs
 - **When**: The client requests the current user's application list
 - **Then**: The API returns the user's applications with gig summaries, ordered newest first
+
+## TC-APP-015: API rejects applications to a non-open gig
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Gig G has status IN_PROGRESS or COMPLETED
+- **When**: A non-owner sends `POST /gigs/G/applications`
+- **Then**: The API responds with 400 Bad Request
+
+## TC-APP-016: Gig detail hides apply action for non-open gigs
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Gig G has status IN_PROGRESS or COMPLETED
+- **When**: A non-owner opens the gig detail page
+- **Then**: The apply action is not shown
+
+## TC-APP-017: My Applications page renders a loading skeleton
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The current user's applications request is still loading
+- **When**: The user opens `You -> Applications`
+- **Then**: The page renders a subpage-shaped skeleton instead of a blank surface
+
+## TC-APP-018: Manage Applications renders a loading skeleton
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The gig owner opens the manage-applications page and the applications request is still loading
+- **When**: The page renders
+- **Then**: The applications list area renders loading skeleton cards

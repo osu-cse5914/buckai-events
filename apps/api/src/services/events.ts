@@ -19,6 +19,15 @@ export const EVENT_STATUSES = [
   "COMPLETED",
   "CANCELLED",
 ] as const;
+export const EVENT_LIST_STATUS_MODES = [
+  "ACTIVE",
+  "OPEN",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+  "ALL",
+] as const;
+export const EVENT_LIST_SORTS = ["START_ASC", "START_DESC"] as const;
 export const COMPENSATION_TYPES = ["FIXED", "HOURLY"] as const;
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -31,6 +40,8 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 export type EventType = (typeof EVENT_TYPES)[number];
 export type EventSource = (typeof EVENT_SOURCES)[number];
 export type EventStatus = (typeof EVENT_STATUSES)[number];
+export type EventListStatusMode = (typeof EVENT_LIST_STATUS_MODES)[number];
+export type EventListSort = (typeof EVENT_LIST_SORTS)[number];
 export type CompensationType = (typeof COMPENSATION_TYPES)[number];
 
 export type EventCreateInput = {
@@ -58,8 +69,10 @@ export type EventListInput = {
   endDate?: Date;
   source?: EventSource;
   status?: EventStatus;
+  statusMode?: EventListStatusMode;
   user?: string;
   search?: string;
+  sort?: EventListSort;
   limit: number;
   offset: number;
 };
@@ -152,7 +165,13 @@ export async function listEvents(
   if (input.type) where.type = input.type;
   if (input.category) where.category = input.category;
   if (input.source) where.source = input.source;
-  if (input.status) where.status = input.status;
+  if (input.status) {
+    where.status = input.status;
+  } else if (input.statusMode === "ACTIVE") {
+    where.status = { in: ["OPEN", "IN_PROGRESS"] };
+  } else if (input.statusMode && input.statusMode !== "ALL") {
+    where.status = input.statusMode;
+  }
   if (input.user) where.creatorId = input.user;
 
   if (input.startDate || input.endDate) {
@@ -173,11 +192,13 @@ export async function listEvents(
     ];
   }
 
+  const orderDirection = input.sort === "START_DESC" ? "desc" : "asc";
+
   const [data, total] = await Promise.all([
     prisma.event.findMany({
       where,
       include: { creator: { select: CREATOR_SELECT } },
-      orderBy: { startAt: "asc" },
+      orderBy: { startAt: orderDirection },
       take: input.limit,
       skip: input.offset,
     }),

@@ -135,6 +135,20 @@ async function renderPage() {
 }
 
 describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
+  it("TC-APP-018: renders a loading skeleton while gig applications are loading", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: { id: "user_owner", email: "owner@osu.edu" },
+    };
+    mockApplicationsGet.mockReturnValue(new Promise(() => {}));
+
+    await renderPage();
+
+    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
   it("TC-APP-012: renders applicant info and actions for pending applications", async () => {
     mockLoaderData = {
       access: "ok",

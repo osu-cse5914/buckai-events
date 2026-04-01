@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { SearchIcon } from "lucide-react";
+import type { SearchRouteSearch } from "@/lib/event-route-search";
+import { toOptionalPage } from "@/lib/event-route-search";
 import { Input } from "@/components/ui/input";
 import {
   EventsEmptyState,
   EventsErrorState,
-  EventsGrid,
-  EventsLoadingGrid,
+  EventsList,
+  EventsListSkeleton,
   EventsPagination,
   useEventsQuery,
 } from "@/components/events/events-browser";
@@ -19,7 +21,7 @@ export function SearchPage({
   onPageChange,
 }: {
   search: string;
-  type: string;
+  type: NonNullable<SearchRouteSearch["type"]> | "";
   category: string;
   page: number;
   onSearchSubmit: (value: string) => void;
@@ -35,6 +37,15 @@ export function SearchPage({
   const trimmedQuery = query.trim();
   const trimmedCategory = category.trim();
   const hasStartedSearch = Boolean(trimmedSearch || type || trimmedCategory);
+  const detailSearch = hasStartedSearch
+    ? {
+        returnTo: "search" as const,
+        q: trimmedSearch || undefined,
+        type: type || undefined,
+        category: trimmedCategory || undefined,
+        page: toOptionalPage(page),
+      }
+    : undefined;
 
   const { data, isLoading, isError, error } = useEventsQuery(
     {
@@ -47,7 +58,7 @@ export function SearchPage({
   );
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-10">
+    <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-10">
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
         <form
           onSubmit={(event) => {
@@ -74,7 +85,7 @@ export function SearchPage({
 
       {hasStartedSearch && isLoading ? (
         <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
-          <EventsLoadingGrid />
+          <EventsListSkeleton showPagination />
         </div>
       ) : null}
       {hasStartedSearch && isError ? (
@@ -95,13 +106,32 @@ export function SearchPage({
         </div>
       ) : null}
       {hasStartedSearch && data && data.data.length > 0 ? (
-        <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700 space-y-6">
-          <EventsGrid events={data.data} />
-          <EventsPagination
-            page={page}
-            total={data.pagination.total}
-            onPageChange={onPageChange}
-          />
+        <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
+          <div className="overflow-hidden rounded-2xl border bg-background">
+            <div className="border-b px-4 py-4 sm:px-5">
+              <p className="text-sm text-muted-foreground">
+                {data.pagination.total} results
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight">
+                {trimmedSearch
+                  ? `Results for "${trimmedSearch}"`
+                  : "Search results"}
+              </h2>
+            </div>
+
+            <EventsList events={data.data} detailSearch={detailSearch} />
+
+            {data.pagination.total > data.pagination.limit ? (
+              <div className="border-t px-4 py-4 sm:px-5">
+                <EventsPagination
+                  page={page}
+                  total={data.pagination.total}
+                  onPageChange={onPageChange}
+                  className="mt-0"
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </section>

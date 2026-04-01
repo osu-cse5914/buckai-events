@@ -13,10 +13,10 @@ import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
 } from "@/lib/event-utils";
+import { ApplicationsListSkeleton } from "@/components/events/applications-list-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute(
   "/_authenticated/events/$eventId/applications/",
@@ -125,20 +125,7 @@ function ManageApplicationsPage() {
       </div>
 
       {applicationsQuery.isLoading ? (
-        <div className="mt-8 grid gap-4">
-          {Array.from({ length: 2 }).map((_, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-4 w-28" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="mt-4 h-9 w-48" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <ApplicationsListSkeleton count={2} showActions />
       ) : applicationsQuery.error ? (
         <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           {applicationsQuery.error instanceof Error

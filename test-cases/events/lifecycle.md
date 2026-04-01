@@ -242,3 +242,93 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: Events exist in the system
 - **When**: A user sends `GET /events` with an invalid enum filter or invalid date filter
 - **Then**: The API responds with 400 Bad Request and does not execute the query
+
+## TC-EVT-024: Events browse split view selection on desktop
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The desktop events browse page renders multiple results
+- **When**: The user selects an event from the left-side list
+- **Then**: The event detail pane renders the selected event without leaving the browse page
+
+## TC-EVT-025: Gigs browse split view selection on desktop
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The desktop gigs browse page renders multiple results
+- **When**: The user selects a gig from the left-side list
+- **Then**: The gig detail pane renders the selected gig without leaving the browse page
+
+## TC-EVT-026: Events browse loads more results on scroll
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The events browse page has more results than the first loaded batch
+- **When**: The user scrolls the list until the load-more sentinel enters view
+- **Then**: The next batch loads into the same list without rendering pagination controls
+
+## TC-EVT-027: Event description markdown renders in detail view
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An event description includes Markdown formatting, including imported content with malformed emphasis spacing
+- **When**: A user opens the event detail view
+- **Then**: The description renders Markdown structure such as headings, lists, links, emphasis, and line breaks without exposing raw Markdown markers
+
+## TC-EVT-028: Events browse deduplicates overlapping infinite-scroll batches
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Two loaded browse batches contain the same event ID
+- **When**: The user scrolls to load the next batch
+- **Then**: The browse list renders that event only once and still shows the new unique results
+
+## TC-EVT-029: Create form fixes listing type from route context
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens the shared create form from the Gigs browse page
+- **When**: The form renders
+- **Then**: The type selector is not shown and the form remains fixed to gig creation fields and actions
+
+## TC-EVT-030: Event list supports grouped active filtering and configurable sort
+
+- **Spec scenario**: S-EVT-4
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Events exist across OPEN, IN_PROGRESS, COMPLETED, and CANCELLED statuses with different start times
+- **When**: A user sends `GET /events?statusMode=ACTIVE&sort=START_DESC`
+- **Then**: The response filters to OPEN and IN_PROGRESS events and orders them by latest start time first
+
+## TC-EVT-031: Events browse defaults to active status and soonest-first ordering
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens `/events` without explicit browse filters
+- **When**: The route loader primes the initial browse batch
+- **Then**: The browse query uses `statusMode=ACTIVE` and `sort=START_ASC`
+
+## TC-EVT-032: Gigs browse defaults to open status and soonest-first ordering
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens `/gigs` without explicit browse filters
+- **When**: The route loader primes the initial browse batch
+- **Then**: The browse query uses `statusMode=OPEN` and `sort=START_ASC`

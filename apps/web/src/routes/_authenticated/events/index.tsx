@@ -1,11 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BrowsePage } from "@/components/events/browse-page";
+import { PAGE_SIZE } from "@/lib/queries";
 import {
-  toOptionalPage,
-  toPageIndex,
+  defaultBrowseFiltersForType,
   validateBrowseSearch,
 } from "@/lib/event-route-search";
 import { loadEventsRouteData } from "@/lib/route-loaders";
+
+const DEFAULT_FILTERS = defaultBrowseFiltersForType("EVENT");
 
 export const Route = createFileRoute("/_authenticated/events/")({
   validateSearch: validateBrowseSearch,
@@ -16,11 +18,13 @@ export const Route = createFileRoute("/_authenticated/events/")({
       queryClient: context.queryClient,
       filters: {
         type: "EVENT",
-        status: deps.status,
+        statusMode: deps.statusMode ?? DEFAULT_FILTERS.statusMode,
         source: deps.source,
-        category: deps.category,
+        sort: deps.sort ?? DEFAULT_FILTERS.sort,
       },
-      page: toPageIndex(deps.page ?? 1),
+      pageSize: PAGE_SIZE,
+      selectedEventId: deps.selected,
+      page: 0,
     }),
   component: EventsRoute,
 });
@@ -34,26 +38,34 @@ function EventsRoute() {
       browseType="EVENT"
       title="Events"
       filters={{
-        status: search.status ?? "",
+        statusMode: search.statusMode ?? DEFAULT_FILTERS.statusMode,
         source: search.source ?? "",
-        category: search.category ?? "",
+        sort: search.sort ?? DEFAULT_FILTERS.sort,
       }}
-      page={toPageIndex(search.page ?? 1)}
+      selectedEventId={search.selected}
       onFilterChange={(key, value) =>
         navigate({
           search: (current) => ({
             ...current,
             [key]: value || undefined,
-            page: undefined,
+            selected: undefined,
           }),
         })
       }
       onClearFilters={() => navigate({ search: {} })}
-      onPageChange={(page) =>
+      onClearSelectedEvent={() =>
         navigate({
           search: (current) => ({
             ...current,
-            page: toOptionalPage(page),
+            selected: undefined,
+          }),
+        })
+      }
+      onSelectEvent={(eventId) =>
+        navigate({
+          search: (current) => ({
+            ...current,
+            selected: eventId,
           }),
         })
       }
