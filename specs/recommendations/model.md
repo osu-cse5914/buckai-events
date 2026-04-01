@@ -1,14 +1,14 @@
 # Recommendation Model [WIP]
 
-> **Status**: This spec is a work-in-progress. The custom model architecture, scoring pipeline, training cycle, and embedding-based approach will be designed in a later phase. The current implementation uses a simple interim ranking (see below) to unblock the feed endpoint and UI.
+> **Status**: Planned. This spec is a work-in-progress, and the shipped API does not currently expose `GET /recommendations`. The custom model architecture, scoring pipeline, training cycle, and embedding-based approach will be designed in a later phase. The interim ranking below describes the intended first shipped recommendation behavior.
 
 ## Overview
 
 The recommendation model provides personalized ranking of events and gigs for each user. It operates independently from the LLM chatbot. The final model will be a purpose-built system trained on platform-specific signals.
 
-## Interim Ranking (Current Phase)
+## Interim Ranking (Planned First Release)
 
-Until the custom model is designed, `GET /recommendations` uses a simple heuristic ranking:
+Until the custom model is designed, the planned `GET /recommendations` endpoint uses a simple heuristic ranking:
 
 1. **Candidate selection**: Events with status OPEN or IN_PROGRESS and startAt in the future.
 2. **Interest matching**: Events whose category matches any of the user's interests are boosted.

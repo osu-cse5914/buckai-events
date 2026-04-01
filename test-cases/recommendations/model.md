@@ -2,6 +2,8 @@
 
 Spec: [`model`](../../specs/recommendations/model.md)
 
+Status: Planned. `GET /recommendations` is not mounted in the current shipped API, so these model-ranking cases are not part of the active regression suite yet.
+
 ---
 
 ## TC-REC-MODEL-001: Interest-based boost

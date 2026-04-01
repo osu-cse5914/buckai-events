@@ -144,17 +144,17 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 ## TC-APP-014: Current user can list their applications across gigs
 
-- **Spec scenario**: —
+- **Spec scenario**: S-APP-10
 - **Type**: Automated
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: The authenticated user has applied to multiple gigs
-- **When**: The client requests the current user's application list
+- **When**: The client sends `GET /users/me/applications`
 - **Then**: The API returns the user's applications with gig summaries, ordered newest first
 
 ## TC-APP-015: API rejects applications to a non-open gig
 
-- **Spec scenario**: —
+- **Spec scenario**: S-APP-11
 - **Type**: Automated
 - **Phase introduced**: 6
 - **Regression**: Always

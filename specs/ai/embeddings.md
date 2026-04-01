@@ -89,6 +89,17 @@ A CLI command or cron job can generate embeddings for events that have no `Event
 4. Results are filtered by event status (OPEN, IN_PROGRESS) and startAt (future).
 5. Top-N events are returned, ordered by similarity score descending.
 
+### API Surface
+
+The backend exposes semantic search at `GET /api/v1/events/semantic-search`.
+
+- `query` is required.
+- `limit` defaults to `10` and is capped at `25`.
+- `type`, `category`, `startDate`, and `endDate` are optional structured
+  filters applied alongside vector similarity.
+- The response is a bare JSON array of matching events with an added
+  `similarity` score.
+
 ### Hybrid Search
 
 Semantic search can be combined with structured filters. For example, the chatbot might search semantically within a category or date range:
@@ -182,4 +193,4 @@ THEN the EventEmbedding row is also deleted (ON DELETE CASCADE)
 
 ## Test Cases
 
-See [`test-cases/ai/embeddings.md`](../../test-cases/ai/embeddings.md) for the full test case registry (TC-EMBED-001 through TC-EMBED-009), including automated generation/search tests and manual semantic search verification.
+See [`test-cases/ai/embeddings.md`](../../test-cases/ai/embeddings.md) for the full test case registry (TC-EMBED-001 through TC-EMBED-011), including automated generation/search tests and manual semantic search verification.

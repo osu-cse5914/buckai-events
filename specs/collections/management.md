@@ -23,7 +23,6 @@ Users save events to named collections (bookmarks). Each collection has a config
 
 - `GET /collections` returns the authenticated user's collections.
 - `GET /collections/:id` returns a single collection with its items (events).
-- `GET /collections/:id/items` returns the events in a collection, paginated.
 
 ## Scenarios
 

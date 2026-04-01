@@ -2,6 +2,8 @@
 
 Spec: [`feed`](../../specs/recommendations/feed.md)
 
+Status: Planned. `GET /recommendations` is not mounted in the current shipped API, so these cases are not part of the active regression suite yet.
+
 ---
 
 ## TC-FEED-001: Blended feed default
