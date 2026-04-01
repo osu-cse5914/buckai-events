@@ -98,6 +98,28 @@ export function EventsLoadingGrid() {
   );
 }
 
+export function EventsCollectionSkeleton({
+  showPagination = false,
+}: {
+  showPagination?: boolean;
+}) {
+  return (
+    <div className="mt-8 space-y-6">
+      <EventsLoadingGrid />
+      {showPagination ? (
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-4 w-32" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function EventsBrowseSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border bg-background lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function YouSubpageHeader({
   title,
@@ -32,6 +33,27 @@ export function YouSubpageHeader({
           {description ? (
             <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}
+        </div>
+      </div>
+
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
+
+export function YouSubpageHeaderSkeleton({
+  action,
+}: {
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-3">
+        <Skeleton className="h-8 w-28 rounded-md" />
+
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-72 max-w-full" />
         </div>
       </div>
 

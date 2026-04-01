@@ -70,6 +70,15 @@ async function renderPage() {
 }
 
 describe("[phase:2] [regression:always] MyApplicationsPage", () => {
+  it("TC-APP-017: renders a loading skeleton while applications are loading", async () => {
+    mockApplicationsGet.mockReturnValue(new Promise(() => {}));
+
+    await renderPage();
+
+    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
   it("TC-APP-011: renders the current user's applications with status badges and links", async () => {
     mockApplicationsGet.mockResolvedValue(
       okJson({

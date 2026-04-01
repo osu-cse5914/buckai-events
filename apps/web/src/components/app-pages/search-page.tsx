@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
+  EventsCollectionSkeleton,
   EventsEmptyState,
   EventsErrorState,
   EventsGrid,
-  EventsLoadingGrid,
   EventsPagination,
   useEventsQuery,
 } from "@/components/events/events-browser";
@@ -74,7 +74,7 @@ export function SearchPage({
 
       {hasStartedSearch && isLoading ? (
         <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
-          <EventsLoadingGrid />
+          <EventsCollectionSkeleton showPagination />
         </div>
       ) : null}
       {hasStartedSearch && isError ? (

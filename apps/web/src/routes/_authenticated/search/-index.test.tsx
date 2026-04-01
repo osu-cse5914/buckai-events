@@ -219,6 +219,15 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     });
   });
 
+  it("TC-PAGES-020: shows a results-shaped skeleton while an active search is loading", async () => {
+    state.mockGet.mockReturnValue(new Promise(() => {}));
+
+    await renderSearchPage({ initialSearch: "hackathon" });
+
+    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
   it("TC-PAGES-012: search page submits a new query and resets pagination", async () => {
     const user = userEvent.setup();
     state.mockGet.mockResolvedValue(makeResponse([{ id: "evt-1", title: "Hackathon" }]));

@@ -6,14 +6,17 @@ import {
   type CurrentUser,
 } from "@/lib/queries";
 import {
+  EventsCollectionSkeleton,
   EventsEmptyState,
   EventsErrorState,
   EventsGrid,
-  EventsLoadingGrid,
   EventsPagination,
   useEventsQuery,
 } from "@/components/events/events-browser";
-import { YouSubpageHeader } from "@/components/you/you-subpage-header";
+import {
+  YouSubpageHeader,
+  YouSubpageHeaderSkeleton,
+} from "@/components/you/you-subpage-header";
 
 function useCurrentUser() {
   const api = useApiClient();
@@ -43,12 +46,8 @@ export function YouEventsPage() {
   if (isLoadingUser || isLoadingEvents) {
     return (
       <section className="mx-auto max-w-5xl px-6 py-10">
-        <div className="space-y-2">
-          <div className="h-8 w-32 rounded bg-muted" />
-          <div className="h-8 w-48 rounded bg-muted" />
-          <div className="h-4 w-72 rounded bg-muted" />
-        </div>
-        <EventsLoadingGrid />
+        <YouSubpageHeaderSkeleton />
+        <EventsCollectionSkeleton showPagination />
       </section>
     );
   }
