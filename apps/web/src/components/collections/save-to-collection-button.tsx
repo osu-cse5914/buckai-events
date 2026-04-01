@@ -78,14 +78,20 @@ export function SaveToCollectionButton({
         );
       }
 
-      return { collectionName };
+      return { collectionId, collectionName };
     },
-    onSuccess: ({ collectionName }) => {
+    onSuccess: ({ collectionId, collectionName }) => {
       setSavedCollectionName(collectionName);
       setErrorMessage(null);
       setOpen(false);
       setNewCollectionName("");
       queryClient.invalidateQueries({ queryKey: queryKeys.collections });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.collection(collectionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.collectionItemsPrefix(collectionId),
+      });
     },
     onError: (error) => {
       setErrorMessage(
