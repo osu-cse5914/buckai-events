@@ -95,3 +95,23 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
   2. Use the search endpoint with natural language queries like "something fun outdoors"
   3. Verify that results are semantically relevant, not just keyword matches
 - **Expected**: Results are ordered by relevance; unrelated events rank low or are excluded
+
+## TC-EMBED-010: Embedding generation requests configured dimensions
+
+- **Spec scenario**: S-EMBED-1
+- **Type**: Automated
+- **Phase introduced**: 4
+- **Regression**: Phase 4+
+- **Given**: The embedding task is configured with dimensions `768`
+- **When**: The embedding service generates an event embedding
+- **Then**: The provider request includes the configured dimensions before storage
+
+## TC-EMBED-011: Embedding generation rejects mismatched vector lengths
+
+- **Spec scenario**: S-EMBED-1
+- **Type**: Automated
+- **Phase introduced**: 4
+- **Regression**: Phase 4+
+- **Given**: The embedding task is configured with dimensions `768`
+- **When**: The provider returns a vector with a different length
+- **Then**: The embedding service fails before writing an invalid vector to the database

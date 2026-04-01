@@ -1,8 +1,10 @@
 import { embed } from "ai";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import {
+  AIConfigurationError,
   createAIModelRouter,
   type AIEnvironment,
+  type ResolvedAITask,
 } from "../lib/ai/router";
 
 export type EventEmbeddingSource = {
@@ -24,6 +26,44 @@ export type SemanticSearchInput = {
 };
 
 type EmbedLike = typeof embed;
+
+function buildEmbeddingProviderOptions(task: ResolvedAITask) {
+  const dimensions = task.model.dimensions;
+  if (!dimensions) {
+    return undefined;
+  }
+
+  switch (task.provider.type) {
+    case "GOOGLE":
+      return {
+        google: {
+          outputDimensionality: dimensions,
+        },
+      };
+    case "OPENAI_COMPATIBLE":
+      return {
+        [task.provider.id]: {
+          dimensions,
+        },
+      };
+  }
+}
+
+function assertEmbeddingDimensions(
+  embedding: number[],
+  expectedDimensions?: number,
+): number[] {
+  if (
+    expectedDimensions !== undefined &&
+    embedding.length !== expectedDimensions
+  ) {
+    throw new AIConfigurationError(
+      `Embedding task "embedding" expected ${expectedDimensions} dimensions, received ${embedding.length}`,
+    );
+  }
+
+  return embedding;
+}
 
 function normalizeText(value: string | null | undefined): string {
   return value?.trim() ?? "";
@@ -66,12 +106,15 @@ async function embedTextValue(
   } = {},
 ): Promise<number[]> {
   const router = createAIModelRouter({ env });
+  const task = router.resolveTask("embedding");
+  const providerOptions = buildEmbeddingProviderOptions(task);
   const result = await embedImpl({
     model: router.getEmbeddingModel("embedding") as never,
     value,
+    providerOptions,
   });
 
-  return result.embedding;
+  return assertEmbeddingDimensions(result.embedding, task.model.dimensions);
 }
 
 export async function generateEventEmbedding(
