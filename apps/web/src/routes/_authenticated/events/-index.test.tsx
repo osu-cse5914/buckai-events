@@ -464,6 +464,40 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     });
   });
 
+  it("TC-EVT-028: deduplicates overlapping events across loaded browse batches", async () => {
+    stubIntersectionObserver();
+    const firstBatch = Array.from({ length: PAGE_SIZE }, (_, index) =>
+      makeEvent({ id: `evt_${index}`, title: `Event ${index}` }),
+    );
+    const secondBatch = [
+      makeEvent({ id: `evt_${PAGE_SIZE - 1}`, title: `Event ${PAGE_SIZE - 1}` }),
+      makeEvent({ id: `evt_${PAGE_SIZE}`, title: `Event ${PAGE_SIZE}` }),
+    ];
+
+    state.mockGet.mockImplementation(({ query }: { query: Record<string, string> }) => {
+      const offset = Number(query.offset);
+
+      if (offset === 0) {
+        return Promise.resolve(makeResponse(firstBatch, PAGE_SIZE + 2, offset));
+      }
+
+      if (offset === PAGE_SIZE) {
+        return Promise.resolve(makeResponse(secondBatch, PAGE_SIZE + 2, offset));
+      }
+
+      throw new Error(`Unexpected offset ${offset}`);
+    });
+
+    await renderEventsPage();
+
+    expect(await screen.findByText(`Event ${PAGE_SIZE - 1}`)).toBeInTheDocument();
+
+    triggerIntersection(screen.getByText("Scroll to load more"));
+
+    expect(await screen.findByText(`Event ${PAGE_SIZE}`)).toBeInTheDocument();
+    expect(screen.getAllByText(`Event ${PAGE_SIZE - 1}`)).toHaveLength(1);
+  });
+
   it("clear filters resets all filters", async () => {
     state.mockGet.mockResolvedValue(makeResponse([]));
     const user = userEvent.setup();

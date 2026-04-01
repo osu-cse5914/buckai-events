@@ -282,3 +282,13 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: An event description includes Markdown formatting
 - **When**: A user opens the event detail view
 - **Then**: The description renders Markdown structure such as headings, lists, and links
+
+## TC-EVT-028: Events browse deduplicates overlapping infinite-scroll batches
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Two loaded browse batches contain the same event ID
+- **When**: The user scrolls to load the next batch
+- **Then**: The browse list renders that event only once and still shows the new unique results

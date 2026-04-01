@@ -69,7 +69,23 @@ export function BrowsePage({
     },
   );
   const events = useMemo(
-    () => data?.pages.flatMap((pageData) => pageData.data) ?? [],
+    () => {
+      const uniqueEvents = [];
+      const seenEventIds = new Set<string>();
+
+      for (const pageData of data?.pages ?? []) {
+        for (const event of pageData.data) {
+          if (seenEventIds.has(event.id)) {
+            continue;
+          }
+
+          seenEventIds.add(event.id);
+          uniqueEvents.push(event);
+        }
+      }
+
+      return uniqueEvents;
+    },
     [data],
   );
   const totalCount = data?.pages[0]?.pagination.total ?? 0;
