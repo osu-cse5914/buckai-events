@@ -304,8 +304,10 @@ describe("[phase:6] [regression:always] Debug Page admin sync", () => {
 
     expect(screen.getByRole("button", { name: "Rerun Full Pipeline" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Backfill Missing Embeddings" })).toBeInTheDocument();
-    expect(screen.getByText("Jazz Night")).toBeInTheDocument();
-    expect(screen.getAllByText("SUCCEEDED")).not.toHaveLength(0);
+    expect(await screen.findByText("Jazz Night")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByText("SUCCEEDED")).not.toHaveLength(0);
+    });
   });
 
   it("TC-DBG-013: admin can rerun the full pipeline for an event", async () => {
