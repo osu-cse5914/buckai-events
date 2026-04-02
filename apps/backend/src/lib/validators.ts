@@ -623,14 +623,14 @@ export const validateRecommendationsQuery = validator("query", (value, c) => {
 });
 
 export const validateSemanticSearchQuery = validator("query", (value, c) => {
-  const pagination = parsePaginationInput(value.limit, undefined, {
+  const pagination = parsePaginationInput(value.limit, value.offset, {
     defaultLimit: 10,
     maxLimit: 25,
   });
   if (pagination === "invalid") {
     return badRequest(
       c,
-      "limit must be numeric",
+      "limit and offset must be numeric",
       "invalid-query",
       "Invalid query parameter",
     );
@@ -648,6 +648,10 @@ export const validateSemanticSearchQuery = validator("query", (value, c) => {
   const limitValue = firstQueryValue(value.limit);
   if (limitValue !== undefined) {
     output.limit = limitValue;
+  }
+  const offsetValue = firstQueryValue(value.offset);
+  if (offsetValue !== undefined) {
+    output.offset = offsetValue;
   }
 
   const typeValue = firstQueryValue(value.type);

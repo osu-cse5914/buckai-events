@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { SearchIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Link } from "@tanstack/react-router";
+import { SearchIcon, SparklesIcon } from "lucide-react";
 import type { SearchRouteSearch } from "@/lib/event-route-search";
 import { toOptionalPage } from "@/lib/event-route-search";
 import { Input } from "@/components/ui/input";
@@ -9,8 +10,20 @@ import {
   EventsList,
   EventsListSkeleton,
   EventsPagination,
-  useEventsQuery,
+  useSearchResultsQuery,
 } from "@/components/events/events-browser";
+import { Button } from "@/components/ui/button";
+
+const TYPE_FILTER_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "EVENT", label: "Events" },
+  { value: "GIG", label: "Gigs" },
+] as const satisfies ReadonlyArray<{
+  value: NonNullable<SearchRouteSearch["type"]> | "";
+  label: string;
+}>;
+
+const SEARCH_UPDATE_DEBOUNCE_MS = 300;
 
 export function SearchPage({
   search,
@@ -24,18 +37,79 @@ export function SearchPage({
   type: NonNullable<SearchRouteSearch["type"]> | "";
   category: string;
   page: number;
-  onSearchSubmit: (value: string) => void;
+  onSearchSubmit: (value: {
+    search: string;
+    type: NonNullable<SearchRouteSearch["type"]> | "";
+    category: string;
+  }) => void;
   onPageChange: (page: number) => void;
 }) {
-  const [query, setQuery] = useState(search);
+  const queryInputRef = useRef<HTMLInputElement>(null);
+  const pendingSearchUpdateRef = useRef<number | null>(null);
 
   useEffect(() => {
-    setQuery(search);
+    const queryInput = queryInputRef.current;
+
+    if (!queryInput || queryInput.value === search) {
+      return;
+    }
+
+    queryInput.value = search;
   }, [search]);
 
+  useEffect(() => {
+    return () => {
+      if (pendingSearchUpdateRef.current == null) {
+        return;
+      }
+
+      window.clearTimeout(pendingSearchUpdateRef.current);
+    };
+  }, []);
+
+  function submitSearch(
+    nextSearch: string,
+    nextType: NonNullable<SearchRouteSearch["type"]> | "",
+  ) {
+    onSearchSubmit({
+      search: nextSearch.trim(),
+      type: nextType,
+      category,
+    });
+  }
+
+  function clearPendingSearchUpdate() {
+    if (pendingSearchUpdateRef.current == null) {
+      return;
+    }
+
+    window.clearTimeout(pendingSearchUpdateRef.current);
+    pendingSearchUpdateRef.current = null;
+  }
+
+  function submitCurrentSearch(nextType = type) {
+    clearPendingSearchUpdate();
+    submitSearch(queryInputRef.current?.value ?? search, nextType);
+  }
+
+  function scheduleSearchUpdate() {
+    const nextSearch = queryInputRef.current?.value ?? "";
+
+    clearPendingSearchUpdate();
+
+    if (nextSearch.trim() === search.trim()) {
+      return;
+    }
+
+    pendingSearchUpdateRef.current = window.setTimeout(() => {
+      pendingSearchUpdateRef.current = null;
+      submitSearch(nextSearch, type);
+    }, SEARCH_UPDATE_DEBOUNCE_MS);
+  }
+
   const trimmedSearch = search.trim();
-  const trimmedQuery = query.trim();
   const trimmedCategory = category.trim();
+  const hasActiveQuery = Boolean(trimmedSearch);
   const hasStartedSearch = Boolean(trimmedSearch || type || trimmedCategory);
   const detailSearch = hasStartedSearch
     ? {
@@ -47,9 +121,9 @@ export function SearchPage({
       }
     : undefined;
 
-  const { data, isLoading, isError, error } = useEventsQuery(
+  const { data, isLoading, isError, error } = useSearchResultsQuery(
     {
-      search: trimmedSearch || undefined,
+      query: trimmedSearch || undefined,
       type: type || undefined,
       category: trimmedCategory || undefined,
     },
@@ -63,23 +137,21 @@ export function SearchPage({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            onSearchSubmit(trimmedQuery);
+            submitCurrentSearch();
           }}
-          className="mx-auto w-full max-w-3xl"
+          className="mx-auto w-full max-w-4xl"
         >
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               aria-label="Search query"
               placeholder="Search events and gigs"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              defaultValue={search}
+              onChange={scheduleSearchUpdate}
+              ref={queryInputRef}
               className="h-16 rounded-full border-none bg-muted/60 pl-14 pr-6 text-lg shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
             />
           </div>
-          <button type="submit" className="sr-only">
-            Search
-          </button>
         </form>
       </div>
 
@@ -97,40 +169,78 @@ export function SearchPage({
           />
         </div>
       ) : null}
-      {hasStartedSearch && data && data.data.length === 0 ? (
-        <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
-          <EventsEmptyState
-            title="No results matched your search"
-            description="Try a broader query."
-          />
-        </div>
-      ) : null}
-      {hasStartedSearch && data && data.data.length > 0 ? (
+      {hasStartedSearch && data ? (
         <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
           <div className="overflow-hidden rounded-2xl border bg-background">
-            <div className="border-b px-4 py-4 sm:px-5">
-              <p className="text-sm text-muted-foreground">
-                {data.pagination.total} results
-              </p>
-              <h2 className="mt-1 text-xl font-semibold tracking-tight">
-                {trimmedSearch
-                  ? `Results for "${trimmedSearch}"`
-                  : "Search results"}
-              </h2>
+            <div className="flex flex-col gap-4 border-b px-4 py-4 sm:px-5 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {data.pagination.total} results
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight">
+                  {trimmedSearch
+                    ? `Results for "${trimmedSearch}"`
+                    : "Filtered results"}
+                </h2>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="group"
+                  aria-label="Type filter"
+                >
+                  {TYPE_FILTER_OPTIONS.map((option) => (
+                    <Button
+                      key={option.value || "ALL"}
+                      type="button"
+                      variant={type === option.value ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-full px-4"
+                      onClick={() => submitCurrentSearch(option.value)}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
+
+                {hasActiveQuery ? (
+                  <Button asChild variant="outline">
+                    <Link
+                      to="/ai"
+                      search={{
+                        prompt: trimmedSearch,
+                      }}
+                    >
+                      <SparklesIcon />
+                      Ask BuckAI
+                    </Link>
+                  </Button>
+                ) : null}
+              </div>
             </div>
 
-            <EventsList events={data.data} detailSearch={detailSearch} />
+            {data.data.length === 0 ? (
+              <EventsEmptyState
+                title="No results matched your search"
+                description="Try a broader query."
+              />
+            ) : (
+              <>
+                <EventsList events={data.data} detailSearch={detailSearch} />
 
-            {data.pagination.total > data.pagination.limit ? (
-              <div className="border-t px-4 py-4 sm:px-5">
-                <EventsPagination
-                  page={page}
-                  total={data.pagination.total}
-                  onPageChange={onPageChange}
-                  className="mt-0"
-                />
-              </div>
-            ) : null}
+                {data.pagination.total > data.pagination.limit ? (
+                  <div className="border-t px-4 py-4 sm:px-5">
+                    <EventsPagination
+                      page={page}
+                      total={data.pagination.total}
+                      onPageChange={onPageChange}
+                      className="mt-0"
+                    />
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       ) : null}

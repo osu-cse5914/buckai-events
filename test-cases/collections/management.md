@@ -159,3 +159,63 @@ Spec: [`management`](../../specs/collections/management.md)
 - **Given**: The user is on an event detail page and has at least one collection
 - **When**: The user opens the save overlay from the detail surface and selects a collection
 - **Then**: The event is added to the selected collection with visible success feedback
+
+## TC-COL-016: List collection items with pagination
+
+- **Spec scenario**: Listing behavior
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A collection contains multiple saved events
+- **When**: The viewer requests `GET /collections/:id/items` with `limit` and `offset`
+- **Then**: The API returns the matching saved events ordered by save time with pagination metadata
+
+## TC-COL-017: Create a collection from the Collections page
+
+- **Spec scenario**: S-COL-1
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user is on the Collections page
+- **When**: The user opens the create form, enters a name, chooses visibility, and submits
+- **Then**: The new collection appears in the page list with the selected visibility
+
+## TC-COL-018: Manage collections from the Collections page
+
+- **Spec scenario**: S-COL-6, S-COL-9, S-COL-10
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user has at least one collection on the Collections page
+- **When**: The user renames a collection, toggles its visibility, or deletes it
+- **Then**: The page updates the collection row in place and removes deleted collections
+
+## TC-COL-019: Owner can manage saved items from collection detail
+
+- **Spec scenario**: S-COL-5
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user owns a collection with saved events
+- **When**: The user opens collection detail and removes a saved event
+- **Then**: The item disappears from the detail page and the collection count updates
+
+## TC-COL-020: Public collection detail is read-only for non-owners
+
+- **Spec scenario**: S-COL-7, S-COL-8
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Another user's collection is public
+- **When**: The viewer opens the collection detail page
+- **Then**: The saved events are visible without owner-only management actions
+
+## TC-COL-021: Save overlay empty state hides inline collection creation
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The user opens the save overlay without any existing collections
+- **When**: The overlay finishes loading
+- **Then**: The empty state is shown without inline collection-name input or create action controls

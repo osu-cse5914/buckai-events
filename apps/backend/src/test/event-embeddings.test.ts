@@ -3,6 +3,7 @@ import { createMockPrisma } from "./helpers/prisma";
 import {
   generateEventEmbedding,
   searchEventsSemantically,
+  searchEventsSemanticallyPaginated,
 } from "../services/event-embeddings";
 
 const embeddingEnv = {
@@ -194,5 +195,71 @@ describe("[phase:4] [regression:always] Event semantic search", () => {
         "2026-04-02T00:00:00.000Z",
       ]),
     );
+  });
+
+  it("TC-EMBED-013: preserves total count while paginating semantic search results", async () => {
+    const embedQuery = vi.fn().mockResolvedValue([0.42, 0.13, 0.88]);
+    vi.mocked(mockPrisma.$queryRaw).mockResolvedValue([
+      {
+        id: "evt_offset",
+        totalCount: 7,
+      },
+    ] as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
+      [
+        {
+          id: "evt_offset",
+          title: "Campus Jazz Night",
+          description: "Live music at the Union",
+          summary: null,
+          type: "EVENT",
+          source: "USER",
+          status: "OPEN",
+          category: "music",
+          tags: ["jazz"],
+          imageUrl: null,
+          ticketUrl: null,
+          externalUrl: null,
+          locationName: "Ohio Union",
+          locationLatitude: null,
+          locationLongitude: null,
+          startAt: new Date("2026-04-01T09:00:00Z"),
+          endAt: null,
+          compensationAmount: null,
+          compensationCurrency: "USD",
+          compensationType: null,
+          creatorId: "user_a",
+          createdAt: new Date("2026-03-31T12:00:00Z"),
+          updatedAt: new Date("2026-03-31T12:00:00Z"),
+          creator: {
+            id: "user_a",
+            displayName: "Alice",
+            email: "alice@osu.edu",
+          },
+        },
+      ] as never,
+    );
+
+    const result = await searchEventsSemanticallyPaginated(mockPrisma, {
+      query: "live music events",
+      limit: 2,
+      offset: 4,
+      embedQuery,
+    });
+
+    expect(result).toMatchObject({
+      total: 7,
+      limit: 2,
+      offset: 4,
+    });
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]).toMatchObject({
+      id: "evt_offset",
+      title: "Campus Jazz Night",
+    });
+    const sql = vi.mocked(mockPrisma.$queryRaw).mock.calls[0]?.[0] as {
+      values?: unknown[];
+    };
+    expect(sql.values).toEqual(expect.arrayContaining([2, 4]));
   });
 });

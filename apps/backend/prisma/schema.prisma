@@ -173,6 +173,7 @@ model Message {
   conversationId String
   role           MessageRole
   content        String      @db.VarChar(10000)
+  parts          Json?
   createdAt      DateTime    @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

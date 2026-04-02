@@ -33,6 +33,7 @@ function createMessage(overrides: Record<string, unknown> = {}) {
     conversationId: "conv_1",
     role: "USER",
     content: "hello",
+    parts: null,
     createdAt: new Date("2026-04-01T12:00:00.000Z"),
     ...overrides,
   };
@@ -81,12 +82,30 @@ function createStreamTextStub(
   });
 }
 
+function createStreamTextErrorStub(error: Error) {
+  return vi.fn(() => ({
+    textStream: {
+      async *[Symbol.asyncIterator]() {
+        yield* [];
+        throw error;
+      },
+    },
+  }));
+}
+
 function createTestApp({
   streamText,
   searchSemanticEvents,
+  generateConversationTitle = vi.fn().mockResolvedValue(undefined),
   currentDate = () => NOW,
 }: {
   streamText?: ReturnType<typeof createStreamTextStub>;
+  generateConversationTitle?: (input: {
+    prisma: unknown;
+    conversationId: string;
+    firstMessageContent: string;
+    env?: Record<string, string | undefined>;
+  }) => Promise<void>;
   searchSemanticEvents?: (
     prisma: unknown,
     input: Record<string, unknown>,
@@ -105,6 +124,7 @@ function createTestApp({
     createConversationsRouter({
       streamText,
       searchSemanticEvents,
+      generateConversationTitle,
       currentDate,
     }),
   );
@@ -223,6 +243,75 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
     expect(mockPrisma.event.findMany).toHaveBeenCalled();
     expect(mockPrisma.event.count).toHaveBeenCalled();
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          conversationId: "conv_1",
+          role: "ASSISTANT",
+          content: "I found a few music events this weekend.",
+          parts: [
+            expect.objectContaining({
+              type: "search-results",
+              toolName: "searchEvents",
+              total: 1,
+              items: [
+                expect.objectContaining({
+                  id: "evt_music_1",
+                  title: "Battle of the Bands",
+                  type: "EVENT",
+                  category: "music",
+                  location: expect.objectContaining({
+                    name: "Ohio Union",
+                  }),
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("TC-CONV-003: first message streams a response and triggers conversation title generation", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_conv_3",
+      role: "USER",
+      content: "What free events are happening this weekend?",
+    });
+    const assistantMessage = createMessage({
+      id: "msg_assistant_conv_3",
+      role: "ASSISTANT",
+      content: "I found a few free events this weekend.",
+    });
+    const generateConversationTitle = vi.fn().mockResolvedValue(undefined);
+    const streamText = createStreamTextStub(async () => [
+      "I found a few free events this weekend.",
+    ]);
+
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(userMessage as never)
+      .mockResolvedValueOnce(assistantMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(
+      createTestApp({
+        streamText,
+        generateConversationTitle,
+      }),
+      userMessage.content,
+    );
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "I found a few free events this weekend.",
+    );
+    expect(generateConversationTitle).toHaveBeenCalledWith({
+      prisma: mockPrisma,
+      conversationId: "conv_1",
+      firstMessageContent: userMessage.content,
+      env: undefined,
+    });
   });
 
   it("TC-CHAT-002: uses the searchGigs tool with semantic search and compensation filters", async () => {
@@ -295,6 +384,35 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
         minCompensation: 20,
         compensationType: "HOURLY",
         limit: 5,
+      }),
+    );
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          conversationId: "conv_1",
+          role: "ASSISTANT",
+          content: "I found a tutoring gig that matches that pay range.",
+          parts: [
+            expect.objectContaining({
+              type: "search-results",
+              toolName: "searchGigs",
+              total: 1,
+              items: [
+                expect.objectContaining({
+                  id: "gig_1",
+                  title: "Physics Tutor",
+                  type: "GIG",
+                  compensation: expect.objectContaining({
+                    amount: 25,
+                    currency: "USD",
+                    type: "HOURLY",
+                  }),
+                }),
+              ],
+            }),
+          ],
+        }),
       }),
     );
   });
@@ -484,6 +602,156 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
   });
 
+  it("TC-CONV-006: only the last 20 messages are included in the chatbot context window", async () => {
+    const recentMessages = Array.from({ length: 20 }, (_, index) =>
+      createMessage({
+        id: `msg_recent_${30 - index}`,
+        role: (30 - index) % 2 === 0 ? "ASSISTANT" : "USER",
+        content: `message ${30 - index}`,
+        createdAt: new Date(`2026-04-01T12:${String(index).padStart(2, "0")}:00.000Z`),
+      }),
+    );
+    const streamText = createStreamTextStub(async ({ messages }) => {
+      expect(messages).toHaveLength(20);
+      expect(messages?.[0]).toEqual({
+        role: "user",
+        content: "message 11",
+      });
+      expect(messages?.[19]).toEqual({
+        role: "assistant",
+        content: "message 30",
+      });
+
+      return ["Using the last 20 messages only."];
+    });
+
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation({ title: "Existing title" }) as never,
+    );
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_user_context",
+          role: "USER",
+          content: "continue",
+        }) as never,
+      )
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_assistant_context",
+          role: "ASSISTANT",
+          content: "Using the last 20 messages only.",
+        }) as never,
+      );
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue(
+      recentMessages as never,
+    );
+
+    const res = await postMessage(createTestApp({ streamText }), "continue");
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith({
+      where: { conversationId: "conv_1" },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+  });
+
+  it("TC-CONV-007: title generation failure does not block the chatbot response", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_conv_7",
+      role: "USER",
+      content: "Show me music events this weekend",
+    });
+    const assistantMessage = createMessage({
+      id: "msg_assistant_conv_7",
+      role: "ASSISTANT",
+      content: "Here are a few music events this weekend.",
+    });
+    const generateConversationTitle = vi
+      .fn()
+      .mockRejectedValue(new Error("AI unavailable"));
+    const streamText = createStreamTextStub(async () => [
+      "Here are a few music events this weekend.",
+    ]);
+
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(userMessage as never)
+      .mockResolvedValueOnce(assistantMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(
+      createTestApp({
+        streamText,
+        generateConversationTitle,
+      }),
+      userMessage.content,
+    );
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "Here are a few music events this weekend.",
+    );
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          role: "ASSISTANT",
+        }),
+      }),
+    );
+  });
+
+  it("TC-CONV-008: title generation does not rerun for conversations that already have titles", async () => {
+    const generateConversationTitle = vi.fn().mockResolvedValue(undefined);
+    const streamText = createStreamTextStub(async () => ["Let's look for gigs."]);
+
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation({ title: "Free weekend events" }) as never,
+    );
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_user_conv_8",
+          role: "USER",
+          content: "What tutoring gigs are available?",
+        }) as never,
+      )
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_assistant_conv_8",
+          role: "ASSISTANT",
+          content: "Let's look for gigs.",
+        }) as never,
+      );
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue(
+      [
+        createMessage({
+          id: "msg_prior_conv_8",
+          role: "USER",
+          content: "What free events are happening this weekend?",
+        }),
+        createMessage({
+          id: "msg_user_conv_8",
+          role: "USER",
+          content: "What tutoring gigs are available?",
+          createdAt: new Date("2026-04-01T12:01:00.000Z"),
+        }),
+      ] as never,
+    );
+
+    const res = await postMessage(
+      createTestApp({
+        streamText,
+        generateConversationTitle,
+      }),
+      "What tutoring gigs are available?",
+    );
+
+    expect(res.status).toBe(200);
+    expect(generateConversationTitle).not.toHaveBeenCalled();
+  });
+
   it("TC-CHAT-010: tool calls can return empty results without fabricated events", async () => {
     const userMessage = createMessage({
       id: "msg_user_10",
@@ -523,5 +791,72 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     expect(decodeSseText(await res.text())).toBe(
       "I couldn't find any matching events for next Tuesday.",
     );
+  });
+
+  it("TC-CHAT-008: chatbot responses stream SSE chunks incrementally", async () => {
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation({ title: "Existing title" }) as never,
+    );
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_user_stream",
+          role: "USER",
+          content: "hello",
+        }) as never,
+      )
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_assistant_stream",
+          role: "ASSISTANT",
+          content: "Hello there",
+        }) as never,
+      );
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue(
+      [
+        createMessage({
+          id: "msg_user_stream",
+          role: "USER",
+          content: "hello",
+        }),
+      ] as never,
+    );
+
+    const res = await postMessage(
+      createTestApp({
+        streamText: createStreamTextStub(async () => ["Hello", " there"]),
+      }),
+      "hello",
+    );
+
+    expect(res.status).toBe(200);
+    const payload = await res.text();
+    expect(payload).toContain("data: Hello");
+    expect(payload).toContain("data:  there");
+    expect(decodeSseText(payload)).toBe("Hello there");
+  });
+
+  it("TC-CHAT-009: AI provider failures return the fallback message without storing an assistant reply", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_failure",
+      role: "USER",
+      content: "What events are happening tonight?",
+    });
+
+    vi.mocked(mockPrisma.message.create).mockResolvedValueOnce(userMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(
+      createTestApp({
+        streamText: createStreamTextErrorStub(new Error("Gemini unavailable")),
+      }),
+      userMessage.content,
+    );
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "I'm having trouble connecting right now. Please try again in a moment.",
+    );
+    expect(mockPrisma.message.create).toHaveBeenCalledTimes(1);
   });
 });

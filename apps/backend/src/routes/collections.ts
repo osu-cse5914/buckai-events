@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { paginated } from "../lib/pagination";
 import { getPrisma } from "../lib/prisma";
 import { trackBackgroundTask } from "../lib/worker-runtime";
 import {
@@ -6,8 +7,10 @@ import {
   parseCollectionItemCreateBody,
   parseCollectionPatchBody,
   readJsonBody,
+  resolvePaginationQuery,
   validateCollectionIdParam,
   validateCollectionItemParams,
+  validatePaginationQuery,
 } from "../lib/validators";
 import type { AppEnv } from "../lib/types";
 import {
@@ -15,6 +18,7 @@ import {
   createOwnedCollection,
   deleteOwnedCollection,
   getCollectionForViewer,
+  listCollectionItemsForViewer,
   removeItemFromOwnedCollection,
   updateOwnedCollection,
 } from "../services/collections";
@@ -57,6 +61,27 @@ export const collections = new Hono<AppEnv>()
       viewerId: user.id,
     });
     return c.json(collection);
+  })
+  .get("/:id/items", validateCollectionIdParam, validatePaginationQuery, async (c) => {
+    const user = c.get("user");
+    const prisma = getPrisma(c);
+    const { id } = c.req.valid("param");
+    const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
+
+    const result = await listCollectionItemsForViewer(prisma, {
+      collectionId: id,
+      viewerId: user.id,
+      limit,
+      offset,
+    });
+
+    return c.json(
+      paginated(result.data, {
+        total: result.total,
+        limit: result.limit,
+        offset: result.offset,
+      }),
+    );
   })
   .patch("/:id", validateCollectionIdParam, async (c) => {
     const user = c.get("user");

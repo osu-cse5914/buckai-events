@@ -1,16 +1,24 @@
 # Recommendation Feed
 
-**Status**: Planned. The shipped API does not currently mount `GET /recommendations`.
+**Status**: Shipped
 
 ## Overview
 
-The recommendation feed is the primary discovery surface. It presents a blended list of events and gigs ranked by the recommendation model (currently interim heuristic ranking — see [model.md](../recommendations/model.md)). Users can filter by type.
+The recommendation feed is the primary discovery surface for the `Featured` page. It presents a sectioned discovery layout built on the current interim recommendation model (see [model.md](../recommendations/model.md)):
 
-## Planned Endpoint
+- `Recommended`: personalized or fallback-ranked feed, paginated
+- `Popular`: short-list preview of what is getting the most attention
+- `Upcoming`: short-list preview of near-term opportunities
 
-`GET /recommendations` returns the personalized feed.
+Users can filter each section by type.
 
-### Query Parameters
+## Endpoints
+
+### `GET /recommendations`
+
+Returns the `Recommended` feed section.
+
+#### Query Parameters
 
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -18,9 +26,26 @@ The recommendation feed is the primary discovery surface. It presents a blended 
 | offset | Int | 0 | Pagination offset |
 | type | EventType? | null | Filter by EVENT or GIG. Null returns both (blended) |
 
-### Response
+#### Response
 
-Returns a paginated response shaped as `{ items, meta }`, where `items` is an array of Event objects ranked by recommendation score. The `meta` object includes `total`, `limit`, `offset`.
+Returns `{ items, meta }`, where `items` is an array of Event objects ranked by recommendation score. `meta` includes `total`, `limit`, `offset`, and `rankingMode`.
+
+`rankingMode` values:
+
+- `PERSONALIZED`
+- `POPULARITY_FALLBACK`
+
+### `GET /recommendations/popular`
+
+Returns the `Popular` Featured preview section. Supports `limit`, `offset`, and `type`.
+
+Response shape: `{ items, meta }`, where `meta` includes `total`, `limit`, and `offset`.
+
+### `GET /recommendations/upcoming`
+
+Returns the `Upcoming` Featured preview section. Supports `limit`, `offset`, and `type`.
+
+Response shape: `{ items, meta }`, where `meta` includes `total`, `limit`, and `offset`.
 
 ## Behaviors
 
@@ -35,6 +60,10 @@ When `type=EVENT` is specified, only events are returned. When `type=GIG`, only 
 ### Empty State
 
 For new users with no interactions and no interests, the feed falls back to a popularity-based ranking (events sorted by total interaction count, then by recency).
+
+### Featured Page Composition
+
+The `Featured` page loads the three recommendation endpoints independently so the personalized feed, popularity preview, and upcoming preview can fail or update independently without collapsing into a single blended response.
 
 ## Scenarios
 
@@ -79,6 +108,15 @@ WHEN user A sends GET /recommendations
 THEN the response contains events sorted by popularity (interaction count) then recency
 ```
 
+### S-FEED-11: Featured loads sectioned recommendation surfaces
+
+```
+GIVEN the authenticated user opens Featured
+WHEN the page loads recommendation data
+THEN the page renders Recommended, Popular, and Upcoming sections
+AND each section can be filtered by type without changing the underlying interim ranking model
+```
+
 ### S-FEED-6: Cache hit [WIP — deferred to custom model phase]
 
 ```
@@ -98,4 +136,4 @@ AND the next GET /recommendations recomputes the ranking
 
 ## Test Cases
 
-See [`test-cases/recommendations/feed.md`](../../test-cases/recommendations/feed.md) for the full test case registry (TC-FEED-001 through TC-FEED-006), including automated pagination/filter tests and manual UI verification.
+See [`test-cases/recommendations/feed.md`](../../test-cases/recommendations/feed.md) for the full test case registry (TC-FEED-001 through TC-FEED-015), including automated Featured-section coverage and manual UI verification.

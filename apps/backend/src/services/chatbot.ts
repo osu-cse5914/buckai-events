@@ -10,6 +10,10 @@ import {
   addItemToOwnedCollection,
   createOwnedCollection,
 } from "./collections";
+import type {
+  ChatMessagePart,
+  SearchResultsMessagePart,
+} from "./chat-message-parts";
 import { searchEventsSemantically } from "./event-embeddings";
 import {
   COMPENSATION_TYPES,
@@ -52,6 +56,9 @@ export const CHATBOT_SYSTEM_PROMPT = [
   "If the user cancels or denies a proposed action, acknowledge it and do not retry the same mutation automatically.",
   "Keep responses concise and student-facing.",
 ].join(" ");
+
+export const CHATBOT_FAILURE_MESSAGE =
+  "I'm having trouble connecting right now. Please try again in a moment.";
 
 type PendingApplyToGigAction = {
   id: string;
@@ -202,37 +209,56 @@ function parseRequiredDate(value: string, field: string) {
   return parsed;
 }
 
+function readString(value: unknown) {
+  return typeof value === "string" ? value : null;
+}
+
+function readNumber(value: unknown) {
+  return typeof value === "number" ? value : null;
+}
+
+function readStringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function readIsoDate(value: unknown) {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return typeof value === "string" ? value : null;
+}
+
 function mapSearchResult(event: Record<string, unknown>) {
+  const compensationAmount = readNumber(event.compensationAmount);
+
   return {
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    summary: event.summary ?? null,
-    type: event.type,
-    category: event.category ?? null,
-    tags: Array.isArray(event.tags) ? event.tags : [],
-    imageUrl: event.imageUrl ?? null,
+    id: readString(event.id) ?? "",
+    title: readString(event.title),
+    description: readString(event.description),
+    summary: readString(event.summary),
+    type: readString(event.type),
+    category: readString(event.category),
+    tags: readStringArray(event.tags),
+    imageUrl: readString(event.imageUrl),
     location: {
-      name: event.locationName,
-      latitude: event.locationLatitude ?? null,
-      longitude: event.locationLongitude ?? null,
+      name: readString(event.locationName),
+      latitude: readNumber(event.locationLatitude),
+      longitude: readNumber(event.locationLongitude),
     },
-    startAt:
-      event.startAt instanceof Date
-        ? event.startAt.toISOString()
-        : event.startAt,
-    endAt:
-      event.endAt instanceof Date ? event.endAt.toISOString() : event.endAt ?? null,
+    startAt: readIsoDate(event.startAt),
+    endAt: readIsoDate(event.endAt),
     compensation:
-      event.compensationAmount == null
+      compensationAmount == null
         ? null
         : {
-            amount: event.compensationAmount,
-            currency: event.compensationCurrency ?? "USD",
-            type: event.compensationType ?? null,
+            amount: compensationAmount,
+            currency: readString(event.compensationCurrency) ?? "USD",
+            type: readString(event.compensationType),
           },
-    similarity:
-      typeof event.similarity === "number" ? event.similarity : undefined,
+    similarity: readNumber(event.similarity) ?? undefined,
   };
 }
 
@@ -472,6 +498,7 @@ export function toModelMessages(
 export function createSseTextResponse(input: {
   textStream: AsyncIterable<string>;
   onComplete?: (fullText: string) => Promise<void>;
+  fallbackText?: string;
 }) {
   const encoder = new TextEncoder();
 
@@ -498,6 +525,9 @@ export function createSseTextResponse(input: {
             await input.onComplete(fullText);
           }
         } catch (error) {
+          if (!fullText && input.fallbackText?.trim()) {
+            controller.enqueue(encoder.encode(toSseChunk(input.fallbackText)));
+          }
           console.error("Failed to stream chatbot response", error);
         } finally {
           controller.close();
@@ -531,10 +561,16 @@ export function createChatbotTools(
     env?: AIEnvironment;
     currentDate: Date;
     searchSemanticEvents?: SearchSemanticEventsLike;
+    recordMessagePart?: (part: ChatMessagePart) => void;
   },
 ) {
   const searchSemanticEvents =
     input.searchSemanticEvents ?? searchEventsSemantically;
+
+  function recordSearchResults(part: SearchResultsMessagePart) {
+    input.recordMessagePart?.(part);
+    return part;
+  }
 
   return {
     searchEvents: tool({
@@ -557,13 +593,21 @@ export function createChatbotTools(
             env: input.env,
           });
 
+          const mappedResults = results.map((result) => mapSearchResult(result));
+          recordSearchResults({
+            type: "search-results",
+            toolName: "searchEvents",
+            total: results.length,
+            items: mappedResults,
+          });
+
           return {
             total: results.length,
-            results: results.map((result) => mapSearchResult(result)),
+            results: mappedResults,
           };
         }
 
-        return listStructuredEvents(input.prisma, {
+        const structuredResults = await listStructuredEvents(input.prisma, {
           now: input.currentDate,
           type: "EVENT",
           category,
@@ -571,6 +615,15 @@ export function createChatbotTools(
           endDate: parsedEndDate,
           limit: normalizedLimit,
         });
+
+        recordSearchResults({
+          type: "search-results",
+          toolName: "searchEvents",
+          total: structuredResults.total,
+          items: structuredResults.results,
+        });
+
+        return structuredResults;
       },
     }),
     searchGigs: tool({
@@ -599,13 +652,21 @@ export function createChatbotTools(
             env: input.env,
           });
 
+          const mappedResults = results.map((result) => mapSearchResult(result));
+          recordSearchResults({
+            type: "search-results",
+            toolName: "searchGigs",
+            total: results.length,
+            items: mappedResults,
+          });
+
           return {
             total: results.length,
-            results: results.map((result) => mapSearchResult(result)),
+            results: mappedResults,
           };
         }
 
-        return listStructuredEvents(input.prisma, {
+        const structuredResults = await listStructuredEvents(input.prisma, {
           now: input.currentDate,
           type: "GIG",
           category,
@@ -614,6 +675,15 @@ export function createChatbotTools(
           compensationType,
           limit: normalizedLimit,
         });
+
+        recordSearchResults({
+          type: "search-results",
+          toolName: "searchGigs",
+          total: structuredResults.total,
+          items: structuredResults.results,
+        });
+
+        return structuredResults;
       },
     }),
     getUserPreferences: tool({
@@ -789,7 +859,10 @@ export function createChatbotStreamResponse(
     streamText?: StreamTextLike;
     searchSemanticEvents?: SearchSemanticEventsLike;
     resolveChatbotModel?: ResolveChatbotModelLike;
-    onComplete?: (assistantText: string) => Promise<void>;
+    onComplete?: (result: {
+      assistantText: string;
+      parts: ChatMessagePart[];
+    }) => Promise<void>;
   },
 ) {
   const streamTextImpl =
@@ -804,6 +877,7 @@ export function createChatbotStreamResponse(
         }))
       : resolveChatbotModelFromEnv);
   const resolvedModel = resolveChatbotModel(input.env);
+  const messagePartsByType = new Map<string, ChatMessagePart>();
 
   const result = streamTextImpl({
     model: resolvedModel.model,
@@ -816,6 +890,9 @@ export function createChatbotStreamResponse(
       env: input.env,
       currentDate: input.currentDate,
       searchSemanticEvents: input.searchSemanticEvents,
+      recordMessagePart: (part) => {
+        messagePartsByType.set(`${part.type}:${part.toolName}`, part);
+      },
     }),
     temperature: resolvedModel.temperature,
     maxOutputTokens: resolvedModel.maxOutputTokens,
@@ -824,7 +901,13 @@ export function createChatbotStreamResponse(
 
   return createSseTextResponse({
     textStream: result.textStream,
-    onComplete: input.onComplete,
+    onComplete: async (assistantText) => {
+      await input.onComplete?.({
+        assistantText,
+        parts: [...messagePartsByType.values()],
+      });
+    },
+    fallbackText: CHATBOT_FAILURE_MESSAGE,
   });
 }
 

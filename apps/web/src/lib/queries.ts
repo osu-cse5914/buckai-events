@@ -69,6 +69,56 @@ export type PaginatedResponse<T> = {
   };
 };
 
+export type ConversationRecord = {
+  id: string;
+  userId: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ConversationSearchResultItem = {
+  id: string;
+  title: string | null;
+  description: string | null;
+  summary: string | null;
+  type: string | null;
+  category: string | null;
+  tags: string[];
+  imageUrl: string | null;
+  location: {
+    name: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  };
+  startAt: string | null;
+  endAt: string | null;
+  compensation: {
+    amount: number | null;
+    currency: string | null;
+    type: string | null;
+  } | null;
+  similarity?: number;
+};
+
+export type ConversationSearchResultsPart = {
+  type: "search-results";
+  toolName: "searchEvents" | "searchGigs";
+  total: number;
+  items: ConversationSearchResultItem[];
+};
+
+export type ConversationMessagePart = ConversationSearchResultsPart;
+
+export type ConversationMessage = {
+  id: string;
+  conversationId: string;
+  role: "USER" | "ASSISTANT" | "SYSTEM";
+  content: string;
+  parts?: ConversationMessagePart[] | null;
+  createdAt: string;
+};
+
 export type MyApplication = ApplicationSummary & {
   gig: {
     id: string;
@@ -89,6 +139,21 @@ export type OwnedCollectionSummary = {
   _count: {
     items: number;
   };
+};
+
+export type CollectionDetail = {
+  id: string;
+  userId: string;
+  name: string;
+  visibility: "PRIVATE" | "PUBLIC";
+  createdAt: string;
+  updatedAt: string;
+  items: Array<{
+    id: string;
+    collectionId: string;
+    eventId: string;
+    event: EventListItem;
+  }>;
 };
 
 export const PAGE_SIZE = 12;
@@ -182,11 +247,37 @@ export type EventListFilters = {
   userId?: string;
 };
 
+export type SearchResultsFilters = {
+  query?: string;
+  type?: string;
+  category?: string;
+};
+
 export const queryKeys = {
   profile: ["profile"] as const,
+  conversations: (limit = 50, offset = 0) =>
+    ["conversations", limit, offset] as const,
+  conversationMessages: (
+    conversationId: string,
+    limit = 100,
+    offset = 0,
+  ) => ["conversations", conversationId, "messages", limit, offset] as const,
   event: (eventId: string) => ["event", eventId] as const,
+  collection: (collectionId: string) => ["collection", collectionId] as const,
+  collectionItemsPrefix: (collectionId: string) =>
+    ["collection", collectionId, "items"] as const,
+  collectionItems: (
+    collectionId: string,
+    page: number,
+    pageSize = PAGE_SIZE,
+  ) => ["collection", collectionId, "items", page, pageSize] as const,
   eventsList: (filters: EventListFilters, page: number, pageSize = PAGE_SIZE) =>
     ["events", filters, page, pageSize] as const,
+  searchResults: (
+    filters: SearchResultsFilters,
+    page: number,
+    pageSize = PAGE_SIZE,
+  ) => ["search", filters, page, pageSize] as const,
   infiniteEventsList: (filters: EventListFilters, pageSize = PAGE_SIZE) =>
     ["events", "infinite", filters, pageSize] as const,
   collections: ["collections"] as const,
@@ -229,6 +320,61 @@ export function ownedCollectionsQueryOptions(api: ApiClient) {
   });
 }
 
+export function conversationsQueryOptions(
+  api: ApiClient,
+  limit = 50,
+  offset = 0,
+) {
+  return queryOptions<PaginatedResponse<ConversationRecord>>({
+    queryKey: queryKeys.conversations(limit, offset),
+    queryFn: async () => {
+      const response = await api.api.v1.conversations.$get({
+        query: {
+          limit: String(limit),
+          offset: String(offset),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load conversations");
+      }
+
+      return response.json() as Promise<PaginatedResponse<ConversationRecord>>;
+    },
+  });
+}
+
+export function conversationMessagesQueryOptions(
+  api: ApiClient,
+  conversationId: string,
+  limit = 100,
+  offset = 0,
+) {
+  return queryOptions<PaginatedResponse<ConversationMessage>>({
+    queryKey: queryKeys.conversationMessages(conversationId, limit, offset),
+    queryFn: async () => {
+      const getConversationMessages =
+        api.api.v1.conversations[":id"].messages.$get as (args: {
+          param: { id: string };
+          query: { limit: string; offset: string };
+        }) => Promise<Response>;
+      const response = await getConversationMessages({
+        param: { id: conversationId },
+        query: {
+          limit: String(limit),
+          offset: String(offset),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load messages");
+      }
+
+      return response.json() as Promise<PaginatedResponse<ConversationMessage>>;
+    },
+  });
+}
+
 export function eventDetailQueryOptions(api: ApiClient, eventId: string) {
   return queryOptions<EventRecord | null>({
     queryKey: queryKeys.event(eventId),
@@ -247,6 +393,56 @@ export function eventDetailQueryOptions(api: ApiClient, eventId: string) {
   });
 }
 
+export function collectionDetailQueryOptions(
+  api: ApiClient,
+  collectionId: string,
+) {
+  return queryOptions<CollectionDetail | null>({
+    queryKey: queryKeys.collection(collectionId),
+    queryFn: async () => {
+      const res = await api.api.v1.collections[":id"].$get({
+        param: { id: collectionId },
+      });
+      if (res.status === 404) {
+        return null;
+      }
+      if (!res.ok) {
+        throw new Error("Failed to load collection");
+      }
+      return res.json() as Promise<CollectionDetail>;
+    },
+  });
+}
+
+export function collectionItemsQueryOptions(
+  api: ApiClient,
+  collectionId: string,
+  page: number,
+  pageSize = PAGE_SIZE,
+) {
+  return queryOptions<PaginatedResponse<EventListItem>>({
+    queryKey: queryKeys.collectionItems(collectionId, page, pageSize),
+    queryFn: async () => {
+      const getCollectionItems =
+        api.api.v1.collections[":id"].items.$get as (args: {
+          param: { id: string };
+          query: { limit: string; offset: string };
+        }) => Promise<Response>;
+      const res = await getCollectionItems({
+        param: { id: collectionId },
+        query: {
+          limit: String(pageSize),
+          offset: String(page * pageSize),
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to load collection items");
+      }
+      return res.json() as Promise<PaginatedResponse<EventListItem>>;
+    },
+  });
+}
+
 export function eventsListQueryOptions(
   api: ApiClient,
   filters: EventListFilters,
@@ -256,6 +452,18 @@ export function eventsListQueryOptions(
   return queryOptions<EventsResponse>({
     queryKey: queryKeys.eventsList(filters, page, pageSize),
     queryFn: () => fetchEventsList(api, filters, page, pageSize),
+  });
+}
+
+export function searchResultsQueryOptions(
+  api: ApiClient,
+  filters: SearchResultsFilters,
+  page: number,
+  pageSize = PAGE_SIZE,
+) {
+  return queryOptions<EventsResponse>({
+    queryKey: queryKeys.searchResults(filters, page, pageSize),
+    queryFn: () => fetchSearchResults(api, filters, page, pageSize),
   });
 }
 
@@ -284,6 +492,43 @@ export async function fetchEventsList(
     throw new Error("Failed to fetch events");
   }
   return response.json() as Promise<EventsResponse>;
+}
+
+export async function fetchSearchResults(
+  api: ApiClient,
+  filters: SearchResultsFilters,
+  page: number,
+  pageSize = PAGE_SIZE,
+) {
+  if (filters.query) {
+    const query: Record<string, string> = {
+      query: filters.query,
+      limit: String(pageSize),
+      offset: String(page * pageSize),
+    };
+
+    if (filters.type) query.type = filters.type;
+    if (filters.category) query.category = filters.category;
+
+    const response = await api.api.v1.events["semantic-search"].$get({
+      query,
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch search results");
+    }
+
+    return response.json() as Promise<EventsResponse>;
+  }
+
+  return fetchEventsList(
+    api,
+    {
+      type: filters.type,
+      category: filters.category,
+    },
+    page,
+    pageSize,
+  );
 }
 
 export async function fetchRecommendationsPage(

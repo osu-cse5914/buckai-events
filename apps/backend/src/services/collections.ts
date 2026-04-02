@@ -60,6 +60,63 @@ export async function getCollectionForViewer(
   return collection;
 }
 
+export async function listCollectionItemsForViewer(
+  prisma: PrismaClient,
+  input: {
+    collectionId: string;
+    viewerId: string;
+    limit: number;
+    offset: number;
+  },
+) {
+  const collection = await prisma.collection.findUnique({
+    where: { id: input.collectionId },
+  });
+
+  if (!collection) {
+    throw new NotFoundError("Collection not found");
+  }
+
+  if (
+    collection.userId !== input.viewerId &&
+    collection.visibility !== "PUBLIC"
+  ) {
+    throw new NotFoundError("Collection not found");
+  }
+
+  const [items, total] = await Promise.all([
+    prisma.collectionItem.findMany({
+      where: { collectionId: input.collectionId },
+      include: {
+        event: {
+          include: {
+            creator: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: input.limit,
+      skip: input.offset,
+    }),
+    prisma.collectionItem.count({
+      where: { collectionId: input.collectionId },
+    }),
+  ]);
+
+  return {
+    data: items.map((item) => item.event),
+    total,
+    limit: input.limit,
+    offset: input.offset,
+  };
+}
+
 export async function createOwnedCollection(
   prisma: PrismaClient,
   input: {

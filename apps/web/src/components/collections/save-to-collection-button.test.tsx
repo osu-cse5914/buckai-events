@@ -85,32 +85,16 @@ describe("[phase:6] [regression:always] SaveToCollectionButton", () => {
     ).toBeInTheDocument();
   });
 
-  it("TC-COL-014: creates a new collection from the save overlay and saves the listing", async () => {
+  it("TC-COL-021: shows an empty state without inline collection creation controls", async () => {
     const collectionsGet = vi.fn().mockResolvedValue(okJson([]));
-    const collectionsPost = vi.fn().mockResolvedValue(
-      okJson(
-        {
-          id: "col_2",
-          userId: "user_1",
-          name: "Saved",
-          visibility: "PRIVATE",
-          createdAt: "2025-03-01T00:00:00.000Z",
-          updatedAt: "2025-03-02T00:00:00.000Z",
-          _count: { items: 0 },
-        },
-        201,
-      ),
-    );
-    const collectionItemPost = vi.fn().mockResolvedValue(okJson({}, 201));
     const apiClient = {
       api: {
         v1: {
           collections: {
             $get: collectionsGet,
-            $post: collectionsPost,
             ":id": {
               items: {
-                $post: collectionItemPost,
+                $post: vi.fn(),
               },
             },
           },
@@ -124,21 +108,7 @@ describe("[phase:6] [regression:always] SaveToCollectionButton", () => {
     await user.click(screen.getByRole("button", { name: "Save to collection" }));
 
     expect(await screen.findByText(/No collections yet/i)).toBeInTheDocument();
-    await user.type(screen.getByLabelText("New collection"), "Saved");
-    await user.click(screen.getByRole("button", { name: "Create & Save" }));
-
-    await waitFor(() => {
-      expect(collectionsPost).toHaveBeenCalledWith({
-        json: { name: "Saved" },
-      });
-      expect(collectionItemPost).toHaveBeenCalledWith({
-        param: { id: "col_2" },
-        json: { eventId: "evt_1" },
-      });
-    });
-
-    expect(
-      screen.getByRole("button", { name: "Saved to Saved" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("New collection")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create & Save" })).not.toBeInTheDocument();
   });
 });
