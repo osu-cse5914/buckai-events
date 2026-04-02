@@ -22,12 +22,14 @@ export default defineConfig({
 
   webServer: [
     {
-      command: "cd apps/backend && PORT=3001 bun run dev",
-      port: 3001,
+      command:
+        "cd apps/backend && PORT=3201 E2E_TEST_AUTH_ENABLED=true bun src/playwright-server.ts",
+      port: 3201,
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: "cd apps/web && bun run dev",
+      command:
+        "cd apps/web && VITE_API_URL=http://localhost:3201 VITE_E2E_TEST_AUTH_ENABLED=true bun run dev",
       port: 5173,
       reuseExistingServer: !process.env.CI,
     },

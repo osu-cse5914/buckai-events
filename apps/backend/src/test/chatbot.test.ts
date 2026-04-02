@@ -149,11 +149,56 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
   });
 
-  it("TC-CHAT-006: system prompt restricts the assistant to OSU platform events and off-topic refusal", () => {
+  it("keeps the chatbot system prompt scoped to Social OSU event workflows", () => {
     expect(CHATBOT_SYSTEM_PROMPT).toContain("Ohio State University");
     expect(CHATBOT_SYSTEM_PROMPT).toContain("events, gigs, and campus activities");
     expect(CHATBOT_SYSTEM_PROMPT).toContain("decline");
     expect(CHATBOT_SYSTEM_PROMPT).toContain("confirm");
+  });
+
+  it("TC-CHAT-006: declines off-topic prompts without invoking event tools", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_6",
+      role: "USER",
+      content: "What's the weather like tomorrow?",
+    });
+    const assistantMessage = createMessage({
+      id: "msg_assistant_6",
+      role: "ASSISTANT",
+      content: "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+    });
+    const streamText = createStreamTextStub(async ({ tools }) => {
+      expect(tools.searchEvents.execute).toBeTypeOf("function");
+      expect(tools.searchGigs.execute).toBeTypeOf("function");
+
+      return [
+        "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+      ];
+    });
+
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(userMessage as never)
+      .mockResolvedValueOnce(assistantMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(createTestApp({ streamText }), userMessage.content);
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+    );
+    expect(mockPrisma.event.findMany).not.toHaveBeenCalled();
+    expect(mockPrisma.application.create).not.toHaveBeenCalled();
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          role: "ASSISTANT",
+          content:
+            "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+        }),
+      }),
+    );
   });
 
   it("TC-CHAT-001: uses the searchEvents tool for grounded event search", async () => {
@@ -745,6 +790,81 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
 
     expect(res.status).toBe(200);
     expect(generateConversationTitle).not.toHaveBeenCalled();
+  });
+
+  it("TC-CHAT-007: grounded event searches report no matches without fabricated results", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_7",
+      role: "USER",
+      content: "Are there any free events tonight?",
+    });
+    const assistantMessage = createMessage({
+      id: "msg_assistant_7",
+      role: "ASSISTANT",
+      content: "I couldn't find any free events tonight.",
+    });
+    const searchSemanticEvents = vi.fn().mockResolvedValue([]);
+    const streamText = createStreamTextStub(async ({ tools }) => {
+      const result = await tools.searchEvents.execute(
+        {
+          query: "free events tonight",
+          startDate: "2026-04-01T00:00:00.000Z",
+          endDate: "2026-04-01T23:59:59.999Z",
+          limit: 5,
+        },
+        {} as never,
+      );
+
+      expect(result).toMatchObject({
+        total: 0,
+        results: [],
+      });
+
+      return ["I couldn't find any free events tonight."];
+    });
+
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(userMessage as never)
+      .mockResolvedValueOnce(assistantMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(
+      createTestApp({
+        streamText,
+        searchSemanticEvents,
+      }),
+      userMessage.content,
+    );
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "I couldn't find any free events tonight.",
+    );
+    expect(searchSemanticEvents).toHaveBeenCalledWith(
+      mockPrisma,
+      expect.objectContaining({
+        query: "free events tonight",
+        type: "EVENT",
+        limit: 5,
+      }),
+    );
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          role: "ASSISTANT",
+          content: "I couldn't find any free events tonight.",
+          parts: [
+            expect.objectContaining({
+              type: "search-results",
+              toolName: "searchEvents",
+              total: 0,
+              items: [],
+            }),
+          ],
+        }),
+      }),
+    );
   });
 
   it("TC-CHAT-010: tool calls can return empty results without fabricated events", async () => {

@@ -26,6 +26,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { isE2ETestAuthEnabled } from "@/lib/e2e-auth";
 import { cn } from "@/lib/utils";
 
 export const navLinks = [
@@ -224,6 +225,16 @@ function ShellNavLink({
 }
 
 function AccountMenu() {
+  if (isE2ETestAuthEnabled(import.meta.env)) {
+    return (
+      <Button variant="ghost" size="icon" asChild aria-label="Profile">
+        <Link to="/profile">
+          <UserRoundIcon className="size-4" />
+        </Link>
+      </Button>
+    );
+  }
+
   return (
     <UserButton>
       <UserButton.MenuItems>

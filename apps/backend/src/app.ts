@@ -3,6 +3,7 @@ import type { Context } from "hono";
 import { cors } from "hono/cors";
 import { appFactory } from "./factory";
 import { problemFromError, notFound, ProblemError } from "./lib/problem-details";
+import { e2eTestAuth, isE2ETestAuthEnabled } from "./middleware/e2e-auth";
 import { requireAuth } from "./middleware/auth";
 import { withRequestResources } from "./middleware/request-resources";
 import { admin } from "./routes/admin";
@@ -57,7 +58,12 @@ export function createVersionedApiRouter() {
   const api = appFactory.createApp();
 
   api.use("*", withRequestResources);
-  api.use("*", clerkMiddleware());
+  api.use("*", e2eTestAuth);
+
+  if (!isE2ETestAuthEnabled()) {
+    api.use("*", clerkMiddleware());
+  }
+
   api.use("*", requireAuth);
 
   return api
