@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterAll, afterEach, beforeAll } from "vitest";
+import { server } from "@/test/msw/server";
 
 // Polyfill pointer capture methods for jsdom (required by Radix UI Select)
 if (!Element.prototype.hasPointerCapture) {
@@ -27,6 +28,15 @@ if (typeof globalThis.ResizeObserver === "undefined") {
   };
 }
 
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
 afterEach(() => {
+  server.resetHandlers();
   cleanup();
+});
+
+afterAll(() => {
+  server.close();
 });

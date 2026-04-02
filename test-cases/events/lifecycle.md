@@ -352,3 +352,33 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: A user-created event or gig has a null creator display name but a creator email
 - **When**: A user views the shared browse list
 - **Then**: The result shows the creator email instead of `Unknown`
+
+## TC-EVT-035: Events query hook exposes a loading state before the first response
+
+- **Spec scenario**: S-EVT-4
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The events endpoint has not returned the first browse batch yet
+- **When**: The shared events query hook is subscribed
+- **Then**: The hook reports a loading state until the first response resolves
+
+## TC-EVT-036: Events query hook requests filtered browse data
+
+- **Spec scenario**: S-EVT-4
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A browse surface requests a specific page of filtered events
+- **When**: The shared events query hook runs
+- **Then**: It requests the matching `/api/v1/events` page and returns the API data
+
+## TC-EVT-037: Events query hook surfaces browse fetch failures
+
+- **Spec scenario**: S-EVT-4
+- **Type**: Automated
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The events endpoint returns a non-success response for a browse request
+- **When**: The shared events query hook runs
+- **Then**: It exposes a fetch failure that the page can render as an error state
