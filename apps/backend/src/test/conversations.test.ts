@@ -220,4 +220,31 @@ describe("[phase:5] [regression:always] Conversations API", () => {
     });
     expect(mockPrisma.message.findMany).not.toHaveBeenCalled();
   });
+
+  it("TC-AUTHZ-012: returns 404 when posting to another user's conversation", async () => {
+    vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER_B.clerkId } as never);
+    vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER_B as never);
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation({ userId: FULL_USER_A.id }) as never,
+    );
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/conversations/conv_1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: "hello" }),
+      }),
+    );
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("not-found"),
+      title: "Resource not found",
+      status: 404,
+      detail: "Conversation not found",
+    });
+    expect(mockPrisma.message.create).not.toHaveBeenCalled();
+  });
 });
