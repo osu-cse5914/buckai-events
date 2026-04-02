@@ -41,7 +41,6 @@ function AppWithAuth() {
 
   useEffect(() => {
     if (!e2eTestAuthEnabled) {
-      setE2EUserId(null);
       return;
     }
 
