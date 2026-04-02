@@ -7,8 +7,11 @@ import {
 import { hc } from "hono/client";
 import type { AppType } from "@social-osu/backend";
 
-export function createApiClient(getToken: () => Promise<string | null>) {
-  return hc<AppType>("/", {
+export function createApiClient(
+  getToken: () => Promise<string | null>,
+  baseUrl = "/",
+) {
+  return hc<AppType>(baseUrl, {
     fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const token = await getToken();
       const headers = new Headers(init?.headers);

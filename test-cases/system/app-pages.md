@@ -28,3 +28,4 @@
 | TC-PAGES-022 | S-PAGES-8 | Event detail returns to the preserved search results when opened from Search | Automated | `apps/web/src/routes/_authenticated/search/-index.test.tsx`, `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx` | 6 | Always |
 | TC-PAGES-023 | S-PAGES-11 | Search falls back to the structured events listing when only explicit filters are active | Automated | `apps/web/src/routes/_authenticated/search/-index.test.tsx` | 6 | Always |
 | TC-PAGES-024 | S-PAGES-12 | AI landing preserves a carried prompt draft and allows editing it in-place | Automated | `apps/web/src/routes/_authenticated/ai/-index.test.tsx` | 6 | Always |
+| TC-PAGES-025 | S-PAGES-8 | Search query execution targets semantic search when a query is present | Automated | `apps/web/src/components/events/events-browser.test.tsx` | 6 | Always |
