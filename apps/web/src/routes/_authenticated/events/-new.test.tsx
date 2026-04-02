@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockEventsPost = vi.fn();
+const mockNavigate = vi.fn();
 const mockApiClient = {
   api: {
     v1: {
@@ -30,7 +32,20 @@ vi.mock("@/components/ui/date-time-picker", () => ({
     placeholder?: string;
     id?: string;
   }) => (
-    <button id={id} type="button" onClick={() => onChange(value)}>
+    <button
+      id={id}
+      type="button"
+      onClick={() =>
+        onChange(
+          value ??
+            new Date(
+              id === "endAt"
+                ? "2026-04-01T14:00:00.000Z"
+                : "2026-04-01T12:00:00.000Z",
+            ),
+        )
+      }
+    >
       {value ? value.toISOString() : placeholder}
     </button>
   ),
@@ -68,7 +83,7 @@ vi.mock("@tanstack/react-router", () => ({
       {children}
     </a>
   ),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockNavigate,
 }));
 
 function createQueryClient() {
@@ -107,6 +122,46 @@ beforeEach(() => {
 });
 
 describe("[phase:6] [regression:always] EventCreationPage", () => {
+  it("TC-EVT-017: submits a valid event and navigates to the new detail page", async () => {
+    const user = userEvent.setup();
+    mockEventsPost.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ id: "evt_created_1" }),
+    });
+
+    await renderCreationPage();
+
+    await user.type(screen.getByLabelText("Title"), "Campus Hack Night");
+    await user.type(
+      screen.getByLabelText("Description"),
+      "Build with classmates all evening.",
+    );
+    await user.type(screen.getByLabelText("Location"), "Ohio Union");
+    await user.click(screen.getByRole("button", { name: "Start Date" }));
+    await user.click(screen.getByRole("button", { name: "End Date" }));
+    await user.click(screen.getByRole("button", { name: "Create Event" }));
+
+    await waitFor(() => {
+      expect(mockEventsPost).toHaveBeenCalledWith({
+        json: {
+          title: "Campus Hack Night",
+          description: "Build with classmates all evening.",
+          type: "EVENT",
+          location: { name: "Ohio Union" },
+          startAt: "2026-04-01T12:00:00.000Z",
+          endAt: "2026-04-01T14:00:00.000Z",
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({
+        to: "/events/$eventId",
+        params: { eventId: "evt_created_1" },
+      });
+    });
+  });
+
   it("TC-EVT-029: hides the type selector and fixes gig creation from route state", async () => {
     await renderCreationPage({ type: "GIG" });
 
@@ -127,5 +182,23 @@ describe("[phase:6] [regression:always] EventCreationPage", () => {
 
     expect(capturedValidateSearch({ type: "GIG" })).toEqual({ type: "GIG" });
     expect(capturedValidateSearch({ type: "NOPE" })).toEqual({ type: undefined });
+  });
+
+  it("shows a validation message when required fields are missing", async () => {
+    const user = userEvent.setup();
+
+    await renderCreationPage();
+    await user.type(screen.getByLabelText("Title"), "Campus Hack Night");
+    await user.type(
+      screen.getByLabelText("Description"),
+      "Build with classmates all evening.",
+    );
+    await user.type(screen.getByLabelText("Location"), "Ohio Union");
+    await user.click(screen.getByRole("button", { name: "Create Event" }));
+
+    expect(
+      await screen.findByText("Please fill in all required fields."),
+    ).toBeInTheDocument();
+    expect(mockEventsPost).not.toHaveBeenCalled();
   });
 });

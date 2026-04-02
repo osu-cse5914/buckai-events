@@ -8,6 +8,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows user B, who created event E
@@ -18,6 +19,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows user B, who saved event E to a PUBLIC collection
@@ -28,6 +30,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows user B, who saved event E to a PRIVATE collection
@@ -38,6 +41,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows users B and C; B created E1 at T1, C saved E2 at T2 (T2 > T1)
@@ -48,6 +52,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows nobody
@@ -58,6 +63,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A's social feed has 50 items
@@ -68,6 +74,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows user B and sees user B's events in the feed
@@ -78,6 +85,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows user B; B created event E and also saved it to a PUBLIC collection
@@ -88,6 +96,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/feed.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows user B; B saved event E to two PUBLIC collections
@@ -99,7 +108,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 - **Spec scenario**: —
 - **Type**: Manual
 - **Phase introduced**: 3
-- **Regression**: Always
+- **Regression**: Final only
 - **Steps**:
   1. Sign in, ensure you follow at least 2 users who have created or saved events
   2. Navigate to the social feed page
@@ -111,6 +120,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/-app-pages.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The authenticated app shell is rendered
@@ -121,6 +131,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-1, S-SFEED-2, S-SFEED-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/social/-index.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The social feed API returns feed items
@@ -131,6 +142,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-6
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/social/-index.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The social feed API has more items than the initial page
@@ -141,6 +153,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-5
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/social/-index.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The social feed API returns no items

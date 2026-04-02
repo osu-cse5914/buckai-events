@@ -8,6 +8,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The OSU Content API returns an event with a new externalId
@@ -18,6 +19,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: An Event exists with externalId and stored itemHash `"abc123"`; API now returns hash `"def456"`
@@ -28,6 +30,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-2a
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: An Event exists with stored itemHash matching the API response hash
@@ -38,6 +41,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The Ticketmaster API returns an event with a new id
@@ -48,6 +52,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: An external event exists but no longer appears in the API feed, and endAt has passed
@@ -58,6 +63,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: An Event exists with a given externalId
@@ -68,6 +74,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The AI service is unavailable
@@ -78,6 +85,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event E was ingested with AI-generated tags
@@ -88,6 +96,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: An external event exists with future endAt, no longer in the API feed
@@ -98,6 +107,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: S-ING-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The OSU Content API returns events with campus `"columbus"` and `"lima"`
@@ -120,6 +130,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The external sync runs across OSU and Ticketmaster sources
@@ -130,6 +141,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The external sync runs without `TICKETMASTER_API_KEY`
@@ -141,6 +153,7 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: External sync creates one event and updates another

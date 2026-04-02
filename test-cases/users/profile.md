@@ -8,6 +8,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: S-USER-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -18,6 +19,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: S-USER-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -28,6 +30,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: S-USER-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -38,6 +41,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: S-USER-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A has displayName `"Brutus"` and major `"CS"`
@@ -48,6 +52,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: S-USER-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -58,6 +63,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -68,6 +74,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: S-USER-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -78,6 +85,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: S-USER-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-me.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: User A is authenticated with role `USER`
@@ -87,23 +95,21 @@ Spec: [`profile`](../../specs/users/profile.md)
 ## TC-USER-006: Profile edit form — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/profile/-index.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
-- **Steps**:
-  1. Sign in and navigate to profile page
-  2. Click edit, change displayName and major
-  3. Save changes
-  4. Refresh the page
-- **Expected**: Updated values persist after refresh
+- **Given**: The authenticated user is on their profile page
+- **When**: They edit their display name and major and save the form
+- **Then**: The page submits the PATCH request with the new values
 
 ## TC-USER-007: Profile edit form preserves data on navigation
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/profile/-index.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
-- **Steps**:
-  1. Sign in, navigate to profile page, edit displayName
-  2. Navigate to another page and return to profile
-- **Expected**: Saved values are retained; unsaved changes are discarded
+- **Given**: The authenticated user has opened the profile edit form
+- **When**: They change a value and cancel without saving
+- **Then**: The page returns to view mode and discards the unsaved edits

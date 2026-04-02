@@ -8,6 +8,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-pipeline.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A creates an event with title and description
@@ -18,6 +19,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-pipeline.test.ts`, `apps/backend/src/test/events-ai-tagging.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event E has an embedding with textHash `"abc123"`
@@ -28,6 +30,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-pipeline.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event E has an embedding with textHash `"abc123"`
@@ -38,6 +41,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-embeddings.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Events exist: "Jazz Night", "Rock Concert", "Study Group for CS 101"
@@ -48,6 +52,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-embeddings.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Events exist in categories `"music"` and `"academic"`
@@ -58,6 +63,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The embedding model is unavailable
@@ -68,6 +74,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-pipeline.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: 10 events exist without EventEmbedding rows
@@ -78,6 +85,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event E has an EventEmbedding row
@@ -100,6 +108,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-embeddings.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The embedding task is configured with dimensions `768`
@@ -110,6 +119,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-embeddings.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The embedding task is configured with dimensions `768`
@@ -120,6 +130,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Phase 6+
 - **Given**: Semantic search finds matching future `OPEN` or `IN_PROGRESS` events
@@ -130,6 +141,7 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 
 - **Spec scenario**: S-EMBED-10
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-embeddings.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Phase 6+
 - **Given**: Semantic search finds more matches than fit in one page

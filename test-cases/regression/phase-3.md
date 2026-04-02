@@ -35,6 +35,10 @@ All automated cases from prior regression suites.
 - **TC-SFEED-007**: Unfollowed user's events disappear
 - **TC-SFEED-008**: Dedup — same event created and saved appears once
 - **TC-SFEED-009**: Dedup — same event in multiple public collections
+- **TC-SFEED-011**: Social page appears in primary navigation
+- **TC-SFEED-012**: Social feed page renders items from the API
+- **TC-SFEED-013**: Social feed page supports loading more items
+- **TC-SFEED-014**: Social feed page shows an empty state with follow guidance
 
 #### Phase 3 — Public Profile (newly testable)
 
@@ -45,11 +49,3 @@ All automated cases from prior regression suites.
 
 - [ ] **TC-AUTH-003**: Non-OSU email rejected
 - [ ] **TC-AUTH-007 / TC-AUTH-008**: Clerk sign-in on desktop and mobile
-- [ ] **TC-USER-006**: Profile edit form
-- [ ] **TC-PUB-007**: Public profile page
-- [ ] **TC-EVT-017 / TC-EVT-018 / TC-EVT-019**: Event creation, list, detail pages
-- [ ] **TC-APP-010 / TC-APP-011 / TC-APP-012**: Gig application UI flows
-- [ ] **TC-COL-011 / TC-COL-012**: Collection UI flows
-- [ ] **TC-FOL-008**: Follow/unfollow button on profile toggles correctly
-- [ ] **TC-FOL-009**: Followers/following lists render on profile
-- [ ] **TC-SFEED-010**: Social feed page shows events from followed users with correct attribution and pagination

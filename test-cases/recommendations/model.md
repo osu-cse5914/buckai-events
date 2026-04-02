@@ -10,6 +10,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-REC-MODEL-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A has interests `["music", "tech"]`
@@ -20,6 +21,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-REC-MODEL-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event E has 50 interactions and event F has 5, both matching user A's interests equally
@@ -30,6 +32,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-REC-MODEL-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event A starts tomorrow and event B starts in 30 days, equal popularity and interest
@@ -40,6 +43,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-REC-MODEL-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A dismissed event E
@@ -50,6 +54,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-REC-MODEL-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event E has startAt in the past and status COMPLETED
@@ -60,6 +65,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-REC-MODEL-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A has no interests and no interactions

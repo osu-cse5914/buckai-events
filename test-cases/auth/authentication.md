@@ -78,7 +78,8 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 ## TC-AUTH-007: Clerk sign-in UI renders on desktop
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Semi-automated
+- **Automated in**: `apps/web/src/routes/-auth-pages.test.tsx`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Steps**:
@@ -90,7 +91,8 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 ## TC-AUTH-008: Clerk sign-in UI renders on mobile
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Semi-automated
+- **Automated in**: `apps/web/src/routes/-auth-pages.test.tsx`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Steps**:
@@ -113,8 +115,8 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 ## TC-AUTH-010: Clerk sign-up UI renders
 
 - **Spec scenario**: S-AUTH-1, S-AUTH-2
-- **Type**: E2E
-- **Automated in**: `e2e/navigation.spec.ts`
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/-auth-pages.test.tsx`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: An unauthenticated user

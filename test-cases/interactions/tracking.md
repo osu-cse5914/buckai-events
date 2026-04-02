@@ -8,6 +8,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/interactions.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A is authenticated and event E exists
@@ -18,6 +19,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/interactions.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A sees event E in recommendations
@@ -28,6 +30,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/interactions.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A viewed event E once already
@@ -38,6 +41,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/interactions.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: No event exists with id `"nonexistent"`
@@ -48,6 +52,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-1
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: User A opens event E in the full detail page
@@ -59,6 +64,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-1
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: User A is browsing events in the desktop split-view layout
@@ -69,6 +75,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Event E has a `ticketUrl` and User A is on its detail page

@@ -8,6 +8,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 - **Spec scenario**: S-PUB-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-id.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User B exists with displayName, major, interests, followerCount, followingCount
@@ -18,6 +19,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 - **Spec scenario**: S-PUB-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-id.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User B exists with email `brutus@osu.edu`
@@ -28,6 +30,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 - **Spec scenario**: S-PUB-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-id.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User B created 3 events (2 OPEN, 1 CANCELLED)
@@ -38,6 +41,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 - **Spec scenario**: S-PUB-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-id.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Phase 3+
 - **Given**: User A follows user B
@@ -48,6 +52,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 - **Spec scenario**: S-PUB-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-id.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Phase 3+
 - **Given**: User A does not follow user B
@@ -58,6 +63,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 - **Spec scenario**: S-PUB-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-id.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: No user exists with id `nonexistent`
@@ -68,6 +74,7 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 
 - **Spec scenario**: S-PUB-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-id.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User B exists
@@ -77,13 +84,10 @@ Spec: [`public-profile`](../../specs/users/public-profile.md)
 ## TC-PUB-007: Public profile page renders correctly — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/components/users/public-profile.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
-- **Steps**:
-  1. Sign in as User A
-  2. Navigate to User B's public profile page
-  3. Verify displayName, major, interests, follower/following counts are shown
-  4. Verify email is NOT shown
-  5. Verify created events are listed
-- **Expected**: All public fields are visible; private fields are hidden
+- **Given**: The authenticated user opens another user's public profile
+- **When**: The profile data loads into the public-profile surface
+- **Then**: Public fields, counts, and active created events render while private fields remain hidden

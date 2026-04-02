@@ -8,6 +8,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 
 - **Spec scenario**: S-FOL-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/follows.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A is authenticated and user B exists
@@ -18,6 +19,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 
 - **Spec scenario**: S-FOL-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/follows.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -28,6 +30,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 
 - **Spec scenario**: S-FOL-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/follows.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A already follows user B
@@ -38,6 +41,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 
 - **Spec scenario**: S-FOL-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/follows.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows user B
@@ -48,6 +52,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 
 - **Spec scenario**: S-FOL-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/follows.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A does not follow user B
@@ -58,6 +63,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 
 - **Spec scenario**: S-FOL-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/follows.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User B has 3 followers
@@ -68,6 +74,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 
 - **Spec scenario**: S-FOL-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/follows.test.ts`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: User A follows 5 users
@@ -79,7 +86,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 - **Spec scenario**: —
 - **Type**: Manual
 - **Phase introduced**: 3
-- **Regression**: Always
+- **Regression**: Final only
 - **Steps**:
   1. Sign in as User A, navigate to User B's public profile
   2. Click the "Follow" button
@@ -93,7 +100,7 @@ Spec: [`follows`](../../specs/social/follows.md)
 - **Spec scenario**: —
 - **Type**: Manual
 - **Phase introduced**: 3
-- **Regression**: Always
+- **Regression**: Final only
 - **Steps**:
   1. Navigate to a user's profile who has followers and follows others
   2. Click on "Followers" count to see the list

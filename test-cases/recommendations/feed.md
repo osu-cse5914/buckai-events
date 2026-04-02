@@ -10,6 +10,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-FEED-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A has interactions with both events and gigs
@@ -20,6 +21,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-FEED-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A sends `GET /recommendations?type=EVENT`
@@ -29,6 +31,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-FEED-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A sends `GET /recommendations?type=GIG`
@@ -38,6 +41,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-FEED-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A has 50 recommended items
@@ -48,6 +52,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: S-FEED-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A has no interactions and no interests

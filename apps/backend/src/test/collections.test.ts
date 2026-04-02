@@ -235,7 +235,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
     expect(await res.json()).toEqual(toJsonValue(updated));
   });
 
-  it("patch collection returns 403 for non-owner", async () => {
+  it("TC-AUTHZ-011: patch collection returns 403 for non-owner", async () => {
     const col = buildCollection({
       id: "col1",
       userId: USER_B.id,
@@ -510,7 +510,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
     expect(mockPrisma.collection.delete).not.toHaveBeenCalled();
   });
 
-  it("returns 403 when requester is not the owner", async () => {
+  it("TC-AUTHZ-011: delete collection returns 403 when requester is not the owner", async () => {
     const col = { id: "col1", userId: USER_B.id };
     vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(col as never);
 

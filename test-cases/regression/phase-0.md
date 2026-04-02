@@ -16,6 +16,7 @@ bun run test:regression:phase-0
 - **TC-AUTH-005**: Missing or invalid JWT returns 401
 - **TC-AUTH-006**: First-time user provisioning
 - **TC-AUTH-009**: Concurrent provisioning race condition
+- **TC-AUTH-010**: Clerk sign-up UI renders
 
 ## Manual checklist
 

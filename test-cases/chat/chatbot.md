@@ -8,6 +8,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A sends `"What music events are happening this weekend?"`
@@ -18,6 +19,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A sends `"Find me a tutoring gig that pays at least $20/hr"`
@@ -28,6 +30,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A sends `"Apply me to that tutoring gig"`
@@ -38,6 +41,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: The chatbot proposed applying to gig G; user A confirms
@@ -48,6 +52,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: The chatbot proposed applying to gig G; user A cancels
@@ -58,6 +63,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A sends `"What's the weather like tomorrow?"`
@@ -67,7 +73,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 ## TC-CHAT-007: Grounded in real data (no hallucination)
 
 - **Spec scenario**: S-CHAT-7
-- **Type**: Semi-automated
+- **Type**: Manual
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A asks about events and no matching results exist
@@ -78,6 +84,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A sends a message
@@ -88,6 +95,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: The Gemini API is unavailable
@@ -98,6 +106,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: S-CHAT-10
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A asks about events and `searchEvents` returns zero results

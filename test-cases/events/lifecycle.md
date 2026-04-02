@@ -8,6 +8,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -18,6 +19,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -28,6 +30,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: Event E exists
@@ -38,6 +41,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: Events exist with various types, categories, and dates
@@ -48,6 +52,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E with title `"Hackathon"`
@@ -58,6 +63,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E
@@ -68,6 +74,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Event E has source `OSU_API`
@@ -78,6 +85,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E with status OPEN
@@ -88,6 +96,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E with status IN_PROGRESS
@@ -98,6 +107,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-10
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/runtime/runtime.test.ts`, `apps/backend/src/test/scheduled.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: Event E has status OPEN and endAt in the past
@@ -108,6 +118,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-11
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/scheduled.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: Event E has status OPEN and endAt is null
@@ -118,6 +129,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-12
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events-ai-tagging.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: User A creates an event with title and description
@@ -128,6 +140,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-13
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events-ai-tagging.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The AI service is unavailable
@@ -138,6 +151,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-14
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Phase 2+
 - **Given**: User A created event E with applications, interactions, and collection items
@@ -148,6 +162,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-15
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Events exist from sources USER, OSU_API, and TICKETMASTER
@@ -158,6 +173,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-16
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Phase 2+
 - **Given**: User A created gig G with 2 pending applications
@@ -167,46 +183,43 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 ## TC-EVT-017: Event creation form — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-new.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
-- **Steps**:
-  1. Sign in, navigate to event creation page
-  2. Fill in title, description, type, location, dates
-  3. For GIG type, fill in compensation
-  4. Submit the form
-- **Expected**: Event is created and appears in the event list
+- **Given**: The authenticated user is on the event creation page
+- **When**: They enter valid event details and submit the form
+- **Then**: The event create request is posted and the user is navigated to the new event detail page
 
-## TC-EVT-018: Event list pagination — UI
+## TC-EVT-018: Event browse progressive loading and history restoration — UI
 
 - **Spec scenario**: —
 - **Type**: Manual
 - **Phase introduced**: 1
-- **Regression**: Always
+- **Regression**: Final only
 - **Steps**:
   1. Ensure 25+ events exist in the system
   2. Navigate to the event list page
-  3. Scroll or click to load the next page
-  4. Use browser back button
-- **Expected**: Pagination works correctly; back button returns to the previous page state
+  3. Scroll to load more results and open an event detail
+  4. Return to the browse surface
+- **Expected**: Progressive loading works and the prior browse context is restored on return
 
 ## TC-EVT-019: Event detail page — creator actions — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-edit.test.tsx`, `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
-- **Steps**:
-  1. Sign in as the event creator
-  2. Navigate to the event detail page
-  3. Verify edit, delete, and status change controls are visible
-  4. Verify these controls are NOT visible when viewing as a non-creator
-- **Expected**: Creator-only actions are shown only to the creator
+- **Given**: A user opens an event detail or edit surface
+- **When**: The viewer is the creator or a non-creator
+- **Then**: Creator-only edit, delete, and status controls are shown only to the creator
 
 ## TC-EVT-020: Invalid status transition rejected
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: Event E has status COMPLETED
@@ -217,6 +230,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-1, S-EVT-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -227,6 +241,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-5, S-EVT-16
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E
@@ -237,6 +252,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4, S-EVT-15
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: Events exist in the system
@@ -247,6 +263,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The desktop events browse page renders multiple results
@@ -257,6 +274,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The desktop gigs browse page renders multiple results
@@ -267,6 +285,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The events browse page has more results than the first loaded batch
@@ -277,6 +296,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/ui/markdown-content.test.tsx`, `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: An event description includes Markdown formatting, including imported content with malformed emphasis spacing
@@ -287,6 +307,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Two loaded browse batches contain the same event ID
@@ -297,6 +318,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-new.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens the shared create form from the Gigs browse page
@@ -307,6 +329,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Events exist across OPEN, IN_PROGRESS, COMPLETED, and CANCELLED statuses with different start times
@@ -317,6 +340,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens `/events` without explicit browse filters
@@ -327,6 +351,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens `/gigs` without explicit browse filters
@@ -337,6 +362,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`, `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Browse results include external events from OSU or Ticketmaster
@@ -347,6 +373,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`, `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user-created event or gig has a null creator display name but a creator email
@@ -357,6 +384,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/events/events-browser.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The events endpoint has not returned the first browse batch yet
@@ -367,6 +395,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/events/events-browser.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A browse surface requests a specific page of filtered events
@@ -377,6 +406,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/events/events-browser.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The events endpoint returns a non-success response for a browse request
