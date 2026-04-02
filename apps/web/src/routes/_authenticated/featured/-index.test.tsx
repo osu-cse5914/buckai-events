@@ -4,6 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeaturedPage } from "@/components/app-pages/featured-page";
+import {
+  buildEventRecord,
+  buildRecommendationSectionResponse,
+  buildRecommendationsResponse,
+} from "@/test/factories";
 
 const state = vi.hoisted(() => {
   const mockRecommendationsGet = vi.fn();
@@ -84,15 +89,16 @@ function makeRecommendationResponse(
     rankingMode?: "PERSONALIZED" | "POPULARITY_FALLBACK";
   } = {},
 ) {
-  return okJson({
-    items,
-    meta: {
-      total: meta.total ?? items.length,
-      limit: meta.limit ?? 12,
-      offset: meta.offset ?? 0,
-      rankingMode: meta.rankingMode ?? "PERSONALIZED",
-    },
-  });
+  return okJson(
+    buildRecommendationsResponse(items, {
+      meta: {
+        total: meta.total ?? items.length,
+        limit: meta.limit ?? 12,
+        offset: meta.offset ?? 0,
+        rankingMode: meta.rankingMode ?? "PERSONALIZED",
+      },
+    }),
+  );
 }
 
 function makeSectionResponse(
@@ -103,43 +109,28 @@ function makeSectionResponse(
     offset?: number;
   } = {},
 ) {
-  return okJson({
-    items,
-    meta: {
-      total: meta.total ?? items.length,
-      limit: meta.limit ?? items.length,
-      offset: meta.offset ?? 0,
-    },
-  });
+  return okJson(
+    buildRecommendationSectionResponse(items, {
+      meta: {
+        total: meta.total ?? items.length,
+        limit: meta.limit ?? items.length,
+        offset: meta.offset ?? 0,
+      },
+    }),
+  );
 }
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEventRecord({
     title: "Hackathon",
     description: "A 24-hour build sprint",
-    type: "EVENT",
-    source: "USER",
-    status: "OPEN",
     category: "tech",
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
     startAt: "2099-04-01T09:00:00.000Z",
-    endAt: null,
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
-    summary: null,
-    creatorId: "user_1",
     createdAt: "2026-03-01T00:00:00.000Z",
     updatedAt: "2026-03-01T00:00:00.000Z",
     creator: { id: "user_1", displayName: "Alice", email: "alice@osu.edu" },
     ...overrides,
-  };
+  });
 }
 
 function FeaturedHarness({

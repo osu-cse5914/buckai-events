@@ -18,11 +18,12 @@ vi.mock("../lib/prisma");
 
 import { getAuth } from "@hono/clerk-auth";
 import { getPrismaClient, getPrisma } from "../lib/prisma";
+import { buildEvent, buildUser } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { app } from "../index";
 import { makeAuthRequest } from "./helpers/context";
 
-const AUTH_USER = {
+const AUTH_USER = buildUser({
   id: "user_auth",
   clerkId: "clerk_auth",
   email: "viewer@osu.edu",
@@ -34,9 +35,9 @@ const AUTH_USER = {
   followingCount: 0,
   createdAt: new Date("2025-01-01T00:00:00Z"),
   updatedAt: new Date("2025-01-01T00:00:00Z"),
-};
+});
 
-const TARGET_USER = {
+const TARGET_USER = buildUser({
   id: "user_target",
   clerkId: "clerk_target",
   email: "brutus@osu.edu",
@@ -48,11 +49,19 @@ const TARGET_USER = {
   followingCount: 5,
   createdAt: new Date("2025-01-01T00:00:00Z"),
   updatedAt: new Date("2025-01-02T00:00:00Z"),
-};
+});
 
 const MOCK_EVENTS = [
-  { id: "evt_1", title: "Open Event 1", status: "OPEN", creatorId: TARGET_USER.id },
-  { id: "evt_2", title: "Open Event 2", status: "OPEN", creatorId: TARGET_USER.id },
+  buildEvent({
+    id: "evt_1",
+    title: "Open Event 1",
+    creatorId: TARGET_USER.id,
+  }),
+  buildEvent({
+    id: "evt_2",
+    title: "Open Event 2",
+    creatorId: TARGET_USER.id,
+  }),
 ];
 
 describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {

@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { buildOwnedCollectionSummary } from "@/test/factories";
 
 const mockCollectionsGet = vi.fn();
 const mockCollectionsPost = vi.fn();
@@ -85,20 +86,19 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
     mockCollectionsGet
       .mockResolvedValueOnce(
         okJson([
-          {
+          buildOwnedCollectionSummary({
             id: "col_1",
             userId: "user_1",
             name: "Music",
-            visibility: "PRIVATE",
             createdAt: "2026-03-01T00:00:00.000Z",
             updatedAt: "2026-03-02T00:00:00.000Z",
             _count: { items: 2 },
-          },
+          }),
         ]),
       )
       .mockResolvedValueOnce(
         okJson([
-          {
+          buildOwnedCollectionSummary({
             id: "col_2",
             userId: "user_1",
             name: "Must See",
@@ -106,21 +106,20 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
             createdAt: "2026-03-03T00:00:00.000Z",
             updatedAt: "2026-03-03T00:00:00.000Z",
             _count: { items: 0 },
-          },
-          {
+          }),
+          buildOwnedCollectionSummary({
             id: "col_1",
             userId: "user_1",
             name: "Music",
-            visibility: "PRIVATE",
             createdAt: "2026-03-01T00:00:00.000Z",
             updatedAt: "2026-03-02T00:00:00.000Z",
             _count: { items: 2 },
-          },
+          }),
         ]),
       );
     mockCollectionsPost.mockResolvedValue(
       okJson(
-        {
+        buildOwnedCollectionSummary({
           id: "col_2",
           userId: "user_1",
           name: "Must See",
@@ -128,7 +127,7 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
           createdAt: "2026-03-03T00:00:00.000Z",
           updatedAt: "2026-03-03T00:00:00.000Z",
           _count: { items: 0 },
-        },
+        }),
         201,
       ),
     );
@@ -163,33 +162,31 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
     mockCollectionsGet
       .mockResolvedValueOnce(
         okJson([
-          {
+          buildOwnedCollectionSummary({
             id: "col_1",
             userId: "user_1",
             name: "Music",
-            visibility: "PRIVATE",
             createdAt: "2026-03-01T00:00:00.000Z",
             updatedAt: "2026-03-02T00:00:00.000Z",
             _count: { items: 2 },
-          },
+          }),
         ]),
       )
       .mockResolvedValueOnce(
         okJson([
-          {
+          buildOwnedCollectionSummary({
             id: "col_1",
             userId: "user_1",
             name: "Shows",
-            visibility: "PRIVATE",
             createdAt: "2026-03-01T00:00:00.000Z",
             updatedAt: "2026-03-04T00:00:00.000Z",
             _count: { items: 2 },
-          },
+          }),
         ]),
       )
       .mockResolvedValueOnce(
         okJson([
-          {
+          buildOwnedCollectionSummary({
             id: "col_1",
             userId: "user_1",
             name: "Shows",
@@ -197,32 +194,35 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
             createdAt: "2026-03-01T00:00:00.000Z",
             updatedAt: "2026-03-04T00:00:00.000Z",
             _count: { items: 2 },
-          },
+          }),
         ]),
       )
       .mockResolvedValueOnce(okJson([]));
     mockCollectionPatch
       .mockResolvedValueOnce(
-        okJson({
-          id: "col_1",
-          userId: "user_1",
-          name: "Shows",
-          visibility: "PRIVATE",
-          createdAt: "2026-03-01T00:00:00.000Z",
-          updatedAt: "2026-03-04T00:00:00.000Z",
-          _count: { items: 2 },
-        }),
+        okJson(
+          buildOwnedCollectionSummary({
+            id: "col_1",
+            userId: "user_1",
+            name: "Shows",
+            createdAt: "2026-03-01T00:00:00.000Z",
+            updatedAt: "2026-03-04T00:00:00.000Z",
+            _count: { items: 2 },
+          }),
+        ),
       )
       .mockResolvedValueOnce(
-        okJson({
-          id: "col_1",
-          userId: "user_1",
-          name: "Shows",
-          visibility: "PUBLIC",
-          createdAt: "2026-03-01T00:00:00.000Z",
-          updatedAt: "2026-03-04T00:00:00.000Z",
-          _count: { items: 2 },
-        }),
+        okJson(
+          buildOwnedCollectionSummary({
+            id: "col_1",
+            userId: "user_1",
+            name: "Shows",
+            visibility: "PUBLIC",
+            createdAt: "2026-03-01T00:00:00.000Z",
+            updatedAt: "2026-03-04T00:00:00.000Z",
+            _count: { items: 2 },
+          }),
+        ),
       );
     mockCollectionDelete.mockResolvedValue({
       ok: true,

@@ -8,35 +8,30 @@ import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { registerApiErrorHandlers } from "../app";
 import { CHATBOT_SYSTEM_PROMPT } from "../services/chatbot";
 import { createConversationsRouter } from "../routes/conversations";
+import {
+  buildAuthUser,
+  buildConversation,
+  buildMessage,
+} from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 
-const USER_A = { id: "user_a", clerkId: "clerk_a", email: "usera@osu.edu" };
+const USER_A = buildAuthUser({
+  id: "user_a",
+  clerkId: "clerk_a",
+  email: "usera@osu.edu",
+});
 
 const NOW = new Date("2026-04-01T12:00:00.000Z");
 
 function createConversation(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "conv_1",
+  return buildConversation({
     userId: USER_A.id,
-    title: null,
-    pendingAction: null,
-    pendingActionCreatedAt: null,
-    createdAt: new Date("2026-04-01T11:00:00.000Z"),
-    updatedAt: new Date("2026-04-01T11:00:00.000Z"),
     ...overrides,
-  };
+  });
 }
 
 function createMessage(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "msg_1",
-    conversationId: "conv_1",
-    role: "USER",
-    content: "hello",
-    parts: null,
-    createdAt: new Date("2026-04-01T12:00:00.000Z"),
-    ...overrides,
-  };
+  return buildMessage(overrides);
 }
 
 function decodeSseText(payload: string) {

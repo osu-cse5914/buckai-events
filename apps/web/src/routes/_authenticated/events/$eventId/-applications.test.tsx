@@ -2,6 +2,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import {
+  buildCurrentUser,
+  buildEventRecord,
+  buildMyApplication,
+  buildPaginatedResponse,
+} from "@/test/factories";
 
 const mockEventGet = vi.fn();
 const mockGigApplicationsGet = vi.fn();
@@ -104,32 +110,22 @@ function createQueryClient() {
 }
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEventRecord({
     title: "Hackathon",
     description: "A 24-hour hackathon at Ohio Union",
     type: "GIG",
-    source: "USER",
-    status: "OPEN",
     category: "tech",
     tags: ["coding", "hackathon"],
-    imageUrl: null,
-    ticketUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
     startAt: "2025-04-01T09:00:00.000Z",
     endAt: "2025-04-02T09:00:00.000Z",
     compensationAmount: 25,
-    compensationCurrency: "USD",
     compensationType: "HOURLY",
     summary: "A hackathon event",
-    creatorId: "user_1",
     createdAt: "2025-03-01T00:00:00.000Z",
     updatedAt: "2025-03-01T00:00:00.000Z",
     creator: { id: "user_1", displayName: "Alice", email: "alice@osu.edu" },
     ...overrides,
-  };
+  });
 }
 
 function okJson(data: unknown, status = 200) {
@@ -144,7 +140,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   capturedComponent = null;
   mockMyApplicationsGet.mockResolvedValue(
-    okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
+    okJson(buildPaginatedResponse([], { pagination: { total: 0, limit: 20, offset: 0 } })),
   );
   mockInteractionsPost.mockResolvedValue(okJson({}, 201));
   vi.resetModules();
@@ -165,9 +161,9 @@ async function renderPage() {
 describe("[phase:2] [regression:always] EventDetailPage Gig Applications", () => {
   it("TC-APP-010: non-owners on gig detail can open the apply modal", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
-    mockUserGet.mockResolvedValue(okJson({ id: "user_2", email: "bob@osu.edu" }));
+    mockUserGet.mockResolvedValue(okJson(buildCurrentUser({ id: "user_2", email: "bob@osu.edu" })));
     mockGigApplicationsGet.mockResolvedValue(
-      okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
+      okJson(buildPaginatedResponse([], { pagination: { total: 0, limit: 20, offset: 0 } })),
     );
     const user = userEvent.setup();
 
@@ -183,22 +179,20 @@ describe("[phase:2] [regression:always] EventDetailPage Gig Applications", () =>
 
   it("TC-APP-010: submitting the apply modal posts the application and disables re-apply", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
-    mockUserGet.mockResolvedValue(okJson({ id: "user_2", email: "bob@osu.edu" }));
+    mockUserGet.mockResolvedValue(okJson(buildCurrentUser({ id: "user_2", email: "bob@osu.edu" })));
     mockGigApplicationsGet
       .mockResolvedValueOnce(
-        okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
+        okJson(buildPaginatedResponse([], { pagination: { total: 0, limit: 20, offset: 0 } })),
       )
       .mockResolvedValueOnce(
-        okJson({
-          data: [
-            {
-              id: "app_1",
-              status: "PENDING",
+        okJson(
+          buildPaginatedResponse([
+            buildMyApplication({
               message: "I can help",
-            },
-          ],
-          pagination: { total: 1, limit: 20, offset: 0 },
-        }),
+              gig: buildMyApplication().gig,
+            }),
+          ], { pagination: { total: 1, limit: 20, offset: 0 } }),
+        ),
       );
     mockGigApplicationsPost.mockResolvedValue(
       okJson({ id: "app_1", status: "PENDING", message: "I can help" }),

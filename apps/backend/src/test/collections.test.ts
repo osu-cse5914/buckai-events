@@ -4,12 +4,21 @@ import { Hono } from "hono";
 vi.mock("../lib/prisma");
 
 import { getPrismaClient, getPrisma } from "../lib/prisma";
+import { buildAuthUser, buildCollection, buildCollectionWithCount } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { registerApiErrorHandlers } from "../app";
 import { collections } from "../routes/collections";
 
-const USER_A = { id: "user_a", clerkId: "clerk_a", email: "usera@osu.edu" };
-const USER_B = { id: "user_b", clerkId: "clerk_b", email: "userb@osu.edu" };
+const USER_A = buildAuthUser({
+  id: "user_a",
+  clerkId: "clerk_a",
+  email: "usera@osu.edu",
+});
+const USER_B = buildAuthUser({
+  id: "user_b",
+  clerkId: "clerk_b",
+  email: "userb@osu.edu",
+});
 
 function createTestApp(user = USER_A) {
   const app = new Hono();
@@ -94,6 +103,10 @@ function listCollectionItems(
   );
 }
 
+function toJsonValue<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 // --- Tests ---
 
 describe("[phase:2] [regression:always] Collection management API", () => {
@@ -106,12 +119,11 @@ describe("[phase:2] [regression:always] Collection management API", () => {
   });
 
   it("TC-COL-001: create a collection with default PRIVATE visibility", async () => {
-    const createdCollection = {
+    const createdCollection = buildCollection({
       id: "col1",
       userId: USER_A.id,
       name: "Music Events",
-      visibility: "PRIVATE",
-    };
+    });
     vi.mocked(mockPrisma.collection.create).mockResolvedValue(
       createdCollection as never,
     );
@@ -128,16 +140,16 @@ describe("[phase:2] [regression:always] Collection management API", () => {
         visibility: "PRIVATE",
       },
     });
-    expect(await res.json()).toEqual(createdCollection);
+    expect(await res.json()).toEqual(toJsonValue(createdCollection));
   });
 
   it("TC-COL-002: create a public collection", async () => {
-    const createdCollection = {
+    const createdCollection = buildCollection({
       id: "col2",
       userId: USER_A.id,
       name: "Must See",
       visibility: "PUBLIC",
-    };
+    });
     vi.mocked(mockPrisma.collection.create).mockResolvedValue(
       createdCollection as never,
     );
@@ -155,35 +167,33 @@ describe("[phase:2] [regression:always] Collection management API", () => {
         visibility: "PUBLIC",
       },
     });
-    expect(await res.json()).toEqual(createdCollection);
+    expect(await res.json()).toEqual(toJsonValue(createdCollection));
   });
 
   it("TC-COL-006: list own collections ordered by updatedAt descending with item counts", async () => {
     const collectionsResult = [
-      {
+      buildCollectionWithCount({
         id: "col3",
         userId: USER_A.id,
         name: "Newest",
-        visibility: "PRIVATE",
-        updatedAt: "2026-03-31T15:00:00.000Z",
+        updatedAt: new Date("2026-03-31T15:00:00.000Z"),
         _count: { items: 2 },
-      },
-      {
+      }),
+      buildCollectionWithCount({
         id: "col2",
         userId: USER_A.id,
         name: "Middle",
         visibility: "PUBLIC",
-        updatedAt: "2026-03-31T14:00:00.000Z",
+        updatedAt: new Date("2026-03-31T14:00:00.000Z"),
         _count: { items: 1 },
-      },
-      {
+      }),
+      buildCollectionWithCount({
         id: "col1",
         userId: USER_A.id,
         name: "Oldest",
-        visibility: "PRIVATE",
-        updatedAt: "2026-03-31T13:00:00.000Z",
+        updatedAt: new Date("2026-03-31T13:00:00.000Z"),
         _count: { items: 0 },
-      },
+      }),
     ];
     vi.mocked(mockPrisma.collection.findMany).mockResolvedValue(
       collectionsResult as never,
@@ -197,16 +207,15 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       orderBy: { updatedAt: "desc" },
       include: { _count: { select: { items: true } } },
     });
-    expect(await res.json()).toEqual(collectionsResult);
+    expect(await res.json()).toEqual(toJsonValue(collectionsResult));
   });
 
   it("TC-COL-009: owner can update collection visibility", async () => {
-    const col = {
+    const col = buildCollection({
       id: "col1",
       userId: USER_A.id,
       name: "Music",
-      visibility: "PRIVATE",
-    };
+    });
     const updated = {
       ...col,
       visibility: "PUBLIC",
@@ -223,16 +232,15 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       where: { id: "col1" },
       data: { visibility: "PUBLIC" },
     });
-    expect(await res.json()).toEqual(updated);
+    expect(await res.json()).toEqual(toJsonValue(updated));
   });
 
   it("patch collection returns 403 for non-owner", async () => {
-    const col = {
+    const col = buildCollection({
       id: "col1",
       userId: USER_B.id,
       name: "Music",
-      visibility: "PRIVATE",
-    };
+    });
     vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(col as never);
 
     const res = await patchCollection(createTestApp(USER_A), "col1", {

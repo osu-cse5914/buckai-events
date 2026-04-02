@@ -4,6 +4,7 @@ import { Hono } from "hono";
 vi.mock("../lib/prisma");
 
 import { getPrismaClient, getPrisma } from "../lib/prisma";
+import { buildAuthUser, buildEvent } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { registerApiErrorHandlers } from "../app";
 import {
@@ -14,8 +15,16 @@ import {
 
 // --- Test data ---
 
-const USER_A = { id: "user_a", clerkId: "clerk_a", email: "usera@osu.edu" };
-const USER_B = { id: "user_b", clerkId: "clerk_b", email: "userb@osu.edu" };
+const USER_A = buildAuthUser({
+  id: "user_a",
+  clerkId: "clerk_a",
+  email: "usera@osu.edu",
+});
+const USER_B = buildAuthUser({
+  id: "user_b",
+  clerkId: "clerk_b",
+  email: "userb@osu.edu",
+});
 
 function createTestApp(user = USER_A) {
   const app = new Hono();
@@ -80,32 +89,16 @@ function createPipelineScheduleTestApp({
 }
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEvent({
     title: "Hackathon",
     description: "24hr hackathon",
-    summary: null,
-    type: "EVENT",
-    source: "USER",
-    externalId: null,
     category: null,
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
-    startAt: new Date("2025-04-01T09:00:00Z"),
-    endAt: null,
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
-    status: "OPEN",
     creatorId: USER_A.id,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    startAt: new Date("2025-04-01T09:00:00Z"),
+    createdAt: new Date("2025-03-01T00:00:00Z"),
+    updatedAt: new Date("2025-03-01T00:00:00Z"),
     ...overrides,
-  };
+  });
 }
 
 function postEvent(app: Hono, body: Record<string, unknown>) {

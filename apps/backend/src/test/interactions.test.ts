@@ -5,10 +5,15 @@ vi.mock("../lib/prisma");
 
 import { getPrisma, getPrismaClient } from "../lib/prisma";
 import { registerApiErrorHandlers } from "../app";
+import { buildAuthUser, buildInteraction } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { interactions } from "../routes/interactions";
 
-const USER = { id: "user_a", clerkId: "clerk_a", email: "usera@osu.edu" };
+const USER = buildAuthUser({
+  id: "user_a",
+  clerkId: "clerk_a",
+  email: "usera@osu.edu",
+});
 
 function createTestApp(user = USER) {
   const app = new Hono();
@@ -46,13 +51,13 @@ describe("[phase:2] [regression:always] Interaction Tracking API", () => {
       { id: "evt_1" } as never,
     );
     vi.mocked(mockPrisma.interaction.create).mockResolvedValue(
-      {
+      buildInteraction({
         id: "int_1",
         userId: USER.id,
         eventId: "evt_1",
         action: "VIEW",
         createdAt: new Date("2026-03-31T15:00:00.000Z"),
-      } as never,
+      }) as never,
     );
 
     const res = await postInteraction(createTestApp(), {
@@ -85,13 +90,13 @@ describe("[phase:2] [regression:always] Interaction Tracking API", () => {
       { id: "evt_2" } as never,
     );
     vi.mocked(mockPrisma.interaction.create).mockResolvedValue(
-      {
+      buildInteraction({
         id: "int_2",
         userId: USER.id,
         eventId: "evt_2",
         action: "DISMISS",
         createdAt: new Date("2026-03-31T15:05:00.000Z"),
-      } as never,
+      }) as never,
     );
 
     const res = await postInteraction(createTestApp(), {
@@ -121,22 +126,22 @@ describe("[phase:2] [regression:always] Interaction Tracking API", () => {
     );
     vi.mocked(mockPrisma.interaction.create)
       .mockResolvedValueOnce(
-        {
+        buildInteraction({
           id: "int_3a",
           userId: USER.id,
           eventId: "evt_3",
           action: "VIEW",
           createdAt: new Date("2026-03-31T15:10:00.000Z"),
-        } as never,
+        }) as never,
       )
       .mockResolvedValueOnce(
-        {
+        buildInteraction({
           id: "int_3b",
           userId: USER.id,
           eventId: "evt_3",
           action: "VIEW",
           createdAt: new Date("2026-03-31T15:11:00.000Z"),
-        } as never,
+        }) as never,
       );
 
     const app = createTestApp();

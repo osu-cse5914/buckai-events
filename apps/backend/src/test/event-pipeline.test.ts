@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockPrisma } from "./helpers/prisma";
+import {
+  buildEventPipelineRun,
+  buildEventWithEmbedding,
+} from "./factories";
 import { createEventEmbeddingTextHash } from "../services/event-embeddings";
 import {
   createEmbeddingBackfillJob,
@@ -8,53 +12,26 @@ import {
 } from "../services/event-pipeline";
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEventWithEmbedding({
     title: "Jazz Night",
     description: "Live music from student groups",
-    summary: null,
-    type: "EVENT",
-    source: "USER",
-    externalId: null,
-    sourceHash: null,
     category: "music",
     tags: ["jazz", "live-music"],
-    imageUrl: null,
-    ticketUrl: null,
-    externalUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
-    startAt: new Date("2026-04-01T09:00:00Z"),
-    endAt: null,
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
-    status: "OPEN",
     creatorId: "user_a",
+    startAt: new Date("2026-04-01T09:00:00Z"),
     createdAt: new Date("2026-03-31T12:00:00Z"),
     updatedAt: new Date("2026-03-31T12:00:00Z"),
-    embedding: null,
     ...overrides,
-  };
+  });
 }
 
 function makeRun(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "run_1",
-    jobId: "job_1",
-    eventId: "evt_1",
-    stage: "EMBEDDING",
-    status: "QUEUED",
-    textHash: null,
-    error: null,
-    createdAt: new Date("2026-03-31T12:00:00Z"),
-    startedAt: null,
-    finishedAt: null,
-    updatedAt: new Date("2026-03-31T12:00:00Z"),
+  return buildEventPipelineRun({
     event: makeEvent(),
+    createdAt: new Date("2026-03-31T12:00:00Z"),
+    updatedAt: new Date("2026-03-31T12:00:00Z"),
     ...overrides,
-  };
+  });
 }
 
 describe("[phase:4] [regression:always] Event enrichment pipeline", () => {
