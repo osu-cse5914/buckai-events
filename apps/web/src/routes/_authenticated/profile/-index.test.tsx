@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { buildCurrentUser } from "@/test/factories";
 
 // Mock the api module before importing the component
 const mockGet = vi.fn();
@@ -32,7 +33,7 @@ vi.mock("@tanstack/react-router", () => ({
 // Import after mocks are set up
 const { ProfilePage } = await import("./index");
 
-const mockUser = {
+const mockUser = buildCurrentUser({
   id: "user-1",
   email: "brutus@osu.edu",
   displayName: "Brutus Buckeye",
@@ -43,7 +44,7 @@ const mockUser = {
   updatedAt: "2025-06-01T00:00:00Z",
   followerCount: 10,
   followingCount: 5,
-};
+});
 
 function createWrapper() {
   const queryClient = new QueryClient({

@@ -4,15 +4,32 @@ import { Hono } from "hono";
 vi.mock("../lib/prisma");
 
 import { getPrismaClient, getPrisma } from "../lib/prisma";
+import {
+  buildApplicationWithApplicant,
+  buildAuthUser,
+  buildEvent,
+} from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { registerApiErrorHandlers } from "../app";
 import { gigs } from "../routes/gigs";
 
 // --- Test data ---
 
-const OWNER = { id: "user_owner", clerkId: "clerk_owner", email: "owner@osu.edu" };
-const APPLICANT_A = { id: "user_a", clerkId: "clerk_a", email: "a@osu.edu" };
-const APPLICANT_B = { id: "user_b", clerkId: "clerk_b", email: "b@osu.edu" };
+const OWNER = buildAuthUser({
+  id: "user_owner",
+  clerkId: "clerk_owner",
+  email: "owner@osu.edu",
+});
+const APPLICANT_A = buildAuthUser({
+  id: "user_a",
+  clerkId: "clerk_a",
+  email: "a@osu.edu",
+});
+const APPLICANT_B = buildAuthUser({
+  id: "user_b",
+  clerkId: "clerk_b",
+  email: "b@osu.edu",
+});
 
 function createTestApp(user = OWNER) {
   const app = new Hono();
@@ -59,32 +76,31 @@ function postApplication(
 const GIG = { id: "gig_1", type: "GIG", status: "OPEN", creatorId: OWNER.id };
 
 function makeGig(overrides: Record<string, unknown> = {}) {
-  return {
+  return buildEvent({
     id: "gig_1",
     title: "Need a tutor",
     description: "Calculus tutor needed",
     type: "GIG",
-    source: "USER",
-    status: "OPEN",
     creatorId: OWNER.id,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-01T00:00:00Z"),
     ...overrides,
-  };
+  });
 }
 
 function makeApplication(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "app_1",
+  return buildApplicationWithApplicant({
     gigId: GIG.id,
     applicantId: APPLICANT_A.id,
-    message: "I'm interested",
-    status: "PENDING",
     createdAt: new Date("2026-01-01T00:00:00Z"),
     updatedAt: new Date("2026-01-01T00:00:00Z"),
-    applicant: { id: APPLICANT_A.id, displayName: "User A", email: "a@osu.edu" },
+    applicant: {
+      id: APPLICANT_A.id,
+      displayName: "User A",
+      email: "a@osu.edu",
+    },
     ...overrides,
-  };
+  });
 }
 
 // --- Tests ---

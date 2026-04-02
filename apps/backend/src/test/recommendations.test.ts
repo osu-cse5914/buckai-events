@@ -19,14 +19,18 @@ vi.mock("../lib/prisma");
 import { getAuth } from "@hono/clerk-auth";
 import { getPrisma, getPrismaClient } from "../lib/prisma";
 import { app } from "../index";
+import {
+  buildEventWithCreatorAndInteractions,
+  buildInteraction,
+  buildUser,
+} from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { makeAuthRequest } from "./helpers/context";
 
-const CURRENT_USER = {
+const CURRENT_USER = buildUser({
   id: "user_rec_1",
   clerkId: "clerk_rec_1",
   email: "recs@osu.edu",
-  role: "USER",
   displayName: "Rec User",
   major: null,
   gradYear: null,
@@ -35,46 +39,29 @@ const CURRENT_USER = {
   followingCount: 0,
   createdAt: new Date("2026-03-01T00:00:00Z"),
   updatedAt: new Date("2026-03-01T00:00:00Z"),
-};
+});
 
 function makeInteraction(id: string) {
-  return {
+  return buildInteraction({
     id,
     userId: "other_user",
     eventId: "evt_unused",
     action: "VIEW",
     createdAt: new Date("2099-03-20T00:00:00Z"),
-  };
+  });
 }
 
 function makeEvent(
   overrides: Record<string, unknown> = {},
   interactionCount = 0,
 ) {
-  return {
+  return buildEventWithCreatorAndInteractions({
     id: "evt_1",
     title: "Event",
     description: "Description",
-    summary: null,
-    type: "EVENT",
-    source: "USER",
-    externalId: null,
-    sourceHash: null,
     category: null,
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
-    externalUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
-    startAt: new Date("2099-04-10T12:00:00Z"),
-    endAt: null,
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
-    status: "OPEN",
     creatorId: "creator_1",
+    startAt: new Date("2099-04-10T12:00:00Z"),
     createdAt: new Date("2026-03-01T00:00:00Z"),
     updatedAt: new Date("2026-03-01T00:00:00Z"),
     creator: {
@@ -82,11 +69,11 @@ function makeEvent(
       displayName: "Creator",
       email: "creator@osu.edu",
     },
-    interactions: Array.from({ length: interactionCount }, (_, index) =>
-      makeInteraction(`int_${index}`),
-    ),
+    interactions: Array.from({ length: interactionCount }, (_, index) => ({
+      id: makeInteraction(`int_${index}`).id,
+    })),
     ...overrides,
-  };
+  });
 }
 
 describe("[phase:4] [regression:always] GET /api/v1/recommendations", () => {

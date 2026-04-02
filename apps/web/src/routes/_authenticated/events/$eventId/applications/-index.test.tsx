@@ -2,6 +2,12 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import {
+  buildCurrentUser,
+  buildEventRecord,
+  buildGigApplication,
+  buildPaginatedResponse,
+} from "@/test/factories";
 
 const mockEventGet = vi.fn();
 const mockApplicationsGet = vi.fn();
@@ -77,27 +83,16 @@ function createQueryClient() {
 }
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEventRecord({
     title: "Need a tutor",
     type: "GIG",
-    source: "USER",
-    status: "OPEN",
     creatorId: "user_owner",
     description: "Tutoring help needed",
     category: null,
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
     locationName: "Thompson Library",
-    locationLatitude: null,
-    locationLongitude: null,
     startAt: "2026-03-20T14:00:00.000Z",
-    endAt: null,
     compensationAmount: 20,
-    compensationCurrency: "USD",
     compensationType: "HOURLY",
-    summary: null,
     createdAt: "2026-03-01T00:00:00.000Z",
     updatedAt: "2026-03-01T00:00:00.000Z",
     creator: {
@@ -106,7 +101,7 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
       email: "owner@osu.edu",
     },
     ...overrides,
-  };
+  });
 }
 
 function okJson(data: unknown) {
@@ -139,7 +134,7 @@ describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
     mockLoaderData = {
       access: "ok",
       event: makeEvent(),
-      currentUser: { id: "user_owner", email: "owner@osu.edu" },
+      currentUser: buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" }),
     };
     mockApplicationsGet.mockReturnValue(new Promise(() => {}));
 
@@ -153,28 +148,26 @@ describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
     mockLoaderData = {
       access: "ok",
       event: makeEvent(),
-      currentUser: { id: "user_owner", email: "owner@osu.edu" },
+      currentUser: buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" }),
     };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(
-      okJson({ id: "user_owner", email: "owner@osu.edu" }),
+      okJson(buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" })),
     );
     mockApplicationsGet.mockResolvedValue(
-      okJson({
-        data: [
-          {
-            id: "app_1",
-            status: "PENDING",
-            message: "I can help",
+      okJson(
+        buildPaginatedResponse([
+          buildGigApplication({
             applicant: {
               id: "user_a",
               displayName: "Alice",
               email: "alice@osu.edu",
             },
-          },
-        ],
-        pagination: { total: 1, limit: 20, offset: 0 },
-      }),
+          }),
+        ], {
+          pagination: { total: 1, limit: 20, offset: 0 },
+        }),
+      ),
     );
 
     await renderPage();
@@ -196,28 +189,26 @@ describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
     mockLoaderData = {
       access: "ok",
       event: makeEvent(),
-      currentUser: { id: "user_owner", email: "owner@osu.edu" },
+      currentUser: buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" }),
     };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(
-      okJson({ id: "user_owner", email: "owner@osu.edu" }),
+      okJson(buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" })),
     );
     mockApplicationsGet.mockResolvedValue(
-      okJson({
-        data: [
-          {
-            id: "app_1",
-            status: "PENDING",
-            message: "I can help",
+      okJson(
+        buildPaginatedResponse([
+          buildGigApplication({
             applicant: {
               id: "user_a",
               displayName: "Alice",
               email: "alice@osu.edu",
             },
-          },
-        ],
-        pagination: { total: 1, limit: 20, offset: 0 },
-      }),
+          }),
+        ], {
+          pagination: { total: 1, limit: 20, offset: 0 },
+        }),
+      ),
     );
     mockApplicationPatch.mockResolvedValue(
       okJson({

@@ -18,15 +18,15 @@ vi.mock("../lib/prisma");
 
 import { getAuth } from "@hono/clerk-auth";
 import { getPrismaClient, getPrisma } from "../lib/prisma";
+import { buildUser } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { app } from "../index";
 import { makeAuthRequest } from "./helpers/context";
 
-const FULL_USER = {
+const FULL_USER = buildUser({
   id: "user_1",
   clerkId: "clerk_abc123",
   email: "student@osu.edu",
-  role: "USER",
   displayName: "Brutus",
   major: "CS",
   gradYear: 2025,
@@ -35,7 +35,7 @@ const FULL_USER = {
   followingCount: 5,
   createdAt: new Date("2025-01-01T00:00:00Z"),
   updatedAt: new Date("2025-01-02T00:00:00Z"),
-};
+});
 
 describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
   const mockPrisma = createMockPrisma();

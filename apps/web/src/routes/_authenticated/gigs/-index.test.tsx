@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BrowsePage } from "@/components/events/browse-page";
 import { PAGE_SIZE } from "@/lib/queries";
+import { buildEventRecord } from "@/test/factories";
 
 const state = vi.hoisted(() => {
   const mockGet = vi.fn();
@@ -119,32 +120,21 @@ function createQueryClient() {
 }
 
 function makeGig(overrides: Record<string, unknown> = {}) {
-  return {
+  return buildEventRecord({
     id: "gig_1",
     title: "Campus Tutor",
     description: "A test gig",
     type: "GIG",
-    source: "USER",
-    status: "OPEN",
     category: "education",
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
     locationName: "Thompson Library",
-    locationLatitude: null,
-    locationLongitude: null,
     startAt: "2025-04-01T09:00:00.000Z",
-    endAt: null,
     compensationAmount: 25,
-    compensationCurrency: "USD",
     compensationType: "HOURLY",
-    summary: null,
-    creatorId: "user_1",
     createdAt: "2025-03-01T00:00:00.000Z",
     updatedAt: "2025-03-01T00:00:00.000Z",
     creator: { id: "user_1", displayName: "Alice", email: "alice@osu.edu" },
     ...overrides,
-  };
+  });
 }
 
 function makeResponse(

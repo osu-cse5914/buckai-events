@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { ApiClientProvider } from "@/lib/api";
+import { buildOwnedCollectionSummary } from "@/test/factories";
 import { SaveToCollectionButton } from "./save-to-collection-button";
 
 function okJson(data: unknown, status = 200) {
@@ -34,15 +35,14 @@ describe("[phase:6] [regression:always] SaveToCollectionButton", () => {
   it("TC-COL-013: saves the current listing to an existing collection from the overlay", async () => {
     const collectionsGet = vi.fn().mockResolvedValue(
       okJson([
-        {
+        buildOwnedCollectionSummary({
           id: "col_1",
           userId: "user_1",
           name: "Music Events",
-          visibility: "PRIVATE",
           createdAt: "2025-03-01T00:00:00.000Z",
           updatedAt: "2025-03-02T00:00:00.000Z",
           _count: { items: 3 },
-        },
+        }),
       ]),
     );
     const collectionItemPost = vi.fn().mockResolvedValue(okJson({}, 201));

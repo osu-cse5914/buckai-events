@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { SearchPage } from "@/components/app-pages/search-page";
 import type { SearchRouteSearch } from "@/lib/event-route-search";
+import { buildEventRecord, buildPaginatedResponse } from "@/test/factories";
 
 const state = vi.hoisted(() => {
   const mockEventsGet = vi.fn();
@@ -121,39 +122,24 @@ function okJson(data: unknown) {
 }
 
 function makeResponse(data: unknown[] = []) {
-  return okJson({
-    data,
-    pagination: { total: data.length, limit: 12, offset: 0 },
-  });
+  return okJson(
+    buildPaginatedResponse(data, {
+      pagination: { total: data.length, limit: 12, offset: 0 },
+    }),
+  );
 }
 
 function makeSearchResult(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEventRecord({
     title: "Hackathon",
     description: "A 24-hour build sprint",
-    type: "EVENT",
-    source: "USER",
-    status: "OPEN",
     category: "tech",
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
     startAt: "2026-04-01T09:00:00.000Z",
-    endAt: null,
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
-    summary: null,
-    creatorId: "user_1",
     createdAt: "2026-03-01T00:00:00.000Z",
     updatedAt: "2026-03-01T00:00:00.000Z",
     creator: { id: "user_1", displayName: "Alice", email: "alice@osu.edu" },
     ...overrides,
-  };
+  });
 }
 
 beforeEach(() => {

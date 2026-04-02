@@ -2,6 +2,11 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  buildConversationMessage,
+  buildConversationRecord,
+  buildPaginatedResponse,
+} from "@/test/factories";
 
 const state = vi.hoisted(() => {
   const conversationsGet = vi.fn();
@@ -77,14 +82,7 @@ function createQueryClient() {
 }
 
 function paginated<T>(data: T[]) {
-  return {
-    data,
-    pagination: {
-      total: data.length,
-      limit: 50,
-      offset: 0,
-    },
-  };
+  return buildPaginatedResponse(data);
 }
 
 function jsonResponse(data: unknown, status = 200) {
@@ -124,26 +122,11 @@ function sseResponse(chunks: string[]) {
 }
 
 function makeConversation(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "conv_1",
-    userId: "user_a",
-    title: "Free weekend events",
-    createdAt: "2026-04-01T10:00:00.000Z",
-    updatedAt: "2026-04-01T11:00:00.000Z",
-    ...overrides,
-  };
+  return buildConversationRecord(overrides);
 }
 
 function makeMessage(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "msg_1",
-    conversationId: "conv_1",
-    role: "USER",
-    content: "hello",
-    parts: null,
-    createdAt: "2026-04-01T11:00:00.000Z",
-    ...overrides,
-  };
+  return buildConversationMessage(overrides);
 }
 
 async function renderAiRoute(search: Record<string, unknown> = {}) {

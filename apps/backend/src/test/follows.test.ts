@@ -5,10 +5,15 @@ vi.mock("../lib/prisma");
 
 import { getPrisma, getPrismaClient } from "../lib/prisma";
 import { ProblemError, notFound, problemFromError } from "../lib/problem-details";
+import { buildAuthUser, buildFollow } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { users } from "../routes/users";
 
-const USER_A = { id: "user_a", clerkId: "clerk_a", email: "usera@osu.edu" };
+const USER_A = buildAuthUser({
+  id: "user_a",
+  clerkId: "clerk_a",
+  email: "usera@osu.edu",
+});
 const USER_B_ID = "user_b";
 
 function createTestApp(user = USER_A) {
@@ -87,9 +92,9 @@ describe("[phase:3] [regression:always] Follow API", () => {
   it("TC-FOL-003: POST /:id/follow returns 409 when already following", async () => {
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue({ id: USER_B_ID } as never);
     vi.mocked(mockPrisma.follow.findUnique).mockResolvedValue({
+      ...buildFollow(),
       followerId: USER_A.id,
       followeeId: USER_B_ID,
-      createdAt: new Date(),
     } as never);
 
     const res = await createTestApp().request(`/users/${USER_B_ID}/follow`, {
@@ -103,9 +108,9 @@ describe("[phase:3] [regression:always] Follow API", () => {
   // TC-FOL-004
   it("TC-FOL-004: DELETE /:id/follow removes follow and returns 204", async () => {
     vi.mocked(mockPrisma.follow.findUnique).mockResolvedValue({
+      ...buildFollow(),
       followerId: USER_A.id,
       followeeId: USER_B_ID,
-      createdAt: new Date(),
     } as never);
     vi.mocked(mockPrisma.follow.delete).mockResolvedValue({} as never);
     vi.mocked(mockPrisma.user.update).mockResolvedValue({} as never);

@@ -5,41 +5,27 @@ vi.mock("../lib/prisma");
 
 import { getPrisma, getPrismaClient } from "../lib/prisma";
 import { createEventsRouter } from "../routes/events";
+import { buildAuthUser, buildEvent } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 
-const USER = {
+const USER = buildAuthUser({
   id: "user_a",
   clerkId: "clerk_a",
   email: "usera@osu.edu",
-};
+});
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
+  return buildEvent({
     id: "evt_ai_1",
     title: "Jazz Night at the Union",
     description: "Live jazz performance featuring student musicians",
-    summary: null,
-    type: "EVENT",
-    source: "USER",
-    externalId: null,
     category: null,
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
-    startAt: new Date("2025-04-01T09:00:00Z"),
-    endAt: null,
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
-    status: "OPEN",
     creatorId: USER.id,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    startAt: new Date("2025-04-01T09:00:00Z"),
+    createdAt: new Date("2025-03-01T00:00:00Z"),
+    updatedAt: new Date("2025-03-01T00:00:00Z"),
     ...overrides,
-  };
+  });
 }
 
 function createTestApp(scheduleEventPipeline = vi.fn()) {

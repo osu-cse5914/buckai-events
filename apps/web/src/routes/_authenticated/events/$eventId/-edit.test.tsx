@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { buildCurrentUser, buildEventRecord } from "@/test/factories";
 
 // Mock API
 const mockEventGet = vi.fn();
@@ -84,36 +85,26 @@ function createQueryClient() {
 }
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEventRecord({
     title: "Hackathon",
     description: "A 24-hour hackathon",
-    type: "EVENT",
-    source: "USER",
-    status: "OPEN",
     category: "tech",
-    tags: [],
-    imageUrl: null,
-    ticketUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
     startAt: "2025-04-01T09:00:00.000Z",
-    endAt: null,
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
-    summary: null,
-    creatorId: "user_1",
     createdAt: "2025-03-01T00:00:00.000Z",
     updatedAt: "2025-03-01T00:00:00.000Z",
     creator: { id: "user_1", displayName: "Alice", email: "alice@osu.edu" },
     ...overrides,
-  };
+  });
 }
 
-const mockCreatorUser = { id: "user_1", email: "alice@osu.edu" };
-const mockOtherUser = { id: "user_2", email: "bob@osu.edu" };
+const mockCreatorUser = buildCurrentUser({
+  id: "user_1",
+  email: "alice@osu.edu",
+});
+const mockOtherUser = buildCurrentUser({
+  id: "user_2",
+  email: "bob@osu.edu",
+});
 
 function okJson(data: unknown) {
   return { ok: true, status: 200, json: () => Promise.resolve(data) };

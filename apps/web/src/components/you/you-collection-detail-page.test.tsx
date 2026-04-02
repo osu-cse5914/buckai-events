@@ -2,6 +2,13 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  buildCollectionDetail,
+  buildCollectionDetailItem,
+  buildCurrentUser,
+  buildEventRecord,
+  buildPaginatedResponse,
+} from "@/test/factories";
 
 const state = vi.hoisted(() => {
   const mockCurrentUserGet = vi.fn();
@@ -109,158 +116,112 @@ beforeEach(() => {
 
 describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
   it("TC-COL-019: owner can remove saved items from collection detail", async () => {
-    mockCurrentUserGet.mockResolvedValue(okJson({ id: "user_1" }));
+    mockCurrentUserGet.mockResolvedValue(okJson(buildCurrentUser({ id: "user_1" })));
     mockCollectionGet.mockResolvedValue(
-      okJson({
-        id: "col_1",
-        userId: "user_1",
-        name: "Music",
-        visibility: "PRIVATE",
-        createdAt: "2026-03-01T00:00:00.000Z",
-        updatedAt: "2026-03-02T00:00:00.000Z",
-        items: [
-          { id: "item_1", collectionId: "col_1", eventId: "evt_1", event: { id: "evt_1" } },
-          { id: "item_2", collectionId: "col_1", eventId: "evt_2", event: { id: "evt_2" } },
-        ],
-      }),
+      okJson(
+        buildCollectionDetail({
+          id: "col_1",
+          userId: "user_1",
+          name: "Music",
+          createdAt: "2026-03-01T00:00:00.000Z",
+          updatedAt: "2026-03-02T00:00:00.000Z",
+          items: [
+            buildCollectionDetailItem({
+              id: "item_1",
+              collectionId: "col_1",
+              eventId: "evt_1",
+              event: buildEventRecord({ id: "evt_1" }),
+            }),
+            buildCollectionDetailItem({
+              id: "item_2",
+              collectionId: "col_1",
+              eventId: "evt_2",
+              event: buildEventRecord({ id: "evt_2" }),
+            }),
+          ],
+        }),
+      ),
     );
     mockCollectionItemsGet
       .mockResolvedValueOnce(
-        okJson({
-          data: [
-            {
+        okJson(
+          buildPaginatedResponse([
+            buildEventRecord({
               id: "evt_1",
               title: "Hackathon",
               description: "Build night",
-              type: "EVENT",
-              source: "USER",
-              status: "OPEN",
               category: "tech",
-              tags: [],
-              imageUrl: null,
-              ticketUrl: null,
               locationName: "Ohio Union",
-              locationLatitude: null,
-              locationLongitude: null,
               startAt: "2026-04-01T18:00:00.000Z",
-              endAt: null,
-              compensationAmount: null,
-              compensationCurrency: "USD",
-              compensationType: null,
-              summary: null,
               creatorId: "user_2",
-              createdAt: "2026-03-01T00:00:00.000Z",
-              updatedAt: "2026-03-01T00:00:00.000Z",
               creator: {
                 id: "user_2",
                 displayName: "Alex",
                 email: "alex@osu.edu",
               },
-            },
-            {
+            }),
+            buildEventRecord({
               id: "evt_2",
               title: "Open Mic",
               description: "Music night",
-              type: "EVENT",
-              source: "USER",
-              status: "OPEN",
               category: "music",
-              tags: [],
-              imageUrl: null,
-              ticketUrl: null,
               locationName: "Drake",
-              locationLatitude: null,
-              locationLongitude: null,
               startAt: "2026-04-02T18:00:00.000Z",
-              endAt: null,
-              compensationAmount: null,
-              compensationCurrency: "USD",
-              compensationType: null,
-              summary: null,
               creatorId: "user_3",
-              createdAt: "2026-03-01T00:00:00.000Z",
-              updatedAt: "2026-03-01T00:00:00.000Z",
               creator: {
                 id: "user_3",
                 displayName: "Jamie",
                 email: "jamie@osu.edu",
               },
-            },
-          ],
-          pagination: { total: 2, limit: 12, offset: 0 },
-        }),
+            }),
+          ], {
+            pagination: { total: 2, limit: 12, offset: 0 },
+          }),
+        ),
       )
       .mockResolvedValueOnce(
-        okJson({
-          data: [
-            {
+        okJson(
+          buildPaginatedResponse([
+            buildEventRecord({
               id: "evt_2",
               title: "Open Mic",
               description: "Music night",
-              type: "EVENT",
-              source: "USER",
-              status: "OPEN",
               category: "music",
-              tags: [],
-              imageUrl: null,
-              ticketUrl: null,
               locationName: "Drake",
-              locationLatitude: null,
-              locationLongitude: null,
               startAt: "2026-04-02T18:00:00.000Z",
-              endAt: null,
-              compensationAmount: null,
-              compensationCurrency: "USD",
-              compensationType: null,
-              summary: null,
               creatorId: "user_3",
-              createdAt: "2026-03-01T00:00:00.000Z",
-              updatedAt: "2026-03-01T00:00:00.000Z",
               creator: {
                 id: "user_3",
                 displayName: "Jamie",
                 email: "jamie@osu.edu",
               },
-            },
-          ],
-          pagination: { total: 1, limit: 12, offset: 0 },
-        }),
+            }),
+          ], {
+            pagination: { total: 1, limit: 12, offset: 0 },
+          }),
+        ),
       )
       .mockResolvedValue(
-        okJson({
-          data: [
-            {
+        okJson(
+          buildPaginatedResponse([
+            buildEventRecord({
               id: "evt_2",
               title: "Open Mic",
               description: "Music night",
-              type: "EVENT",
-              source: "USER",
-              status: "OPEN",
               category: "music",
-              tags: [],
-              imageUrl: null,
-              ticketUrl: null,
               locationName: "Drake",
-              locationLatitude: null,
-              locationLongitude: null,
               startAt: "2026-04-02T18:00:00.000Z",
-              endAt: null,
-              compensationAmount: null,
-              compensationCurrency: "USD",
-              compensationType: null,
-              summary: null,
               creatorId: "user_3",
-              createdAt: "2026-03-01T00:00:00.000Z",
-              updatedAt: "2026-03-01T00:00:00.000Z",
               creator: {
                 id: "user_3",
                 displayName: "Jamie",
                 email: "jamie@osu.edu",
               },
-            },
-          ],
-          pagination: { total: 1, limit: 12, offset: 0 },
-        }),
+            }),
+          ], {
+            pagination: { total: 1, limit: 12, offset: 0 },
+          }),
+        ),
       );
     mockCollectionItemDelete.mockResolvedValue({
       ok: true,

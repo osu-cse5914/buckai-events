@@ -2,6 +2,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import {
+  buildCurrentUser,
+  buildEventRecord,
+  buildOwnedCollectionSummary,
+  buildPaginatedResponse,
+} from "@/test/factories";
 
 // Mock API
 const mockEventGet = vi.fn();
@@ -131,36 +137,23 @@ function createQueryClient() {
 }
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "evt_1",
+  return buildEventRecord({
     title: "Hackathon",
     description: "A 24-hour hackathon at Ohio Union",
-    type: "EVENT",
-    source: "USER",
-    status: "OPEN",
     category: "tech",
     tags: ["coding", "hackathon"],
-    imageUrl: null,
-    ticketUrl: null,
-    locationName: "Ohio Union",
-    locationLatitude: null,
-    locationLongitude: null,
     startAt: "2025-04-01T09:00:00.000Z",
     endAt: "2025-04-02T09:00:00.000Z",
-    compensationAmount: null,
-    compensationCurrency: "USD",
-    compensationType: null,
     summary: "A hackathon event",
-    creatorId: "user_1",
     createdAt: "2025-03-01T00:00:00.000Z",
     updatedAt: "2025-03-01T00:00:00.000Z",
     creator: { id: "user_1", displayName: "Alice", email: "alice@osu.edu" },
     ...overrides,
-  };
+  });
 }
 
-const mockCreatorUser = { id: "user_1", email: "alice@osu.edu" };
-const mockOtherUser = { id: "user_2", email: "bob@osu.edu" };
+const mockCreatorUser = buildCurrentUser({ id: "user_1", email: "alice@osu.edu" });
+const mockOtherUser = buildCurrentUser({ id: "user_2", email: "bob@osu.edu" });
 
 function okJson(data: unknown, status = 200) {
   return {
@@ -175,7 +168,7 @@ beforeEach(() => {
   capturedComponent = null;
   mockRouteSearch = {};
   mockMyApplicationsGet.mockResolvedValue(
-    okJson({ data: [], pagination: { total: 0, limit: 20, offset: 0 } }),
+    okJson(buildPaginatedResponse([], { pagination: { total: 0, limit: 20, offset: 0 } })),
   );
   mockInteractionsPost.mockResolvedValue(okJson({}, 201));
   mockCollectionsGet.mockResolvedValue(okJson([]));
@@ -338,15 +331,14 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     mockUserGet.mockResolvedValue(okJson(mockOtherUser));
     mockCollectionsGet.mockResolvedValue(
       okJson([
-        {
+        buildOwnedCollectionSummary({
           id: "col_1",
           userId: "user_2",
           name: "Favorites",
-          visibility: "PRIVATE",
           createdAt: "2025-03-01T00:00:00.000Z",
           updatedAt: "2025-03-02T00:00:00.000Z",
           _count: { items: 2 },
-        },
+        }),
       ]),
     );
 

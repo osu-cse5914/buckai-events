@@ -18,11 +18,12 @@ vi.mock("../lib/prisma");
 
 import { getAuth } from "@hono/clerk-auth";
 import { getPrismaClient, getPrisma } from "../lib/prisma";
+import { buildSocialFeedItem, buildUser } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { app } from "../index";
 import { makeAuthRequest } from "./helpers/context";
 
-const FULL_USER = {
+const FULL_USER = buildUser({
   id: "user_a",
   clerkId: "clerk_a",
   email: "usera@osu.edu",
@@ -32,26 +33,9 @@ const FULL_USER = {
   followingCount: 1,
   createdAt: new Date("2025-01-01T00:00:00Z"),
   updatedAt: new Date("2025-01-02T00:00:00Z"),
-};
+});
 
-function makeFeedItem(overrides: Record<string, unknown> = {}) {
-  return {
-    event: {
-      id: "evt_1",
-      title: "Hack Night",
-      source: "USER",
-      type: "EVENT",
-      status: "OPEN",
-    },
-    action: "created",
-    actor: {
-      id: "user_b",
-      displayName: "User B",
-    },
-    actionAt: "2026-03-01T12:00:00.000Z",
-    ...overrides,
-  };
-}
+const makeFeedItem = buildSocialFeedItem;
 
 describe("[phase:3] [regression:always] GET /api/v1/social/feed", () => {
   const mockPrisma = createMockPrisma();

@@ -18,11 +18,12 @@ vi.mock("../lib/prisma");
 
 import { getAuth } from "@hono/clerk-auth";
 import { getPrismaClient, getPrisma } from "../lib/prisma";
+import { buildApplicationWithGig, buildUser } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { app } from "../index";
 import { makeAuthRequest } from "./helpers/context";
 
-const FULL_USER = {
+const FULL_USER = buildUser({
   id: "user_1",
   clerkId: "clerk_abc123",
   email: "student@osu.edu",
@@ -32,27 +33,9 @@ const FULL_USER = {
   followingCount: 0,
   createdAt: new Date("2025-01-01T00:00:00Z"),
   updatedAt: new Date("2025-01-02T00:00:00Z"),
-};
+});
 
-function makeApplication(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "app_1",
-    gigId: "gig_1",
-    applicantId: FULL_USER.id,
-    message: "I'm interested",
-    status: "PENDING",
-    createdAt: new Date("2026-03-01T12:00:00Z"),
-    updatedAt: new Date("2026-03-01T12:00:00Z"),
-    gig: {
-      id: "gig_1",
-      title: "Need a tutor",
-      status: "OPEN",
-      startAt: new Date("2026-03-20T14:00:00Z"),
-      locationName: "Thompson Library",
-    },
-    ...overrides,
-  };
-}
+const makeApplication = buildApplicationWithGig;
 
 describe("[phase:2] [regression:always] GET /api/v1/users/me/applications", () => {
   const mockPrisma = createMockPrisma();

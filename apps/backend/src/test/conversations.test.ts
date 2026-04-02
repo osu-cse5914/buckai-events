@@ -19,57 +19,43 @@ vi.mock("../lib/prisma");
 import { getAuth } from "@hono/clerk-auth";
 import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { app } from "../index";
+import { buildMessage, buildUser, buildConversation } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { makeAuthRequest } from "./helpers/context";
 
-const FULL_USER_A = {
+const FULL_USER_A = buildUser({
   id: "user_a",
   clerkId: "clerk_a",
   email: "usera@osu.edu",
-  role: "USER",
   displayName: "User A",
   interests: [],
   followerCount: 0,
   followingCount: 0,
   createdAt: new Date("2026-04-01T10:00:00.000Z"),
   updatedAt: new Date("2026-04-01T10:00:00.000Z"),
-};
+});
 
-const FULL_USER_B = {
+const FULL_USER_B = buildUser({
   id: "user_b",
   clerkId: "clerk_b",
   email: "userb@osu.edu",
-  role: "USER",
   displayName: "User B",
   interests: [],
   followerCount: 0,
   followingCount: 0,
   createdAt: new Date("2026-04-01T10:00:00.000Z"),
   updatedAt: new Date("2026-04-01T10:00:00.000Z"),
-};
+});
 
 function createConversation(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "conv_1",
+  return buildConversation({
     userId: FULL_USER_A.id,
-    title: null,
-    pendingAction: null,
-    pendingActionCreatedAt: null,
-    createdAt: new Date("2026-04-01T11:00:00.000Z"),
-    updatedAt: new Date("2026-04-01T11:00:00.000Z"),
     ...overrides,
-  };
+  });
 }
 
 function createMessage(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "msg_1",
-    conversationId: "conv_1",
-    role: "USER",
-    content: "hello",
-    createdAt: new Date("2026-04-01T12:00:00.000Z"),
-    ...overrides,
-  };
+  return buildMessage(overrides);
 }
 
 function toJsonValue<T>(value: T): T {
