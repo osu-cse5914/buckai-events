@@ -54,6 +54,31 @@ function createSemanticSearchTestApp({
   return app;
 }
 
+function createPipelineScheduleTestApp({
+  user = USER_A,
+  scheduleEventPipeline,
+}: {
+  user?: typeof USER_A;
+  scheduleEventPipeline: NonNullable<
+    Parameters<typeof createEventsRouter>[0]
+  >["scheduleEventPipeline"];
+}) {
+  const app = new Hono();
+  registerApiErrorHandlers(app);
+  app.use("/*", async (c, next) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c as any).set("user", user);
+    await next();
+  });
+  app.route(
+    "/events",
+    createEventsRouter({
+      scheduleEventPipeline,
+    }),
+  );
+  return app;
+}
+
 function makeEvent(overrides: Record<string, unknown> = {}) {
   return {
     id: "evt_1",
@@ -697,7 +722,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
     });
 
     // S-EVT-14 → TC-EVT-014
-    it("TC-EVT-014: delete cascades to applications, interactions, collectionItems", async () => {
+    it("TC-EVT-014 / TC-EMBED-008: delete cascades to applications, interactions, collectionItems, and embeddings", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeEvent() as never);
       vi.mocked(mockPrisma.event.delete).mockResolvedValue(makeEvent() as never);
 
@@ -747,5 +772,51 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
 
       expect(res.status).toBe(404);
     });
+  });
+});
+
+describe("[phase:4] [regression:always] Event pipeline scheduling resilience", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+  });
+
+  it("TC-EMBED-006: embedding scheduling failure does not block event creation", async () => {
+    const scheduleEventPipeline = vi
+      .fn()
+      .mockRejectedValue(new Error("embedding model unavailable"));
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(makeEvent() as never);
+
+    const res = await postEvent(
+      createPipelineScheduleTestApp({
+        scheduleEventPipeline,
+      }),
+      {
+        title: "Hackathon",
+        description: "24hr hackathon",
+        type: "EVENT",
+        location: { name: "Ohio Union" },
+        startAt: "2025-04-01T09:00:00Z",
+      },
+    );
+
+    expect(res.status).toBe(201);
+    expect(mockPrisma.event.create).toHaveBeenCalled();
+    expect(scheduleEventPipeline).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        eventId: "evt_1",
+        trigger: "EVENT_CREATE",
+        stages: ["TAGGING", "EMBEDDING"],
+      }),
+    );
+    expect(console.error).toHaveBeenCalledWith(
+      "Failed to schedule event pipeline for event evt_1",
+      expect.any(Error),
+    );
   });
 });

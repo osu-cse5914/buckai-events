@@ -405,3 +405,22 @@ describe("[phase:5] [regression:always] AI Route", () => {
     expect(within(eventCard).getByText("RPAC / North Rec")).toBeInTheDocument();
   });
 });
+
+describe("[phase:6] [regression:always] AI prompt carryover", () => {
+  it("TC-PAGES-024: preserves a carried prompt draft and lets the user edit it before sending", async () => {
+    state.conversationsGet.mockResolvedValue(jsonResponse(paginated([])));
+
+    await renderAiRoute({ prompt: "find music tonight" });
+
+    const user = userEvent.setup();
+    const input = await screen.findByLabelText("Message");
+    expect(input).toHaveValue("find music tonight");
+
+    await user.clear(input);
+    await user.type(input, "find jazz tomorrow");
+
+    expect(input).toHaveValue("find jazz tomorrow");
+    expect(state.conversationsPost).not.toHaveBeenCalled();
+    expect(state.messagesPost).not.toHaveBeenCalled();
+  });
+});

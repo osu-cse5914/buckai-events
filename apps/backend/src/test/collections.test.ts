@@ -416,7 +416,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
   });
 
   // GET /:id behavior
-  it("TC-COL-007: public collection is visible to other users and includes items", async () => {
+  it("TC-COL-007 / TC-AUTHZ-009: public collection is visible to other users and includes items", async () => {
     const col = {
       id: "col1",
       userId: USER_A.id,
@@ -437,7 +437,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
     expect(items[0].event.id).toBe("evt1");
   });
 
-  it("TC-COL-008: private collection of another user returns 404", async () => {
+  it("TC-COL-008 / TC-AUTHZ-010: private collection of another user returns 404", async () => {
     const col = {
       id: "col1",
       userId: USER_A.id,

@@ -194,7 +194,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
   // ===========================================================================
   describe("POST /:gigId/applications — validation (#59)", () => {
     // S-APP-2 → TC-APP-002
-    it("TC-APP-002: cannot apply to own gig (403)", async () => {
+    it("TC-APP-002 / TC-AUTHZ-004: cannot apply to own gig (403)", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
         makeGig() as never,
       );
@@ -423,6 +423,29 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
   // PATCH /gigs/:gigId/applications/:appId
   // ===========================================================================
   describe("PATCH /:gigId/applications/:appId", () => {
+    it("TC-AUTHZ-008: non-owner cannot update application status", async () => {
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
+        makeGig() as never,
+      );
+
+      const res = await patchApplication(
+        createTestApp(APPLICANT_A),
+        "gig_1",
+        "app_1",
+        { status: "ACCEPTED" },
+      );
+
+      expect(res.status).toBe(403);
+      expect(await res.json()).toMatchObject({
+        type: expect.stringContaining("forbidden"),
+        title: "Forbidden",
+        status: 403,
+        detail: "Only the gig owner can update application status",
+      });
+      expect(mockPrisma.application.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.application.updateMany).not.toHaveBeenCalled();
+    });
+
     // S-APP-4 → TC-APP-004
     it("TC-APP-004: accept a PENDING application", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
