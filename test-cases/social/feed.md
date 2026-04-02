@@ -106,3 +106,43 @@ Spec: [`feed`](../../specs/social/feed.md)
   3. Verify events show actor name and action type (created/saved)
   4. Scroll to trigger pagination
 - **Expected**: Feed shows events from followed users in reverse chronological order with correct attribution
+
+## TC-SFEED-011: Social page appears in primary navigation
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Phase introduced**: 3
+- **Regression**: Always
+- **Given**: The authenticated app shell is rendered
+- **When**: The primary navigation model is inspected
+- **Then**: It includes a Social destination
+
+## TC-SFEED-012: Social feed page renders items from the API
+
+- **Spec scenario**: S-SFEED-1, S-SFEED-2, S-SFEED-4
+- **Type**: Automated
+- **Phase introduced**: 3
+- **Regression**: Always
+- **Given**: The social feed API returns feed items
+- **When**: The authenticated user opens the social feed page
+- **Then**: The page shows actor name, action type, and event title in API order
+
+## TC-SFEED-013: Social feed page supports loading more items
+
+- **Spec scenario**: S-SFEED-6
+- **Type**: Automated
+- **Phase introduced**: 3
+- **Regression**: Always
+- **Given**: The social feed API has more items than the initial page
+- **When**: The user loads more items
+- **Then**: The next page is appended and the item count increases
+
+## TC-SFEED-014: Social feed page shows an empty state with follow guidance
+
+- **Spec scenario**: S-SFEED-5
+- **Type**: Automated
+- **Phase introduced**: 3
+- **Regression**: Always
+- **Given**: The social feed API returns no items
+- **When**: The authenticated user opens the social feed page
+- **Then**: The page shows an empty-state message and follow guidance based on profile context

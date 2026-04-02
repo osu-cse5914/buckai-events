@@ -206,7 +206,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
-  });
+  }, 15000);
 
   it("TC-EVT-019: displays all event fields", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent()));

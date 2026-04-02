@@ -220,6 +220,22 @@ export type RecommendationSectionResponse = {
   };
 };
 
+export type SocialFeedItem = {
+  event: {
+    id: string;
+    title: string;
+    source: string;
+    type: string;
+    status: string;
+  };
+  action: "created" | "saved";
+  actor: {
+    id: string;
+    displayName: string | null;
+  };
+  actionAt: string;
+};
+
 export type EventListFilters = {
   search?: string;
   type?: string;
@@ -265,6 +281,7 @@ export const queryKeys = {
   infiniteEventsList: (filters: EventListFilters, pageSize = PAGE_SIZE) =>
     ["events", "infinite", filters, pageSize] as const,
   collections: ["collections"] as const,
+  socialFeed: (pageSize = PAGE_SIZE) => ["social-feed", pageSize] as const,
   recommendationsFeed: (type: string, pageSize = PAGE_SIZE) =>
     ["recommendations", "recommended", type, pageSize] as const,
   recommendationsPopular: (type: string, limit: number) =>
@@ -541,6 +558,30 @@ export async function fetchRecommendationsPage(
   }
 
   return response.json() as Promise<RecommendationsResponse>;
+}
+
+export async function fetchSocialFeedPage(
+  api: ApiClient,
+  {
+    limit = PAGE_SIZE,
+    offset = 0,
+  }: {
+    limit?: number;
+    offset?: number;
+  } = {},
+) {
+  const response = await api.api.v1.social.feed.$get({
+    query: {
+      limit: String(limit),
+      offset: String(offset),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch social feed");
+  }
+
+  return response.json() as Promise<PaginatedResponse<SocialFeedItem>>;
 }
 
 export async function fetchPopularRecommendationsPage(

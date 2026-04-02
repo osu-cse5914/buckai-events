@@ -28,6 +28,7 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
       { to: "/featured", label: "Featured" },
       { to: "/events", label: "Events" },
       { to: "/gigs", label: "Gigs" },
+      { to: "/social", label: "Social" },
       { to: "/you", label: "You" },
     ]);
 
@@ -35,6 +36,10 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
       { to: "/search", label: "Search" },
       { to: "/ai", label: "BuckAI" },
     ]);
+  });
+
+  it("TC-SFEED-011: primary nav exposes the Social destination", () => {
+    expect(navLinks).toContainEqual({ to: "/social", label: "Social" });
   });
 
   it("TC-PAGES-010: the authenticated root redirects to Featured", async () => {
