@@ -384,6 +384,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/events/events-browser.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The events endpoint has not returned the first browse batch yet
@@ -394,6 +395,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/events/events-browser.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A browse surface requests a specific page of filtered events
@@ -404,6 +406,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/events/events-browser.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The events endpoint returns a non-success response for a browse request
