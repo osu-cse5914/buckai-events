@@ -17,6 +17,12 @@ function isAllowedEmailDomain(email: string): boolean {
  * Must be applied AFTER clerkMiddleware().
  */
 export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
+  const existingUser = c.get("user") as AppEnv["Variables"]["user"] | undefined;
+  if (existingUser) {
+    await next();
+    return;
+  }
+
   const auth = getAuth(c);
   const clerkId = auth?.userId;
 

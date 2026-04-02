@@ -7,6 +7,7 @@ export type WorkerBindings = Env & {
   CLERK_SECRET_KEY: string;
   TICKETMASTER_API_KEY?: string;
   AI_ROUTER_CONFIG_JSON: string;
+  E2E_TEST_AUTH_ENABLED?: string;
 };
 
 export type AppEnv = {

@@ -1,10 +1,10 @@
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
-import type { useAuth } from "@clerk/clerk-react";
 import type { ApiClient } from "@/lib/api";
+import type { AppAuth } from "@/lib/e2e-auth";
 
 type RouterContext = {
-  auth: ReturnType<typeof useAuth>;
+  auth: AppAuth;
   api: ApiClient;
   queryClient: QueryClient;
 };
