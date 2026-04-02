@@ -39,23 +39,9 @@ All automated cases from Phase 0 through Phase 5, plus:
 - [ ] **TC-AUTH-007**: Clerk sign-in UI on desktop
 - [ ] **TC-AUTH-008**: Clerk sign-in UI on mobile
 
-### User Profile
-
-- [ ] **TC-USER-006**: Profile edit form saves and persists
-- [ ] **TC-USER-007**: Profile edit preserves data on navigation
-- [ ] **TC-PUB-007**: Public profile page renders correctly
-
 ### Events
 
-- [ ] **TC-EVT-017**: Event creation form validates and submits
 - [ ] **TC-EVT-018**: Event list pagination with browser back button
-- [ ] **TC-EVT-019**: Creator-only actions on event detail page
-
-### Gig Applications
-
-- [ ] **TC-APP-010**: Apply button on gig detail page
-- [ ] **TC-APP-011**: "My Applications" view
-- [ ] **TC-APP-012**: "Manage Applications" view
 
 ### Collections
 
@@ -64,8 +50,6 @@ All automated cases from Phase 0 through Phase 5, plus:
 
 ### Social
 
-- [ ] **TC-FOL-008**: Follow/unfollow button toggles
-- [ ] **TC-FOL-009**: Followers/following lists
 - [ ] **TC-SFEED-010**: Social feed page
 
 ### AI & External Data

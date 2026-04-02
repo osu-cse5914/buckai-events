@@ -45,13 +45,6 @@ All automated cases from prior regression suites.
 
 - [ ] **TC-AUTH-003**: Non-OSU email rejected
 - [ ] **TC-AUTH-007 / TC-AUTH-008**: Clerk sign-in on desktop and mobile
-- [ ] **TC-USER-006**: Profile edit form
-- [ ] **TC-PUB-007**: Public profile page
-- [ ] **TC-EVT-017–019**: Event creation, list, detail pages
-- [ ] **TC-APP-010–012**: Gig application UI flows
-- [ ] **TC-COL-011 / TC-COL-012**: Collection UI flows
-- [ ] **TC-FOL-008 / TC-FOL-009**: Follow UI flows
-- [ ] **TC-SFEED-010**: Social feed page
 - [ ] **TC-ING-011**: External events visible
 - [ ] **TC-EMBED-009**: Semantic search manual verification
 - [ ] **TC-FEED-006**: Recommendations page

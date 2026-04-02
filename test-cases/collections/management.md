@@ -8,6 +8,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -18,6 +19,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A is authenticated
@@ -28,6 +30,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A owns collection C and event E exists
@@ -38,6 +41,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: Collection C already contains event E
@@ -48,6 +52,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: Collection C contains event E
@@ -58,6 +63,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A has 3 collections
@@ -68,6 +74,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A has collection C with visibility PUBLIC
@@ -78,6 +85,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A has collection C with visibility PRIVATE
@@ -88,6 +96,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A has collection C with visibility PRIVATE
@@ -98,6 +107,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-10
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A has collection C with 5 items
@@ -109,31 +119,32 @@ Spec: [`management`](../../specs/collections/management.md)
 - **Spec scenario**: —
 - **Type**: Manual
 - **Phase introduced**: 2
-- **Regression**: Always
+- **Regression**: Final only
 - **Steps**:
   1. Navigate to an event detail page
   2. Click "Save to Collection"
-  3. Select or create a collection
-  4. Verify the event appears in the selected collection
-- **Expected**: Save flow works end-to-end with visual confirmation
+  3. Select an existing collection from the overlay
+  4. Verify the event appears in the selected collection with visible success feedback
+- **Expected**: Save flow works end-to-end with the overlay-based collection picker
 
 ## TC-COL-012: Collections page — UI
 
 - **Spec scenario**: —
 - **Type**: Manual
 - **Phase introduced**: 2
-- **Regression**: Always
+- **Regression**: Final only
 - **Steps**:
   1. Navigate to the Collections page
   2. Create a new collection
-  3. View collection details
-  4. Delete a collection
-- **Expected**: CRUD operations work from the UI with correct state updates
+  3. Rename or update the collection visibility
+  4. View collection details and delete a collection
+- **Expected**: Collections page create/manage/detail flows work from the UI with correct state updates
 
 ## TC-COL-013: Save to an existing collection from the browse overlay
 
 - **Spec scenario**: S-COL-3, S-PAGES-6
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/collections/save-to-collection-button.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user has at least one collection and an event is visible in browse
@@ -144,6 +155,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-3
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user is on an event detail page and has at least one collection
@@ -154,6 +166,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: Listing behavior
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A collection contains multiple saved events
@@ -164,6 +177,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-1
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/you/you-collections-page.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user is on the Collections page
@@ -174,6 +188,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-6, S-COL-9, S-COL-10
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/you/you-collections-page.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user has at least one collection on the Collections page
@@ -184,6 +199,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-5
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/you/you-collection-detail-page.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user owns a collection with saved events
@@ -194,6 +210,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-7, S-COL-8
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/you/you-collection-detail-page.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Another user's collection is public
@@ -204,6 +221,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/components/collections/save-to-collection-button.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user opens the save overlay without any existing collections

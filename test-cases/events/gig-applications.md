@@ -8,6 +8,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User B is authenticated, gig G exists owned by user A
@@ -18,6 +19,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A created gig G
@@ -28,6 +30,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User B already applied to gig G
@@ -38,6 +41,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: Gig G has a PENDING application from user B
@@ -48,6 +52,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: Gig G has a PENDING application from user B
@@ -58,6 +63,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: Gig G has PENDING applications from users B, C, and D
@@ -68,6 +74,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: Event E has type EVENT (not GIG)
@@ -78,6 +85,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: Gig G has status CANCELLED
@@ -88,6 +96,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User B's application to gig G has status ACCEPTED
@@ -97,45 +106,41 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 ## TC-APP-010: Apply button on gig detail page — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-applications.test.tsx`
 - **Phase introduced**: 2
 - **Regression**: Always
-- **Steps**:
-  1. Sign in as a user who does NOT own the gig
-  2. Navigate to a gig detail page
-  3. Click the "Apply" button
-  4. Enter an optional message and submit
-- **Expected**: Application is created; UI shows confirmation
+- **Given**: The authenticated viewer does not own the gig
+- **When**: They open the apply dialog from the gig detail page and submit an application
+- **Then**: The request is posted and the UI shows confirmation or returned validation details
 
 ## TC-APP-011: "My Applications" view — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/you/applications/-index.test.tsx`
 - **Phase introduced**: 2
 - **Regression**: Always
-- **Steps**:
-  1. Sign in as a user who has applied to multiple gigs
-  2. Navigate to "My Applications" page
-  3. Verify all applications are listed with their current statuses
-- **Expected**: All submitted applications are visible with correct status (PENDING/ACCEPTED/REJECTED)
+- **Given**: The authenticated user has submitted gig applications
+- **When**: They open `You -> Applications`
+- **Then**: The page lists their applications with current statuses and links back to each gig
 
 ## TC-APP-012: "Manage Applications" view — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/applications/-index.test.tsx`
 - **Phase introduced**: 2
 - **Regression**: Always
-- **Steps**:
-  1. Sign in as a gig owner with multiple applications
-  2. Navigate to the gig's "Manage Applications" view
-  3. Accept one applicant, reject another
-  4. Verify status updates are reflected immediately
-- **Expected**: Statuses update in real-time; remaining applications are still actionable
+- **Given**: The authenticated user owns a gig with pending applications
+- **When**: They open the manage-applications view and accept or reject an applicant
+- **Then**: Applicant details render and status updates are reflected immediately
 
 ## TC-APP-013: Application succeeds when APPLY interaction recording fails
 
 - **Spec scenario**: S-APP-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`, `apps/backend/src/test/runtime/runtime.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User B is authenticated, gig G exists owned by user A, and interaction persistence fails
@@ -146,6 +151,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-10
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/users-applications.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: The authenticated user has applied to multiple gigs
@@ -156,6 +162,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: S-APP-11
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Gig G has status IN_PROGRESS or COMPLETED
@@ -166,6 +173,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-applications.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Gig G has status IN_PROGRESS or COMPLETED
@@ -176,6 +184,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/you/applications/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The current user's applications request is still loading
@@ -186,6 +195,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/applications/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The gig owner opens the manage-applications page and the applications request is still loading

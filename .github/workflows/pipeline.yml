@@ -37,6 +37,7 @@ jobs:
           bun-version: latest
 
       - run: bun install --frozen-lockfile
+      - run: bun run test:registry:audit
       - run: bun run db:generate
       - run: bun run lint
       - run: bun run typecheck

@@ -25,6 +25,9 @@ All automated cases from Phase 0 and Phase 1 regression suites.
 - **TC-APP-007**: Cannot apply to non-gig event
 - **TC-APP-008**: Cannot apply to cancelled gig
 - **TC-APP-009**: Cannot change status of non-PENDING application
+- **TC-APP-010**: Gig detail apply flow works end-to-end
+- **TC-APP-011**: My Applications page lists submitted gigs with statuses
+- **TC-APP-012**: Manage Applications page updates applicant statuses
 
 #### Phase 2 — Collections
 
@@ -55,6 +58,7 @@ All automated cases from Phase 0 and Phase 1 regression suites.
 - **TC-AUTHZ-008**: Only gig owner updates application status
 - **TC-AUTHZ-009**: Public collection visible to others
 - **TC-AUTHZ-010**: Private collection hidden from others
+- **TC-AUTHZ-011**: Non-owner cannot modify another user's collection
 
 #### Phase 2 — Event cascade (newly testable)
 
@@ -66,14 +70,3 @@ All automated cases from Phase 0 and Phase 1 regression suites.
 - [ ] **TC-AUTH-003**: Non-OSU email rejected
 - [ ] **TC-AUTH-007**: Clerk sign-in UI renders on desktop
 - [ ] **TC-AUTH-008**: Clerk sign-in UI renders on mobile
-- [ ] **TC-USER-006**: Profile edit form saves and persists
-- [ ] **TC-PUB-007**: Public profile page renders correctly
-- [ ] **TC-EVT-017**: Event creation form works
-- [ ] **TC-EVT-018**: Event list pagination works
-- [ ] **TC-EVT-019**: Creator-only actions visible appropriately
-- [ ] **TC-APP-010**: Apply button on gig detail page works end-to-end
-- [ ] **TC-APP-011**: "My Applications" view shows all applications with statuses
-- [ ] **TC-APP-012**: "Manage Applications" view — accept/reject works
-- [ ] **TC-AUTHZ-011**: Non-owner cannot modify another user's collection
-- [ ] **TC-COL-011**: "Save to Collection" button works end-to-end
-- [ ] **TC-COL-012**: Collections page CRUD works from UI

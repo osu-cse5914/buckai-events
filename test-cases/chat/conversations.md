@@ -10,6 +10,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/conversations.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A is authenticated
@@ -20,6 +21,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/conversations.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A has 3 conversations with different updatedAt values
@@ -30,6 +32,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: User A has conversation C with no messages
@@ -40,6 +43,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/conversations.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: Conversation C has 5 messages
@@ -50,6 +54,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/conversations.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Always
 - **Given**: User A owns conversation C
@@ -60,6 +65,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: Conversation C has 30 messages
@@ -70,6 +76,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: The AI service is unavailable
@@ -80,6 +87,7 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 
 - **Spec scenario**: S-CONV-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: Conversation C has title `"Free weekend events"`

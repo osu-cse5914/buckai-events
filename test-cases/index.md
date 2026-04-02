@@ -56,8 +56,8 @@ Each test case uses this format:
 |-------|-------------|
 | **ID** | Unique identifier, e.g. `TC-AUTH-001` |
 | **Spec scenario** | Links back to the spec scenario ID, e.g. `S-AUTH-1` |
-| **Type** | `Automated` / `Manual` / `Semi-automated` |
-| **Automated in** | Path to test file (for automated cases) |
+| **Type** | `Automated` / `Automated + Manual` / `Manual` / `Semi-automated` |
+| **Automated in** | Path to test file (required for automated, automated + manual, and semi-automated cases) |
 | **Phase introduced** | Phase where the case first becomes testable |
 | **Regression** | `Always` / `Phase N+` / `Final only` |
 

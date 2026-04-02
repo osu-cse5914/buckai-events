@@ -8,6 +8,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 
 - **Spec scenario**: S-AI-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/ai-model-router.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Task `"tagging"` is configured with modelId `"gemini-flash"`, which has providerId `"google"`
@@ -18,6 +19,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 
 - **Spec scenario**: S-AI-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/ai-model-router.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Task `"chatbot"` is configured with modelId `"gemini-pro"`
@@ -28,6 +30,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 
 - **Spec scenario**: S-AI-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/ai-model-router.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: The Google provider's API is down
@@ -38,6 +41,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 
 - **Spec scenario**: S-AI-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/ai-model-router.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: No task is configured with id `"nonexistent"`
@@ -48,6 +52,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 
 - **Spec scenario**: S-AI-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/ai-model-router.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Task `"embedding"` is configured with modelId `"text-embed"`

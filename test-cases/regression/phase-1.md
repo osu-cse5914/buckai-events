@@ -12,7 +12,7 @@ bun run test:regression:phase-1
 
 #### Phase 0 (re-run)
 
-- TC-AUTH-001 through TC-AUTH-006, TC-AUTH-009
+- TC-AUTH-001, TC-AUTH-002, TC-AUTH-004 through TC-AUTH-006, TC-AUTH-009, TC-AUTH-010
 
 #### Phase 1 — User Profile API
 
@@ -21,6 +21,8 @@ bun run test:regression:phase-1
 - **TC-USER-003**: Update interests
 - **TC-USER-004**: Partial update preserves other fields
 - **TC-USER-005**: Cannot update email via profile endpoint
+- **TC-USER-006**: Profile edit form submits updated values
+- **TC-USER-007**: Profile edit form discards unsaved changes on cancel
 - **TC-USER-008**: PATCH /users/me rejects non-object JSON payloads
 
 #### Phase 1 — Public Profile API
@@ -29,6 +31,7 @@ bun run test:regression:phase-1
 - **TC-PUB-002**: Email not visible on public profile
 - **TC-PUB-003**: Created events on profile (only OPEN/IN_PROGRESS)
 - **TC-PUB-006**: User not found returns 404
+- **TC-PUB-007**: Public profile page renders correctly
 - **TC-PUB-008**: Non-numeric pagination params return 400
 
 #### Phase 1 — Event CRUD API
@@ -47,6 +50,8 @@ bun run test:regression:phase-1
 - **TC-EVT-021**: Invalid create payload rejected
 - **TC-EVT-022**: Invalid update payload rejected
 - **TC-EVT-023**: Invalid list filters rejected
+- **TC-EVT-017**: Event creation form submits and navigates to detail
+- **TC-EVT-019**: Creator-only actions on event detail surfaces
 
 #### Phase 1 — Authorization
 
@@ -59,11 +64,5 @@ bun run test:regression:phase-1
 - [ ] **TC-AUTH-003**: Non-OSU email rejected
 - [ ] **TC-AUTH-007**: Clerk sign-in UI renders on desktop
 - [ ] **TC-AUTH-008**: Clerk sign-in UI renders on mobile
-- [ ] **TC-USER-006**: Profile edit form saves and persists after refresh
-- [ ] **TC-USER-007**: Profile edit form preserves data on navigation
-- [ ] **TC-PUB-007**: Public profile page renders correctly
-- [ ] **TC-EVT-017**: Event creation form validates and submits correctly
-- [ ] **TC-EVT-018**: Event list pagination works with browser back button
-- [ ] **TC-EVT-019**: Event detail page shows creator-only actions appropriately
 - [ ] App shell layout: header navigation renders correctly on desktop and mobile
 - [ ] All pages return graceful error states for 404 / network failures

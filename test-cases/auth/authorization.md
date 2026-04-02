@@ -8,6 +8,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-1
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E
@@ -18,6 +19,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-2
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E
@@ -28,6 +30,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-3
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: User A created event E
@@ -38,6 +41,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-4
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A created gig G
@@ -48,6 +52,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-5
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A created gig G with 3 applications
@@ -58,6 +63,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-6
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A created gig G
@@ -68,6 +74,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-7
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User B applied to gig G owned by user A
@@ -78,6 +85,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-8
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/gigs.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A created gig G, user B applied
@@ -88,6 +96,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-9
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A has a collection with visibility PUBLIC
@@ -98,6 +107,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-10
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: User A has a collection with visibility PRIVATE
@@ -107,19 +117,19 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 ## TC-AUTHZ-011: Non-owner cannot modify another user's collection
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/collections.test.ts`
 - **Phase introduced**: 2
 - **Regression**: Always
-- **Steps**:
-  1. Sign in as User A, create a collection
-  2. Sign in as User B
-  3. Attempt to rename or delete User A's collection via API
-- **Expected**: API responds with 403 or 404
+- **Given**: User A owns collection C
+- **When**: User B attempts to rename or delete collection C via the API
+- **Then**: The API rejects the mutation and collection C is unchanged
 
 ## TC-AUTHZ-012: Cannot access another user's conversation
 
 - **Spec scenario**: —
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/conversations.test.ts`
 - **Phase introduced**: 5
 - **Regression**: Always
 - **Given**: User A owns conversation C
@@ -130,6 +140,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-11
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/admin-external-ingestion.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: An authenticated user with role `USER`
@@ -140,6 +151,7 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 
 - **Spec scenario**: S-AUTHZ-12
 - **Type**: Automated
+- **Automated in**: `apps/backend/src/test/admin-external-ingestion.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: An authenticated user with role `ADMIN`
