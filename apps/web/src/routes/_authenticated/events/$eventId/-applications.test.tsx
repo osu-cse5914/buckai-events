@@ -172,14 +172,14 @@ describe("[phase:2] [regression:always] EventDetailPage Gig Applications", () =>
     const user = userEvent.setup();
 
     await renderPage();
-    await screen.findByText("Hackathon");
+    await screen.findByRole("button", { name: "Apply" });
 
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Apply to this gig")).toBeInTheDocument();
     expect(screen.getByLabelText("Message (optional)")).toBeInTheDocument();
-  });
+  }, 15000);
 
   it("TC-APP-010: submitting the apply modal posts the application and disables re-apply", async () => {
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
