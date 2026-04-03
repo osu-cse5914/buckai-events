@@ -93,6 +93,10 @@ describe("ProfilePage", () => {
     expect(screen.getByText("Computer Science")).toBeInTheDocument();
     expect(screen.getByText("2026")).toBeInTheDocument();
     expect(screen.getByText("music, sports, tech")).toBeInTheDocument();
+    expect(screen.getByText("10")).toBeInTheDocument();
+    expect(screen.getByText("followers")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
+    expect(screen.getByText("following")).toBeInTheDocument();
   });
 
   // --- TC-USER-006: Edit form saves changes ---

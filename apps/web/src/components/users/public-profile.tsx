@@ -10,6 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -36,7 +42,32 @@ export interface PublicProfileData {
   };
 }
 
-export function ProfileView({ user }: { user: PublicProfileData }) {
+export interface FollowUser {
+  id: string;
+  displayName: string | null;
+  major: string | null;
+  gradYear: number | null;
+}
+
+export interface ProfileViewProps {
+  user: PublicProfileData;
+  onFollow?: () => void;
+  onUnfollow?: () => void;
+  followPending?: boolean;
+  onFollowersClick?: () => void;
+  onFollowingClick?: () => void;
+}
+
+export function ProfileView({
+  user,
+  onFollow,
+  onUnfollow,
+  followPending = false,
+  onFollowersClick,
+  onFollowingClick,
+}: ProfileViewProps) {
+  const hasFollowAction = !!onFollow || !!onUnfollow;
+
   return (
     <section className="mx-auto max-w-3xl px-6 py-10">
       <div className="flex flex-col gap-6">
@@ -53,23 +84,39 @@ export function ProfileView({ user }: { user: PublicProfileData }) {
 
         {/* Stats */}
         <div className="flex gap-6">
-          <div className="flex items-center gap-1.5 text-sm">
+          <button
+            className="flex items-center gap-1.5 text-sm disabled:pointer-events-none"
+            onClick={onFollowersClick}
+            disabled={!onFollowersClick}
+            type="button"
+          >
             <UsersIcon className="size-4 text-muted-foreground" />
             <span className="font-semibold">{user.followerCount}</span>
-            <span className="text-muted-foreground">
+            <span className={onFollowersClick ? "underline-offset-4 hover:underline" : "text-muted-foreground"}>
               {user.followerCount === 1 ? "follower" : "followers"}
             </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
+          </button>
+          <button
+            className="flex items-center gap-1.5 text-sm disabled:pointer-events-none"
+            onClick={onFollowingClick}
+            disabled={!onFollowingClick}
+            type="button"
+          >
             <span className="font-semibold">{user.followingCount}</span>
-            <span className="text-muted-foreground">following</span>
-          </div>
+            <span className={onFollowingClick ? "underline-offset-4 hover:underline" : "text-muted-foreground"}>
+              following
+            </span>
+          </button>
         </div>
 
-        {/* Follow button placeholder */}
+        {/* Follow button */}
         <div>
-          <Button variant="outline" disabled>
-            {user.isFollowing ? "Following" : "Follow"}
+          <Button
+            variant="outline"
+            disabled={!hasFollowAction || followPending}
+            onClick={user.isFollowing ? onUnfollow : onFollow}
+          >
+            {user.isFollowing ? "Unfollow" : "Follow"}
           </Button>
         </div>
 
@@ -142,6 +189,69 @@ export function ProfileView({ user }: { user: PublicProfileData }) {
         </div>
       </div>
     </section>
+  );
+}
+
+export function FollowListDialog({
+  open,
+  onOpenChange,
+  title,
+  users,
+  isLoading,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  users: FollowUser[];
+  isLoading: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 py-2">
+          {isLoading && (
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          )}
+          {!isLoading && users.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No users yet.
+            </p>
+          )}
+          {!isLoading &&
+            users.map((u) => (
+              <Link
+                key={u.id}
+                to="/users/$id"
+                params={{ id: u.id }}
+                onClick={() => onOpenChange(false)}
+                className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-muted transition-colors"
+              >
+                <div className="size-8 rounded-full bg-muted-foreground/20 flex items-center justify-center text-sm font-semibold shrink-0">
+                  {(u.displayName ?? "?")[0]?.toUpperCase()}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium truncate">
+                    {u.displayName ?? "Unknown"}
+                  </span>
+                  {u.major && (
+                    <span className="text-xs text-muted-foreground truncate">
+                      {u.major}
+                      {u.gradYear ? ` · ${u.gradYear}` : ""}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

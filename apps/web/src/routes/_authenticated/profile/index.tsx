@@ -11,6 +11,10 @@ import {
   queryKeys,
   type CurrentUser,
 } from "@/lib/queries";
+import {
+  FollowListDialog,
+  type FollowUser,
+} from "@/components/users/public-profile";
 
 export const Route = createFileRoute("/_authenticated/profile/")({
   component: ProfilePage,
@@ -21,9 +25,46 @@ function useProfile() {
   return useQuery<CurrentUser>(currentUserQueryOptions(api));
 }
 
+function useFollowersList(id: string, enabled: boolean) {
+  const api = useApiClient();
+  return useQuery<{ data: FollowUser[] }>({
+    queryKey: ["users", id, "followers"],
+    queryFn: async () => {
+      const res = await api.api.v1.users[":id"].followers.$get({
+        param: { id },
+        query: {},
+      });
+      if (!res.ok) throw new Error("Failed to fetch followers");
+      return res.json() as Promise<{ data: FollowUser[] }>;
+    },
+    enabled,
+  });
+}
+
+function useFollowingList(id: string, enabled: boolean) {
+  const api = useApiClient();
+  return useQuery<{ data: FollowUser[] }>({
+    queryKey: ["users", id, "following"],
+    queryFn: async () => {
+      const res = await api.api.v1.users[":id"].following.$get({
+        param: { id },
+        query: {},
+      });
+      if (!res.ok) throw new Error("Failed to fetch following");
+      return res.json() as Promise<{ data: FollowUser[] }>;
+    },
+    enabled,
+  });
+}
+
 export function ProfilePage() {
   const { data: user, isLoading, error } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
+  const [followersOpen, setFollowersOpen] = useState(false);
+  const [followingOpen, setFollowingOpen] = useState(false);
+
+  const followersQuery = useFollowersList(user?.id ?? "", followersOpen && !!user);
+  const followingQuery = useFollowingList(user?.id ?? "", followingOpen && !!user);
 
   if (isLoading) {
     return (
@@ -82,15 +123,61 @@ export function ProfilePage() {
       {isEditing ? (
         <ProfileEditForm user={user} onCancel={() => setIsEditing(false)} onSaved={() => setIsEditing(false)} />
       ) : (
-        <ProfileDisplay user={user} />
+        <ProfileDisplay
+          user={user}
+          onFollowersClick={() => setFollowersOpen(true)}
+          onFollowingClick={() => setFollowingOpen(true)}
+        />
       )}
+      <FollowListDialog
+        open={followersOpen}
+        onOpenChange={setFollowersOpen}
+        title="Followers"
+        users={followersQuery.data?.data ?? []}
+        isLoading={followersQuery.isLoading}
+      />
+      <FollowListDialog
+        open={followingOpen}
+        onOpenChange={setFollowingOpen}
+        title="Following"
+        users={followingQuery.data?.data ?? []}
+        isLoading={followingQuery.isLoading}
+      />
     </section>
   );
 }
 
-function ProfileDisplay({ user }: { user: CurrentUser }) {
+function ProfileDisplay({
+  user,
+  onFollowersClick,
+  onFollowingClick,
+}: {
+  user: CurrentUser;
+  onFollowersClick?: () => void;
+  onFollowingClick?: () => void;
+}) {
   return (
     <div className="mt-6 space-y-4">
+      <div className="flex gap-6">
+        <button
+          type="button"
+          className="text-left"
+          onClick={onFollowersClick}
+        >
+          <p className="text-2xl font-bold">{user.followerCount}</p>
+          <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+            {user.followerCount === 1 ? "follower" : "followers"}
+          </p>
+        </button>
+        <button
+          type="button"
+          className="text-left"
+          onClick={onFollowingClick}
+        >
+          <p className="text-2xl font-bold">{user.followingCount}</p>
+          <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">following</p>
+        </button>
+      </div>
       <Field label="Email" value={user.email} />
       <Field label="Display Name" value={user.displayName} />
       <Field label="Major" value={user.major} />

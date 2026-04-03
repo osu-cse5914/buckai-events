@@ -56,7 +56,7 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     expect(screen.queryByText("brutus@osu.edu")).not.toBeInTheDocument();
   });
 
-  it("TC-PUB-007: shows Follow button when not following", () => {
+  it("TC-PUB-007: shows Follow button when not following (disabled without callbacks)", () => {
     render(<ProfileView user={baseUser} />);
 
     const button = screen.getByRole("button", { name: "Follow" });
@@ -64,10 +64,10 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     expect(button).toBeDisabled();
   });
 
-  it("TC-PUB-007: shows Following button when following", () => {
+  it("TC-PUB-007: shows Unfollow button when following (disabled without callbacks)", () => {
     render(<ProfileView user={{ ...baseUser, isFollowing: true }} />);
 
-    const button = screen.getByRole("button", { name: "Following" });
+    const button = screen.getByRole("button", { name: "Unfollow" });
     expect(button).toBeInTheDocument();
     expect(button).toBeDisabled();
   });
