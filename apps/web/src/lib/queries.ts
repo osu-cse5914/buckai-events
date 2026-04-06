@@ -73,9 +73,60 @@ export type ConversationRecord = {
   id: string;
   userId: string;
   title: string | null;
+  pendingAction: ConversationPendingAction | null;
+  pendingActionCreatedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
+
+export type ConversationPendingApplyToGigAction = {
+  id: string;
+  toolName: "applyToGig";
+  summary: string;
+  args: {
+    gigId: string;
+    message: string | null;
+  };
+};
+
+export type ConversationPendingSaveEventAction = {
+  id: string;
+  toolName: "saveEvent";
+  summary: string;
+  args: {
+    eventId: string;
+    collectionId: string | null;
+  };
+};
+
+export type ConversationPendingCreateEventAction = {
+  id: string;
+  toolName: "createEvent";
+  summary: string;
+  args: {
+    title: string;
+    description: string;
+    type: "EVENT" | "GIG";
+    location: {
+      name: string;
+      latitude: number | null;
+      longitude: number | null;
+    };
+    startAt: string;
+    endAt: string | null;
+    compensation: {
+      amount: number | null;
+      currency: string;
+      type: string | null;
+    } | null;
+    imageUrl: string | null;
+  };
+};
+
+export type ConversationPendingAction =
+  | ConversationPendingApplyToGigAction
+  | ConversationPendingSaveEventAction
+  | ConversationPendingCreateEventAction;
 
 export type ConversationSearchResultItem = {
   id: string;

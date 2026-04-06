@@ -173,6 +173,8 @@ export function buildConversationRecord(
       id: "conv_1",
       userId: "user_1",
       title: "Free weekend events",
+      pendingAction: null,
+      pendingActionCreatedAt: null,
       createdAt: "2026-04-01T10:00:00.000Z",
       updatedAt: "2026-04-01T11:00:00.000Z",
     },
