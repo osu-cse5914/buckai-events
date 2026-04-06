@@ -96,7 +96,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/profile/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_authenticated/profile/-index.test.tsx`, `apps/mobile/src/screens/profile-screen.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: The authenticated user is on their profile page

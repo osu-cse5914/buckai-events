@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Social OSU",
+    "slug": "social-osu-mobile",
+    "version": "1.0.0",
+    "scheme": "social-osu",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "edu.osu.socialosu.mobile"
+    },
+    "android": {
+      "package": "edu.osu.socialosu.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "@clerk/expo"
+    ]
+  }
+}

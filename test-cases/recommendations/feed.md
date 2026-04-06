@@ -119,7 +119,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`, `apps/mobile/src/screens/featured-screen.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The recommendations section queries succeed
@@ -129,7 +129,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`, `apps/mobile/src/screens/featured-screen.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user changes the Featured type filter
