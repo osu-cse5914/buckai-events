@@ -131,12 +131,12 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 ## TC-CHAT-012: Confirmation dialog for mutations — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
-- **Steps**:
-  1. In a chat conversation, ask to apply to a gig or save an event
-  2. Verify a confirmation dialog appears with action details
-  3. Click "Confirm" and verify the action is executed
-  4. Repeat and click "Cancel" and verify the action is not executed
-- **Expected**: Confirmation flow works with clear action description and both confirm/cancel paths
+- **Given**: The active conversation has a pending chatbot mutation for an apply, save, or create action
+- **When**: The AI page renders and the user clicks the confirmation dialog's confirm or cancel button
+- **Then**: The dialog shows clear action details
+- **And**: The frontend posts the user's confirmation or cancellation back into the conversation flow
+- **And**: The pending action clears once the assistant responds
