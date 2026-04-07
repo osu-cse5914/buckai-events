@@ -35,7 +35,8 @@ function useFollowersList(id: string, enabled: boolean) {
         query: {},
       });
       if (!res.ok) throw new Error("Failed to fetch followers");
-      return res.json() as Promise<{ data: FollowUser[] }>;
+      const json = await res.json();
+      return { data: Array.isArray(json.data) ? json.data as FollowUser[] : [] };
     },
     enabled,
   });
@@ -51,7 +52,8 @@ function useFollowingList(id: string, enabled: boolean) {
         query: {},
       });
       if (!res.ok) throw new Error("Failed to fetch following");
-      return res.json() as Promise<{ data: FollowUser[] }>;
+      const json = await res.json();
+      return { data: Array.isArray(json.data) ? json.data as FollowUser[] : [] };
     },
     enabled,
   });

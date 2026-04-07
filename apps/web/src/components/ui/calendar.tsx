@@ -7,11 +7,24 @@ import {
 import {
   DayPicker,
   getDefaultClassNames,
-  type DayButton,
+  type DayButtonProps,
+  type RootProps,
+  type WeekNumberProps,
 } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
+
+function assignRef<T>(ref: unknown, value: T | null) {
+  if (typeof ref === "function") {
+    (ref as (instance: T | null) => void)(value)
+    return
+  }
+
+  if (ref && typeof ref === "object" && "current" in ref) {
+    ;(ref as React.MutableRefObject<T | null>).current = value
+  }
+}
 
 function Calendar({
   className,
@@ -130,11 +143,11 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }) => {
+        Root: ({ className, rootRef, ...props }: RootProps) => {
           return (
             <div
               data-slot="calendar"
-              ref={rootRef}
+              ref={(node) => assignRef(rootRef, node)}
               className={cn(className)}
               {...props}
             />
@@ -161,7 +174,8 @@ function Calendar({
           )
         },
         DayButton: CalendarDayButton,
-        WeekNumber: ({ children, ...props }) => {
+        WeekNumber: ({ children, week, ...props }: WeekNumberProps) => {
+          void week
           return (
             <td {...props}>
               <div className="flex size-(--cell-size) items-center justify-center text-center">
@@ -182,7 +196,7 @@ function CalendarDayButton({
   day,
   modifiers,
   ...props
-}: React.ComponentProps<typeof DayButton>) {
+}: DayButtonProps) {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)

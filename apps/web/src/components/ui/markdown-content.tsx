@@ -1,4 +1,4 @@
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,77 @@ export function MarkdownContent({
   className?: string;
 }) {
   const normalizedContent = normalizeMarkdownSource(children);
+  const components: Components = {
+    a: ({
+      href,
+      node,
+      ref,
+      ...props
+    }) => {
+      void node;
+      void ref;
+      const isExternal = typeof href === "string"
+        ? /^(https?:)?\/\//.test(href)
+        : false;
+
+      return (
+        <a
+          href={href}
+          rel={isExternal ? "noreferrer" : undefined}
+          target={isExternal ? "_blank" : undefined}
+          {...props}
+        />
+      );
+    },
+    p: ({
+      className: paragraphClassName,
+      node,
+      ref,
+      ...props
+    }) => {
+      void node;
+      void ref;
+
+      return (
+        <p
+          className={cn("whitespace-pre-line", paragraphClassName)}
+          {...props}
+        />
+      );
+    },
+    strong: ({
+      className: strongClassName,
+      node,
+      ref,
+      ...props
+    }) => {
+      void node;
+      void ref;
+
+      return (
+        <strong
+          className={cn("font-bold text-foreground", strongClassName)}
+          {...props}
+        />
+      );
+    },
+    em: ({
+      className: emphasisClassName,
+      node,
+      ref,
+      ...props
+    }) => {
+      void node;
+      void ref;
+
+      return (
+        <em
+          className={cn("italic", emphasisClassName)}
+          {...props}
+        />
+      );
+    },
+  };
 
   return (
     <div
@@ -56,40 +127,7 @@ export function MarkdownContent({
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
-        components={{
-          a: ({ href, ...props }) => {
-            const isExternal = typeof href === "string"
-              ? /^(https?:)?\/\//.test(href)
-              : false;
-
-            return (
-              <a
-                href={href}
-                rel={isExternal ? "noreferrer" : undefined}
-                target={isExternal ? "_blank" : undefined}
-                {...props}
-              />
-            );
-          },
-          p: ({ className: paragraphClassName, ...props }) => (
-            <p
-              className={cn("whitespace-pre-line", paragraphClassName)}
-              {...props}
-            />
-          ),
-          strong: ({ className: strongClassName, ...props }) => (
-            <strong
-              className={cn("font-bold text-foreground", strongClassName)}
-              {...props}
-            />
-          ),
-          em: ({ className: emphasisClassName, ...props }) => (
-            <em
-              className={cn("italic", emphasisClassName)}
-              {...props}
-            />
-          ),
-        }}
+        components={components}
       >
         {normalizedContent}
       </ReactMarkdown>
