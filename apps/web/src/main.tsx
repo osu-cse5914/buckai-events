@@ -32,18 +32,35 @@ declare module "@tanstack/react-router" {
   }
 }
 
-function AppWithAuth() {
-  const clerkAuth = useAuth();
-  const e2eTestAuthEnabled = isE2ETestAuthEnabled(import.meta.env);
+function RouterApp({
+  auth,
+  getE2ETestUserId,
+}: {
+  auth: AppAuth;
+  getE2ETestUserId?: () => string | null;
+}) {
+  if (!auth.isLoaded) {
+    return null;
+  }
+
+  const api = createApiClient({
+    getToken: auth.getToken,
+    getE2ETestUserId,
+  });
+
+  return (
+    <ApiClientProvider client={api}>
+      <RouterProvider router={router} context={{ auth, api, queryClient }} />
+    </ApiClientProvider>
+  );
+}
+
+function E2ETestApp() {
   const [e2eUserId, setE2EUserId] = useState<string | null>(() =>
-    e2eTestAuthEnabled ? readStoredE2ETestUserId() : null,
+    readStoredE2ETestUserId(),
   );
 
   useEffect(() => {
-    if (!e2eTestAuthEnabled) {
-      return;
-    }
-
     const syncE2EUserId = () => {
       setE2EUserId(readStoredE2ETestUserId());
     };
@@ -56,47 +73,48 @@ function AppWithAuth() {
       window.removeEventListener("storage", syncE2EUserId);
       window.removeEventListener("focus", syncE2EUserId);
     };
-  }, [e2eTestAuthEnabled]);
+  }, []);
 
-  const auth: AppAuth = e2eTestAuthEnabled
-    ? {
-        isLoaded: true,
-        isSignedIn: Boolean(e2eUserId),
-        getToken: async () => null,
-      }
-    : {
-        isLoaded: clerkAuth.isLoaded,
-        isSignedIn: Boolean(clerkAuth.isSignedIn),
-        getToken: clerkAuth.getToken,
-      };
+  const auth: AppAuth = {
+    isLoaded: true,
+    isSignedIn: Boolean(e2eUserId),
+    getToken: async () => null,
+  };
 
-  if (!auth.isLoaded) {
-    return null;
-  }
+  return <RouterApp auth={auth} getE2ETestUserId={() => e2eUserId} />;
+}
 
-  const api = createApiClient({
-    getToken: auth.getToken,
-    getE2ETestUserId: e2eTestAuthEnabled ? () => e2eUserId : undefined,
-  });
+function ClerkApp() {
+  const clerkAuth = useAuth();
+
+  const auth: AppAuth = {
+    isLoaded: clerkAuth.isLoaded,
+    isSignedIn: Boolean(clerkAuth.isSignedIn),
+    getToken: clerkAuth.getToken,
+  };
 
   return (
-    <ApiClientProvider client={api}>
-      <RouterProvider router={router} context={{ auth, api, queryClient }} />
-    </ApiClientProvider>
+    <RouterApp auth={auth} />
   );
 }
+
+const e2eTestAuthEnabled = isE2ETestAuthEnabled(import.meta.env);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ClerkProvider
-        publishableKey={CLERK_PUBLISHABLE_KEY}
-        signInUrl="/sign-in"
-        signUpUrl="/sign-up"
-        afterSignOutUrl="/sign-in"
-      >
-        <AppWithAuth />
-      </ClerkProvider>
+      {e2eTestAuthEnabled ? (
+        <E2ETestApp />
+      ) : (
+        <ClerkProvider
+          publishableKey={CLERK_PUBLISHABLE_KEY}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          afterSignOutUrl="/sign-in"
+        >
+          <ClerkApp />
+        </ClerkProvider>
+      )}
     </QueryClientProvider>
   </StrictMode>,
 );

@@ -7,6 +7,8 @@
   ],
   "scripts": {
     "dev": "turbo run dev --filter=!@social-osu/docs",
+    "dev:stack": "turbo run dev --filter=@social-osu/backend --filter=@social-osu/web",
+    "dev:ios": "/bin/sh -c 'trap \"kill 0\" EXIT INT TERM; bun run dev:stack & bun run --cwd apps/mobile ios; wait'",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test:registry:audit": "bun scripts/audit-test-registry.ts",
