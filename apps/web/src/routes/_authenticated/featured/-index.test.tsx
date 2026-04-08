@@ -8,20 +8,31 @@ import {
   buildEventRecord,
   buildRecommendationSectionResponse,
   buildRecommendationsResponse,
+  buildSocialFeedItem,
+  buildPaginatedResponse,
 } from "@/test/factories";
 
 const state = vi.hoisted(() => {
   const mockRecommendationsGet = vi.fn();
   const mockPopularGet = vi.fn();
   const mockUpcomingGet = vi.fn();
+  const mockSocialFeedGet = vi.fn();
+  const mockCurrentUserGet = vi.fn();
 
   return {
     mockRecommendationsGet,
     mockPopularGet,
     mockUpcomingGet,
+    mockSocialFeedGet,
+    mockCurrentUserGet,
     mockApiClient: {
       api: {
         v1: {
+          users: {
+            me: {
+              $get: (...args: unknown[]) => mockCurrentUserGet(...args),
+            },
+          },
           recommendations: {
             $get: (...args: unknown[]) => mockRecommendationsGet(...args),
             popular: {
@@ -29,6 +40,11 @@ const state = vi.hoisted(() => {
             },
             upcoming: {
               $get: (...args: unknown[]) => mockUpcomingGet(...args),
+            },
+          },
+          social: {
+            feed: {
+              $get: (...args: unknown[]) => mockSocialFeedGet(...args),
             },
           },
         },
@@ -78,6 +94,25 @@ function okJson(data: unknown) {
     status: 200,
     json: () => Promise.resolve(data),
   };
+}
+
+function makeSocialFeedResponse(
+  items: Array<ReturnType<typeof buildSocialFeedItem>> = [],
+  pagination: {
+    total?: number;
+    limit?: number;
+    offset?: number;
+  } = {},
+) {
+  return okJson(
+    buildPaginatedResponse(items, {
+      pagination: {
+        total: pagination.total ?? items.length,
+        limit: pagination.limit ?? 12,
+        offset: pagination.offset ?? 0,
+      },
+    }),
+  );
 }
 
 function makeRecommendationResponse(
@@ -156,6 +191,22 @@ async function renderFeaturedPage(options?: {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  state.mockCurrentUserGet.mockResolvedValue(
+    okJson({
+      id: "user_1",
+      email: "student@osu.edu",
+      role: "USER",
+      displayName: "Brutus",
+      major: "Computer Science",
+      gradYear: 2026,
+      interests: ["music", "sports"],
+      createdAt: "2026-03-01T00:00:00.000Z",
+      updatedAt: "2026-03-01T00:00:00.000Z",
+      followerCount: 0,
+      followingCount: 0,
+    }),
+  );
+  state.mockSocialFeedGet.mockResolvedValue(makeSocialFeedResponse([]));
 });
 
 describe("[phase:6] [regression:always] FeaturedPage", () => {
@@ -169,17 +220,68 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
     state.mockUpcomingGet.mockResolvedValue(
       makeSectionResponse([makeEvent({ id: "evt_up", title: "Upcoming Show" })]),
     );
+    state.mockSocialFeedGet.mockResolvedValue(
+      makeSocialFeedResponse([
+        buildSocialFeedItem({
+          actor: { id: "user_2", displayName: "Alice" },
+          action: "created",
+          event: {
+            id: "evt_following",
+            title: "Following Show",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+        }),
+      ]),
+    );
 
     await renderFeaturedPage();
 
     expect(await screen.findByRole("heading", { name: "Recommended" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Following" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Popular" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Upcoming" })).toBeInTheDocument();
     await waitFor(() => {
       expect(document.body).toHaveTextContent("Recommended Show");
+      expect(document.body).toHaveTextContent("Following Show");
       expect(document.body).toHaveTextContent("Popular Show");
       expect(document.body).toHaveTextContent("Upcoming Show");
     });
+  });
+
+  it("TC-SFEED-015: shows followed-user activity inside the Featured Following section", async () => {
+    state.mockRecommendationsGet.mockResolvedValue(makeRecommendationResponse([]));
+    state.mockPopularGet.mockResolvedValue(makeSectionResponse([]));
+    state.mockUpcomingGet.mockResolvedValue(makeSectionResponse([]));
+    state.mockSocialFeedGet.mockResolvedValue(
+      makeSocialFeedResponse([
+        buildSocialFeedItem({
+          actor: { id: "user_b", displayName: "User B" },
+          action: "saved",
+          event: {
+            id: "evt_2",
+            title: "Career Fair",
+            source: "USER",
+            type: "EVENT",
+            status: "OPEN",
+          },
+          actionAt: "2026-03-03T12:00:00.000Z",
+        }),
+      ]),
+    );
+
+    await renderFeaturedPage();
+
+    const followingSection = await screen.findByRole("heading", { name: "Following" });
+    const sectionContainer = followingSection.closest("section");
+
+    if (!sectionContainer) {
+      throw new Error("Expected Following section container");
+    }
+
+    expect(await within(sectionContainer).findByText("Career Fair")).toBeInTheDocument();
+    expect(within(sectionContainer).getByText("User B saved")).toBeInTheDocument();
   });
 
   it("TC-FEED-012: updates all sections when the Featured filter changes", async () => {
