@@ -104,7 +104,6 @@ describe("[phase:1] [regression:always] Debug Page", () => {
       "Featured",
       "Events",
       "Gigs",
-      "Social",
       "You",
     ]);
   });

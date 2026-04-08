@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { FollowingSection } from "@/components/app-pages/social-feed-section";
 import { Button } from "@/components/ui/button";
 import {
   EventsEmptyState,
@@ -161,11 +162,13 @@ export function FeaturedPage({
           ) : null}
         </FeaturedSection>
 
+        <FollowingSection className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700" />
+
         <FeaturedSection
           title="Popular"
           description="What is drawing the most attention right now."
           summary={popularQuery.data ? `${popularQuery.data.items.length} picks` : undefined}
-          className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700"
+          className="animate-in fade-in-0 slide-in-from-bottom-6 duration-700"
         >
           <FeaturedPreviewSectionState
             items={popularQuery.data?.items ?? []}
@@ -182,7 +185,7 @@ export function FeaturedPage({
           title="Upcoming"
           description="The nearest openings and events worth scanning next."
           summary={upcomingQuery.data ? `${upcomingQuery.data.items.length} picks` : undefined}
-          className="animate-in fade-in-0 slide-in-from-bottom-6 duration-700"
+          className="animate-in fade-in-0 slide-in-from-bottom-7 duration-700"
         >
           <FeaturedPreviewSectionState
             items={upcomingQuery.data?.items ?? []}

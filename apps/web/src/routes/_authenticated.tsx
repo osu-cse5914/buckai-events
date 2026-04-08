@@ -15,7 +15,6 @@ import {
   SearchIcon,
   SparklesIcon,
   StarIcon,
-  UsersIcon,
   UserRoundIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ export const navLinks = [
   { to: "/featured", label: "Featured" },
   { to: "/events", label: "Events" },
   { to: "/gigs", label: "Gigs" },
-  { to: "/social", label: "Social" },
   { to: "/you", label: "You" },
 ] as const;
 
@@ -261,7 +259,6 @@ const NAV_ICONS = {
   "/featured": StarIcon,
   "/events": CalendarIcon,
   "/gigs": BriefcaseBusinessIcon,
-  "/social": UsersIcon,
   "/you": UserRoundIcon,
   "/search": SearchIcon,
   "/ai": SparklesIcon,

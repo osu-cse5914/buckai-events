@@ -116,7 +116,7 @@ Spec: [`feed`](../../specs/social/feed.md)
   4. Scroll to trigger pagination
 - **Expected**: Feed shows events from followed users in reverse chronological order with correct attribution
 
-## TC-SFEED-011: Social page appears in primary navigation
+## TC-SFEED-011: Social feed is not exposed as a primary navigation tab
 
 - **Spec scenario**: —
 - **Type**: Automated
@@ -125,7 +125,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 - **Regression**: Always
 - **Given**: The authenticated app shell is rendered
 - **When**: The primary navigation model is inspected
-- **Then**: It includes a Social destination
+- **Then**: It does not include a Social destination
 
 ## TC-SFEED-012: Social feed page renders items from the API
 
@@ -159,3 +159,14 @@ Spec: [`feed`](../../specs/social/feed.md)
 - **Given**: The social feed API returns no items
 - **When**: The authenticated user opens the social feed page
 - **Then**: The page shows an empty-state message and follow guidance based on profile context
+
+## TC-SFEED-015: Featured page surfaces the Following section
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The social feed API returns recent activity from followed users
+- **When**: The authenticated user opens Featured
+- **Then**: The page renders a `Following` section with actor attribution and event titles
