@@ -4,6 +4,7 @@ import { getPrisma } from "../lib/prisma";
 import { generateConversationTitle } from "../services/conversation-titles";
 import {
   CHATBOT_FAILURE_MESSAGE,
+  buildFallbackReplySuggestions,
   parsePendingChatAction,
   cancelPendingChatAction,
   createChatbotStreamResponse,
@@ -179,11 +180,27 @@ export function createConversationsRouter({
               return;
             }
 
+            const refreshedConversation = await prisma.conversation.findUnique({
+              where: { id },
+              select: { pendingAction: true },
+            });
+            const fallbackReplySuggestions = buildFallbackReplySuggestions({
+              assistantText,
+              lastUserMessage: body.content,
+              parts,
+              hasPendingAction: Boolean(
+                parsePendingChatAction(refreshedConversation?.pendingAction),
+              ),
+            });
+            const messageParts = fallbackReplySuggestions
+              ? [...parts, fallbackReplySuggestions]
+              : parts;
+
             await createConversationMessage(prisma, {
               conversationId: id,
               role: "ASSISTANT",
               content: assistantText,
-              parts,
+              parts: messageParts,
             });
 
             if (!shouldGenerateTitle) {

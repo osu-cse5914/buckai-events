@@ -162,3 +162,14 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 - **Given**: The latest assistant message includes suggested reply candidates
 - **When**: The AI page renders and the user clicks one of the suggestions
 - **Then**: The suggestion is posted back into the active conversation as the next user message
+
+## TC-CHAT-015: Fallback suggested replies still appear when the model skips the reply tool
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Phase 6+
+- **Given**: The assistant answers normally but does not call `suggestReplies`
+- **When**: The backend persists the assistant message
+- **Then**: It appends fallback `reply-suggestions` so the UI still has clickable follow-up replies

@@ -107,3 +107,14 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
   4. Create a new conversation
   5. Verify it appears at the top of the sidebar
 - **Expected**: Sidebar renders correctly; switching conversations loads the correct history
+
+## TC-CONV-010: Title generation rejects leaked prompt instructions
+
+- **Spec scenario**: S-CONV-3
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/conversation-titles.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Phase 6+
+- **Given**: The title-generation model returns prompt-like instructions instead of a concise title
+- **When**: The system generates the first conversation title
+- **Then**: It falls back to a sanitized title derived from the first user message
