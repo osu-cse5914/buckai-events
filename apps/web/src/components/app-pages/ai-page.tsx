@@ -13,6 +13,7 @@ import {
   conversationsQueryOptions,
   type ConversationMessage,
   type ConversationPendingAction,
+  type ConversationReplySuggestionsPart,
   type ConversationSearchResultsPart,
 } from "@/lib/queries";
 import { formatDate, TYPE_STYLES } from "@/lib/event-utils";
@@ -212,6 +213,38 @@ function SearchResultsCards({
   );
 }
 
+function ReplySuggestions({
+  part,
+  disabled,
+  onSelect,
+}: {
+  part: ConversationReplySuggestionsPart;
+  disabled: boolean;
+  onSelect: (suggestion: string) => void;
+}) {
+  if (!part.suggestions.length) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {part.suggestions.map((suggestion) => (
+        <Button
+          key={suggestion}
+          type="button"
+          variant="outline"
+          size="sm"
+          className="rounded-full"
+          disabled={disabled}
+          onClick={() => onSelect(suggestion)}
+        >
+          {suggestion}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 type DisplayMessage = {
   id: string;
   role: ConversationMessage["role"];
@@ -402,6 +435,14 @@ export function AiPage({
         ]
       : []),
   ];
+  const latestReplySuggestionsMessageId =
+    [...displayedMessages]
+      .reverse()
+      .find(
+        (message) =>
+          message.role === "ASSISTANT" &&
+          message.parts?.some((part) => part.type === "reply-suggestions"),
+      )?.id ?? null;
   const conversationCount =
     conversationsQuery.data?.pagination.total ??
     conversationsQuery.data?.data.length ??
@@ -744,10 +785,21 @@ export function AiPage({
                       ) : null}
 
                       {message.parts?.map((part, index) => (
-                        <SearchResultsCards
-                          key={`${message.id}-${part.type}-${index}`}
-                          part={part}
-                        />
+                        part.type === "search-results" ? (
+                          <SearchResultsCards
+                            key={`${message.id}-${part.type}-${index}`}
+                            part={part}
+                          />
+                        ) : message.id === latestReplySuggestionsMessageId ? (
+                          <ReplySuggestions
+                            key={`${message.id}-${part.type}-${index}`}
+                            part={part}
+                            disabled={isSending || Boolean(pendingAction)}
+                            onSelect={(suggestion) => {
+                              void sendMessage(suggestion, { clearDraft: false });
+                            }}
+                          />
+                        ) : null
                       ))}
                     </div>
                   ),

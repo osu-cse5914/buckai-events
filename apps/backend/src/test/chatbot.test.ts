@@ -6,7 +6,10 @@ vi.mock("../lib/prisma");
 
 import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { registerApiErrorHandlers } from "../app";
-import { CHATBOT_SYSTEM_PROMPT } from "../services/chatbot";
+import {
+  CHATBOT_SYSTEM_PROMPT,
+  createSseTextResponse,
+} from "../services/chatbot";
 import { createConversationsRouter } from "../routes/conversations";
 import {
   buildAuthUser,
@@ -55,6 +58,7 @@ type StreamTextStubOptions = Record<string, unknown> & {
   tools: Record<string, StreamTextToolStub> & {
     searchEvents: StreamTextToolStub;
     searchGigs: StreamTextToolStub;
+    suggestReplies: StreamTextToolStub;
     applyToGig: StreamTextToolStub;
   };
 };
@@ -290,7 +294,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
           conversationId: "conv_1",
           role: "ASSISTANT",
           content: "I found a few music events this weekend.",
-          parts: [
+          parts: expect.arrayContaining([
             expect.objectContaining({
               type: "search-results",
               toolName: "searchEvents",
@@ -307,7 +311,11 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
                 }),
               ],
             }),
-          ],
+            expect.objectContaining({
+              type: "reply-suggestions",
+              toolName: "suggestReplies",
+            }),
+          ]),
         }),
       }),
     );
@@ -433,7 +441,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
           conversationId: "conv_1",
           role: "ASSISTANT",
           content: "I found a tutoring gig that matches that pay range.",
-          parts: [
+          parts: expect.arrayContaining([
             expect.objectContaining({
               type: "search-results",
               toolName: "searchGigs",
@@ -451,7 +459,11 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
                 }),
               ],
             }),
-          ],
+            expect.objectContaining({
+              type: "reply-suggestions",
+              toolName: "suggestReplies",
+            }),
+          ]),
         }),
       }),
     );
@@ -854,14 +866,18 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
         data: expect.objectContaining({
           role: "ASSISTANT",
           content: "I couldn't find any free events tonight.",
-          parts: [
+          parts: expect.arrayContaining([
             expect.objectContaining({
               type: "search-results",
               toolName: "searchEvents",
               total: 0,
               items: [],
             }),
-          ],
+            expect.objectContaining({
+              type: "reply-suggestions",
+              toolName: "suggestReplies",
+            }),
+          ]),
         }),
       }),
     );
@@ -973,5 +989,176 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       "I'm having trouble connecting right now. Please try again in a moment.",
     );
     expect(mockPrisma.message.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("[phase:6] [regression:always] Chatbot SSE lifecycle", () => {
+  it("continues consuming the model stream after the SSE client disconnects", async () => {
+    let releaseSecondChunk!: () => void;
+    const secondChunkReady = new Promise<void>((resolve) => {
+      releaseSecondChunk = resolve;
+    });
+    let completeResolve!: () => void;
+    const completed = new Promise<void>((resolve) => {
+      completeResolve = resolve;
+    });
+    const onComplete = vi.fn(async (fullText: string) => {
+      expect(fullText).toBe("firstsecond");
+      completeResolve();
+    });
+
+    const response = createSseTextResponse({
+      textStream: {
+        async *[Symbol.asyncIterator]() {
+          yield "first";
+          await secondChunkReady;
+          yield "second";
+        },
+      },
+      onComplete,
+    });
+
+    const reader = response.body?.getReader();
+    expect(reader).toBeDefined();
+
+    const firstChunk = await reader!.read();
+    expect(new TextDecoder().decode(firstChunk.value)).toContain("data: first");
+
+    await reader!.cancel();
+    releaseSecondChunk();
+    await completed;
+
+    expect(onComplete).toHaveBeenCalledWith("firstsecond");
+  });
+});
+
+describe("[phase:6] [regression:always] Chatbot reply suggestions", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation() as never,
+    );
+    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(
+      createConversation() as never,
+    );
+  });
+
+  it("TC-CHAT-013: records suggested replies as assistant message parts", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_13",
+      role: "USER",
+      content: "Give me a few next steps for finding a music event.",
+    });
+    const assistantMessage = createMessage({
+      id: "msg_assistant_13",
+      role: "ASSISTANT",
+      content: "Here are a few ways we can narrow it down.",
+    });
+    const streamText = createStreamTextStub(async ({ tools }) => {
+      const result = await tools.suggestReplies.execute(
+        {
+          suggestions: [
+            "Show me music events tonight",
+            "Only free options",
+            "What about live performances this weekend?",
+          ],
+        },
+        {} as never,
+      );
+
+      expect(result).toEqual({
+        suggestions: [
+          "Show me music events tonight",
+          "Only free options",
+          "What about live performances this weekend?",
+        ],
+      });
+
+      return ["Here are a few ways we can narrow it down."];
+    });
+
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(userMessage as never)
+      .mockResolvedValueOnce(assistantMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(createTestApp({ streamText }), userMessage.content);
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "Here are a few ways we can narrow it down.",
+    );
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          role: "ASSISTANT",
+          content: "Here are a few ways we can narrow it down.",
+          parts: [
+            {
+              type: "reply-suggestions",
+              toolName: "suggestReplies",
+              suggestions: [
+                "Show me music events tonight",
+                "Only free options",
+                "What about live performances this weekend?",
+              ],
+            },
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("TC-CHAT-015: adds fallback suggested replies when the model does not call suggestReplies", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_15",
+      role: "USER",
+      content: "Show me fitness events on campus",
+    });
+    const assistantMessage = createMessage({
+      id: "msg_assistant_15",
+      role: "ASSISTANT",
+      content: "I found a few fitness events on campus.",
+    });
+    const streamText = createStreamTextStub(async () => [
+      "I found a few fitness events on campus.",
+    ]);
+
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(userMessage as never)
+      .mockResolvedValueOnce(assistantMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(createTestApp({ streamText }), userMessage.content);
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "I found a few fitness events on campus.",
+    );
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          role: "ASSISTANT",
+          content: "I found a few fitness events on campus.",
+          parts: [
+            {
+              type: "reply-suggestions",
+              toolName: "suggestReplies",
+              suggestions: [
+                "Show me more fitness events",
+                "Only free options",
+                "What about this weekend?",
+              ],
+            },
+          ],
+        }),
+      }),
+    );
   });
 });

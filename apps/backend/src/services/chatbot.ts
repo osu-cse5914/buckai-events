@@ -12,6 +12,7 @@ import {
 } from "./collections";
 import type {
   ChatMessagePart,
+  ReplySuggestionsMessagePart,
   SearchResultsMessagePart,
 } from "./chat-message-parts";
 import { searchEventsSemantically } from "./event-embeddings";
@@ -53,6 +54,8 @@ export const CHATBOT_SYSTEM_PROMPT = [
   "If a tool returns no matches, say that clearly and do not fabricate options.",
   "Politely decline off-topic requests and redirect the user back to events or gigs.",
   "Before any mutation such as applying, saving, or creating, ask for confirmation first.",
+  "When it would help the user continue, use suggestReplies with 2 to 4 short reply options they could send next.",
+  "Do not use suggestReplies for confirm or cancel actions because those are handled by the confirmation UI.",
   "If the user cancels or denies a proposed action, acknowledge it and do not retry the same mutation automatically.",
   "Keep responses concise and student-facing.",
 ].join(" ");
@@ -124,6 +127,10 @@ const searchGigsInputSchema = z.object({
   compensationType: z.enum(COMPENSATION_TYPES).optional(),
   category: z.string().trim().optional(),
   limit: z.number().int().min(1).max(10).optional(),
+});
+
+const suggestRepliesInputSchema = z.object({
+  suggestions: z.array(z.string().trim().min(1)).min(2).max(4),
 });
 
 const pendingChatActionSchema = z.discriminatedUnion("toolName", [
@@ -259,6 +266,108 @@ function mapSearchResult(event: Record<string, unknown>) {
             type: readString(event.compensationType),
           },
     similarity: readNumber(event.similarity) ?? undefined,
+  };
+}
+
+function extractSuggestionTopic(text: string) {
+  const stopwords = new Set([
+    "a",
+    "an",
+    "and",
+    "about",
+    "any",
+    "are",
+    "at",
+    "can",
+    "campus",
+    "event",
+    "events",
+    "find",
+    "for",
+    "gig",
+    "gigs",
+    "help",
+    "i",
+    "looking",
+    "me",
+    "on",
+    "options",
+    "show",
+    "tell",
+    "that",
+    "the",
+    "there",
+    "to",
+    "what",
+  ]);
+  const words = text.match(/[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g) ?? [];
+  const topicalWords = words.filter(
+    (word) => !stopwords.has(word.toLowerCase()),
+  );
+
+  return topicalWords.slice(0, 2).join(" ").toLowerCase();
+}
+
+function getLatestSearchResultsPart(parts: ChatMessagePart[]) {
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    const part = parts[index];
+    if (part?.type === "search-results") {
+      return part;
+    }
+  }
+
+  return null;
+}
+
+export function buildFallbackReplySuggestions(input: {
+  assistantText: string;
+  lastUserMessage: string;
+  parts: ChatMessagePart[];
+  hasPendingAction: boolean;
+}): ReplySuggestionsMessagePart | null {
+  if (
+    input.hasPendingAction ||
+    !input.assistantText.trim() ||
+    input.assistantText === CHATBOT_FAILURE_MESSAGE ||
+    input.parts.some((part) => part.type === "reply-suggestions")
+  ) {
+    return null;
+  }
+
+  const latestSearchResults = getLatestSearchResultsPart(input.parts);
+  const inferredType =
+    latestSearchResults?.toolName === "searchGigs" ||
+    /\bgig|gigs|tutor|job|paid\b/i.test(input.lastUserMessage)
+      ? "GIG"
+      : "EVENT";
+  const topicalLabel =
+    extractSuggestionTopic(
+      latestSearchResults
+        ? latestSearchResults.total > 0
+          ? latestSearchResults.items[0]?.category ??
+            latestSearchResults.items[0]?.title ??
+            ""
+          : ""
+        : input.lastUserMessage,
+    ) || (inferredType === "GIG" ? "gigs" : "events");
+
+  const suggestions =
+    inferredType === "GIG"
+      ? [
+          `Show me more ${topicalLabel} gigs`,
+          "Only hourly gigs",
+          "What pays at least $20/hr?",
+        ]
+      : [
+          `Show me more ${topicalLabel} events`,
+          "Only free options",
+          "What about this weekend?",
+        ];
+
+  return {
+    type: "reply-suggestions",
+    toolName: "suggestReplies",
+    suggestions: [...new Set(suggestions)].slice(0, 4),
   };
 }
 
@@ -510,15 +619,42 @@ export function createSseTextResponse(input: {
       .concat("\n");
   }
 
+  function isClosedControllerError(error: unknown) {
+    return (
+      error instanceof TypeError &&
+      "code" in error &&
+      error.code === "ERR_INVALID_STATE"
+    );
+  }
+
+  let clientDisconnected = false;
+
   return new Response(
     new ReadableStream({
       async start(controller) {
         let fullText = "";
 
+        const enqueueChunk = (chunk: string) => {
+          if (clientDisconnected) {
+            return;
+          }
+
+          try {
+            controller.enqueue(encoder.encode(toSseChunk(chunk)));
+          } catch (error) {
+            if (isClosedControllerError(error)) {
+              clientDisconnected = true;
+              return;
+            }
+
+            throw error;
+          }
+        };
+
         try {
           for await (const chunk of input.textStream) {
             fullText += chunk;
-            controller.enqueue(encoder.encode(toSseChunk(chunk)));
+            enqueueChunk(chunk);
           }
 
           if (input.onComplete) {
@@ -526,12 +662,28 @@ export function createSseTextResponse(input: {
           }
         } catch (error) {
           if (!fullText && input.fallbackText?.trim()) {
-            controller.enqueue(encoder.encode(toSseChunk(input.fallbackText)));
+            enqueueChunk(input.fallbackText);
           }
-          console.error("Failed to stream chatbot response", error);
+          if (!clientDisconnected) {
+            console.error("Failed to stream chatbot response", error);
+          }
         } finally {
-          controller.close();
+          if (!clientDisconnected) {
+            try {
+              controller.close();
+            } catch (error) {
+              if (!isClosedControllerError(error)) {
+                console.error("Failed to close chatbot SSE stream", error);
+              }
+            }
+          }
         }
+      },
+      cancel() {
+        // The browser can cancel the SSE response if the user navigates away or
+        // starts a new request. Keep consuming the model stream, but stop writing
+        // to the client-side controller after that point.
+        clientDisconnected = true;
       },
     }),
     {
@@ -568,6 +720,11 @@ export function createChatbotTools(
     input.searchSemanticEvents ?? searchEventsSemantically;
 
   function recordSearchResults(part: SearchResultsMessagePart) {
+    input.recordMessagePart?.(part);
+    return part;
+  }
+
+  function recordReplySuggestions(part: ReplySuggestionsMessagePart) {
     input.recordMessagePart?.(part);
     return part;
   }
@@ -698,6 +855,24 @@ export function createChatbotTools(
           major: user.major,
           gradYear: user.gradYear,
           interests: user.interests,
+        };
+      },
+    }),
+    suggestReplies: tool({
+      description:
+        "Suggest 2 to 4 short user-ready follow-up replies that the frontend can render as one-click quick replies.",
+      inputSchema: suggestRepliesInputSchema,
+      execute: async ({ suggestions }) => {
+        const normalizedSuggestions = [...new Set(suggestions)].slice(0, 4);
+
+        recordReplySuggestions({
+          type: "reply-suggestions",
+          toolName: "suggestReplies",
+          suggestions: normalizedSuggestions,
+        });
+
+        return {
+          suggestions: normalizedSuggestions,
         };
       },
     }),

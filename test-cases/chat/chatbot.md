@@ -140,3 +140,36 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 - **Then**: The dialog shows clear action details
 - **And**: The frontend posts the user's confirmation or cancellation back into the conversation flow
 - **And**: The pending action clears once the assistant responds
+
+## TC-CHAT-013: Suggested reply tool records quick replies
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Phase 6+
+- **Given**: The chatbot has obvious follow-up prompts it can offer after answering
+- **When**: The model calls the suggested reply tool
+- **Then**: The assistant message stores a `reply-suggestions` part with the suggested replies
+
+## TC-CHAT-014: Suggested replies render as one-click follow-ups
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Phase 6+
+- **Given**: The latest assistant message includes suggested reply candidates
+- **When**: The AI page renders and the user clicks one of the suggestions
+- **Then**: The suggestion is posted back into the active conversation as the next user message
+
+## TC-CHAT-015: Fallback suggested replies still appear when the model skips the reply tool
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/chatbot.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Phase 6+
+- **Given**: The assistant answers normally but does not call `suggestReplies`
+- **When**: The backend persists the assistant message
+- **Then**: It appends fallback `reply-suggestions` so the UI still has clickable follow-up replies
