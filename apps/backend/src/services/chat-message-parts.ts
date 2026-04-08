@@ -29,4 +29,12 @@ export type SearchResultsMessagePart = {
   items: ChatSearchResultItem[];
 };
 
-export type ChatMessagePart = SearchResultsMessagePart;
+export type ReplySuggestionsMessagePart = {
+  type: "reply-suggestions";
+  toolName: "suggestReplies";
+  suggestions: string[];
+};
+
+export type ChatMessagePart =
+  | SearchResultsMessagePart
+  | ReplySuggestionsMessagePart;

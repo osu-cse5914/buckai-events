@@ -159,7 +159,15 @@ export type ConversationSearchResultsPart = {
   items: ConversationSearchResultItem[];
 };
 
-export type ConversationMessagePart = ConversationSearchResultsPart;
+export type ConversationReplySuggestionsPart = {
+  type: "reply-suggestions";
+  toolName: "suggestReplies";
+  suggestions: string[];
+};
+
+export type ConversationMessagePart =
+  | ConversationSearchResultsPart
+  | ConversationReplySuggestionsPart;
 
 export type ConversationMessage = {
   id: string;

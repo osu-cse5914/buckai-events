@@ -729,4 +729,62 @@ describe("[phase:6] [regression:always] AI prompt carryover", () => {
     expect(state.conversationsPost).not.toHaveBeenCalled();
     expect(state.messagesPost).not.toHaveBeenCalled();
   });
+
+  it("TC-CHAT-014: renders suggested replies and sends the clicked suggestion", async () => {
+    const user = userEvent.setup();
+
+    state.conversationsGet.mockResolvedValue(
+      jsonResponse(
+        paginated([
+          makeConversation({
+            id: "conv_suggestions",
+            title: "Music plans",
+          }),
+        ]),
+      ),
+    );
+    state.messagesGet.mockResolvedValue(
+      jsonResponse(
+        paginated([
+          makeMessage({
+            id: "msg_suggestions",
+            conversationId: "conv_suggestions",
+            role: "ASSISTANT",
+            content: "Want to narrow this down?",
+            parts: [
+              {
+                type: "reply-suggestions",
+                toolName: "suggestReplies",
+                suggestions: [
+                  "Show me music events tonight",
+                  "Only free music events",
+                  "What about this weekend?",
+                ],
+              },
+            ],
+          }),
+        ]),
+      ),
+    );
+    state.messagesPost.mockResolvedValue(
+      sseResponse(["Here are the free music events tonight."]),
+    );
+
+    await renderAiRoute({ conversationId: "conv_suggestions" });
+
+    expect(
+      await screen.findByRole("button", { name: "Show me music events tonight" }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Only free music events" }),
+    );
+
+    await waitFor(() => {
+      expect(state.messagesPost).toHaveBeenCalledWith({
+        param: { id: "conv_suggestions" },
+        json: { content: "Only free music events" },
+      });
+    });
+  });
 });

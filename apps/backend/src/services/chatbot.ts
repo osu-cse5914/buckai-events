@@ -12,6 +12,7 @@ import {
 } from "./collections";
 import type {
   ChatMessagePart,
+  ReplySuggestionsMessagePart,
   SearchResultsMessagePart,
 } from "./chat-message-parts";
 import { searchEventsSemantically } from "./event-embeddings";
@@ -53,6 +54,8 @@ export const CHATBOT_SYSTEM_PROMPT = [
   "If a tool returns no matches, say that clearly and do not fabricate options.",
   "Politely decline off-topic requests and redirect the user back to events or gigs.",
   "Before any mutation such as applying, saving, or creating, ask for confirmation first.",
+  "When it would help the user continue, use suggestReplies with 2 to 4 short reply options they could send next.",
+  "Do not use suggestReplies for confirm or cancel actions because those are handled by the confirmation UI.",
   "If the user cancels or denies a proposed action, acknowledge it and do not retry the same mutation automatically.",
   "Keep responses concise and student-facing.",
 ].join(" ");
@@ -124,6 +127,10 @@ const searchGigsInputSchema = z.object({
   compensationType: z.enum(COMPENSATION_TYPES).optional(),
   category: z.string().trim().optional(),
   limit: z.number().int().min(1).max(10).optional(),
+});
+
+const suggestRepliesInputSchema = z.object({
+  suggestions: z.array(z.string().trim().min(1)).min(2).max(4),
 });
 
 const pendingChatActionSchema = z.discriminatedUnion("toolName", [
@@ -572,6 +579,11 @@ export function createChatbotTools(
     return part;
   }
 
+  function recordReplySuggestions(part: ReplySuggestionsMessagePart) {
+    input.recordMessagePart?.(part);
+    return part;
+  }
+
   return {
     searchEvents: tool({
       description:
@@ -698,6 +710,24 @@ export function createChatbotTools(
           major: user.major,
           gradYear: user.gradYear,
           interests: user.interests,
+        };
+      },
+    }),
+    suggestReplies: tool({
+      description:
+        "Suggest 2 to 4 short user-ready follow-up replies that the frontend can render as one-click quick replies.",
+      inputSchema: suggestRepliesInputSchema,
+      execute: async ({ suggestions }) => {
+        const normalizedSuggestions = [...new Set(suggestions)].slice(0, 4);
+
+        recordReplySuggestions({
+          type: "reply-suggestions",
+          toolName: "suggestReplies",
+          suggestions: normalizedSuggestions,
+        });
+
+        return {
+          suggestions: normalizedSuggestions,
         };
       },
     }),

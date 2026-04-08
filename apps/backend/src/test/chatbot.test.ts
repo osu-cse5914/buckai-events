@@ -55,6 +55,7 @@ type StreamTextStubOptions = Record<string, unknown> & {
   tools: Record<string, StreamTextToolStub> & {
     searchEvents: StreamTextToolStub;
     searchGigs: StreamTextToolStub;
+    suggestReplies: StreamTextToolStub;
     applyToGig: StreamTextToolStub;
   };
 };
@@ -973,5 +974,88 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       "I'm having trouble connecting right now. Please try again in a moment.",
     );
     expect(mockPrisma.message.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("[phase:6] [regression:always] Chatbot reply suggestions", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation() as never,
+    );
+    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(
+      createConversation() as never,
+    );
+  });
+
+  it("TC-CHAT-013: records suggested replies as assistant message parts", async () => {
+    const userMessage = createMessage({
+      id: "msg_user_13",
+      role: "USER",
+      content: "Give me a few next steps for finding a music event.",
+    });
+    const assistantMessage = createMessage({
+      id: "msg_assistant_13",
+      role: "ASSISTANT",
+      content: "Here are a few ways we can narrow it down.",
+    });
+    const streamText = createStreamTextStub(async ({ tools }) => {
+      const result = await tools.suggestReplies.execute(
+        {
+          suggestions: [
+            "Show me music events tonight",
+            "Only free options",
+            "What about live performances this weekend?",
+          ],
+        },
+        {} as never,
+      );
+
+      expect(result).toEqual({
+        suggestions: [
+          "Show me music events tonight",
+          "Only free options",
+          "What about live performances this weekend?",
+        ],
+      });
+
+      return ["Here are a few ways we can narrow it down."];
+    });
+
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(userMessage as never)
+      .mockResolvedValueOnce(assistantMessage as never);
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
+
+    const res = await postMessage(createTestApp({ streamText }), userMessage.content);
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "Here are a few ways we can narrow it down.",
+    );
+    expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          role: "ASSISTANT",
+          content: "Here are a few ways we can narrow it down.",
+          parts: [
+            {
+              type: "reply-suggestions",
+              toolName: "suggestReplies",
+              suggestions: [
+                "Show me music events tonight",
+                "Only free options",
+                "What about live performances this weekend?",
+              ],
+            },
+          ],
+        }),
+      }),
+    );
   });
 });
