@@ -160,3 +160,15 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 - **When**: The sync finishes
 - **Then**: A full pipeline job is queued for the newly created event
 - **And**: An embedding-only pipeline job is queued for the updated event
+
+## TC-ING-015: Ticketmaster sync skips stale events before persistence
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: Ticketmaster returns one past event and one future event
+- **When**: The sync runs
+- **Then**: Only the future event is considered for create or update
+- **And**: Only the future event is eligible for pipeline scheduling

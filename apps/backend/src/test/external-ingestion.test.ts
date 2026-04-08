@@ -69,7 +69,7 @@ function makeTicketmasterEvent(overrides: Record<string, unknown> = {}) {
     url: "https://www.ticketmaster.com/event/tm_67890",
     dates: {
       start: {
-        dateTime: "2026-04-05T00:00:00.000Z",
+        dateTime: "2026-05-05T00:00:00.000Z",
       },
     },
     _embedded: {
@@ -698,5 +698,100 @@ describe("[phase:6] [regression:always] External event ingestion summaries", () 
     } finally {
       warnSpy.mockRestore();
     }
+  });
+
+  it("TC-ING-015: skips stale Ticketmaster events before persistence and pipeline scheduling", async () => {
+    const scheduleEventPipeline = vi.fn();
+
+    stubExternalFetch({
+      ticketmasterPages: [
+        {
+          _embedded: {
+            events: [
+              makeTicketmasterEvent({
+                id: "tm_past",
+                name: "Past Columbus Concert",
+                dates: {
+                  start: {
+                    dateTime: "2026-03-01T00:00:00.000Z",
+                  },
+                  end: {
+                    dateTime: "2026-03-01T03:00:00.000Z",
+                  },
+                },
+              }),
+              makeTicketmasterEvent({
+                id: "tm_future",
+                name: "Future Columbus Concert",
+                dates: {
+                  start: {
+                    dateTime: "2026-04-12T00:00:00.000Z",
+                  },
+                  end: {
+                    dateTime: "2026-04-12T03:00:00.000Z",
+                  },
+                },
+                url: "https://www.ticketmaster.com/event/tm_future",
+              }),
+            ],
+          },
+          page: {
+            totalPages: 1,
+            number: 0,
+          },
+        },
+      ],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
+    vi.mocked(mockPrisma.event.findMany)
+      .mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([] as never);
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(
+      makeStoredExternalEvent({
+        id: "evt_tm_future",
+        source: "TICKETMASTER",
+        externalId: "tm_future",
+        title: "Future Columbus Concert",
+        ticketUrl: "https://www.ticketmaster.com/event/tm_future",
+        externalUrl: null,
+      }) as never,
+    );
+
+    const result = await syncExternalEvents(mockPrisma, {
+      ticketmasterApiKey: "ticketmaster_test_key",
+      now: new Date("2026-04-08T12:00:00.000Z"),
+      scheduleEventPipeline,
+    });
+
+    expect(result.sources.ticketmaster).toEqual({
+      fetched: 1,
+      created: 1,
+      updated: 0,
+      skipped: 0,
+      completed: 0,
+    });
+    expect(mockPrisma.event.findUnique).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.event.findUnique).toHaveBeenCalledWith({
+      where: {
+        externalId: "tm_future",
+      },
+    });
+    expect(mockPrisma.event.create).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          source: "TICKETMASTER",
+          externalId: "tm_future",
+          title: "Future Columbus Concert",
+        }),
+      }),
+    );
+    expect(scheduleEventPipeline).toHaveBeenCalledTimes(1);
+    expect(scheduleEventPipeline).toHaveBeenCalledWith({
+      eventId: "evt_tm_future",
+      stages: ["TAGGING", "EMBEDDING"],
+      trigger: "EVENT_CREATE",
+    });
   });
 });

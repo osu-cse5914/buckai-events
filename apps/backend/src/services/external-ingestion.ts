@@ -167,6 +167,14 @@ function dedupeCandidates(candidates: ExternalEventCandidate[]) {
   );
 }
 
+function isStaleExternalCandidate(
+  candidate: Pick<ExternalEventCandidate, "startAt" | "endAt">,
+  now: Date,
+) {
+  const comparisonDate = candidate.endAt ?? candidate.startAt;
+  return comparisonDate < now;
+}
+
 export async function fetchOsuEvents(
   fetchImpl: FetchLike = fetch,
 ): Promise<ExternalEventCandidate[]> {
@@ -216,6 +224,7 @@ function buildTicketmasterUrl(apiKey: string, page: number) {
 export async function fetchTicketmasterEvents(
   apiKey: string,
   fetchImpl: FetchLike = fetch,
+  now = new Date(),
 ): Promise<ExternalEventCandidate[]> {
   if (!apiKey.trim()) {
     throw new Error("TICKETMASTER_API_KEY is required");
@@ -253,6 +262,10 @@ export async function fetchTicketmasterEvents(
         startAt,
         endAt: parseDate(event.dates?.end?.dateTime),
       };
+
+      if (isStaleExternalCandidate(normalized, now)) {
+        continue;
+      }
 
       candidates.push({
         ...normalized,
@@ -434,7 +447,7 @@ export async function syncExternalEvents(
   const startedAt = new Date();
   const normalizedTicketmasterApiKey = ticketmasterApiKey?.trim();
   const ticketmasterCandidatesPromise = normalizedTicketmasterApiKey
-    ? fetchTicketmasterEvents(normalizedTicketmasterApiKey, fetchImpl)
+    ? fetchTicketmasterEvents(normalizedTicketmasterApiKey, fetchImpl, now)
     : Promise.resolve([] as ExternalEventCandidate[]);
 
   if (!normalizedTicketmasterApiKey) {
