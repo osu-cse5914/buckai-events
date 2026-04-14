@@ -58,3 +58,25 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 - **Given**: Task `"embedding"` is configured with modelId `"text-embed"`
 - **When**: The embedding feature sends text
 - **Then**: The router returns a vector of the configured dimensions
+
+## TC-AI-006: Cloudflare AI Gateway dynamic route swap
+
+- **Spec scenario**: S-AI-2
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/ai-model-router.test.ts`
+- **Phase introduced**: 4
+- **Regression**: Phase 4+
+- **Given**: Task `"chatbot"` is configured with modelId `"gemini-pro"`
+- **When**: Config is updated to set `"chatbot"` modelId to `"social-osu"` with provider `"cf-aig"`
+- **Then**: The chatbot now uses Cloudflare AI Gateway model `"dynamic/social-osu"` without code changes
+
+## TC-AI-007: Cloudflare AI Gateway embedding route swap
+
+- **Spec scenario**: S-AI-5
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/ai-model-router.test.ts`
+- **Phase introduced**: 4
+- **Regression**: Phase 4+
+- **Given**: Task `"embedding"` is configured with modelId `"text-embed"`
+- **When**: Config is updated to set `"embedding"` modelId to `"social-osu-embedding"` with provider `"cf-aig"`
+- **Then**: The router returns a Cloudflare AI Gateway embedding model configured with `"dynamic/social-osu-embedding"`

@@ -1,9 +1,15 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createAiGateway } from "ai-gateway-provider";
+import { createUnified } from "ai-gateway-provider/providers/unified";
 import type { EmbeddingModel, LanguageModel } from "ai";
 import { z } from "zod";
 
-export const AI_PROVIDER_TYPES = ["GOOGLE", "OPENAI_COMPATIBLE"] as const;
+export const AI_PROVIDER_TYPES = [
+  "GOOGLE",
+  "OPENAI_COMPATIBLE",
+  "CF_AI_GATEWAY",
+] as const;
 export const AI_MODEL_TYPES = ["GENERATIVE", "EMBEDDING"] as const;
 
 export type AIProviderType = (typeof AI_PROVIDER_TYPES)[number];
@@ -16,6 +22,8 @@ export type AIProviderConfig = {
   type: AIProviderType;
   apiKeyEnvVar: string;
   baseUrl?: string;
+  accountId?: string;
+  gateway?: string;
   rateLimit?: number;
 };
 
@@ -96,6 +104,8 @@ const aiProviderConfigSchema = z
     type: z.enum(AI_PROVIDER_TYPES),
     apiKeyEnvVar: z.string().min(1),
     baseUrl: z.string().min(1).optional(),
+    accountId: z.string().min(1).optional(),
+    gateway: z.string().min(1).optional(),
     rateLimit: z.number().int().positive().optional(),
   })
   .strict();
@@ -161,6 +171,35 @@ function requireProviderBaseUrl(provider: AIProviderConfig): string {
   );
 }
 
+function requireProviderAccountId(provider: AIProviderConfig): string {
+  if (provider.accountId?.trim()) {
+    return provider.accountId.trim();
+  }
+
+  throw new AIConfigurationError(
+    `Provider "${provider.id}" requires a non-empty accountId`,
+  );
+}
+
+function requireProviderGateway(provider: AIProviderConfig): string {
+  if (provider.gateway?.trim()) {
+    return provider.gateway.trim();
+  }
+
+  throw new AIConfigurationError(
+    `Provider "${provider.id}" requires a non-empty gateway`,
+  );
+}
+
+function buildCloudflareAIGatewayCompatBaseUrl(
+  provider: AIProviderConfig,
+): string {
+  const accountId = requireProviderAccountId(provider);
+  const gateway = requireProviderGateway(provider);
+
+  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/compat`;
+}
+
 function validateIndexedIds<T extends { id: string }>(
   values: Record<string, T>,
   type: "provider" | "model" | "task",
@@ -186,6 +225,18 @@ export function validateAIConfig(config: AIConfig): AIConfig {
     ) {
       throw new AIConfigurationError(
         `Provider "${provider.id}" requires a non-empty baseUrl`,
+      );
+    }
+
+    if (
+      provider.type === "CF_AI_GATEWAY" &&
+      (!provider.accountId ||
+        provider.accountId.trim().length === 0 ||
+        !provider.gateway ||
+        provider.gateway.trim().length === 0)
+    ) {
+      throw new AIConfigurationError(
+        `Provider "${provider.id}" requires non-empty accountId and gateway`,
       );
     }
   }
@@ -274,6 +325,27 @@ const defaultAdapters: AIProviderAdapters = {
         name: provider.id,
         apiKey: requireProviderApiKey(provider, env),
         baseURL: requireProviderBaseUrl(provider),
+      });
+
+      return openaiCompatible.embeddingModel(model.modelId as never);
+    },
+  },
+  CF_AI_GATEWAY: {
+    languageModel(provider, model, env) {
+      const gateway = createAiGateway({
+        accountId: requireProviderAccountId(provider),
+        gateway: requireProviderGateway(provider),
+        apiKey: requireProviderApiKey(provider, env),
+      });
+      const unified = createUnified();
+
+      return gateway(unified(model.modelId as never)) as never;
+    },
+    embeddingModel(provider, model, env) {
+      const openaiCompatible = createOpenAICompatible({
+        name: provider.id,
+        apiKey: requireProviderApiKey(provider, env),
+        baseURL: buildCloudflareAIGatewayCompatBaseUrl(provider),
       });
 
       return openaiCompatible.embeddingModel(model.modelId as never);

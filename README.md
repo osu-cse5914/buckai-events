@@ -41,7 +41,7 @@ Development is organized into 7 phases tracked via GitHub Issues and Milestones:
 - Backend: Hono on Cloudflare Workers
 - Database: Neon PostgreSQL via Prisma ORM
 - Auth: Clerk (OSU email restricted)
-- AI: Vercel AI SDK with Google Gemini and OpenAI-compatible provider support
+- AI: Vercel AI SDK with Google Gemini, Cloudflare AI Gateway, and OpenAI-compatible provider support
 - CI/CD: GitHub Actions
 
 ## Project Structure
@@ -72,7 +72,7 @@ Set the required API secrets in `apps/backend/.env`:
 
 - `DATABASE_URL`: your Neon or local Postgres connection string
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
-- `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used when a router provider entry references it
+- `CF_AIG_TOKEN`: Cloudflare AI Gateway token used when a router provider entry references it
 - `AI_ROUTER_CONFIG_JSON`: serialized provider/model/task routing and tuning config consumed by the AI router
 - any additional provider secret named by a provider entry's `apiKeyEnvVar`
 
@@ -82,7 +82,7 @@ Optional local overrides:
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
-  - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `OPENAI_PRIMARY_API_KEY`
+  - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `CF_AIG_TOKEN`
   - `AI_ROUTER_CONFIG_JSON` can be stored as pretty-printed multiline JSON inside a single quoted env value
   - system prompts stay in application code, not in `AI_ROUTER_CONFIG_JSON`
 - `apps/web/.env`
@@ -94,75 +94,59 @@ Example `AI_ROUTER_CONFIG_JSON`:
 ```json
 {
   "providers": {
-    "google": {
-      "id": "google",
-      "type": "GOOGLE",
-      "apiKeyEnvVar": "GOOGLE_GENERATIVE_AI_API_KEY"
-    },
-    "openai": {
-      "id": "openai",
-      "type": "OPENAI_COMPATIBLE",
-      "apiKeyEnvVar": "OPENAI_PRIMARY_API_KEY",
-      "baseUrl": "https://example.com/v1"
+    "cf-aig": {
+      "id": "cf-aig",
+      "type": "CF_AI_GATEWAY",
+      "apiKeyEnvVar": "CF_AIG_TOKEN",
+      "accountId": "2b7085f62464ab452fbd1c9569cedaef",
+      "gateway": "esperta-gateway"
     }
   },
   "models": {
-    "gemini-flash": {
-      "id": "gemini-flash",
-      "providerId": "google",
-      "modelId": "gemini-2.5-flash",
-      "type": "GENERATIVE",
-      "maxTokens": 1024,
-      "contextWindow": 1000000
-    },
-    "gemini-pro": {
-      "id": "gemini-pro",
-      "providerId": "google",
-      "modelId": "gemini-2.5-pro",
+    "social-osu": {
+      "id": "social-osu",
+      "providerId": "cf-aig",
+      "modelId": "dynamic/social-osu",
       "type": "GENERATIVE",
       "maxTokens": 2048,
-      "contextWindow": 262144
+      "contextWindow": 1000000
     },
-    "text-embed": {
-      "id": "text-embed",
-      "providerId": "google",
-      "modelId": "gemini-embedding-001",
+    "social-osu-embedding": {
+      "id": "social-osu-embedding",
+      "providerId": "cf-aig",
+      "modelId": "dynamic/social-osu-embedding",
       "type": "EMBEDDING",
       "dimensions": 768,
       "contextWindow": 131072
-    },
-    "gpt4o": {
-      "id": "gpt4o",
-      "providerId": "openai",
-      "modelId": "gpt-4o",
-      "type": "GENERATIVE"
     }
   },
   "tasks": {
     "chatbot": {
       "id": "chatbot",
-      "modelId": "gpt4o",
+      "modelId": "social-osu",
       "temperature": 0.7
     },
     "tagging": {
       "id": "tagging",
-      "modelId": "gemini-flash",
+      "modelId": "social-osu",
       "temperature": 0.3,
       "maxOutputTokens": 300
     },
     "title-generation": {
       "id": "title-generation",
-      "modelId": "gemini-flash",
+      "modelId": "social-osu",
       "temperature": 0.5,
       "maxOutputTokens": 80
     },
     "embedding": {
       "id": "embedding",
-      "modelId": "text-embed"
+      "modelId": "social-osu-embedding"
     }
   }
 }
 ```
+
+In the current gateway setup, `dynamic/social-osu` routes to `MiniMax-M2.7` and `dynamic/social-osu-embedding` routes to `nvidia/llama-nemotron-embed-vl-1b-v2:free`.
 
 Generate the Prisma client and initialize the database schema:
 

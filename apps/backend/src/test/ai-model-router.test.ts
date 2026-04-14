@@ -20,6 +20,13 @@ function buildAIConfig(): AIConfig {
         apiKeyEnvVar: "OPENAI_PRIMARY_API_KEY",
         baseUrl: "https://example.com/v1",
       },
+      "cf-aig": {
+        id: "cf-aig",
+        type: "CF_AI_GATEWAY",
+        apiKeyEnvVar: "CF_AIG_TOKEN",
+        accountId: "2b7085f62464ab452fbd1c9569cedaef",
+        gateway: "esperta-gateway",
+      },
     },
     models: {
       "gemini-flash": {
@@ -51,6 +58,22 @@ function buildAIConfig(): AIConfig {
         providerId: "openai",
         modelId: "gpt-4o",
         type: "GENERATIVE",
+      },
+      "social-osu": {
+        id: "social-osu",
+        providerId: "cf-aig",
+        modelId: "dynamic/social-osu",
+        type: "GENERATIVE",
+        maxTokens: 2048,
+        contextWindow: 1_000_000,
+      },
+      "social-osu-embedding": {
+        id: "social-osu-embedding",
+        providerId: "cf-aig",
+        modelId: "dynamic/social-osu-embedding",
+        type: "EMBEDDING",
+        dimensions: 768,
+        contextWindow: 131_072,
       },
     },
     tasks: {
@@ -84,6 +107,7 @@ function buildEnv(config = buildAIConfig()) {
     AI_ROUTER_CONFIG_JSON: JSON.stringify(config),
     GOOGLE_GENERATIVE_AI_API_KEY: "google_test_key",
     OPENAI_PRIMARY_API_KEY: "openai_test_key",
+    CF_AIG_TOKEN: "cf_aig_test_key",
   };
 }
 
@@ -140,6 +164,55 @@ describe("[phase:4] [regression:always] AI model router", () => {
     expect(() => router.getLanguageModel("tagging")).toThrow(
       AIProviderUnavailableError,
     );
+  });
+
+  it("TC-AI-006: supports swapping chatbot to a Cloudflare AI Gateway dynamic route via config only", () => {
+    const config = buildAIConfig();
+    config.tasks.chatbot.modelId = "social-osu";
+
+    const router = createAIModelRouter({
+      config,
+      env: {
+        GOOGLE_GENERATIVE_AI_API_KEY: "google_test_key",
+        OPENAI_PRIMARY_API_KEY: "openai_test_key",
+        CF_AIG_TOKEN: "cf_aig_test_key",
+      },
+    });
+
+    const chatbot = router.resolveTask("chatbot");
+
+    expect(chatbot.provider.id).toBe("cf-aig");
+    expect(chatbot.provider.type).toBe("CF_AI_GATEWAY");
+    expect(chatbot.provider.accountId).toBe("2b7085f62464ab452fbd1c9569cedaef");
+    expect(chatbot.provider.gateway).toBe("esperta-gateway");
+    expect(chatbot.model.id).toBe("social-osu");
+    expect(chatbot.model.modelId).toBe("dynamic/social-osu");
+    expect(router.getLanguageModel("chatbot")).toBeDefined();
+  });
+
+  it("TC-AI-007: supports swapping embedding to a Cloudflare AI Gateway model via config only", () => {
+    const config = buildAIConfig();
+    config.tasks.embedding.modelId = "social-osu-embedding";
+
+    const router = createAIModelRouter({
+      config,
+      env: {
+        GOOGLE_GENERATIVE_AI_API_KEY: "google_test_key",
+        OPENAI_PRIMARY_API_KEY: "openai_test_key",
+        CF_AIG_TOKEN: "cf_aig_test_key",
+      },
+    });
+
+    const embedding = router.resolveTask("embedding");
+
+    expect(embedding.provider.id).toBe("cf-aig");
+    expect(embedding.provider.type).toBe("CF_AI_GATEWAY");
+    expect(embedding.provider.accountId).toBe("2b7085f62464ab452fbd1c9569cedaef");
+    expect(embedding.provider.gateway).toBe("esperta-gateway");
+    expect(embedding.model.id).toBe("social-osu-embedding");
+    expect(embedding.model.modelId).toBe("dynamic/social-osu-embedding");
+    expect(embedding.model.dimensions).toBe(768);
+    expect(router.getEmbeddingModel("embedding")).toBeDefined();
   });
 
   it("TC-AI-004: throws configuration errors for missing config, invalid config, and unknown task ids", () => {
