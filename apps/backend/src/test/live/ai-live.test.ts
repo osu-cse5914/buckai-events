@@ -133,7 +133,7 @@ describe("[phase:4] [regression:always] Live AI Gateway smoke", () => {
       model: router.getEmbeddingModel("embedding"),
       value: "Social OSU live embedding smoke test",
       providerOptions: {
-        openrouter: {
+        [task.provider.id]: {
           dimensions: task.model.dimensions,
         },
       },
