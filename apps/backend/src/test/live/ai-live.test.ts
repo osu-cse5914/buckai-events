@@ -126,7 +126,7 @@ describe("[phase:4] [regression:always] Live AI Gateway smoke", () => {
     const router = createAIModelRouter({ env });
     const task = router.resolveTask("embedding");
 
-    expect(task.provider.type).toBe("OPENAI_COMPATIBLE");
+    expect(task.provider.type).toBe("CF_AI_GATEWAY");
     expect(task.model.modelId).toBe("nvidia/llama-nemotron-embed-vl-1b-v2:free");
 
     const result = await embed({

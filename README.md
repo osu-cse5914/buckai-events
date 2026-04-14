@@ -94,38 +94,32 @@ Example `AI_ROUTER_CONFIG_JSON`:
 ```json
 {
   "providers": {
-    "provider-id": {
-      "id": "provider-id",
+    "cf-aig": {
+      "id": "cf-aig",
       "type": "CF_AI_GATEWAY",
       "apiKeyEnvVar": "CF_AIG_TOKEN",
       "accountId": "your-account-id",
-      "gateway": "your-gateway",
-      "customProviderId": "custom-your-provider",
-      "chatCompletionsPath": "/v1/chat/completions"
-    },
-    "embedding-provider": {
-      "id": "embedding-provider",
-      "type": "OPENAI_COMPATIBLE",
-      "baseUrl": "https://gateway.ai.cloudflare.com/v1/your-account-id/your-gateway/provider/v1",
-      "headersEnv": {
-        "cf-aig-authorization": "CF_AIG_TOKEN"
-      }
+      "gateway": "your-gateway"
     }
   },
   "models": {
-    "chat-model": {
-      "id": "chat-model",
-      "providerId": "provider-id",
-      "modelId": "provider-model-name",
+    "MiniMax-M2.7": {
+      "id": "MiniMax-M2.7",
+      "providerId": "cf-aig",
+      "modelId": "MiniMax-M2.7",
       "type": "GENERATIVE",
+      "gatewayProviderId": "custom-your-provider",
+      "chatCompletionsPath": "/v1/chat/completions",
       "maxTokens": 2048,
       "contextWindow": 1000000
     },
-    "embedding-model": {
-      "id": "embedding-model",
-      "providerId": "embedding-provider",
-      "modelId": "provider/embedding-model",
+    "nvidia/llama-nemotron-embed-vl-1b-v2:free": {
+      "id": "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+      "providerId": "cf-aig",
+      "modelId": "nvidia/llama-nemotron-embed-vl-1b-v2:free",
       "type": "EMBEDDING",
+      "gatewayProviderId": "openrouter",
+      "gatewayBasePath": "/v1",
       "dimensions": 768,
       "contextWindow": 131072
     }
@@ -133,24 +127,24 @@ Example `AI_ROUTER_CONFIG_JSON`:
   "tasks": {
     "chatbot": {
       "id": "chatbot",
-      "modelId": "chat-model",
+      "modelId": "MiniMax-M2.7",
       "temperature": 0.7
     },
     "tagging": {
       "id": "tagging",
-      "modelId": "chat-model",
+      "modelId": "MiniMax-M2.7",
       "temperature": 0.3,
       "maxOutputTokens": 300
     },
     "title-generation": {
       "id": "title-generation",
-      "modelId": "chat-model",
+      "modelId": "MiniMax-M2.7",
       "temperature": 0.5,
       "maxOutputTokens": 80
     },
     "embedding": {
       "id": "embedding",
-      "modelId": "embedding-model"
+      "modelId": "nvidia/llama-nemotron-embed-vl-1b-v2:free"
     }
   }
 }

@@ -39,6 +39,9 @@ export type AIModelConfig = {
   providerId: string;
   modelId: string;
   type: AIModelType;
+  gatewayProviderId?: string;
+  gatewayBasePath?: string;
+  chatCompletionsPath?: string;
   maxTokens?: number;
   dimensions?: number;
   contextWindow?: number;
@@ -127,6 +130,9 @@ const aiModelConfigSchema = z
     providerId: z.string().min(1),
     modelId: z.string().min(1),
     type: z.enum(AI_MODEL_TYPES),
+    gatewayProviderId: z.string().min(1).optional(),
+    gatewayBasePath: z.string().min(1).optional(),
+    chatCompletionsPath: z.string().min(1).optional(),
     maxTokens: z.number().int().positive().optional(),
     dimensions: z.number().int().positive().optional(),
     contextWindow: z.number().int().positive().optional(),
@@ -282,13 +288,24 @@ function parseCloudflareCustomProviderModelId(modelId: string): {
 
 function buildCloudflareAIGatewayCustomProviderUrl(
   provider: AIProviderConfig,
-  customProviderId: string,
+  gatewayProviderId: string,
   path: string,
 ): string {
   const accountId = requireProviderAccountId(provider);
   const gateway = requireProviderGateway(provider);
 
-  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/${customProviderId}${path}`;
+  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/${gatewayProviderId}${path}`;
+}
+
+function buildCloudflareAIGatewayProviderBaseUrl(
+  provider: AIProviderConfig,
+  gatewayProviderId: string,
+  gatewayBasePath: string,
+): string {
+  const accountId = requireProviderAccountId(provider);
+  const gateway = requireProviderGateway(provider);
+
+  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/${gatewayProviderId}${gatewayBasePath}`;
 }
 
 function buildCloudflareAIGatewayHeaders(
@@ -311,11 +328,12 @@ function resolveCloudflareCustomProviderTarget(
   provider: AIProviderConfig,
   model: AIModelConfig,
 ): {
-  customProviderId: string;
+  gatewayProviderId: string;
   providerModelId: string;
   chatCompletionsPath: string;
 } | null {
-  const chatCompletionsPath = provider.chatCompletionsPath?.trim();
+  const chatCompletionsPath =
+    model.chatCompletionsPath?.trim() ?? provider.chatCompletionsPath?.trim();
   if (!chatCompletionsPath) {
     return null;
   }
@@ -326,10 +344,11 @@ function resolveCloudflareCustomProviderTarget(
     );
   }
 
-  const explicitCustomProviderId = provider.customProviderId?.trim();
-  if (explicitCustomProviderId) {
+  const explicitGatewayProviderId =
+    model.gatewayProviderId?.trim() ?? provider.customProviderId?.trim();
+  if (explicitGatewayProviderId) {
     return {
-      customProviderId: explicitCustomProviderId,
+      gatewayProviderId: explicitGatewayProviderId,
       providerModelId: model.modelId,
       chatCompletionsPath,
     };
@@ -343,9 +362,40 @@ function resolveCloudflareCustomProviderTarget(
   }
 
   return {
-    customProviderId: parsedModel.customProviderId,
+    gatewayProviderId: parsedModel.customProviderId,
     providerModelId: parsedModel.providerModelId,
     chatCompletionsPath,
+  };
+}
+
+function resolveCloudflareOpenAICompatibleRoute(
+  model: AIModelConfig,
+): {
+  gatewayProviderId: string;
+  gatewayBasePath: string;
+} | null {
+  const gatewayProviderId = model.gatewayProviderId?.trim();
+  const gatewayBasePath = model.gatewayBasePath?.trim();
+
+  if (!gatewayProviderId && !gatewayBasePath) {
+    return null;
+  }
+
+  if (!gatewayProviderId || !gatewayBasePath) {
+    throw new AIConfigurationError(
+      `Model "${model.id}" requires both gatewayProviderId and gatewayBasePath`,
+    );
+  }
+
+  if (!gatewayBasePath.startsWith("/")) {
+    throw new AIConfigurationError(
+      `Model "${model.id}" gatewayBasePath must start with "/"`,
+    );
+  }
+
+  return {
+    gatewayProviderId,
+    gatewayBasePath,
   };
 }
 
@@ -370,7 +420,7 @@ function createCloudflareCustomProviderLanguageModel(
     url: () =>
       buildCloudflareAIGatewayCustomProviderUrl(
         provider,
-        customProviderTarget.customProviderId,
+        customProviderTarget.gatewayProviderId,
         customProviderTarget.chatCompletionsPath,
       ),
     },
@@ -444,6 +494,22 @@ export function validateAIConfig(config: AIConfig): AIConfig {
     if (!config.providers[model.providerId]) {
       throw new AIConfigurationError(
         `Model "${model.id}" references unknown provider "${model.providerId}"`,
+      );
+    }
+
+    if (model.gatewayBasePath && !model.gatewayProviderId) {
+      throw new AIConfigurationError(
+        `Model "${model.id}" requires gatewayProviderId when gatewayBasePath is set`,
+      );
+    }
+
+    if (
+      model.chatCompletionsPath &&
+      !model.gatewayProviderId &&
+      !parseCloudflareCustomProviderModelId(model.modelId)
+    ) {
+      throw new AIConfigurationError(
+        `Model "${model.id}" requires gatewayProviderId or a modelId shaped like "custom-provider/model" when chatCompletionsPath is set`,
       );
     }
   }
@@ -560,9 +626,16 @@ const defaultAdapters: AIProviderAdapters = {
       return gateway(unified(model.modelId as never)) as never;
     },
     embeddingModel(provider, model, env) {
+      const openAICompatibleRoute = resolveCloudflareOpenAICompatibleRoute(model);
       const openaiCompatible = createOpenAICompatible({
         name: provider.id,
-        baseURL: buildCloudflareAIGatewayCompatBaseUrl(provider),
+        baseURL: openAICompatibleRoute
+          ? buildCloudflareAIGatewayProviderBaseUrl(
+              provider,
+              openAICompatibleRoute.gatewayProviderId,
+              openAICompatibleRoute.gatewayBasePath,
+            )
+          : buildCloudflareAIGatewayCompatBaseUrl(provider),
         headers: {
           "cf-aig-authorization": `Bearer ${requireProviderApiKey(provider, env)}`,
         },
