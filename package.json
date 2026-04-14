@@ -12,6 +12,7 @@
     "test:registry:audit": "bun scripts/audit-test-registry.ts",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:live:ai": "bun --cwd apps/backend run test:live:ai",
     "test:coverage": "turbo run test -- --coverage",
     "test:regression:phase-0": "turbo run test -- --reporter=verbose -t '\\[phase:0\\]'",
     "test:regression:phase-1": "turbo run test -- --reporter=verbose -t '\\[phase:[01]\\]'",

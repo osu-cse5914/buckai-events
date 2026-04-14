@@ -93,8 +93,27 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  deploy-production:
+  live-ai:
     needs: [checks, e2e, secret-scan]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    env:
+      AI_ROUTER_CONFIG_JSON: ${{ secrets.AI_ROUTER_CONFIG_JSON }}
+      CF_AIG_TOKEN: ${{ secrets.CF_AIG_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+      - run: bun run test:live:ai
+
+  deploy-production:
+    needs: [checks, e2e, secret-scan, live-ai]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production

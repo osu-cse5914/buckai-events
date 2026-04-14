@@ -54,6 +54,8 @@ function buildEmbeddingProviderOptions(task: ResolvedAITask) {
           outputDimensionality: dimensions,
         },
       };
+    case "CF_AI_GATEWAY":
+      return undefined;
     case "OPENAI_COMPATIBLE":
       return {
         [task.provider.id]: {

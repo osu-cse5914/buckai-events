@@ -41,7 +41,7 @@ Development is organized into 7 phases tracked via GitHub Issues and Milestones:
 - Backend: Hono on Cloudflare Workers
 - Database: Neon PostgreSQL via Prisma ORM
 - Auth: Clerk (OSU email restricted)
-- AI: Vercel AI SDK with Google Gemini and OpenAI-compatible provider support
+- AI: Vercel AI SDK with Google Gemini, Cloudflare AI Gateway, and OpenAI-compatible provider support
 - CI/CD: GitHub Actions
 
 ## Project Structure
@@ -72,7 +72,7 @@ Set the required API secrets in `apps/backend/.env`:
 
 - `DATABASE_URL`: your Neon or local Postgres connection string
 - `CLERK_SECRET_KEY`: your Clerk secret key for the same Clerk instance you will use in the web app
-- `GOOGLE_GENERATIVE_AI_API_KEY`: Google Gemini API key used when a router provider entry references it
+- `CF_AIG_TOKEN`: Cloudflare AI Gateway token used when a router provider entry references it
 - `AI_ROUTER_CONFIG_JSON`: serialized provider/model/task routing and tuning config consumed by the AI router
 - any additional provider secret named by a provider entry's `apiKeyEnvVar`
 
@@ -82,7 +82,7 @@ Optional local overrides:
   - `PORT` defaults to `3001`
   - `CORS_ORIGIN` defaults to `http://localhost:5173`
   - `CLERK_PUBLISHABLE_KEY` overrides the repo's default development Clerk publishable key used by the API auth middleware
-  - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `OPENAI_PRIMARY_API_KEY`
+  - add whatever provider secret names your `AI_ROUTER_CONFIG_JSON` references, for example `CF_AIG_TOKEN`
   - `AI_ROUTER_CONFIG_JSON` can be stored as pretty-printed multiline JSON inside a single quoted env value
   - system prompts stay in application code, not in `AI_ROUTER_CONFIG_JSON`
 - `apps/web/.env`
@@ -94,71 +94,63 @@ Example `AI_ROUTER_CONFIG_JSON`:
 ```json
 {
   "providers": {
-    "google": {
-      "id": "google",
-      "type": "GOOGLE",
-      "apiKeyEnvVar": "GOOGLE_GENERATIVE_AI_API_KEY"
+    "provider-id": {
+      "id": "provider-id",
+      "type": "CF_AI_GATEWAY",
+      "apiKeyEnvVar": "CF_AIG_TOKEN",
+      "accountId": "your-account-id",
+      "gateway": "your-gateway",
+      "customProviderId": "custom-your-provider",
+      "chatCompletionsPath": "/v1/chat/completions"
     },
-    "openai": {
-      "id": "openai",
+    "embedding-provider": {
+      "id": "embedding-provider",
       "type": "OPENAI_COMPATIBLE",
-      "apiKeyEnvVar": "OPENAI_PRIMARY_API_KEY",
-      "baseUrl": "https://example.com/v1"
+      "baseUrl": "https://gateway.ai.cloudflare.com/v1/your-account-id/your-gateway/provider/v1",
+      "headersEnv": {
+        "cf-aig-authorization": "CF_AIG_TOKEN"
+      }
     }
   },
   "models": {
-    "gemini-flash": {
-      "id": "gemini-flash",
-      "providerId": "google",
-      "modelId": "gemini-2.5-flash",
-      "type": "GENERATIVE",
-      "maxTokens": 1024,
-      "contextWindow": 1000000
-    },
-    "gemini-pro": {
-      "id": "gemini-pro",
-      "providerId": "google",
-      "modelId": "gemini-2.5-pro",
+    "chat-model": {
+      "id": "chat-model",
+      "providerId": "provider-id",
+      "modelId": "provider-model-name",
       "type": "GENERATIVE",
       "maxTokens": 2048,
-      "contextWindow": 262144
+      "contextWindow": 1000000
     },
-    "text-embed": {
-      "id": "text-embed",
-      "providerId": "google",
-      "modelId": "gemini-embedding-001",
+    "embedding-model": {
+      "id": "embedding-model",
+      "providerId": "embedding-provider",
+      "modelId": "provider/embedding-model",
       "type": "EMBEDDING",
       "dimensions": 768,
       "contextWindow": 131072
-    },
-    "gpt4o": {
-      "id": "gpt4o",
-      "providerId": "openai",
-      "modelId": "gpt-4o",
-      "type": "GENERATIVE"
     }
   },
   "tasks": {
     "chatbot": {
       "id": "chatbot",
-      "modelId": "gpt4o",
+      "modelId": "chat-model",
       "temperature": 0.7
     },
     "tagging": {
       "id": "tagging",
-      "modelId": "gemini-flash",
+      "modelId": "chat-model",
       "temperature": 0.3,
       "maxOutputTokens": 300
     },
     "title-generation": {
       "id": "title-generation",
-      "modelId": "gemini-flash",
+      "modelId": "chat-model",
       "temperature": 0.5,
       "maxOutputTokens": 80
     },
     "embedding": {
       "id": "embedding",
-      "modelId": "text-embed"
+      "modelId": "embedding-model"
     }
   }
 }
@@ -221,10 +213,11 @@ First-time Cloudflare setup:
    ```
 4. Set the AI provider secrets used by your router config.
    ```bash
-   cd apps/backend && wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
-   cd apps/backend && wrangler secret put OPENAI_PRIMARY_API_KEY
+   cd apps/backend && wrangler secret put CF_AIG_TOKEN
+   cd apps/backend && wrangler secret put AI_ROUTER_CONFIG_JSON
    ```
-5. Set `AI_ROUTER_CONFIG_JSON` in your deployment environment to the serialized router config.
+5. Mirror the same `AI_ROUTER_CONFIG_JSON` and any referenced provider secrets into the GitHub `production` environment so the `live-ai` pipeline job can run `bun run test:live:ai` before deploy.
+6. Keep runtime AI routing in environment configuration, not in committed source files.
 
 If you deploy against a different Clerk instance than the repo default, set
 `VITE_CLERK_PUBLISHABLE_KEY` in the build environment before `bun run deploy`.
