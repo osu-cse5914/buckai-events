@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { YouHubPage } from "@/components/you/you-hub-page";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/you/")({
-  component: YouHubPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/you/applications" });
+  },
+  component: () => null,
 });

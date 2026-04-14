@@ -85,5 +85,17 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
       "href",
       "/you",
     );
+    expect(screen.getByRole("link", { name: "Applications" })).toHaveAttribute(
+      "href",
+      "/you/applications",
+    );
+    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute(
+      "href",
+      "/you/events",
+    );
+    expect(screen.getByRole("link", { name: "Collections" })).toHaveAttribute(
+      "href",
+      "/you/collections",
+    );
   });
 });
