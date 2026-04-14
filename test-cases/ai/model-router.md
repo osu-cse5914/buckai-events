@@ -68,7 +68,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 - **Regression**: Phase 4+
 - **Given**: Task `"chatbot"` is configured with modelId `"gemini-pro"`
 - **When**: Config is updated to set `"chatbot"` modelId to `"social-osu"` with provider `"cf-aig"`
-- **Then**: The chatbot now uses Cloudflare AI Gateway model `"dynamic/social-osu"` without code changes
+- **Then**: The chatbot now uses a Cloudflare AI Gateway custom MiniMax provider model without code changes
 
 ## TC-AI-007: Cloudflare AI Gateway embedding route swap
 
@@ -79,4 +79,26 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 - **Regression**: Phase 4+
 - **Given**: Task `"embedding"` is configured with modelId `"text-embed"`
 - **When**: Config is updated to set `"embedding"` modelId to `"social-osu-embedding"` with provider `"cf-aig"`
-- **Then**: The router returns a Cloudflare AI Gateway embedding model configured with `"dynamic/social-osu-embedding"`
+- **Then**: The router returns an AI Gateway OpenRouter embedding model configured with `"nvidia/llama-nemotron-embed-vl-1b-v2:free"`
+
+## TC-AI-008: Live chatbot route smoke test
+
+- **Spec scenario**: S-AI-2
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/live/ai-live.test.ts`
+- **Phase introduced**: 4
+- **Regression**: Phase 4+
+- **Given**: `AI_ROUTER_CONFIG_JSON` points `"chatbot"` at `"dynamic/social-osu"` with provider `"cf-aig"`
+- **When**: The live AI smoke test runs against the configured Cloudflare AI Gateway
+- **Then**: The chatbot task returns non-empty text from the real API
+
+## TC-AI-009: Live embedding route smoke test
+
+- **Spec scenario**: S-AI-5
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/live/ai-live.test.ts`
+- **Phase introduced**: 4
+- **Regression**: Phase 4+
+- **Given**: `AI_ROUTER_CONFIG_JSON` points `"embedding"` at `"dynamic/social-osu-embedding"` with provider `"cf-aig"`
+- **When**: The live AI smoke test runs against the configured Cloudflare AI Gateway
+- **Then**: The embedding task returns a vector whose length matches the configured dimensions

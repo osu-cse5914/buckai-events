@@ -20,6 +20,15 @@ function buildAIConfig(): AIConfig {
         apiKeyEnvVar: "OPENAI_PRIMARY_API_KEY",
         baseUrl: "https://example.com/v1",
       },
+      openrouter: {
+        id: "openrouter",
+        type: "OPENAI_COMPATIBLE",
+        baseUrl:
+          "https://gateway.ai.cloudflare.com/v1/2b7085f62464ab452fbd1c9569cedaef/esperta-gateway/openrouter/v1",
+        headersEnv: {
+          "cf-aig-authorization": "CF_AIG_TOKEN",
+        },
+      },
       "cf-aig": {
         id: "cf-aig",
         type: "CF_AI_GATEWAY",
@@ -62,15 +71,15 @@ function buildAIConfig(): AIConfig {
       "social-osu": {
         id: "social-osu",
         providerId: "cf-aig",
-        modelId: "dynamic/social-osu",
+        modelId: "custom-minimax-china/MiniMax-M2.7",
         type: "GENERATIVE",
         maxTokens: 2048,
         contextWindow: 1_000_000,
       },
       "social-osu-embedding": {
         id: "social-osu-embedding",
-        providerId: "cf-aig",
-        modelId: "dynamic/social-osu-embedding",
+        providerId: "openrouter",
+        modelId: "nvidia/llama-nemotron-embed-vl-1b-v2:free",
         type: "EMBEDDING",
         dimensions: 768,
         contextWindow: 131_072,
@@ -186,7 +195,7 @@ describe("[phase:4] [regression:always] AI model router", () => {
     expect(chatbot.provider.accountId).toBe("2b7085f62464ab452fbd1c9569cedaef");
     expect(chatbot.provider.gateway).toBe("esperta-gateway");
     expect(chatbot.model.id).toBe("social-osu");
-    expect(chatbot.model.modelId).toBe("dynamic/social-osu");
+    expect(chatbot.model.modelId).toBe("custom-minimax-china/MiniMax-M2.7");
     expect(router.getLanguageModel("chatbot")).toBeDefined();
   });
 
@@ -205,12 +214,12 @@ describe("[phase:4] [regression:always] AI model router", () => {
 
     const embedding = router.resolveTask("embedding");
 
-    expect(embedding.provider.id).toBe("cf-aig");
-    expect(embedding.provider.type).toBe("CF_AI_GATEWAY");
-    expect(embedding.provider.accountId).toBe("2b7085f62464ab452fbd1c9569cedaef");
-    expect(embedding.provider.gateway).toBe("esperta-gateway");
+    expect(embedding.provider.id).toBe("openrouter");
+    expect(embedding.provider.type).toBe("OPENAI_COMPATIBLE");
     expect(embedding.model.id).toBe("social-osu-embedding");
-    expect(embedding.model.modelId).toBe("dynamic/social-osu-embedding");
+    expect(embedding.model.modelId).toBe(
+      "nvidia/llama-nemotron-embed-vl-1b-v2:free",
+    );
     expect(embedding.model.dimensions).toBe(768);
     expect(router.getEmbeddingModel("embedding")).toBeDefined();
   });

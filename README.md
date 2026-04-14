@@ -94,27 +94,35 @@ Example `AI_ROUTER_CONFIG_JSON`:
 ```json
 {
   "providers": {
-    "cf-aig": {
-      "id": "cf-aig",
+    "provider-id": {
+      "id": "provider-id",
       "type": "CF_AI_GATEWAY",
       "apiKeyEnvVar": "CF_AIG_TOKEN",
-      "accountId": "2b7085f62464ab452fbd1c9569cedaef",
-      "gateway": "esperta-gateway"
+      "accountId": "your-account-id",
+      "gateway": "your-gateway"
+    },
+    "embedding-provider": {
+      "id": "embedding-provider",
+      "type": "OPENAI_COMPATIBLE",
+      "baseUrl": "https://gateway.ai.cloudflare.com/v1/your-account-id/your-gateway/provider/v1",
+      "headersEnv": {
+        "cf-aig-authorization": "CF_AIG_TOKEN"
+      }
     }
   },
   "models": {
-    "social-osu": {
-      "id": "social-osu",
-      "providerId": "cf-aig",
-      "modelId": "dynamic/social-osu",
+    "chat-model": {
+      "id": "chat-model",
+      "providerId": "provider-id",
+      "modelId": "provider/model-name",
       "type": "GENERATIVE",
       "maxTokens": 2048,
       "contextWindow": 1000000
     },
-    "social-osu-embedding": {
-      "id": "social-osu-embedding",
-      "providerId": "cf-aig",
-      "modelId": "dynamic/social-osu-embedding",
+    "embedding-model": {
+      "id": "embedding-model",
+      "providerId": "embedding-provider",
+      "modelId": "provider/embedding-model",
       "type": "EMBEDDING",
       "dimensions": 768,
       "contextWindow": 131072
@@ -123,30 +131,28 @@ Example `AI_ROUTER_CONFIG_JSON`:
   "tasks": {
     "chatbot": {
       "id": "chatbot",
-      "modelId": "social-osu",
+      "modelId": "chat-model",
       "temperature": 0.7
     },
     "tagging": {
       "id": "tagging",
-      "modelId": "social-osu",
+      "modelId": "chat-model",
       "temperature": 0.3,
       "maxOutputTokens": 300
     },
     "title-generation": {
       "id": "title-generation",
-      "modelId": "social-osu",
+      "modelId": "chat-model",
       "temperature": 0.5,
       "maxOutputTokens": 80
     },
     "embedding": {
       "id": "embedding",
-      "modelId": "social-osu-embedding"
+      "modelId": "embedding-model"
     }
   }
 }
 ```
-
-In the current gateway setup, `dynamic/social-osu` routes to `MiniMax-M2.7` and `dynamic/social-osu-embedding` routes to `nvidia/llama-nemotron-embed-vl-1b-v2:free`.
 
 Generate the Prisma client and initialize the database schema:
 
