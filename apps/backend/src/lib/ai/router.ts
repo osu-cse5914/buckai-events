@@ -1,9 +1,18 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import {
+  createOpenAICompatible,
+  OpenAICompatibleChatLanguageModel,
+} from "@ai-sdk/openai-compatible";
+import { createAiGateway } from "ai-gateway-provider";
+import { createUnified } from "ai-gateway-provider/providers/unified";
 import type { EmbeddingModel, LanguageModel } from "ai";
 import { z } from "zod";
 
-export const AI_PROVIDER_TYPES = ["GOOGLE", "OPENAI_COMPATIBLE"] as const;
+export const AI_PROVIDER_TYPES = [
+  "GOOGLE",
+  "OPENAI_COMPATIBLE",
+  "CF_AI_GATEWAY",
+] as const;
 export const AI_MODEL_TYPES = ["GENERATIVE", "EMBEDDING"] as const;
 
 export type AIProviderType = (typeof AI_PROVIDER_TYPES)[number];
@@ -14,8 +23,14 @@ export type AIEnvironment = Record<string, string | undefined> | undefined;
 export type AIProviderConfig = {
   id: string;
   type: AIProviderType;
-  apiKeyEnvVar: string;
+  apiKeyEnvVar?: string;
+  upstreamApiKeyEnvVar?: string;
   baseUrl?: string;
+  accountId?: string;
+  gateway?: string;
+  customProviderId?: string;
+  chatCompletionsPath?: string;
+  headersEnv?: Record<string, string>;
   rateLimit?: number;
 };
 
@@ -94,8 +109,14 @@ const aiProviderConfigSchema = z
   .object({
     id: z.string().min(1),
     type: z.enum(AI_PROVIDER_TYPES),
-    apiKeyEnvVar: z.string().min(1),
+    apiKeyEnvVar: z.string().min(1).optional(),
+    upstreamApiKeyEnvVar: z.string().min(1).optional(),
     baseUrl: z.string().min(1).optional(),
+    accountId: z.string().min(1).optional(),
+    gateway: z.string().min(1).optional(),
+    customProviderId: z.string().min(1).optional(),
+    chatCompletionsPath: z.string().min(1).optional(),
+    headersEnv: z.record(z.string().min(1)).optional(),
     rateLimit: z.number().int().positive().optional(),
   })
   .strict();
@@ -143,9 +164,51 @@ function requireProviderApiKey(
   provider: AIProviderConfig,
   env: AIEnvironment,
 ): string {
+  if (!provider.apiKeyEnvVar?.trim()) {
+    throw new AIConfigurationError(
+      `Provider "${provider.id}" requires a non-empty apiKeyEnvVar`,
+    );
+  }
+
   const apiKey = readEnvValue(env, provider.apiKeyEnvVar);
   if (!apiKey) {
     throw new AIProviderUnavailableError(provider.id, provider.apiKeyEnvVar);
+  }
+
+  return apiKey;
+}
+
+function resolveProviderHeaders(
+  provider: AIProviderConfig,
+  env: AIEnvironment,
+): Record<string, string> | undefined {
+  if (!provider.headersEnv) {
+    return undefined;
+  }
+
+  const entries = Object.entries(provider.headersEnv).map(([header, envVar]) => {
+    const value = readEnvValue(env, envVar);
+    if (!value) {
+      throw new AIProviderUnavailableError(provider.id, envVar);
+    }
+
+    return [header, value] as const;
+  });
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
+function resolveOptionalProviderApiKey(
+  provider: AIProviderConfig,
+  env: AIEnvironment,
+): string | undefined {
+  if (!provider.upstreamApiKeyEnvVar?.trim()) {
+    return undefined;
+  }
+
+  const apiKey = readEnvValue(env, provider.upstreamApiKeyEnvVar);
+  if (!apiKey) {
+    throw new AIProviderUnavailableError(provider.id, provider.upstreamApiKeyEnvVar);
   }
 
   return apiKey;
@@ -158,6 +221,159 @@ function requireProviderBaseUrl(provider: AIProviderConfig): string {
 
   throw new AIConfigurationError(
     `Provider "${provider.id}" requires a non-empty baseUrl`,
+  );
+}
+
+function requireProviderAccountId(provider: AIProviderConfig): string {
+  if (provider.accountId?.trim()) {
+    return provider.accountId.trim();
+  }
+
+  throw new AIConfigurationError(
+    `Provider "${provider.id}" requires a non-empty accountId`,
+  );
+}
+
+function requireProviderGateway(provider: AIProviderConfig): string {
+  if (provider.gateway?.trim()) {
+    return provider.gateway.trim();
+  }
+
+  throw new AIConfigurationError(
+    `Provider "${provider.id}" requires a non-empty gateway`,
+  );
+}
+
+function buildCloudflareAIGatewayCompatBaseUrl(
+  provider: AIProviderConfig,
+): string {
+  const accountId = requireProviderAccountId(provider);
+  const gateway = requireProviderGateway(provider);
+
+  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/compat`;
+}
+
+const CLOUDFLARE_CUSTOM_PROVIDER_PREFIX = "custom-";
+
+function parseCloudflareCustomProviderModelId(modelId: string): {
+  customProviderId: string;
+  providerModelId: string;
+} | null {
+  const separatorIndex = modelId.indexOf("/");
+  if (separatorIndex <= 0) {
+    return null;
+  }
+
+  const customProviderId = modelId.slice(0, separatorIndex);
+  const providerModelId = modelId.slice(separatorIndex + 1);
+
+  if (
+    !customProviderId.startsWith(CLOUDFLARE_CUSTOM_PROVIDER_PREFIX) ||
+    providerModelId.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    customProviderId,
+    providerModelId,
+  };
+}
+
+function buildCloudflareAIGatewayCustomProviderUrl(
+  provider: AIProviderConfig,
+  customProviderId: string,
+  path: string,
+): string {
+  const accountId = requireProviderAccountId(provider);
+  const gateway = requireProviderGateway(provider);
+
+  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/${customProviderId}${path}`;
+}
+
+function buildCloudflareAIGatewayHeaders(
+  provider: AIProviderConfig,
+  env: AIEnvironment,
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    "cf-aig-authorization": `Bearer ${requireProviderApiKey(provider, env)}`,
+  };
+
+  const upstreamApiKey = resolveOptionalProviderApiKey(provider, env);
+  if (upstreamApiKey) {
+    headers.Authorization = `Bearer ${upstreamApiKey}`;
+  }
+
+  return headers;
+}
+
+function resolveCloudflareCustomProviderTarget(
+  provider: AIProviderConfig,
+  model: AIModelConfig,
+): {
+  customProviderId: string;
+  providerModelId: string;
+  chatCompletionsPath: string;
+} | null {
+  const chatCompletionsPath = provider.chatCompletionsPath?.trim();
+  if (!chatCompletionsPath) {
+    return null;
+  }
+
+  if (!chatCompletionsPath.startsWith("/")) {
+    throw new AIConfigurationError(
+      `Provider "${provider.id}" chatCompletionsPath must start with "/"`,
+    );
+  }
+
+  const explicitCustomProviderId = provider.customProviderId?.trim();
+  if (explicitCustomProviderId) {
+    return {
+      customProviderId: explicitCustomProviderId,
+      providerModelId: model.modelId,
+      chatCompletionsPath,
+    };
+  }
+
+  const parsedModel = parseCloudflareCustomProviderModelId(model.modelId);
+  if (!parsedModel) {
+    throw new AIConfigurationError(
+      `Provider "${provider.id}" requires customProviderId or a modelId shaped like "custom-provider/model" when chatCompletionsPath is set`,
+    );
+  }
+
+  return {
+    customProviderId: parsedModel.customProviderId,
+    providerModelId: parsedModel.providerModelId,
+    chatCompletionsPath,
+  };
+}
+
+function createCloudflareCustomProviderLanguageModel(
+  provider: AIProviderConfig,
+  model: AIModelConfig,
+  env: AIEnvironment,
+): LanguageModel | null {
+  const customProviderTarget = resolveCloudflareCustomProviderTarget(
+    provider,
+    model,
+  );
+  if (!customProviderTarget) {
+    return null;
+  }
+
+  return new OpenAICompatibleChatLanguageModel(
+    customProviderTarget.providerModelId,
+    {
+    provider: `${provider.id}.chat`,
+    headers: () => buildCloudflareAIGatewayHeaders(provider, env),
+    url: () =>
+      buildCloudflareAIGatewayCustomProviderUrl(
+        provider,
+        customProviderTarget.customProviderId,
+        customProviderTarget.chatCompletionsPath,
+      ),
+    },
   );
 }
 
@@ -186,6 +402,40 @@ export function validateAIConfig(config: AIConfig): AIConfig {
     ) {
       throw new AIConfigurationError(
         `Provider "${provider.id}" requires a non-empty baseUrl`,
+      );
+    }
+
+    if (
+      provider.type === "OPENAI_COMPATIBLE" &&
+      (!provider.apiKeyEnvVar || provider.apiKeyEnvVar.trim().length === 0) &&
+      (!provider.headersEnv || Object.keys(provider.headersEnv).length === 0)
+    ) {
+      throw new AIConfigurationError(
+        `Provider "${provider.id}" requires apiKeyEnvVar or headersEnv`,
+      );
+    }
+
+    if (
+      provider.type === "CF_AI_GATEWAY" &&
+      (!provider.apiKeyEnvVar ||
+        provider.apiKeyEnvVar.trim().length === 0 ||
+        !provider.accountId ||
+        provider.accountId.trim().length === 0 ||
+        !provider.gateway ||
+        provider.gateway.trim().length === 0)
+    ) {
+      throw new AIConfigurationError(
+        `Provider "${provider.id}" requires non-empty accountId and gateway`,
+      );
+    }
+
+    if (
+      provider.customProviderId &&
+      (!provider.chatCompletionsPath ||
+        provider.chatCompletionsPath.trim().length === 0)
+    ) {
+      throw new AIConfigurationError(
+        `Provider "${provider.id}" requires chatCompletionsPath when customProviderId is set`,
       );
     }
   }
@@ -261,19 +511,61 @@ const defaultAdapters: AIProviderAdapters = {
   },
   OPENAI_COMPATIBLE: {
     languageModel(provider, model, env) {
+      const headers = resolveProviderHeaders(provider, env);
       const openaiCompatible = createOpenAICompatible({
         name: provider.id,
-        apiKey: requireProviderApiKey(provider, env),
+        apiKey: provider.apiKeyEnvVar
+          ? requireProviderApiKey(provider, env)
+          : undefined,
         baseURL: requireProviderBaseUrl(provider),
+        headers,
       });
 
       return openaiCompatible.languageModel(model.modelId as never);
     },
     embeddingModel(provider, model, env) {
+      const headers = resolveProviderHeaders(provider, env);
       const openaiCompatible = createOpenAICompatible({
         name: provider.id,
-        apiKey: requireProviderApiKey(provider, env),
+        apiKey: provider.apiKeyEnvVar
+          ? requireProviderApiKey(provider, env)
+          : undefined,
         baseURL: requireProviderBaseUrl(provider),
+        headers,
+      });
+
+      return openaiCompatible.embeddingModel(model.modelId as never);
+    },
+  },
+  CF_AI_GATEWAY: {
+    languageModel(provider, model, env) {
+      const customProviderModel = createCloudflareCustomProviderLanguageModel(
+        provider,
+        model,
+        env,
+      );
+      if (customProviderModel) {
+        return customProviderModel;
+      }
+
+      const gateway = createAiGateway({
+        accountId: requireProviderAccountId(provider),
+        gateway: requireProviderGateway(provider),
+        apiKey: requireProviderApiKey(provider, env),
+      });
+      const unified = createUnified({
+        apiKey: resolveOptionalProviderApiKey(provider, env),
+      });
+
+      return gateway(unified(model.modelId as never)) as never;
+    },
+    embeddingModel(provider, model, env) {
+      const openaiCompatible = createOpenAICompatible({
+        name: provider.id,
+        baseURL: buildCloudflareAIGatewayCompatBaseUrl(provider),
+        headers: {
+          "cf-aig-authorization": `Bearer ${requireProviderApiKey(provider, env)}`,
+        },
       });
 
       return openaiCompatible.embeddingModel(model.modelId as never);
