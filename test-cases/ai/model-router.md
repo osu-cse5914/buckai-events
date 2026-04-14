@@ -59,7 +59,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 - **When**: The embedding feature sends text
 - **Then**: The router returns a vector of the configured dimensions
 
-## TC-AI-006: Cloudflare AI Gateway dynamic route swap
+## TC-AI-006: Cloudflare AI Gateway custom-provider route swap
 
 - **Spec scenario**: S-AI-2
 - **Type**: Automated
@@ -67,8 +67,8 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
 - **Given**: Task `"chatbot"` is configured with modelId `"gemini-pro"`
-- **When**: Config is updated to set `"chatbot"` modelId to `"social-osu"` with provider `"cf-aig"`
-- **Then**: The chatbot now uses a Cloudflare AI Gateway custom MiniMax provider model without code changes
+- **When**: Config is updated to set `"chatbot"` modelId to a model behind a Cloudflare AI Gateway custom provider route
+- **Then**: The chatbot uses the configured custom provider endpoint without application code changes
 
 ## TC-AI-007: Cloudflare AI Gateway embedding route swap
 
@@ -88,7 +88,7 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 - **Automated in**: `apps/backend/src/test/live/ai-live.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
-- **Given**: `AI_ROUTER_CONFIG_JSON` points `"chatbot"` at `"dynamic/social-osu"` with provider `"cf-aig"`
+- **Given**: `AI_ROUTER_CONFIG_JSON` points `"chatbot"` at the desired live generative route
 - **When**: The live AI smoke test runs against the configured Cloudflare AI Gateway
 - **Then**: The chatbot task returns non-empty text from the real API
 
@@ -99,6 +99,6 @@ Spec: [`model-router`](../../specs/ai/model-router.md)
 - **Automated in**: `apps/backend/src/test/live/ai-live.test.ts`
 - **Phase introduced**: 4
 - **Regression**: Phase 4+
-- **Given**: `AI_ROUTER_CONFIG_JSON` points `"embedding"` at `"dynamic/social-osu-embedding"` with provider `"cf-aig"`
+- **Given**: `AI_ROUTER_CONFIG_JSON` points `"embedding"` at the desired live embedding route
 - **When**: The live AI smoke test runs against the configured Cloudflare AI Gateway
 - **Then**: The embedding task returns a vector whose length matches the configured dimensions

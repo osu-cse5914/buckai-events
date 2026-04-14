@@ -99,7 +99,9 @@ Example `AI_ROUTER_CONFIG_JSON`:
       "type": "CF_AI_GATEWAY",
       "apiKeyEnvVar": "CF_AIG_TOKEN",
       "accountId": "your-account-id",
-      "gateway": "your-gateway"
+      "gateway": "your-gateway",
+      "customProviderId": "custom-your-provider",
+      "chatCompletionsPath": "/v1/chat/completions"
     },
     "embedding-provider": {
       "id": "embedding-provider",
@@ -114,7 +116,7 @@ Example `AI_ROUTER_CONFIG_JSON`:
     "chat-model": {
       "id": "chat-model",
       "providerId": "provider-id",
-      "modelId": "provider/model-name",
+      "modelId": "provider-model-name",
       "type": "GENERATIVE",
       "maxTokens": 2048,
       "contextWindow": 1000000
@@ -211,10 +213,11 @@ First-time Cloudflare setup:
    ```
 4. Set the AI provider secrets used by your router config.
    ```bash
-   cd apps/backend && wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
-   cd apps/backend && wrangler secret put OPENAI_PRIMARY_API_KEY
+   cd apps/backend && wrangler secret put CF_AIG_TOKEN
+   cd apps/backend && wrangler secret put AI_ROUTER_CONFIG_JSON
    ```
-5. Set `AI_ROUTER_CONFIG_JSON` in your deployment environment to the serialized router config.
+5. Mirror the same `AI_ROUTER_CONFIG_JSON` and any referenced provider secrets into the GitHub `production` environment so the `live-ai` pipeline job can run `bun run test:live:ai` before deploy.
+6. Keep runtime AI routing in environment configuration, not in committed source files.
 
 If you deploy against a different Clerk instance than the repo default, set
 `VITE_CLERK_PUBLISHABLE_KEY` in the build environment before `bun run deploy`.

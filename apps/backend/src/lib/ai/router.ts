@@ -28,6 +28,8 @@ export type AIProviderConfig = {
   baseUrl?: string;
   accountId?: string;
   gateway?: string;
+  customProviderId?: string;
+  chatCompletionsPath?: string;
   headersEnv?: Record<string, string>;
   rateLimit?: number;
 };
@@ -112,6 +114,8 @@ const aiProviderConfigSchema = z
     baseUrl: z.string().min(1).optional(),
     accountId: z.string().min(1).optional(),
     gateway: z.string().min(1).optional(),
+    customProviderId: z.string().min(1).optional(),
+    chatCompletionsPath: z.string().min(1).optional(),
     headersEnv: z.record(z.string().min(1)).optional(),
     rateLimit: z.number().int().positive().optional(),
   })
@@ -249,11 +253,10 @@ function buildCloudflareAIGatewayCompatBaseUrl(
   return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/compat`;
 }
 
-const MINIMAX_CUSTOM_PROVIDER_PREFIX = "custom-minimax";
-const MINIMAX_CHAT_COMPLETIONS_PATH = "/v1/text/chatcompletion_v2";
+const CLOUDFLARE_CUSTOM_PROVIDER_PREFIX = "custom-";
 
-function parseMiniMaxCustomProviderModelId(modelId: string): {
-  providerSlug: string;
+function parseCloudflareCustomProviderModelId(modelId: string): {
+  customProviderId: string;
   providerModelId: string;
 } | null {
   const separatorIndex = modelId.indexOf("/");
@@ -261,31 +264,31 @@ function parseMiniMaxCustomProviderModelId(modelId: string): {
     return null;
   }
 
-  const providerSlug = modelId.slice(0, separatorIndex);
+  const customProviderId = modelId.slice(0, separatorIndex);
   const providerModelId = modelId.slice(separatorIndex + 1);
 
   if (
-    !providerSlug.startsWith(MINIMAX_CUSTOM_PROVIDER_PREFIX) ||
+    !customProviderId.startsWith(CLOUDFLARE_CUSTOM_PROVIDER_PREFIX) ||
     providerModelId.length === 0
   ) {
     return null;
   }
 
   return {
-    providerSlug,
+    customProviderId,
     providerModelId,
   };
 }
 
 function buildCloudflareAIGatewayCustomProviderUrl(
   provider: AIProviderConfig,
-  providerSlug: string,
+  customProviderId: string,
   path: string,
 ): string {
   const accountId = requireProviderAccountId(provider);
   const gateway = requireProviderGateway(provider);
 
-  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/${providerSlug}${path}`;
+  return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gateway}/${customProviderId}${path}`;
 }
 
 function buildCloudflareAIGatewayHeaders(
@@ -304,27 +307,74 @@ function buildCloudflareAIGatewayHeaders(
   return headers;
 }
 
-function createCloudflareMiniMaxLanguageModel(
+function resolveCloudflareCustomProviderTarget(
+  provider: AIProviderConfig,
+  model: AIModelConfig,
+): {
+  customProviderId: string;
+  providerModelId: string;
+  chatCompletionsPath: string;
+} | null {
+  const chatCompletionsPath = provider.chatCompletionsPath?.trim();
+  if (!chatCompletionsPath) {
+    return null;
+  }
+
+  if (!chatCompletionsPath.startsWith("/")) {
+    throw new AIConfigurationError(
+      `Provider "${provider.id}" chatCompletionsPath must start with "/"`,
+    );
+  }
+
+  const explicitCustomProviderId = provider.customProviderId?.trim();
+  if (explicitCustomProviderId) {
+    return {
+      customProviderId: explicitCustomProviderId,
+      providerModelId: model.modelId,
+      chatCompletionsPath,
+    };
+  }
+
+  const parsedModel = parseCloudflareCustomProviderModelId(model.modelId);
+  if (!parsedModel) {
+    throw new AIConfigurationError(
+      `Provider "${provider.id}" requires customProviderId or a modelId shaped like "custom-provider/model" when chatCompletionsPath is set`,
+    );
+  }
+
+  return {
+    customProviderId: parsedModel.customProviderId,
+    providerModelId: parsedModel.providerModelId,
+    chatCompletionsPath,
+  };
+}
+
+function createCloudflareCustomProviderLanguageModel(
   provider: AIProviderConfig,
   model: AIModelConfig,
   env: AIEnvironment,
 ): LanguageModel | null {
-  const parsedModel = parseMiniMaxCustomProviderModelId(model.modelId);
-  if (!parsedModel) {
+  const customProviderTarget = resolveCloudflareCustomProviderTarget(
+    provider,
+    model,
+  );
+  if (!customProviderTarget) {
     return null;
   }
 
-  // MiniMax custom providers do not expose the OpenAI-style /chat/completions path.
-  return new OpenAICompatibleChatLanguageModel(parsedModel.providerModelId, {
+  return new OpenAICompatibleChatLanguageModel(
+    customProviderTarget.providerModelId,
+    {
     provider: `${provider.id}.chat`,
     headers: () => buildCloudflareAIGatewayHeaders(provider, env),
     url: () =>
       buildCloudflareAIGatewayCustomProviderUrl(
         provider,
-        parsedModel.providerSlug,
-        MINIMAX_CHAT_COMPLETIONS_PATH,
+        customProviderTarget.customProviderId,
+        customProviderTarget.chatCompletionsPath,
       ),
-  });
+    },
+  );
 }
 
 function validateIndexedIds<T extends { id: string }>(
@@ -376,6 +426,16 @@ export function validateAIConfig(config: AIConfig): AIConfig {
     ) {
       throw new AIConfigurationError(
         `Provider "${provider.id}" requires non-empty accountId and gateway`,
+      );
+    }
+
+    if (
+      provider.customProviderId &&
+      (!provider.chatCompletionsPath ||
+        provider.chatCompletionsPath.trim().length === 0)
+    ) {
+      throw new AIConfigurationError(
+        `Provider "${provider.id}" requires chatCompletionsPath when customProviderId is set`,
       );
     }
   }
@@ -479,13 +539,13 @@ const defaultAdapters: AIProviderAdapters = {
   },
   CF_AI_GATEWAY: {
     languageModel(provider, model, env) {
-      const miniMaxModel = createCloudflareMiniMaxLanguageModel(
+      const customProviderModel = createCloudflareCustomProviderLanguageModel(
         provider,
         model,
         env,
       );
-      if (miniMaxModel) {
-        return miniMaxModel;
+      if (customProviderModel) {
+        return customProviderModel;
       }
 
       const gateway = createAiGateway({

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { generateText } from "ai";
+import { describe, expect, it, vi } from "vitest";
 import {
   AIConfigurationError,
   AIProviderUnavailableError,
@@ -175,28 +176,94 @@ describe("[phase:4] [regression:always] AI model router", () => {
     );
   });
 
-  it("TC-AI-006: supports swapping chatbot to a Cloudflare AI Gateway dynamic route via config only", () => {
-    const config = buildAIConfig();
+  it("TC-AI-006: supports swapping chatbot to a Cloudflare custom-provider route via config only", async () => {
+    const config = JSON.parse(JSON.stringify(buildAIConfig())) as AIConfig;
+    config.providers["cf-aig-custom"] = {
+      id: "cf-aig-custom",
+      type: "CF_AI_GATEWAY",
+      apiKeyEnvVar: "CF_AIG_TOKEN",
+      accountId: "test-account-id",
+      gateway: "test-gateway",
+      customProviderId: "custom-regional-llm",
+      chatCompletionsPath: "/api/v2/chat/completions",
+    };
+    config.models["social-osu"] = {
+      id: "social-osu",
+      providerId: "cf-aig-custom",
+      modelId: "regional-model-v1",
+      type: "GENERATIVE",
+      maxTokens: 2048,
+      contextWindow: 1_000_000,
+    };
     config.tasks.chatbot.modelId = "social-osu";
 
-    const router = createAIModelRouter({
-      config,
-      env: {
-        GOOGLE_GENERATIVE_AI_API_KEY: "google_test_key",
-        OPENAI_PRIMARY_API_KEY: "openai_test_key",
-        CF_AIG_TOKEN: "cf_aig_test_key",
-      },
-    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: "chatcmpl-test",
+          object: "chat.completion",
+          created: 0,
+          model: "regional-model-v1",
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: "assistant",
+                content: "Config-driven route works",
+              },
+              finish_reason: "stop",
+            },
+          ],
+          usage: {
+            prompt_tokens: 1,
+            completion_tokens: 1,
+            total_tokens: 2,
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
 
-    const chatbot = router.resolveTask("chatbot");
+    try {
+      const router = createAIModelRouter({
+        env: {
+          AI_ROUTER_CONFIG_JSON: JSON.stringify(config),
+          CF_AIG_TOKEN: "cf_aig_test_key",
+        },
+      });
 
-    expect(chatbot.provider.id).toBe("cf-aig");
-    expect(chatbot.provider.type).toBe("CF_AI_GATEWAY");
-    expect(chatbot.provider.accountId).toBe("2b7085f62464ab452fbd1c9569cedaef");
-    expect(chatbot.provider.gateway).toBe("esperta-gateway");
-    expect(chatbot.model.id).toBe("social-osu");
-    expect(chatbot.model.modelId).toBe("custom-minimax-china/MiniMax-M2.7");
-    expect(router.getLanguageModel("chatbot")).toBeDefined();
+      const chatbot = router.resolveTask("chatbot");
+
+      expect(chatbot.provider.id).toBe("cf-aig-custom");
+      expect(chatbot.provider.type).toBe("CF_AI_GATEWAY");
+      expect(chatbot.model.id).toBe("social-osu");
+
+      const result = await generateText({
+        model: router.getLanguageModel("chatbot"),
+        prompt: "Hello",
+        temperature: 0,
+        maxOutputTokens: 32,
+      });
+
+      expect(result.text).toBe("Config-driven route works");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      const [url, init] = fetchMock.mock.calls[0] ?? [];
+      expect(url).toBe(
+        "https://gateway.ai.cloudflare.com/v1/test-account-id/test-gateway/custom-regional-llm/api/v2/chat/completions",
+      );
+
+      const requestBody = JSON.parse(String(init?.body ?? ""));
+      expect(requestBody.model).toBe("regional-model-v1");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("TC-AI-007: supports swapping embedding to a Cloudflare AI Gateway model via config only", () => {

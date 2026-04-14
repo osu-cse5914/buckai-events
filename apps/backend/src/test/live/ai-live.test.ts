@@ -91,8 +91,8 @@ function requireLiveEnvValue(
 function loadLiveEnv(): AIEnvironment {
   const dotEnv = loadDotEnv();
   const env = {
-    ...process.env,
     ...dotEnv,
+    ...process.env,
   } satisfies Record<string, string | undefined>;
 
   requireLiveEnvValue("CF_AIG_TOKEN", "cf_aig_token_here");
