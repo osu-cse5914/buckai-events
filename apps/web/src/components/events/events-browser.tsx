@@ -28,21 +28,11 @@ import {
   STATUS_LABELS,
   STATUS_STYLES,
   formatDate,
-  formatEventAttribution,
 } from "@/lib/event-utils";
 import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
-import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -98,47 +88,6 @@ export function useInfiniteEventsQuery(
       return loaded < lastPage.pagination.total ? allPages.length : undefined;
     },
   });
-}
-
-export function EventsLoadingGrid({ className }: { className?: string } = {}) {
-  return (
-    <div className={cn("mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
-      {Array.from({ length: 6 }).map((_, index) => (
-        <Card key={index}>
-          <CardHeader>
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="mt-2 h-4 w-1/2" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="mt-2 h-4 w-2/3" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-export function EventsCollectionSkeleton({
-  showPagination = false,
-}: {
-  showPagination?: boolean;
-}) {
-  return (
-    <div className="mt-8 space-y-6">
-      <EventsLoadingGrid />
-      {showPagination ? (
-        <div className="flex items-center justify-between gap-4">
-          <Skeleton className="h-4 w-32" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 export function EventsListSkeleton({
@@ -332,72 +281,6 @@ export function EventsEmptyState({
       <p className="text-lg font-medium">{title}</p>
       <p className="max-w-xl text-sm text-muted-foreground">{description}</p>
       {action ? <div className="mt-2">{action}</div> : null}
-    </div>
-  );
-}
-
-export function EventsGrid({
-  events,
-  showTypeBadge = true,
-  className,
-}: {
-  events: EventListItem[];
-  showTypeBadge?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={cn("mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
-      {events.map((event) => (
-        <Link
-          key={event.id}
-          to="/events/$eventId"
-          params={{ eventId: event.id }}
-          className="group"
-        >
-          <Card className="h-full transition-shadow group-hover:shadow-md">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                {showTypeBadge ? (
-                  <EventTypeBadge type={event.type} />
-                ) : null}
-                <Badge
-                  variant="secondary"
-                  className={STATUS_STYLES[event.status] ?? ""}
-                >
-                  {STATUS_LABELS[event.status] ?? event.status}
-                </Badge>
-              </div>
-              <CardTitle className="mt-2 line-clamp-2 pb-0.5 leading-tight group-hover:underline">
-                {event.title}
-              </CardTitle>
-              {event.category ? (
-                <CardDescription className="capitalize">
-                  {event.category}
-                </CardDescription>
-              ) : null}
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <CalendarIcon className="size-3.5 shrink-0" />
-                <span>{formatDate(event.startAt)}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <MapPinIcon className="size-3.5 shrink-0" />
-                <span className="truncate">{event.locationName}</span>
-              </div>
-              {event.type === "GIG" && event.compensationAmount != null ? (
-                <p className="font-medium text-foreground">
-                  ${event.compensationAmount}
-                  {event.compensationType === "HOURLY" ? "/hr" : " fixed"}
-                </p>
-              ) : null}
-            </CardContent>
-            <CardFooter className="text-xs text-muted-foreground">
-              {formatEventAttribution(event)}
-            </CardFooter>
-          </Card>
-        </Link>
-      ))}
     </div>
   );
 }

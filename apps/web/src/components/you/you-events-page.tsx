@@ -6,10 +6,10 @@ import {
   type CurrentUser,
 } from "@/lib/queries";
 import {
-  EventsCollectionSkeleton,
   EventsEmptyState,
   EventsErrorState,
   EventsList,
+  EventsListSkeleton,
   EventsPagination,
   useEventsQuery,
 } from "@/components/events/events-browser";
@@ -53,7 +53,7 @@ export function YouEventsPage() {
     return (
       <section className="mx-auto max-w-5xl px-6 py-10">
         <YouSubpageHeaderSkeleton />
-        <EventsCollectionSkeleton showPagination />
+        <EventsListSkeleton showPagination />
       </section>
     );
   }
