@@ -2,6 +2,13 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,32 +75,42 @@ export function ProfilePage() {
 
   if (isLoading) {
     return (
-      <section className="mx-auto max-w-3xl px-6 py-10">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-9 w-16" />
-        </div>
-        <div className="mt-6 space-y-4">
-          <div>
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="mt-1 h-5 w-48" />
-          </div>
-          <div>
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="mt-1 h-5 w-36" />
-          </div>
-          <div>
-            <Skeleton className="h-4 w-12" />
-            <Skeleton className="mt-1 h-5 w-40" />
-          </div>
-          <div>
+      <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-2">
             <Skeleton className="h-4 w-28" />
-            <Skeleton className="mt-1 h-5 w-20" />
+            <Skeleton className="h-10 w-40" />
+            <Skeleton className="h-4 w-72 max-w-full" />
           </div>
-          <div>
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="mt-1 h-5 w-56" />
-          </div>
+          <Skeleton className="h-10 w-20" />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+          <Card className="gap-4">
+            <CardHeader>
+              <Skeleton className="h-7 w-32" />
+              <Skeleton className="h-4 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+            </CardContent>
+          </Card>
+
+          <Card className="gap-4">
+            <CardHeader>
+              <Skeleton className="h-7 w-36" />
+              <Skeleton className="h-4 w-56" />
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton
+                  key={index}
+                  className={index === 4 ? "h-24 rounded-xl sm:col-span-2" : "h-24 rounded-xl"}
+                />
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </section>
     );
@@ -101,8 +118,8 @@ export function ProfilePage() {
 
   if (error || !user) {
     return (
-      <section className="mx-auto max-w-3xl px-6 py-10">
-        <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+      <section className="mx-auto max-w-5xl px-6 py-10">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           {error instanceof Error ? error.message : "Failed to load profile"}
         </div>
       </section>
@@ -110,9 +127,15 @@ export function ProfilePage() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1.5">
+          <p className="text-sm text-muted-foreground">Account profile</p>
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Update the details people see across Social OSU and keep your academic info current for collaboration and discovery.
+          </p>
+        </div>
         {!isEditing && (
           <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
             Edit
@@ -121,7 +144,17 @@ export function ProfilePage() {
       </div>
 
       {isEditing ? (
-        <ProfileEditForm user={user} onCancel={() => setIsEditing(false)} onSaved={() => setIsEditing(false)} />
+        <Card className="gap-4 overflow-hidden rounded-2xl border bg-background py-0">
+          <CardHeader className="border-b px-6 py-6 sm:px-8">
+            <CardTitle>Edit profile</CardTitle>
+            <CardDescription>
+              These details help other students recognize you and make your public profile feel complete.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 py-6 sm:px-8">
+            <ProfileEditForm user={user} onCancel={() => setIsEditing(false)} onSaved={() => setIsEditing(false)} />
+          </CardContent>
+        </Card>
       ) : (
         <ProfileDisplay
           user={user}
@@ -157,41 +190,81 @@ function ProfileDisplay({
   onFollowingClick?: () => void;
 }) {
   return (
-    <div className="mt-6 space-y-4">
-      <div className="flex gap-6">
-        <button
-          type="button"
-          className="text-left"
-          onClick={onFollowersClick}
-        >
-          <p className="text-2xl font-bold">{user.followerCount}</p>
-          <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-            {user.followerCount === 1 ? "follower" : "followers"}
-          </p>
-        </button>
-        <button
-          type="button"
-          className="text-left"
-          onClick={onFollowingClick}
-        >
-          <p className="text-2xl font-bold">{user.followingCount}</p>
-          <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">following</p>
-        </button>
-      </div>
-      <Field label="Email" value={user.email} />
-      <Field label="Display Name" value={user.displayName} />
-      <Field label="Major" value={user.major} />
-      <Field label="Graduation Year" value={user.gradYear?.toString()} />
-      <Field label="Interests" value={user.interests.length > 0 ? user.interests.join(", ") : null} />
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+      <Card className="gap-4">
+        <CardHeader>
+          <CardTitle>Community</CardTitle>
+          <CardDescription>Your visibility and connections across Social OSU.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <button
+              type="button"
+              className="text-left"
+              onClick={onFollowersClick}
+            >
+              <p className="text-2xl font-bold">{user.followerCount}</p>
+              <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+                {user.followerCount === 1 ? "follower" : "followers"}
+              </p>
+            </button>
+            <button
+              type="button"
+              className="text-left"
+              onClick={onFollowingClick}
+            >
+              <p className="text-2xl font-bold">{user.followingCount}</p>
+              <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+                following
+              </p>
+            </button>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Visibility</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              These details appear across your Social OSU profile and help others recognize your interests and background.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="gap-4">
+        <CardHeader>
+          <CardTitle>Profile details</CardTitle>
+          <CardDescription>
+            Keep your academic details and interests current so your profile stays useful to others.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6 sm:grid-cols-2">
+          <Field label="Email" value={user.email} />
+          <Field label="Display Name" value={user.displayName} />
+          <Field label="Major" value={user.major} />
+          <Field label="Graduation Year" value={user.gradYear?.toString()} />
+          <Field
+            label="Interests"
+            value={user.interests.length > 0 ? user.interests.join(", ") : null}
+            className="sm:col-span-2"
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string | null | undefined;
+  className?: string;
+}) {
   return (
-    <div>
+    <div className={className}>
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1">{value || "—"}</p>
+      <p className="mt-2 text-sm sm:text-base">{value || "—"}</p>
     </div>
   );
 }
@@ -240,7 +313,7 @@ function ProfileEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="displayName">Display Name</Label>
         <Input

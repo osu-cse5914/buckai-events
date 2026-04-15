@@ -371,11 +371,11 @@ export function YouCollectionsPage() {
             <SheetTrigger asChild>
               <Button
                 type="button"
-                size="icon"
-                aria-label="Create Collection"
-                title="Create Collection"
+                aria-label="New collection"
+                title="New collection"
               >
                 <PlusIcon />
+                New collection
               </Button>
             </SheetTrigger>
 
@@ -449,7 +449,7 @@ export function YouCollectionsPage() {
       />
 
       {actionErrorMessage ? (
-        <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           {actionErrorMessage}
         </div>
       ) : null}
