@@ -104,6 +104,7 @@ jobs:
     env:
       AI_ROUTER_CONFIG_JSON: ${{ secrets.AI_ROUTER_CONFIG_JSON }}
       CF_AIG_TOKEN: ${{ secrets.CF_AIG_TOKEN }}
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/social_osu_app?schema=public
 
     steps:
       - uses: actions/checkout@v5
