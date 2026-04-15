@@ -10,8 +10,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "vp lint . --react-plugin --deny-warnings --ignore-pattern src/routeTree.gen.ts --ignore-pattern dist",
-    "pretypecheck": "bun run generate-routes",
-    "typecheck": "vp check -- --ignore-path=.eslintignore",
+    "pretypecheck": "bun run generate-routes && vp fmt src/routeTree.gen.ts",
+    "typecheck": "vp check --no-lint",
     "pretest": "bun run generate-routes",
     "test": "vitest run"
   },

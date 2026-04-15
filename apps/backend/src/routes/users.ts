@@ -55,8 +55,7 @@ async function enrichUsersWithClerkImages(
 
   return Promise.all(
     users.map(async (user) => {
-      const clerkUser =
-        clerk && user.clerkId ? await clerk.users.getUser(user.clerkId) : undefined;
+      const clerkUser = clerk && user.clerkId ? await clerk.users.getUser(user.clerkId) : undefined;
       const extras = readClerkProfileExtras(clerkUser);
 
       return {
