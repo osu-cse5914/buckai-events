@@ -89,40 +89,42 @@ export async function seedAiFixtures() {
   await prisma.user.create({ data: AI_OWNER });
   await prisma.event.create({ data: AI_GIG });
 
-  await prisma.conversation.createMany({
-    data: [
-      {
-        id: E2E_AI_CONVERSATION_A,
-        userId: E2E_AI_USER_ID,
-        title: "Music picks",
-        createdAt: new Date("2026-04-01T10:00:00.000Z"),
-        updatedAt: new Date("2026-04-01T10:05:00.000Z"),
-      },
-      {
-        id: E2E_AI_CONVERSATION_B,
-        userId: E2E_AI_USER_ID,
-        title: "Tutoring gigs",
-        createdAt: new Date("2026-04-02T11:00:00.000Z"),
-        updatedAt: new Date("2026-04-02T11:05:00.000Z"),
-      },
-      {
-        id: E2E_AI_PENDING_CONVERSATION_ID,
-        userId: E2E_AI_USER_ID,
-        title: "Gig application",
-        pendingAction: {
-          id: "pending_e2e_ai_apply",
-          toolName: "applyToGig",
-          summary: "Apply to E2E AI Tutor Gig",
-          args: {
-            gigId: E2E_AI_GIG_ID,
-            message: "I have tutoring experience.",
-          },
+  await prisma.conversation.create({
+    data: {
+      id: E2E_AI_CONVERSATION_A,
+      userId: E2E_AI_USER_ID,
+      title: "Music picks",
+      createdAt: new Date("2026-04-01T10:00:00.000Z"),
+      updatedAt: new Date("2026-04-01T10:05:00.000Z"),
+    },
+  });
+  await prisma.conversation.create({
+    data: {
+      id: E2E_AI_CONVERSATION_B,
+      userId: E2E_AI_USER_ID,
+      title: "Tutoring gigs",
+      createdAt: new Date("2026-04-02T11:00:00.000Z"),
+      updatedAt: new Date("2026-04-02T11:05:00.000Z"),
+    },
+  });
+  await prisma.conversation.create({
+    data: {
+      id: E2E_AI_PENDING_CONVERSATION_ID,
+      userId: E2E_AI_USER_ID,
+      title: "Gig application",
+      pendingAction: {
+        id: "pending_e2e_ai_apply",
+        toolName: "applyToGig",
+        summary: "Apply to E2E AI Tutor Gig",
+        args: {
+          gigId: E2E_AI_GIG_ID,
+          message: "I have tutoring experience.",
         },
-        pendingActionCreatedAt: new Date("2026-04-03T12:00:00.000Z"),
-        createdAt: new Date("2026-04-03T12:00:00.000Z"),
-        updatedAt: new Date("2026-04-03T12:05:00.000Z"),
       },
-    ],
+      pendingActionCreatedAt: new Date("2026-04-03T12:00:00.000Z"),
+      createdAt: new Date("2026-04-03T12:00:00.000Z"),
+      updatedAt: new Date("2026-04-03T12:05:00.000Z"),
+    },
   });
 
   await prisma.message.createMany({
