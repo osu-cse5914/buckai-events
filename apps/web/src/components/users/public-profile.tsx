@@ -69,10 +69,13 @@ export function ProfileView({
 
   return (
     <ProfileOverview
-      eyebrow="Public profile"
       title={user.displayName ?? "User"}
-      communityTitle="Community"
-      communityDescription="Follower and following counts on Social OSU."
+      subtitle={
+        [user.major, user.gradYear ? `Class of ${user.gradYear}` : null]
+          .filter(Boolean)
+          .join(" · ") || undefined
+      }
+      avatarFallback={(user.displayName ?? "?").charAt(0).toUpperCase()}
       stats={[
         {
           value: user.followerCount,
@@ -85,26 +88,18 @@ export function ProfileView({
           onClick: onFollowingClick,
         },
       ]}
-      communityFooter={
-        <Button
-          variant="outline"
-          disabled={!hasFollowAction || followPending}
-          onClick={user.isFollowing ? onUnfollow : onFollow}
-        >
-          {user.isFollowing ? "Unfollow" : "Follow"}
-        </Button>
-      }
-      detailTitle="Profile details"
-      detailDescription="Academic background and shared interests visible on this public profile."
-      detailFields={[
-        { label: "Major", value: user.major || "—" },
-        {
-          label: "Graduation Year",
-          value: user.gradYear ? `Class of ${user.gradYear}` : "—",
-        },
-      ]}
+      detailFields={[]}
       detailFooter={
-        user.interests.length > 0 ? (
+        <div className="space-y-4">
+          <Button
+            variant="outline"
+            disabled={!hasFollowAction || followPending}
+            onClick={user.isFollowing ? onUnfollow : onFollow}
+          >
+            {user.isFollowing ? "Unfollow" : "Follow"}
+          </Button>
+
+          {user.interests.length > 0 ? (
           <div>
             <p className="text-sm font-medium text-muted-foreground">Interests</p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -115,7 +110,8 @@ export function ProfileView({
               ))}
             </div>
           </div>
-        ) : undefined
+          ) : null}
+        </div>
       }
       extraSection={
         <section className="space-y-3">

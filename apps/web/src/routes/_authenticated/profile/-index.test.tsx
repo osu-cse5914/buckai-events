@@ -25,6 +25,10 @@ vi.mock("@/lib/api", () => ({
   useApiClient: () => mockApiClient,
 }));
 
+vi.mock("@clerk/clerk-react", () => ({
+  useUser: () => ({ user: { imageUrl: "https://example.com/avatar.png" } }),
+}));
+
 // Mock TanStack Router's createFileRoute
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => () => ({}),
@@ -205,7 +209,7 @@ describe("ProfilePage", () => {
 
     // Empty fields should show dash placeholder
     const dashes = screen.getAllByText("—");
-    expect(dashes.length).toBeGreaterThanOrEqual(4);
+    expect(dashes.length).toBeGreaterThanOrEqual(3);
   });
 
   // --- Error on save ---

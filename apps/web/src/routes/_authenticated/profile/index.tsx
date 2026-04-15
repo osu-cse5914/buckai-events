@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -66,6 +67,7 @@ function useFollowingList(id: string, enabled: boolean) {
 }
 
 export function ProfilePage() {
+  const { user: clerkUser } = useUser();
   const { data: user, isLoading, error } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [followersOpen, setFollowersOpen] = useState(false);
@@ -131,22 +133,11 @@ export function ProfilePage() {
     <>
       {isEditing ? (
         <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1.5">
-              <p className="text-sm text-muted-foreground">Account profile</p>
-              <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-              <p className="max-w-2xl text-sm text-muted-foreground">
-                Update the details people see across Social OSU and keep your academic info current for collaboration and discovery.
-              </p>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold tracking-tight">Edit profile</h1>
 
         <Card className="gap-4 overflow-hidden rounded-2xl border bg-background py-0">
           <CardHeader className="border-b px-6 py-6 sm:px-8">
             <CardTitle>Edit profile</CardTitle>
-            <CardDescription>
-              These details help other students recognize you and make your public profile feel complete.
-            </CardDescription>
           </CardHeader>
           <CardContent className="px-6 py-6 sm:px-8">
             <ProfileEditForm user={user} onCancel={() => setIsEditing(false)} onSaved={() => setIsEditing(false)} />
@@ -155,16 +146,14 @@ export function ProfilePage() {
         </section>
       ) : (
         <ProfileOverview
-          eyebrow="Account profile"
-          title="Profile"
-          description="Update the details people see across Social OSU and keep your academic info current for collaboration and discovery."
+          title={user.displayName ?? "Your profile"}
           action={
             <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
               Edit
             </Button>
           }
-          communityTitle="Community"
-          communityDescription="Your visibility and connections across Social OSU."
+          imageUrl={clerkUser?.imageUrl ?? null}
+          avatarFallback={(user.displayName ?? user.email).charAt(0).toUpperCase()}
           stats={[
             {
               value: user.followerCount,
@@ -177,22 +166,13 @@ export function ProfilePage() {
               onClick: () => setFollowingOpen(true),
             },
           ]}
-          communityFooter={
-            <p className="text-sm text-muted-foreground">
-              These details appear across your Social OSU profile and help others recognize your interests and background.
-            </p>
-          }
-          detailTitle="Profile details"
-          detailDescription="Keep your academic details and interests current so your profile stays useful to others."
           detailFields={[
             { label: "Email", value: user.email },
-            { label: "Display Name", value: user.displayName || "—" },
             { label: "Major", value: user.major || "—" },
             { label: "Graduation Year", value: user.gradYear?.toString() || "—" },
             {
               label: "Interests",
               value: user.interests.length > 0 ? user.interests.join(", ") : "—",
-              className: "sm:col-span-2",
             },
           ]}
         />

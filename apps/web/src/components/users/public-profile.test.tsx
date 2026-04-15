@@ -39,8 +39,8 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     render(<ProfileView user={baseUser} />);
 
     expect(screen.getByText("Brutus Buckeye")).toBeInTheDocument();
-    expect(screen.getByText("Computer Science")).toBeInTheDocument();
-    expect(screen.getByText("Class of 2025")).toBeInTheDocument();
+    expect(screen.getByText(/Computer Science/)).toBeInTheDocument();
+    expect(screen.getByText(/Class of 2025/)).toBeInTheDocument();
     expect(screen.getByText("sports")).toBeInTheDocument();
     expect(screen.getByText("music")).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
