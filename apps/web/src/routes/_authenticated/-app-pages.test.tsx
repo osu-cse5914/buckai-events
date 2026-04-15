@@ -25,16 +25,14 @@ vi.mock("@tanstack/react-router", () => ({
 describe("[phase:6] [regression:always] App Pages Shell", () => {
   it("TC-PAGES-011: primary nav exposes only the app-pages destinations", () => {
     expect(navLinks).toEqual([
+      { to: "/search", label: "Search" },
       { to: "/featured", label: "Featured" },
       { to: "/events", label: "Events" },
       { to: "/gigs", label: "Gigs" },
       { to: "/you", label: "You" },
     ]);
 
-    expect(utilityNavLinks).toEqual([
-      { to: "/search", label: "Search" },
-      { to: "/ai", label: "BuckAI" },
-    ]);
+    expect(utilityNavLinks).toEqual([{ to: "/ai", label: "BuckAI" }]);
   });
 
   it("TC-SFEED-011: primary nav does not expose the Social destination", () => {

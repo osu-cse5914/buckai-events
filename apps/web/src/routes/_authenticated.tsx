@@ -29,6 +29,7 @@ import { isE2ETestAuthEnabled } from "@/lib/e2e-auth";
 import { cn } from "@/lib/utils";
 
 export const navLinks = [
+  { to: "/search", label: "Search" },
   { to: "/featured", label: "Featured" },
   { to: "/events", label: "Events" },
   { to: "/gigs", label: "Gigs" },
@@ -36,7 +37,6 @@ export const navLinks = [
 ] as const;
 
 export const utilityNavLinks = [
-  { to: "/search", label: "Search" },
   { to: "/ai", label: "BuckAI" },
 ] as const;
 
