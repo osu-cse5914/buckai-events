@@ -354,19 +354,84 @@ export function buildFallbackReplySuggestions(input: {
     /\bgig|gigs|tutor|job|paid\b/i.test(input.lastUserMessage)
       ? "GIG"
       : "EVENT";
-  const topicalLabel =
-    extractSuggestionTopic(
-      latestSearchResults
-        ? latestSearchResults.total > 0
-          ? (latestSearchResults.items[0]?.category ?? latestSearchResults.items[0]?.title ?? "")
-          : ""
-        : input.lastUserMessage,
-    ) || (inferredType === "GIG" ? "gigs" : "events");
 
-  const suggestions =
-    inferredType === "GIG"
-      ? [`Show me more ${topicalLabel} gigs`, "Only hourly gigs", "What pays at least $20/hr?"]
-      : [`Show me more ${topicalLabel} events`, "Only free options", "What about this weekend?"];
+  const suggestions: string[] = [];
+
+  if (inferredType === "GIG") {
+    const items = latestSearchResults?.items ?? [];
+    const categories = [...new Set(items.map((i) => i.category).filter(Boolean))];
+    const hasHourly = items.some((i) => i.compensation?.type === "HOURLY");
+    const hasFixed = items.some((i) => i.compensation?.type !== "HOURLY");
+    const amounts = items
+      .map((i) => i.compensation?.amount)
+      .filter((a): a is number => a != null);
+    const maxAmount = amounts.length > 0 ? Math.max(...amounts) : null;
+
+    if (categories.length > 0) {
+      suggestions.push(`Show me more ${categories[0]} gigs`);
+    } else {
+      suggestions.push("Show me more gigs");
+    }
+
+    if (hasHourly && hasFixed) {
+      suggestions.push("Only hourly gigs");
+    } else if (hasHourly) {
+      const avgHourly =
+        amounts.reduce((s, a, _, arr) => s + a / arr.length, 0) /
+        (amounts.length || 1);
+      if (avgHourly > 15) {
+        suggestions.push("What about lower pay?");
+      } else {
+        suggestions.push("What pays more?");
+      }
+    }
+
+    if (maxAmount !== null && maxAmount > 0) {
+      suggestions.push(`What pays around $${Math.round(maxAmount * 0.8)}/hr?`);
+    } else {
+      suggestions.push("What gigs pay well?");
+    }
+  } else {
+    const items = latestSearchResults?.items ?? [];
+    const categories = [...new Set(items.map((i) => i.category).filter(Boolean))];
+    const hasFree = items.some(
+      (i) => i.compensation == null || i.compensation.amount == null || i.compensation.amount === 0,
+    );
+    const locations = [...new Set(items.map((i) => i.location.name).filter(Boolean))];
+    const dates = items
+      .map((i) => i.startAt)
+      .filter((d): d is string => d != null)
+      .sort();
+
+    if (categories.length > 0) {
+      suggestions.push(`Show me more ${categories[0]} events`);
+    } else {
+      suggestions.push("Show me more events");
+    }
+
+    if (hasFree) {
+      suggestions.push("Only free events");
+    } else {
+      suggestions.push("Any free options?");
+    }
+
+    if (dates.length > 0) {
+      const nextDate = new Date(dates[0]!);
+      const now = new Date();
+      const diffDays = Math.ceil((nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 1) {
+        suggestions.push("What about tomorrow?");
+      } else if (diffDays <= 7) {
+        suggestions.push("What else is happening soon?");
+      } else {
+        suggestions.push("What's happening this weekend?");
+      }
+    } else if (locations.length > 0) {
+      suggestions.push(`Events near ${locations[0]}?`);
+    } else {
+      suggestions.push("What else is happening?");
+    }
+  }
 
   return {
     type: "reply-suggestions",
