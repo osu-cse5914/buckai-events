@@ -287,7 +287,11 @@ describe("[phase:4] [regression:always] AI model router", () => {
   });
 
   it("TC-AI-004: throws configuration errors for missing config, invalid config, and unknown task ids", () => {
+    // Bun auto-loads .env, which may contain AI_ROUTER_CONFIG_JSON. Clear it so
+    // the no-args call exercises the "missing config" error path.
+    vi.stubEnv("AI_ROUTER_CONFIG_JSON", "");
     expect(() => createAIModelRouter()).toThrow(AIConfigurationError);
+    vi.unstubAllEnvs();
     expect(() =>
       createAIModelRouter({
         env: {

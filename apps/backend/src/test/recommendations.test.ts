@@ -207,6 +207,24 @@ describe("[phase:4] [regression:always] GET /api/v1/recommendations", () => {
     expect(body.items.map((item) => item.id)).toEqual(["evt_open_future"]);
   });
 
+  it("TC-REC-MODEL-007: interest-matched event outranks a significantly more popular but unmatched event", async () => {
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
+      [
+        makeEvent({ id: "evt_matched", category: "music" }, 0),
+        makeEvent({ id: "evt_very_popular", category: "sports" }, 100),
+      ] as never,
+    );
+
+    const res = await app.request(makeAuthRequest("/api/v1/recommendations"));
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: Array<{ id: string }> };
+    expect(body.items.map((item) => item.id)).toEqual([
+      "evt_matched",
+      "evt_very_popular",
+    ]);
+  });
+
   it("TC-REC-MODEL-006: falls back to popularity ranking for a user with no interests and no interactions", async () => {
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(
       { ...CURRENT_USER, interests: [] } as never,

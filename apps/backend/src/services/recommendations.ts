@@ -67,22 +67,42 @@ function stripInteractionCounts(candidate: RecommendationCandidate) {
   return event;
 }
 
+// Scoring weights for personalized ranking.
+// INTEREST_WEIGHT dominates so profile alignment always outranks crowd signals.
+const INTEREST_WEIGHT = 3.0;
+// Log-normalized popularity is capped at POPULARITY_WEIGHT — it cannot overcome an interest match.
+const POPULARITY_WEIGHT = 0.5;
+// Normalization ceiling: interactions above this count contribute full POPULARITY_WEIGHT.
+const POPULARITY_SCALE = 100;
+
+function scorePersonalizedCandidate(
+  candidate: RecommendationCandidate,
+  interests: string[],
+): number {
+  const interestScore =
+    candidate.category !== null && interests.includes(candidate.category)
+      ? INTEREST_WEIGHT
+      : 0;
+
+  const popularityScore =
+    Math.min(
+      Math.log1p(candidate.interactions.length) / Math.log1p(POPULARITY_SCALE),
+      1.0,
+    ) * POPULARITY_WEIGHT;
+
+  return interestScore + popularityScore;
+}
+
 function compareRecommendationCandidates(
   left: RecommendationCandidate,
   right: RecommendationCandidate,
   interests: string[],
 ) {
-  const leftInterestMatch =
-    left.category !== null && interests.includes(left.category) ? 1 : 0;
-  const rightInterestMatch =
-    right.category !== null && interests.includes(right.category) ? 1 : 0;
-  if (leftInterestMatch !== rightInterestMatch) {
-    return rightInterestMatch - leftInterestMatch;
-  }
-
-  const popularityDiff = right.interactions.length - left.interactions.length;
-  if (popularityDiff !== 0) {
-    return popularityDiff;
+  const scoreDiff =
+    scorePersonalizedCandidate(right, interests) -
+    scorePersonalizedCandidate(left, interests);
+  if (scoreDiff !== 0) {
+    return scoreDiff;
   }
 
   const recencyDiff = left.startAt.getTime() - right.startAt.getTime();
