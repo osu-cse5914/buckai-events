@@ -42,7 +42,7 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
       { to: "/you", label: "You" },
     ]);
 
-    expect(utilityNavLinks).toEqual([{ to: "/ai", label: "BuckAI Events" }]);
+    expect(utilityNavLinks).toEqual([{ to: "/ai", label: "BuckAI" }]);
   });
 
   it("TC-SFEED-011: primary nav does not expose the Social destination", () => {
