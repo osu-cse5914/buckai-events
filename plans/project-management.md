@@ -117,42 +117,35 @@ For the rationale behind choosing GitHub Issues + Markdown over Linear, Jira, pu
 | Architecture decisions | Comments + discussion |
 | Strategic roadmap | PR links |
 | Sprint retrospective notes | Bug reports |
-| Test case definitions | Manual regression checklists |
+| Test case definitions | Manual verification notes/checklists |
 
 ---
 
-## Regression Testing
+## Testing Workflow
 
 ### Test Case Registry
 
-All test cases (automated and manual) are defined in `test-cases/`, organized by feature area and linked to specs. Each test case has a unique ID (e.g., `TC-AUTH-001`), a type (Automated/Manual/Semi-automated), and a phase tag.
+All test cases (automated and manual) are defined in `test-cases/`, organized by feature area and linked to specs. Each test case has a unique ID (e.g., `TC-AUTH-001`) and a type (Automated/Manual/Semi-automated).
 
 See [`test-cases/index.md`](../test-cases/index.md) for the full structure and conventions.
 
-### Milestone Regression Workflow
+### Active automated suites
 
-When a GitHub Milestone is closed, the `regression.yml` GitHub Actions workflow:
-
-1. Extracts the phase number from the milestone title (e.g., "Phase 1 — Users & Events" → `1`)
-2. Runs `bun run test:regression:phase-1` (all automated tests for phases 0–1)
-3. Creates a GitHub Issue with the manual test checklist from `test-cases/regression/phase-1.md`
-
-```
-Milestone closed
-       │
-       ├──► CI runs automated regression
-       │
-       └──► GitHub Issue created with manual checklist
-                │
-                └──► Team checks off manual cases
-```
+1. `bun run test`
+   Workspace Vitest suites for backend and frontend.
+2. `bun run test:e2e`
+   Playwright browser integration tests against the local app stack.
+3. `bun run test:live:ai`
+   Provider-backed AI smoke tests for the configured production-style route.
+4. `bun run test:registry:audit`
+   Registry integrity audit to keep TC-IDs and executable tests aligned.
 
 ### Test Case Lifecycle
 
 1. **Spec written** → Scenarios defined (S-AUTH-1, S-EVT-3, etc.)
 2. **Test case registered** → TC-ID created in `test-cases/<area>/<feature>.md`
-3. **Test implemented** → Vitest test written with `[phase:N]` tag, referencing TC-ID
-4. **Regression included** → Test case added to `test-cases/regression/phase-N.md`
+3. **Test implemented** → executable test written, referencing TC-ID
+4. **Coverage audited** → `bun run test:registry:audit` confirms the registry still matches the test files
 
 ### Issue Test Case References
 

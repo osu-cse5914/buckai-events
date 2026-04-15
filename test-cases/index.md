@@ -38,14 +38,6 @@ test-cases/
 ├── chat/
 │   ├── chatbot.md              ← TC-CHAT-*
 │   └── conversations.md        ← TC-CONV-*
-└── regression/
-    ├── phase-0.md              ← Foundation regression suite
-    ├── phase-1.md              ← Users & Events regression suite
-    ├── phase-2.md              ← Marketplace regression suite
-    ├── phase-3.md              ← Social regression suite
-    ├── phase-4.md              ← AI & External Data regression suite
-    ├── phase-5.md              ← Chatbot regression suite
-    └── phase-6.md              ← Polish & Integration regression suite
 ```
 
 ## Test Case Format
@@ -61,52 +53,34 @@ Each test case uses this format:
 | **Phase introduced** | Phase where the case first becomes testable |
 | **Regression** | `Always` / `Phase N+` / `Final only` |
 
-## Regression Strategy
+## Suite Strategy
 
-Regression suites are **cumulative** — each phase includes all prior phases' regression cases. When a milestone closes:
+The phase-based regression model has been retired. The testing plan now uses three active automated layers:
 
-1. **Automated**: CI runs `bun run test:regression:phase-N` (all automated cases up to phase N)
-2. **Manual**: A GitHub Issue is auto-created with the manual test checklist for that phase
+1. **Workspace tests**: `bun run test`
+   - Vitest suites in `apps/backend/src/test` and `apps/web/src`
+   - covers unit, route, and integration-style tests that do not require a browser
+2. **Browser E2E**: `bun run test:e2e`
+   - Playwright suites in `e2e/`
+   - covers real frontend/backend/browser integration with seeded fixtures
+3. **Live AI smoke**: `bun run test:live:ai`
+   - provider-backed AI route checks in `apps/backend/src/test/live`
+   - covers real Cloudflare AI Gateway and live-model behavior
 
-See [`regression/`](regression/) for per-phase suite definitions.
+Manual verification is still tracked in the per-feature test-case files for cases that remain expensive, visual, or environment-specific.
 
 ## Test Scripts
 
 | Command | Description |
 |---------|-------------|
 | `bun run test` | Run all tests |
-| `bun run test:regression:phase-0` | Phase 0 regression (Foundation) |
-| `bun run test:regression:phase-1` | Phase 0 + 1 regression |
-| `bun run test:regression:phase-2` | Phase 0 + 1 + 2 regression |
-| `bun run test:regression:phase-3` | Phase 0 + 1 + 2 + 3 regression |
-| `bun run test:regression:phase-4` | Phase 0–4 regression |
-| `bun run test:regression:phase-5` | Phase 0–5 regression |
-| `bun run test:regression:phase-6` | Full regression |
-| `bun run test:manual-checklist -- N` | Generate manual test checklist for phase N |
-
-### Manual Test Checklist Generation
-
-The script `scripts/generate-regression-issue.ts` reads the regression suite for a given phase, resolves all manual TC-IDs from the test case registry, and outputs a fully expanded markdown document with:
-
-- Grouped test cases by feature area
-- Numbered steps for each test case
-- Expected behavior for each test case
-- Pass/Fail checkboxes and notes placeholders
-
-This runs automatically in CI when a milestone closes (`regression.yml`), generating a GitHub Issue with the full manual testing runbook. You can also run it locally to preview:
-
-```sh
-bun scripts/generate-regression-issue.ts 1 "Phase 1 — Users & Events"
-```
+| `bun run test:integration` | Run browser integration/E2E coverage |
+| `bun run test:e2e` | Run Playwright end-to-end tests |
+| `bun run test:live:ai` | Run provider-backed live AI smoke tests |
+| `bun run test:registry:audit` | Validate TC-ID coverage and registry integrity |
 
 ## Tagging Convention
 
-Automated tests use describe-level tags so they can be filtered per phase:
+Every automated test should reference at least one TC-ID in the test title so the registry audit can trace registry entries to executable coverage.
 
-```typescript
-describe('[phase:0] [regression:always] Authentication', () => {
-  it('TC-AUTH-001: returns 401 when JWT is missing', () => { ... });
-});
-```
-
-Tags: `[phase:N]` for the phase, `[regression:always]` for inclusion in all regression runs.
+Historical `[phase:N]` tags may remain in existing `describe()` blocks, but they are legacy metadata now and are no longer used to drive active regression suites.

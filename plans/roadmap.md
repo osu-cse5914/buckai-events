@@ -353,28 +353,22 @@ Phase 0 (Foundation)
 
 ---
 
-## Regression Testing
+## Testing Strategy
 
-Each phase has a cumulative regression suite defined in [`test-cases/regression/`](../test-cases/regression/). When a phase milestone closes:
+The phase-regression model has been retired now that the delivery phases are complete.
 
-1. **Automated**: The `regression.yml` GitHub Actions workflow runs `bun run test:regression:phase-N`, which executes all automated test cases from phase 0 through N.
-2. **Manual**: A GitHub Issue is auto-created with the manual test checklist for that phase.
+Test cases remain tracked in [`test-cases/`](../test-cases/) alongside specs. Each spec file links to its corresponding test case file, and executable tests reference TC-IDs directly.
 
-Test cases are tracked in [`test-cases/`](../test-cases/) alongside specs. Each spec file links to its corresponding test case file. See [`test-cases/index.md`](../test-cases/index.md) for the full registry and tagging conventions.
-
-### Automated test tagging
-
-All Vitest tests use `[phase:N]` tags in `describe()` blocks, enabling selective regression runs per phase.
-
-### Regression commands
+### Active automated suites
 
 | Command | Scope |
 |---------|-------|
-| `bun run test` | All tests |
-| `bun run test:regression:phase-0` | Phase 0 only |
-| `bun run test:regression:phase-1` | Phase 0 + 1 |
-| `bun run test:regression:phase-N` | Phase 0 through N |
-| `bun run test:regression:phase-6` | Full regression |
+| `bun run test` | Workspace Vitest suites |
+| `bun run test:e2e` | Playwright browser integration tests |
+| `bun run test:live:ai` | Provider-backed live AI smoke tests |
+| `bun run test:registry:audit` | Registry/test-file integrity audit |
+
+Historical `[phase:N]` tags may still appear in older test files, but they are kept as metadata only.
 
 ## Notes
 

@@ -83,8 +83,8 @@ jobs:
       - run: bun run db:push
       - run: bunx playwright install --with-deps chromium
 
-      - name: Run Playwright tests
-        run: bun run test:e2e
+      - name: Run browser integration tests
+        run: bun run test:integration
 
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}

@@ -36,3 +36,14 @@ Spec: [`endpoints`](../../specs/api/endpoints.md)
 - **Given**: The versioned API router is mounted under a parent path
 - **When**: A request targets a versioned endpoint through that parent mount
 - **Then**: The request reaches the versioned route handlers without the child routers hardcoding `/api/v1`
+
+## TC-API-004: API health endpoint returns a healthy status payload
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/health-check.test.ts`, `e2e/health.spec.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The local application stack is running
+- **When**: A client sends `GET /api/health`
+- **Then**: The API responds with a successful health payload containing `service`, `status`, and `timestamp`
