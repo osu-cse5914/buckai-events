@@ -1,8 +1,11 @@
 {
   "name": "@social-osu/backend",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "dev:worker": "wrangler dev",
@@ -10,7 +13,7 @@
     "deploy": "bun --cwd ../web run build && wrangler deploy",
     "start": "bun run dist/index.js",
     "lint": "vp lint . --deny-warnings -A triple-slash-reference --ignore-pattern dist --ignore-pattern .wrangler --ignore-pattern worker-configuration.d.ts",
-    "typecheck": "bun run types:worker:check && tsc --noEmit",
+    "typecheck": "bun run types:worker:check && vp check",
     "types:worker": "env -i HOME=\"$HOME\" PATH=\"$PATH\" SHELL=\"$SHELL\" CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler types",
     "types:worker:check": "env -i HOME=\"$HOME\" PATH=\"$PATH\" SHELL=\"$SHELL\" CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler types --check",
     "prisma:generate": "prisma generate",
@@ -20,9 +23,6 @@
     "test:runtime": "vitest run -c vitest.runtime.config.ts",
     "test:live:ai": "vitest run -c vitest.live.config.ts",
     "test": "bun run test:unit && bun run test:runtime"
-  },
-  "exports": {
-    ".": "./src/index.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.54",

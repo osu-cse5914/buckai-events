@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "turbo run dev --filter=!@social-osu/docs",
     "build": "turbo run build",
-    "lint": "bun run --cwd apps/web lint && bun run --cwd apps/backend lint",
+    "lint": "turbo run typecheck",
     "test:registry:audit": "bun scripts/audit-test-registry.ts",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

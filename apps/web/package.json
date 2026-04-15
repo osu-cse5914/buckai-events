@@ -1,7 +1,7 @@
 {
   "name": "@social-osu/web",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "lint": "vp lint . --react-plugin --deny-warnings --ignore-pattern src/routeTree.gen.ts --ignore-pattern dist",
     "pretypecheck": "bun run generate-routes",
-    "typecheck": "tsc --noEmit --pretty false",
+    "typecheck": "vp check -- --ignore-path=.eslintignore",
     "pretest": "bun run generate-routes",
     "test": "vitest run"
   },
