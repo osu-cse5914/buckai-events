@@ -42,7 +42,7 @@ import { Textarea } from "@/components/ui/textarea";
 const CONVERSATION_LIMIT = 50;
 const MESSAGE_LIMIT = 100;
 const INITIAL_BUCKAI_MESSAGE =
-  "Hi, I'm BuckAI Events. I can help you find events, gigs, and campus activity around BuckAI Events. Ask for recommendations, what's happening tonight, or help narrowing down options.";
+  "Hi, I'm BuckAI. I can help you find events, gigs, and campus activity around BuckAI Events. Ask for recommendations, what's happening tonight, or help narrowing down options.";
 
 function AiConversationsSkeleton() {
   return (
