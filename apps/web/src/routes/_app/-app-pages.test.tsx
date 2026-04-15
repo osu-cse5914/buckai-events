@@ -77,10 +77,10 @@ describe("[phase:6] [regression:always] App Pages Shell", () => {
     expect(thrown).toEqual({ to: "/featured" });
   });
 
-  it("TC-AUTH-011: the shared shell stays layout-only for public discovery routes", async () => {
+  it("TC-AUTH-011: the shared shell redirects signed-out users to /sign-in", async () => {
     await import("../_app");
 
-    expect(state.beforeLoads["/_app"]).toBeUndefined();
+    expect(state.beforeLoads["/_app"]).toBe(requireSignedInBeforeLoad);
   });
 
   it("TC-AUTH-012: private route guards redirect signed-out users to /sign-in", () => {
