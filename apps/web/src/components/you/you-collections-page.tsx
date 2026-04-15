@@ -44,6 +44,7 @@ import {
   YouSubpageHeader,
   YouSubpageHeaderSkeleton,
 } from "@/components/you/you-subpage-header";
+import { YouTabsNav } from "@/components/you/you-tabs-nav";
 
 const COLLECTION_VISIBILITY_STYLES: Record<"PRIVATE" | "PUBLIC", string> = {
   PRIVATE: "bg-slate-100 text-slate-700",
@@ -359,9 +360,12 @@ export function YouCollectionsPage() {
 
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+      <YouTabsNav currentTab="collections" />
+
       <YouSubpageHeader
         title="Collections"
         description="Manage the collections that organize your saved listings."
+        showBackLink={false}
         action={(
           <Sheet open={isCreateOpen} onOpenChange={handleCreateOpenChange}>
             <SheetTrigger asChild>

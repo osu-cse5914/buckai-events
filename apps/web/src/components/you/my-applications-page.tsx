@@ -24,6 +24,7 @@ import {
   YouSubpageHeader,
   YouSubpageHeaderSkeleton,
 } from "@/components/you/you-subpage-header";
+import { YouTabsNav } from "@/components/you/you-tabs-nav";
 
 function useMyApplications() {
   const api = useApiClient();
@@ -53,10 +54,13 @@ export function MyApplicationsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-10">
+    <section className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10">
+      <YouTabsNav currentTab="applications" />
+
       <YouSubpageHeader
         title="Applications"
         description="Track the gigs you have applied to and their latest status."
+        showBackLink={false}
       />
 
       {data && data.data.length === 0 ? (

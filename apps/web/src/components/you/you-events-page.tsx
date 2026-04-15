@@ -17,6 +17,7 @@ import {
   YouSubpageHeader,
   YouSubpageHeaderSkeleton,
 } from "@/components/you/you-subpage-header";
+import { YouTabsNav } from "@/components/you/you-tabs-nav";
 
 function useCurrentUser() {
   const api = useApiClient();
@@ -67,10 +68,13 @@ export function YouEventsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
+    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+      <YouTabsNav currentTab="events" />
+
       <YouSubpageHeader
         title="Your Events"
         description="Manage the events and gigs you created."
+        showBackLink={false}
       />
 
       {isError ? (
