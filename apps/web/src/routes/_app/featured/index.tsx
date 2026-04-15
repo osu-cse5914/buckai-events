@@ -11,7 +11,6 @@ function FeaturedRoute() {
   const navigate = useNavigate({ from: Route.fullPath });
   const search = Route.useSearch();
   const navigateFeaturedSearch = (next: {
-    type?: typeof search.type | "";
   }) => {
     const nextType = "type" in next ? next.type : search.type;
 

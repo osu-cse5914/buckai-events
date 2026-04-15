@@ -34,6 +34,7 @@ export type BrowseRouteSearch = {
 
 export type FeaturedRouteSearch = {
   type?: (typeof EVENT_TYPES)[number];
+  q?: string;
 };
 
 export type SearchRouteSearch = {
@@ -225,6 +226,7 @@ export function validateFeaturedSearch(
 ): FeaturedRouteSearch {
   return {
     type: normalizeEnumValue(search.type, EVENT_TYPES),
+    q: normalizeTrimmedString(search.q),
   };
 }
 

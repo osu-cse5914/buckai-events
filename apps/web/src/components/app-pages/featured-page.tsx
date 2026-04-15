@@ -42,15 +42,20 @@ const LANE_OPTIONS = [
 
 export function FeaturedPage({
   type = "",
+  searchQuery = "",
   onTypeChange,
+  onSearchQueryChange,
 }: {
   type?: FeaturedFilter;
+  searchQuery?: string;
   onTypeChange: (value: FeaturedFilter) => void;
+  onSearchQueryChange: (value: string) => void;
 }) {
   const [activeLane, setActiveLane] = useState<FeaturedLane>("recommended");
   const api = useApiClient();
   const { isSignedIn } = useAuth();
   const normalizedType = type || "ALL";
+  const normalizedSearchQuery = searchQuery.trim();
   const recommendedQuery = useInfiniteQuery({
     queryKey: queryKeys.recommendationsFeed(
       normalizedType,
@@ -61,6 +66,7 @@ export function FeaturedPage({
     queryFn: ({ pageParam }) =>
       fetchRecommendationsPage(api, {
         type: type || undefined,
+        search: normalizedSearchQuery || undefined,
         offset: pageParam,
         limit: PAGE_SIZE,
       }),
@@ -78,6 +84,7 @@ export function FeaturedPage({
     queryFn: () =>
       fetchPopularRecommendationsPage(api, {
         type: type || undefined,
+        search: normalizedSearchQuery || undefined,
         limit: FEATURED_PREVIEW_LIMIT,
       }),
   });
@@ -90,6 +97,7 @@ export function FeaturedPage({
     queryFn: () =>
       fetchUpcomingRecommendationsPage(api, {
         type: type || undefined,
+        search: normalizedSearchQuery || undefined,
         limit: FEATURED_PREVIEW_LIMIT,
       }),
   });
@@ -193,8 +201,16 @@ export function FeaturedPage({
               <FeaturedSectionInset>
                 <EventsEmptyState
                   className="mt-0"
-                  title="No recommendations yet"
-                  description="Check back soon for upcoming events and gigs."
+                  title={
+                    normalizedSearchQuery
+                      ? "No matching recommendations"
+                      : "No recommendations yet"
+                  }
+                  description={
+                    normalizedSearchQuery
+                      ? "Try a different keyword or clear the search."
+                      : "Check back soon for upcoming events and gigs."
+                  }
                 />
               </FeaturedSectionInset>
             ) : null}
@@ -283,8 +299,16 @@ export function FeaturedPage({
               isPending={popularQuery.isPending}
               isError={popularQuery.isError}
               error={popularQuery.error}
-              emptyTitle="No popular picks right now"
-              emptyDescription="Fresh activity will surface here as attention builds."
+              emptyTitle={
+                normalizedSearchQuery
+                  ? "No matching popular picks"
+                  : "No popular picks right now"
+              }
+              emptyDescription={
+                normalizedSearchQuery
+                  ? "Try a different keyword or clear the search."
+                  : "Fresh activity will surface here as attention builds."
+              }
               errorMessage="Failed to fetch popular recommendations"
             />
           </FeaturedSection>
@@ -309,8 +333,16 @@ export function FeaturedPage({
               isPending={upcomingQuery.isPending}
               isError={upcomingQuery.isError}
               error={upcomingQuery.error}
-              emptyTitle="No upcoming picks right now"
-              emptyDescription="Newly scheduled listings will appear here as they open up."
+              emptyTitle={
+                normalizedSearchQuery
+                  ? "No matching upcoming picks"
+                  : "No upcoming picks right now"
+              }
+              emptyDescription={
+                normalizedSearchQuery
+                  ? "Try a different keyword or clear the search."
+                  : "Newly scheduled listings will appear here as they open up."
+              }
               errorMessage="Failed to fetch upcoming recommendations"
             />
           </FeaturedSection>

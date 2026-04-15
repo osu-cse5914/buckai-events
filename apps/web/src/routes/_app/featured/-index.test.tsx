@@ -203,6 +203,7 @@ function FeaturedHarness({
 
 async function renderFeaturedPage(options?: {
   initialType?: FeaturedFilter;
+  initialSearchQuery?: string;
 }) {
   const queryClient = createQueryClient();
   return render(
@@ -340,7 +341,7 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
     });
   });
 
-  it("TC-FEED-016: featured discovery does not render a keyword search field", async () => {
+it("TC-FEED-016: featured discovery does not render a keyword search field", async () => {
     state.mockRecommendationsGet.mockResolvedValue(
       makeRecommendationResponse([
         makeEvent({ id: "evt_rec", title: "Career Prep Night" }),
@@ -397,6 +398,61 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
       "href",
       "/sign-in",
     );
+  });
+
+  it("TC-FEED-017: featured event links preserve Featured return context", async () => {
+    state.mockRecommendationsGet.mockResolvedValue(
+      makeRecommendationResponse([makeEvent({ id: "evt_rec", title: "Recommended Show" })]),
+    );
+    state.mockPopularGet.mockResolvedValue(makeSectionResponse([]));
+    state.mockUpcomingGet.mockResolvedValue(makeSectionResponse([]));
+
+    await renderFeaturedPage({ initialType: "EVENT" });
+
+    expect(await screen.findByRole("link", { name: /Recommended Show/i })).toHaveAttribute(
+      "href",
+      "/events/evt_rec?returnTo=featured&type=EVENT",
+    );
+  });
+
+  it("TC-FEED-018: signed-out featured users are prompted to sign in before loading more", async () => {
+    authState.isSignedIn = false;
+    state.mockRecommendationsGet.mockResolvedValue(
+      makeRecommendationResponse(
+        [buildEventRecord({ id: "evt_rec", title: "Recommended Show" })],
+        {
+          total: 10,
+          rankingMode: "PERSONALIZED",
+        },
+      ),
+    );
+    state.mockPopularGet.mockResolvedValue(makeSectionResponse([]));
+    state.mockUpcomingGet.mockResolvedValue(makeSectionResponse([]));
+
+    await renderFeaturedPage();
+
+    expect(await screen.findByRole("link", { name: "Sign in to load more" })).toHaveAttribute(
+      "href",
+      "/sign-in",
+    );
+=======
+    const searchInput = await screen.findByRole("searchbox", {
+      name: "Search Featured",
+    });
+    await userEvent.type(searchInput, "career");
+
+    await waitFor(() => {
+      expect(
+        state.mockRecommendationsGet.mock.calls.at(-1)?.[0]?.query?.search,
+      ).toBe("career");
+      expect(state.mockPopularGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
+        "career",
+      );
+      expect(state.mockUpcomingGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
+        "career",
+      );
+    });
+>>>>>>> main:apps/web/src/routes/_authenticated/featured/-index.test.tsx
   });
 
   it("TC-FEED-013: shows the fallback banner only from the personalized section state", async () => {
