@@ -94,7 +94,8 @@ Spec: [`conversations`](../../specs/chat/conversations.md)
 
 - **Spec scenario**: —
 - **Type**: Automated + Manual
-- **Automated in**: `apps/web/src/routes/_app/ai/-index.test.tsx`, `e2e/ai.spec.ts`
+- **Automated in**: `apps/web/src/routes/_app/ai/-index.test.tsx`
+- **Manual**: Manual testing required for full E2E flow
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Steps**:
