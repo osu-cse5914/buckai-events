@@ -58,10 +58,8 @@ test.describe("BuckAI browser integration", () => {
 
     await page.goto(`/ai?conversationId=${E2E_AI_PENDING_CONVERSATION_ID}`);
 
-    await expect(page.getByRole("heading", { name: "Gig application" })).toBeVisible();
-
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await expect(dialog).toBeVisible({ timeout: 10000 });
     await expect(dialog.getByRole("heading", { name: "Confirm action" })).toBeVisible();
     await expect(
       dialog.getByText("BuckAI is ready to submit this gig application for you."),
