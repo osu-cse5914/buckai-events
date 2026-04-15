@@ -807,6 +807,11 @@ paths:
           description: Filter by EVENT or GIG. Omit for blended feed.
           schema:
             $ref: '#/components/schemas/EventType'
+        - in: query
+          name: search
+          description: Non-semantic keyword filter applied before pagination.
+          schema:
+            type: string
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
       responses:
@@ -830,6 +835,11 @@ paths:
           description: Filter by EVENT or GIG. Omit for blended section results.
           schema:
             $ref: '#/components/schemas/EventType'
+        - in: query
+          name: search
+          description: Non-semantic keyword filter applied before pagination.
+          schema:
+            type: string
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
       responses:
@@ -853,6 +863,11 @@ paths:
           description: Filter by EVENT or GIG. Omit for blended section results.
           schema:
             $ref: '#/components/schemas/EventType'
+        - in: query
+          name: search
+          description: Non-semantic keyword filter applied before pagination.
+          schema:
+            type: string
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
       responses:

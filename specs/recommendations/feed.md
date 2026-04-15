@@ -25,6 +25,7 @@ Returns the `Recommended` feed section.
 | limit | Int | 20 | Number of items to return |
 | offset | Int | 0 | Pagination offset |
 | type | EventType? | null | Filter by EVENT or GIG. Null returns both (blended) |
+| search | String? | null | Non-semantic keyword filter applied before pagination |
 
 #### Response
 
@@ -38,6 +39,8 @@ Returns `{ items, meta }`, where `items` is an array of Event objects ranked by 
 ### `GET /recommendations/popular`
 
 Returns the `Popular` Featured preview section. Supports `limit`, `offset`, and `type`.
+
+Supports `limit`, `offset`, `type`, and `search`.
 
 Response shape: `{ items, meta }`, where `meta` includes `total`, `limit`, and `offset`.
 
@@ -60,6 +63,10 @@ When `type=EVENT` is specified, only events are returned. When `type=GIG`, only 
 ### Empty State
 
 For new users with no interactions and no interests, the feed falls back to a popularity-based ranking (events sorted by total interaction count, then by recency).
+
+### Keyword Search
+
+The `Featured` page may pass a keyword search query to the recommendation section endpoints. Keyword search is non-semantic and does not depend on embeddings. It narrows the `Recommended`, `Popular`, and `Upcoming` recommendation sections before pagination while preserving each section's ranking model. The social `Following` lane is not part of keyword search because it is an activity feed rather than a recommendation endpoint.
 
 ### Featured Page Composition
 
@@ -117,6 +124,16 @@ THEN the page renders Recommended, Popular, and Upcoming sections
 AND each section can be filtered by type without changing the underlying interim ranking model
 ```
 
+### S-FEED-12: Featured keyword search narrows recommendation sections
+
+```
+GIVEN the authenticated user is on Featured
+WHEN the user enters a keyword search query
+THEN Recommended, Popular, and Upcoming reload with the query
+AND ranking, pagination, empty states, and error states remain scoped per section
+AND the search does not use semantic embeddings
+```
+
 ### S-FEED-6: Cache hit [WIP — deferred to custom model phase]
 
 ```
@@ -136,4 +153,4 @@ AND the next GET /recommendations recomputes the ranking
 
 ## Test Cases
 
-See [`test-cases/recommendations/feed.md`](../../test-cases/recommendations/feed.md) for the full test case registry (TC-FEED-001 through TC-FEED-015), including automated Featured-section coverage and manual UI verification.
+See [`test-cases/recommendations/feed.md`](../../test-cases/recommendations/feed.md) for the full test case registry (TC-FEED-001 through TC-FEED-016), including automated Featured-section coverage and manual UI verification.

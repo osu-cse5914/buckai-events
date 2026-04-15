@@ -9,6 +9,7 @@ export type RecommendationRankingMode =
 type RecommendationListInput = {
   userId: string;
   type?: EventType;
+  search?: string;
   limit: number;
   offset: number;
   now?: Date;
@@ -65,6 +66,46 @@ function stripInteractionCounts(candidate: RecommendationCandidate) {
   const event = { ...candidate };
   Reflect.deleteProperty(event, "interactions");
   return event;
+}
+
+function normalizeKeywordSearch(search: string | undefined) {
+  const normalized = search?.trim().toLowerCase();
+  return normalized ? normalized : undefined;
+}
+
+function buildKeywordSearchWhere(search: string | undefined): Prisma.EventWhereInput {
+  if (!search) {
+    return {};
+  }
+
+  return {
+    OR: [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+      { summary: { contains: search, mode: "insensitive" } },
+      { category: { contains: search, mode: "insensitive" } },
+      { locationName: { contains: search, mode: "insensitive" } },
+    ],
+  };
+}
+
+function candidateMatchesKeywordSearch(
+  candidate: RecommendationCandidate,
+  search: string | undefined,
+) {
+  if (!search) {
+    return true;
+  }
+
+  const fields = [
+    candidate.title,
+    candidate.description,
+    candidate.summary,
+    candidate.category,
+    candidate.locationName,
+  ];
+
+  return fields.some((field) => field?.toLowerCase().includes(search));
 }
 
 // Scoring weights for personalized ranking.
@@ -152,6 +193,7 @@ async function loadRecommendationContext(
   input: RecommendationListInput,
 ): Promise<RecommendationContext> {
   const now = input.now ?? new Date();
+  const keywordSearch = normalizeKeywordSearch(input.search);
   const [user, dismissedInteractions, userInteractionCount, rawCandidates] =
     await Promise.all([
       prisma.user.findUnique({
@@ -180,6 +222,7 @@ async function loadRecommendationContext(
           status: { in: ["OPEN", "IN_PROGRESS"] },
           startAt: { gt: now },
           ...(input.type ? { type: input.type } : {}),
+          ...buildKeywordSearchWhere(keywordSearch),
         },
         include: RECOMMENDATION_EVENT_INCLUDE,
       }),
@@ -206,9 +249,11 @@ function rankRecommendationCandidates(
   compare: (left: RecommendationCandidate, right: RecommendationCandidate) => number,
 ) {
   const now = input.now ?? new Date();
+  const keywordSearch = normalizeKeywordSearch(input.search);
 
   return candidates
     .filter((candidate) => isEligibleCandidate(candidate, { now, type: input.type }))
+    .filter((candidate) => candidateMatchesKeywordSearch(candidate, keywordSearch))
     .filter((candidate) => !dismissedEventIds.has(candidate.id))
     .sort(compare);
 }

@@ -341,12 +341,12 @@ export const queryKeys = {
     ["events", "infinite", filters, pageSize] as const,
   collections: ["collections"] as const,
   socialFeed: (pageSize = PAGE_SIZE) => ["social-feed", pageSize] as const,
-  recommendationsFeed: (type: string, pageSize = PAGE_SIZE) =>
-    ["recommendations", "recommended", type, pageSize] as const,
-  recommendationsPopular: (type: string, limit: number) =>
-    ["recommendations", "popular", type, limit] as const,
-  recommendationsUpcoming: (type: string, limit: number) =>
-    ["recommendations", "upcoming", type, limit] as const,
+  recommendationsFeed: (type: string, search: string, pageSize = PAGE_SIZE) =>
+    ["recommendations", "recommended", type, search, pageSize] as const,
+  recommendationsPopular: (type: string, search: string, limit: number) =>
+    ["recommendations", "popular", type, search, limit] as const,
+  recommendationsUpcoming: (type: string, search: string, limit: number) =>
+    ["recommendations", "upcoming", type, search, limit] as const,
   myApplications: ["my-applications"] as const,
   gigApplications: (eventId: string) => ["gig-applications", eventId] as const,
   gigApplicationStatus: (eventId: string) =>
@@ -622,10 +622,12 @@ export async function fetchRecommendationsPage(
   api: ApiClient,
   {
     type,
+    search,
     limit = PAGE_SIZE,
     offset = 0,
   }: {
     type?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   },
@@ -637,6 +639,9 @@ export async function fetchRecommendationsPage(
 
   if (type) {
     query.type = type;
+  }
+  if (search) {
+    query.search = search;
   }
 
   const response = await api.api.v1.recommendations.$get({ query });
@@ -675,10 +680,12 @@ export async function fetchPopularRecommendationsPage(
   api: ApiClient,
   {
     type,
+    search,
     limit = PAGE_SIZE,
     offset = 0,
   }: {
     type?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   },
@@ -690,6 +697,9 @@ export async function fetchPopularRecommendationsPage(
 
   if (type) {
     query.type = type;
+  }
+  if (search) {
+    query.search = search;
   }
 
   const response = await api.api.v1.recommendations.popular.$get({ query });
@@ -704,10 +714,12 @@ export async function fetchUpcomingRecommendationsPage(
   api: ApiClient,
   {
     type,
+    search,
     limit = PAGE_SIZE,
     offset = 0,
   }: {
     type?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   },
@@ -719,6 +731,9 @@ export async function fetchUpcomingRecommendationsPage(
 
   if (type) {
     query.type = type;
+  }
+  if (search) {
+    query.search = search;
   }
 
   const response = await api.api.v1.recommendations.upcoming.$get({ query });

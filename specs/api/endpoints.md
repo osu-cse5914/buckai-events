@@ -143,9 +143,9 @@ default 10, max 25; `GET /api/v1/admin/ai-pipeline/jobs` uses `limit` default
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/recommendations` | Get the `Recommended` Featured feed section. Params: `limit`, `offset`, `type`. Response `meta` also includes `rankingMode` |
-| GET | `/api/v1/recommendations/popular` | Get the `Popular` Featured preview section. Params: `limit`, `offset`, `type` |
-| GET | `/api/v1/recommendations/upcoming` | Get the `Upcoming` Featured preview section. Params: `limit`, `offset`, `type` |
+| GET | `/api/v1/recommendations` | Get the `Recommended` Featured feed section. Params: `limit`, `offset`, `type`, `search`. Response `meta` also includes `rankingMode` |
+| GET | `/api/v1/recommendations/popular` | Get the `Popular` Featured preview section. Params: `limit`, `offset`, `type`, `search` |
+| GET | `/api/v1/recommendations/upcoming` | Get the `Upcoming` Featured preview section. Params: `limit`, `offset`, `type`, `search` |
 ## Conversations
 
 | Method | Path | Description |
