@@ -5,7 +5,6 @@ import { join, relative, resolve } from "path";
 
 const ROOT = resolve(import.meta.dir, "..");
 const TEST_CASES_DIR = join(ROOT, "test-cases");
-const REGRESSION_DIR = join(TEST_CASES_DIR, "regression");
 const ALLOWED_TYPES = new Set([
   "Automated",
   "Automated + Manual",
@@ -29,6 +28,13 @@ const WALK_SKIP_DIRS = new Set([
   "coverage",
   "dist",
   "node_modules",
+]);
+const COVERAGE_AUDIT_EXCEPTIONS = new Set([
+  "apps/backend/src/test/ai-tagging.test.ts",
+  "apps/backend/src/test/factories/index.test.ts",
+  "apps/backend/src/test/index.scheduled.test.ts",
+  "apps/web/src/components/ui/button.test.tsx",
+  "apps/web/src/test/factories/index.test.ts",
 ]);
 
 type TestCaseRecord = {
@@ -63,6 +69,19 @@ function walk(dir: string, predicate: (path: string) => boolean): string[] {
   }
 
   return files;
+}
+
+function collectTestFiles(): string[] {
+  return walk(
+    ROOT,
+    (candidate) =>
+      TEST_FILE_PATTERNS.some((pattern) => pattern.test(candidate)) &&
+      !candidate.startsWith(TEST_CASES_DIR),
+  );
+}
+
+function shouldAuditTestFile(relPath: string) {
+  return !COVERAGE_AUDIT_EXCEPTIONS.has(relPath);
 }
 
 function collectRegistryFiles(): string[] {
@@ -196,14 +215,7 @@ function parseRegistryFiles(): TestCaseRecord[] {
   return records;
 }
 
-function collectTestFileHits(): Map<string, Set<string>> {
-  const files = walk(
-    ROOT,
-    (candidate) =>
-      TEST_FILE_PATTERNS.some((pattern) => pattern.test(candidate)) &&
-      !candidate.startsWith(TEST_CASES_DIR),
-  );
-
+function collectTestFileHits(files: string[]): Map<string, Set<string>> {
   const hits = new Map<string, Set<string>>();
 
   for (const file of files) {
@@ -222,30 +234,12 @@ function collectTestFileHits(): Map<string, Set<string>> {
   return hits;
 }
 
-function collectRegressionSuiteIds(): { file: string; ids: string[] }[] {
-  const suites: { file: string; ids: string[] }[] = [];
-
-  for (const entry of readdirSync(REGRESSION_DIR).sort()) {
-    if (!entry.endsWith(".md")) {
-      continue;
-    }
-
-    const fullPath = join(REGRESSION_DIR, entry);
-    const content = readFileSync(fullPath, "utf8");
-    suites.push({
-      file: relative(ROOT, fullPath),
-      ids: [...new Set([...content.matchAll(/TC-[A-Z0-9-]+-\d+/g)].map((match) => match[0]))],
-    });
-  }
-
-  return suites;
-}
-
 function main() {
   const errors: string[] = [];
   const infos: string[] = [];
   const records = parseRegistryFiles();
-  const testFileHits = collectTestFileHits();
+  const testFiles = collectTestFiles();
+  const testFileHits = collectTestFileHits(testFiles);
   const seenIds = new Map<string, string>();
   const manualAlways: string[] = [];
   const manualAlwaysWithExactHits: string[] = [];
@@ -301,21 +295,44 @@ function main() {
   }
 
   const knownIds = new Set(records.map((record) => record.id));
-  for (const suite of collectRegressionSuiteIds()) {
-    for (const id of suite.ids) {
-      if (!knownIds.has(id)) {
-        errors.push(`${suite.file}: references unknown TC-ID ${id}`);
-      }
+  for (const [id, hitFiles] of testFileHits) {
+    if (!knownIds.has(id)) {
+      errors.push(
+        `Test files reference unknown TC-ID ${id}: ${[...hitFiles].sort().join(", ")}`,
+      );
     }
   }
 
-  const automatedAlways = records.filter(
+  for (const file of testFiles) {
+    const relPath = relative(ROOT, file);
+    if (!shouldAuditTestFile(relPath)) {
+      continue;
+    }
+
+    const content = readFileSync(file, "utf8");
+    if (!content.match(/TC-[A-Z0-9-]+-\d+/)) {
+      errors.push(
+        `${relPath}: test file does not reference any TC-ID from the registry`,
+      );
+    }
+  }
+
+  const automatedWithoutExactHits = records.filter(
     (record) =>
-      record.regression === "Always" && AUTOMATED_TYPES.has(record.type),
-  ).length;
+      AUTOMATED_TYPES.has(record.type) && !testFileHits.has(record.id),
+  );
+
+  for (const record of automatedWithoutExactHits) {
+    errors.push(
+      `${record.sourceFile}: ${record.id} is marked ${record.type} but no test file references the TC-ID`,
+    );
+  }
+
+  const automatedCases = records.filter((record) => AUTOMATED_TYPES.has(record.type)).length;
   infos.push(`Registry cases: ${records.length}`);
-  infos.push(`Regression Always automated/semi-automated: ${automatedAlways}`);
-  infos.push(`Regression Always manual-only: ${manualAlways.length}`);
+  infos.push(`Automated or semi-automated cases: ${automatedCases}`);
+  infos.push(`Manual-only cases: ${records.length - automatedCases}`);
+  infos.push(`Test files audited: ${testFiles.length}`);
 
   if (manualAlwaysWithExactHits.length > 0) {
     infos.push("Manual-only Regression Always cases with exact automated hits:");

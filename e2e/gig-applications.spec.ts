@@ -3,12 +3,11 @@ import {
   E2E_APPLICANT_ID,
   E2E_GIG_ID,
   E2E_OWNER_ID,
-  createAuthenticatedPage,
   disconnectGigApplicationFixtures,
   resetGigApplicationFixtures,
   seedGigApplicationFixtures,
-  signInAs,
 } from "./helpers/gig-application-fixtures";
+import { createAuthenticatedPage, signInAs } from "./helpers/auth";
 
 test.describe("[phase:2] [regression:always] Gig application flows", () => {
   test.describe.configure({ mode: "serial" });

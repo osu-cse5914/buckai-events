@@ -18,7 +18,7 @@ All REST endpoints are prefixed with `/api/v1`.
 
 ## Project Management
 
-Development is organized into 7 phases tracked via GitHub Issues and Milestones:
+Social OSU shipped across 7 historical phases. That phase breakdown remains in the roadmap for context, but the active workflow is issue- and PR-based rather than milestone-regression based.
 
 | Phase | Focus |
 |-------|-------|
@@ -182,10 +182,30 @@ Notes:
 | `bun run build` | Build all apps |
 | `bun run lint` | Lint all apps |
 | `bun run typecheck` | Typecheck all apps |
+| `bun run test` | Run workspace Vitest suites |
+| `bun run test:e2e` | Run browser integration/E2E tests |
+| `bun run test:live:ai` | Run provider-backed live AI smoke tests |
+| `bun run test:registry:audit` | Audit TC-ID registry coverage |
 | `bun run db:generate` | Generate Prisma client |
 | `bun run db:migrate` | Run Prisma migrations |
 | `bun run db:push` | Push Prisma schema to the database |
 | `bun run deploy` | Build and deploy via the app deploy scripts |
+
+## Testing
+
+The testing plan has three active automated layers:
+
+1. `bun run test`
+   Runs the workspace Vitest suites in `apps/backend` and `apps/web`.
+2. `bun run test:e2e`
+   Runs Playwright browser integration tests against the local frontend and backend.
+3. `bun run test:live:ai`
+   Runs provider-backed live AI smoke tests from `apps/backend`.
+
+Use `bun run test:registry:audit` to verify that test files and registry TC-IDs stay aligned.
+
+For browser E2E, prefer a dedicated disposable database. `bun run test:e2e` uses
+`PLAYWRIGHT_DATABASE_URL` when provided and otherwise falls back to `DATABASE_URL`.
 
 ## Deployment
 

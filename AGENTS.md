@@ -29,31 +29,30 @@ All test cases — automated and manual — are tracked in `/test-cases`. Each s
 
 ### Tagging Convention
 
-All automated tests must use phase tags in `describe()` blocks so they can be filtered for regression runs:
+All automated tests must reference their TC-ID in the test title:
 
 ```typescript
-describe('[phase:N] [regression:always] Feature Name', () => {
-  it('TC-XXX-001: behavior description', () => { ... });
+describe("Feature Name", () => {
+  it("TC-XXX-001: behavior description", () => { ... });
 });
 ```
 
-- `[phase:N]` — the phase where this test was introduced (0–6)
-- `[regression:always]` — included in all regression runs from this phase onward
+Historical `[phase:N]` tags may remain in existing `describe()` blocks, but they are legacy metadata and are no longer used to drive active regression suites.
 
 ### When Writing Tests
 
 1. Check the test case registry (`/test-cases/<area>/<feature>.md`) for the TC-ID corresponding to the spec scenario.
 2. Use the TC-ID in the `it()` description (e.g., `it('TC-AUTH-005: returns 401 when JWT is missing', ...)`).
-3. Tag the `describe()` block with the correct phase.
-4. If a test case does not yet exist in the registry for new behavior, add it to the registry first.
+3. If a test case does not yet exist in the registry for new behavior, add it to the registry first.
 
-### Regression Testing
+### Test Suite Model
 
-Regression suites are defined in `/test-cases/regression/phase-N.md`. Each phase's suite is cumulative — it includes all prior phases.
+The phase-based regression model is retired. The active automated suites are:
 
-- **Automated**: Runs via `bun run test:regression:phase-N` (filters by phase tags).
-- **Manual**: A GitHub Issue is auto-created with the manual test checklist when a milestone closes.
-- On milestone close, the `regression.yml` GitHub Actions workflow runs both.
+- **Workspace tests**: `bun run test`
+- **Browser integration/E2E**: `bun run test:e2e`
+- **Live AI smoke**: `bun run test:live:ai`
+- **Registry audit**: `bun run test:registry:audit`
 
 ## Workflow Rules
 
@@ -67,8 +66,8 @@ Regression suites are defined in `/test-cases/regression/phase-N.md`. Each phase
 
 ## Project Management
 
-- The project roadmap lives in `plans/roadmap.md`. It defines phases, task breakdowns, and dependencies.
-- Individual tasks are tracked as GitHub Issues, organized by Milestones (one per phase).
+- The project roadmap lives in `plans/roadmap.md`. It is the historical delivery plan plus current dependency context.
+- Individual tasks are tracked as GitHub Issues.
 - Before starting work, check for a GitHub Issue. If one exists, read the linked spec first.
 - One issue = one PR. Keep scope small and focused.
 - Agents do not merge PRs. Only humans merge.
@@ -79,9 +78,7 @@ Regression suites are defined in `/test-cases/regression/phase-N.md`. Each phase
 
 - `scope:api`, `scope:web`, `scope:full-stack` — what part of the stack
 - `agent:in-progress`, `agent:review` — agent workflow state
-- `timebox:N` — which timebox/sprint the issue belongs to
-
-Phase tracking uses GitHub Milestones (one per phase), not labels.
+- `timebox:N` — optional planning label if the team chooses to use sprint/timebox grouping
 
 Issue types (Feature, Task, Bug) are set via GitHub's native issue type field, not labels.
 
@@ -135,7 +132,9 @@ Rules:
 | `bun run lint` | Lint all apps |
 | `bun run typecheck` | Typecheck all apps |
 | `bun run test` | Run all tests |
-| `bun run test:regression:phase-N` | Run cumulative regression for phase 0–N |
+| `bun run test:e2e` | Run browser end-to-end tests |
+| `bun run test:live:ai` | Run live AI smoke tests |
+| `bun run test:registry:audit` | Audit test-case registry coverage |
 | `bun run db:generate` | Generate Prisma client |
 | `bun run db:migrate` | Run Prisma migrations |
 | `bun run db:push` | Push schema to database |

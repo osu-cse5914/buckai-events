@@ -79,7 +79,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: —
 - **Type**: Semi-automated
-- **Automated in**: `apps/web/src/routes/-auth-pages.test.tsx`
+- **Automated in**: `apps/web/src/routes/-auth-pages.test.tsx`, `e2e/navigation.spec.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Steps**:
@@ -116,7 +116,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-1, S-AUTH-2
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/-auth-pages.test.tsx`
+- **Automated in**: `apps/web/src/routes/-auth-pages.test.tsx`, `e2e/navigation.spec.ts`
 - **Phase introduced**: 0
 - **Regression**: Always
 - **Given**: An unauthenticated user
@@ -127,7 +127,7 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 
 - **Spec scenario**: S-AUTH-7
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/-app-pages.test.tsx`
+- **Automated in**: `apps/web/src/routes/_authenticated/-app-pages.test.tsx`, `e2e/navigation.spec.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A visitor is not signed in

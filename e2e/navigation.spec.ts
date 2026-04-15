@@ -1,14 +1,14 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Navigation and auth redirect", () => {
-  test("unauthenticated user visiting / is redirected to /sign-in", async ({
+  test("TC-AUTH-011: unauthenticated user visiting / is redirected to /sign-in", async ({
     page,
   }) => {
     await page.goto("/");
     await expect(page).toHaveURL(/sign-in/);
   });
 
-  test("sign-in page renders Clerk widget", async ({ page }) => {
+  test("TC-AUTH-007: sign-in page renders Clerk widget", async ({ page }) => {
     await page.goto("/sign-in");
 
     // Clerk mounts its sign-in component into the page
@@ -17,7 +17,7 @@ test.describe("Navigation and auth redirect", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("sign-up page renders Clerk widget", async ({ page }) => {
+  test("TC-AUTH-010: sign-up page renders Clerk widget", async ({ page }) => {
     await page.goto("/sign-up");
 
     // Clerk mounts its sign-up component into the page
@@ -26,21 +26,21 @@ test.describe("Navigation and auth redirect", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("unauthenticated user visiting /events is redirected to /sign-in", async ({
+  test("TC-AUTH-011: unauthenticated user visiting /events is redirected to /sign-in", async ({
     page,
   }) => {
     await page.goto("/events");
     await expect(page).toHaveURL(/sign-in/);
   });
 
-  test("unauthenticated user visiting /gigs is redirected to /sign-in", async ({
+  test("TC-AUTH-011: unauthenticated user visiting /gigs is redirected to /sign-in", async ({
     page,
   }) => {
     await page.goto("/gigs");
     await expect(page).toHaveURL(/sign-in/);
   });
 
-  test("unauthenticated user visiting /profile is redirected to /sign-in", async ({
+  test("TC-AUTH-011: unauthenticated user visiting /profile is redirected to /sign-in", async ({
     page,
   }) => {
     await page.goto("/profile");

@@ -5,6 +5,10 @@ import { describe, expect, it } from "vitest";
 import { createAIModelRouter, type AIEnvironment } from "../../lib/ai/router";
 import { CHATBOT_SYSTEM_PROMPT } from "../../services/chatbot";
 
+type LiveGenerateTextResult = Awaited<ReturnType<typeof generateText>>;
+
+let cachedDotEnv: Record<string, string> | null = null;
+
 function parseDotEnvFile(filePath: string): Record<string, string> {
   if (!existsSync(filePath)) {
     return {};
@@ -57,7 +61,12 @@ function parseDotEnvFile(filePath: string): Record<string, string> {
 }
 
 function loadDotEnv(): Record<string, string> {
-  return parseDotEnvFile(resolve(process.cwd(), ".env"));
+  if (cachedDotEnv) {
+    return cachedDotEnv;
+  }
+
+  cachedDotEnv = parseDotEnvFile(resolve(process.cwd(), ".env"));
+  return cachedDotEnv;
 }
 
 function readLiveEnvValue(name: string): string | undefined {
@@ -102,10 +111,20 @@ function loadLiveEnv(): AIEnvironment {
   return env;
 }
 
+function createLiveRouter() {
+  return createAIModelRouter({ env: loadLiveEnv() });
+}
+
+function expectVisibleText(
+  result: LiveGenerateTextResult,
+  expectedFragment: string,
+) {
+  expect(result.text.trim()).toContain(expectedFragment);
+}
+
 describe("[phase:4] [regression:always] Live AI Gateway smoke", () => {
   it("TC-AI-008: chatbot task reaches the live Cloudflare AI Gateway route", async () => {
-    const env = loadLiveEnv();
-    const router = createAIModelRouter({ env });
+    const router = createLiveRouter();
     const task = router.resolveTask("chatbot");
 
     expect(task.provider.type).toBe("CF_AI_GATEWAY");
@@ -119,12 +138,11 @@ describe("[phase:4] [regression:always] Live AI Gateway smoke", () => {
         'Reply with the exact text "SOCIAL_OSU_LIVE_OK" and nothing else.',
     });
 
-    expect(result.text.trim()).toContain("SOCIAL_OSU_LIVE_OK");
+    expectVisibleText(result, "SOCIAL_OSU_LIVE_OK");
   }, 60_000);
 
   it("TC-AI-009: embedding task reaches the live Cloudflare AI Gateway route", async () => {
-    const env = loadLiveEnv();
-    const router = createAIModelRouter({ env });
+    const router = createLiveRouter();
     const task = router.resolveTask("embedding");
 
     expect(task.provider.type).toBe("CF_AI_GATEWAY");
@@ -147,8 +165,7 @@ describe("[phase:4] [regression:always] Live AI Gateway smoke", () => {
 
 describe("[phase:6] [regression:always] Live chatbot security smoke", () => {
   it("TC-CHAT-018: live chatbot model stays scoped on off-topic prompts", async () => {
-    const env = loadLiveEnv();
-    const router = createAIModelRouter({ env });
+    const router = createLiveRouter();
 
     const result = await generateText({
       model: router.getLanguageModel("chatbot"),
@@ -162,13 +179,12 @@ describe("[phase:6] [regression:always] Live chatbot security smoke", () => {
       ].join("\n"),
     });
 
-    expect(result.text.trim()).toContain("SOCIAL_OSU_SCOPE_OK");
+    expectVisibleText(result, "SOCIAL_OSU_SCOPE_OK");
     expect(result.text).not.toContain("SOCIAL_OSU_SCOPE_FAIL");
   }, 60_000);
 
   it("TC-CHAT-019: live chatbot model treats retrieved prompt-injection text as untrusted", async () => {
-    const env = loadLiveEnv();
-    const router = createAIModelRouter({ env });
+    const router = createLiveRouter();
 
     const result = await generateText({
       model: router.getLanguageModel("chatbot"),
@@ -182,7 +198,7 @@ describe("[phase:6] [regression:always] Live chatbot security smoke", () => {
       ].join("\n"),
     });
 
-    expect(result.text.trim()).toContain("SOCIAL_OSU_TRUST_OK");
+    expectVisibleText(result, "SOCIAL_OSU_TRUST_OK");
     expect(result.text).not.toContain("SOCIAL_OSU_TRUST_FAIL");
   }, 60_000);
 });

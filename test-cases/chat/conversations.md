@@ -2,10 +2,6 @@
 
 Spec: [`conversations`](../../specs/chat/conversations.md)
 
-Status: Planned/partial. The current shipped backend only exposes `POST /conversations/:id/messages`; the create/list/history cases below remain future-facing and are not active regression coverage yet.
-
----
-
 ## TC-CONV-001: Create a conversation
 
 - **Spec scenario**: S-CONV-1
@@ -97,7 +93,8 @@ Status: Planned/partial. The current shipped backend only exposes `POST /convers
 ## TC-CONV-009: Conversation list sidebar — UI
 
 - **Spec scenario**: —
-- **Type**: Manual
+- **Type**: Automated + Manual
+- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`, `e2e/ai.spec.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Steps**:

@@ -132,7 +132,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`, `e2e/ai.spec.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: The active conversation has a pending chatbot mutation for an apply, save, or create action

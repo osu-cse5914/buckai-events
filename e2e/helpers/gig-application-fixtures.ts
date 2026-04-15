@@ -1,10 +1,8 @@
 import type { AppStatus } from "@prisma/client";
-import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { getPrismaClient } from "../../apps/backend/src/lib/prisma";
-import { E2E_TEST_AUTH_STORAGE_KEY } from "../../apps/web/src/lib/e2e-auth";
-
-const BASE_URL = "http://localhost:5173";
+export { createAuthenticatedPage, signInAs } from "./auth";
 const DATABASE_URL =
+  process.env.PLAYWRIGHT_DATABASE_URL ??
   process.env.DATABASE_URL ??
   "postgresql://postgres:postgres@localhost:5432/social_osu_app?schema=public";
 const prisma = getPrismaClient(DATABASE_URL);
@@ -48,12 +46,6 @@ const GIG = {
 };
 
 export async function resetGigApplicationFixtures() {
-  await prisma.interaction.deleteMany({
-    where: { eventId: E2E_GIG_ID },
-  });
-  await prisma.application.deleteMany({
-    where: { gigId: E2E_GIG_ID },
-  });
   await prisma.event.deleteMany({
     where: { id: E2E_GIG_ID },
   });
@@ -96,29 +88,4 @@ export async function seedGigApplicationFixtures(input?: {
 
 export async function disconnectGigApplicationFixtures() {
   await prisma.$disconnect();
-}
-
-export async function signInAs(page: Page, userId: string) {
-  await page.addInitScript(
-    ({ storageKey, nextUserId }) => {
-      window.localStorage.setItem(storageKey, nextUserId);
-    },
-    {
-      storageKey: E2E_TEST_AUTH_STORAGE_KEY,
-      nextUserId: userId,
-    },
-  );
-}
-
-export async function createAuthenticatedPage(
-  browser: Browser,
-  userId: string,
-): Promise<{ context: BrowserContext; page: Page }> {
-  const context = await browser.newContext({ baseURL: BASE_URL });
-  const page = await context.newPage();
-
-  await signInAs(page, userId);
-  await page.goto(BASE_URL);
-
-  return { context, page };
 }
