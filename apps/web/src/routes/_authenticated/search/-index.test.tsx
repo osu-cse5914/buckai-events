@@ -307,6 +307,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
 
     const searchInput = screen.getByRole("textbox", { name: "Search query" });
     await user.type(searchInput, "tag: group-fitness");
+    await user.keyboard("{Enter}");
 
     await vi.waitFor(() => {
       const lastCall = state.mockEventsGet.mock.calls.at(-1);
@@ -367,6 +368,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       searchInput,
       "pickup type:gig category:fitness tag:group-fitness",
     );
+    await user.keyboard("{Enter}");
 
     await vi.waitFor(() => {
       const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
@@ -442,13 +444,13 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     expect(await screen.findByText('Results for "hackathon"')).toBeInTheDocument();
 
     const eventRow = screen.getByRole("article", { name: "Hackathon listing" });
-    expect(within(eventRow).getByText("EVENT")).toBeInTheDocument();
+    expect(within(eventRow).getByText("Event · User · Tech")).toBeInTheDocument();
     expect(
       within(eventRow).getByRole("button", { name: "Save to collection" }),
     ).toBeInTheDocument();
 
     const gigRow = screen.getByRole("article", { name: "Campus Tutor listing" });
-    expect(within(gigRow).getByText("GIG")).toBeInTheDocument();
+    expect(within(gigRow).getByText("Gig · User · Tech")).toBeInTheDocument();
     expect(within(gigRow).getByText("$25/hr")).toBeInTheDocument();
   });
 
@@ -490,7 +492,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     );
   });
 
-  it("TC-PAGES-012: search page debounces a new query and resets pagination", async () => {
+  it("TC-PAGES-012: search page executes a new query on Enter and resets pagination", async () => {
     const user = userEvent.setup();
     state.mockSemanticSearchGet.mockResolvedValue(
       makeResponse([makeSearchResult({ id: "evt-1", title: "Hackathon" })]),
@@ -516,6 +518,8 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     expect(state.mockSemanticSearchGet.mock.calls.at(-1)?.[0].query.query).toBe(
       "music",
     );
+
+    await user.keyboard("{Enter}");
 
     await waitFor(() => {
       const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);

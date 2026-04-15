@@ -16,6 +16,7 @@ import {
   useSearchResultsQuery,
 } from "@/components/events/events-browser";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const TYPE_FILTER_OPTIONS = [
   { value: "", label: "All" },
@@ -25,8 +26,6 @@ const TYPE_FILTER_OPTIONS = [
   value: NonNullable<SearchRouteSearch["type"]> | "";
   label: string;
 }>;
-
-const SEARCH_UPDATE_DEBOUNCE_MS = 300;
 
 function getSelectionTextOffset(root: HTMLElement) {
   const selection = window.getSelection();
@@ -156,7 +155,6 @@ export function SearchPage({
 }) {
   const queryInputRef = useRef<HTMLDivElement>(null);
   const selectionOffsetRef = useRef<number | null>(null);
-  const pendingSearchUpdateRef = useRef<number | null>(null);
   const searchInputValue = buildSearchInputValue({
     query: search,
     type,
@@ -219,16 +217,6 @@ export function SearchPage({
     restoreSelectionTextOffset(input, selectionOffset);
   }, [draftSearchInput]);
 
-  useEffect(() => {
-    return () => {
-      if (pendingSearchUpdateRef.current == null) {
-        return;
-      }
-
-      window.clearTimeout(pendingSearchUpdateRef.current);
-    };
-  }, []);
-
   function submitSearch(
     nextSearch: string,
     options?: {
@@ -262,17 +250,13 @@ export function SearchPage({
   }
 
   function clearPendingSearchUpdate() {
-    if (pendingSearchUpdateRef.current == null) {
-      return;
-    }
-
-    window.clearTimeout(pendingSearchUpdateRef.current);
-    pendingSearchUpdateRef.current = null;
   }
 
-  function submitCurrentSearch(nextType = type) {
+  function submitCurrentSearch(
+    nextTypeOverride?: NonNullable<SearchRouteSearch["type"]> | "",
+  ) {
     clearPendingSearchUpdate();
-    submitSearch(draftSearchInput, { typeOverride: nextType });
+    submitSearch(draftSearchInput, { typeOverride: nextTypeOverride });
   }
 
   function applySuggestion(suggestionText: string) {
@@ -290,23 +274,6 @@ export function SearchPage({
   function scheduleSearchUpdate(nextSearch: string, nextCaretOffset = nextSearch.length) {
     selectionOffsetRef.current = nextCaretOffset;
     setDraftSearchInput(nextSearch);
-
-    clearPendingSearchUpdate();
-
-    const parsedSearch = parseSearchInputValue(nextSearch);
-    if (
-      (parsedSearch.query ?? "") === trimmedSearch &&
-      (parsedSearch.tag ?? "") === trimmedTag &&
-      (parsedSearch.category ?? "") === trimmedCategory &&
-      (parsedSearch.type ?? "") === type
-    ) {
-      return;
-    }
-
-    pendingSearchUpdateRef.current = window.setTimeout(() => {
-      pendingSearchUpdateRef.current = null;
-      submitSearch(nextSearch);
-    }, SEARCH_UPDATE_DEBOUNCE_MS);
   }
   const detailSearch = hasStartedSearch
     ? {
@@ -331,7 +298,14 @@ export function SearchPage({
   );
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-10">
+    <section
+      className={cn(
+        "mx-auto flex w-full max-w-6xl flex-col px-6",
+        hasStartedSearch
+          ? "gap-10 py-10"
+          : "min-h-[calc(100vh-9rem)] justify-center gap-6 py-16",
+      )}
+    >
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
         <form
           onSubmit={(event) => {
