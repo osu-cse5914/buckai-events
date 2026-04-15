@@ -1,10 +1,6 @@
 import { redirect } from "@tanstack/react-router";
 
-export const PUBLIC_DISCOVERY_NAV_PATHS = [
-  "/featured",
-  "/events",
-  "/gigs",
-] as const;
+export const PUBLIC_DISCOVERY_NAV_PATHS = ["/featured", "/events", "/gigs"] as const;
 
 const PUBLIC_AUTHENTICATED_ROUTE_PATTERNS = [
   /^\/featured$/,

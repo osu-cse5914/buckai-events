@@ -1,16 +1,7 @@
 import type { MouseEvent, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQuery,
-} from "@tanstack/react-query";
-import {
-  CalendarIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  MapPinIcon,
-} from "lucide-react";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, MapPinIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import {
   fetchEventsList,
@@ -23,10 +14,7 @@ import {
   searchResultsQueryOptions,
   type SearchResultsFilters,
 } from "@/lib/queries";
-import {
-  buildEventMetaLine,
-  formatDate,
-} from "@/lib/event-utils";
+import { buildEventMetaLine, formatDate } from "@/lib/event-utils";
 import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
 import { Button } from "@/components/ui/button";
@@ -74,13 +62,9 @@ export function useInfiniteEventsQuery(
     queryKey: queryKeys.infiniteEventsList(filters, pageSize),
     enabled,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      fetchEventsList(api, filters, pageParam as number, pageSize),
+    queryFn: ({ pageParam }) => fetchEventsList(api, filters, pageParam as number, pageSize),
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce(
-        (count, currentPage) => count + currentPage.data.length,
-        0,
-      );
+      const loaded = allPages.reduce((count, currentPage) => count + currentPage.data.length, 0);
 
       return loaded < lastPage.pagination.total ? allPages.length : undefined;
     },
@@ -102,10 +86,7 @@ export function EventsListSkeleton({
 }) {
   return (
     <div
-      className={cn(
-        framed ? "overflow-hidden rounded-2xl border bg-background" : "",
-        className,
-      )}
+      className={cn(framed ? "overflow-hidden rounded-2xl border bg-background" : "", className)}
     >
       {showHeader ? (
         <div className="border-b px-4 py-4 sm:px-5">
@@ -178,10 +159,7 @@ export function EventsBrowseSkeleton() {
 
         <div className="lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div
-              key={index}
-              className="border-b px-4 py-4 sm:px-5"
-            >
+            <div key={index} className="border-b px-4 py-4 sm:px-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-2">
                   <Skeleton className="h-4 w-28" />
@@ -238,13 +216,7 @@ export function EventsBrowseSkeleton() {
   );
 }
 
-export function EventsErrorState({
-  message,
-  className,
-}: {
-  message: string;
-  className?: string;
-}) {
+export function EventsErrorState({ message, className }: { message: string; className?: string }) {
   return (
     <div
       className={cn(
@@ -269,12 +241,7 @@ export function EventsEmptyState({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "mt-8 flex flex-col items-center gap-2 px-2 py-4 text-center",
-        className,
-      )}
-    >
+    <div className={cn("mt-8 flex flex-col items-center gap-2 px-2 py-4 text-center", className)}>
       <p className="text-lg font-medium">{title}</p>
       <p className="max-w-xl text-sm text-muted-foreground">{description}</p>
       {action ? <div className="mt-2">{action}</div> : null}
@@ -398,8 +365,7 @@ export function EventsPagination({
   return (
     <div className={cn("mt-8 flex items-center justify-between", className)}>
       <p className="text-sm text-muted-foreground">
-        Showing {page * PAGE_SIZE + 1}–
-        {Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+        Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
       </p>
       <div className="flex items-center gap-1">
         <Button

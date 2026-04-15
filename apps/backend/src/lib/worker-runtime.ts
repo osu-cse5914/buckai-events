@@ -5,13 +5,15 @@ import type { AppEnv } from "./types";
 
 type PrismaFactory = (connectionString?: string) => PrismaClient;
 
-function getExecutionContext(c: Context<AppEnv>):
-  | { waitUntil(promise: Promise<unknown>): void }
-  | undefined {
+function getExecutionContext(
+  c: Context<AppEnv>,
+): { waitUntil(promise: Promise<unknown>): void } | undefined {
   try {
-    return (c as Context<AppEnv> & {
-      executionCtx?: { waitUntil(promise: Promise<unknown>): void };
-    }).executionCtx;
+    return (
+      c as Context<AppEnv> & {
+        executionCtx?: { waitUntil(promise: Promise<unknown>): void };
+      }
+    ).executionCtx;
   } catch {
     return undefined;
   }

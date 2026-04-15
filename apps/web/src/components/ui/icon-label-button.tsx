@@ -11,10 +11,7 @@ export function IconLabelButton({
   icon: ReactNode;
 }) {
   return (
-    <Button
-      className={cn("h-11 rounded-xl px-4", className)}
-      {...props}
-    >
+    <Button className={cn("h-11 rounded-xl px-4", className)} {...props}>
       {icon}
       {children}
     </Button>

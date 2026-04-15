@@ -83,10 +83,7 @@ function readLiveEnvValue(name: string): string | undefined {
   return undefined;
 }
 
-function requireLiveEnvValue(
-  name: string,
-  placeholder?: string,
-): string {
+function requireLiveEnvValue(name: string, placeholder?: string): string {
   const value = readLiveEnvValue(name);
 
   if (!value || (placeholder && value === placeholder)) {
@@ -115,10 +112,7 @@ function createLiveRouter() {
   return createAIModelRouter({ env: loadLiveEnv() });
 }
 
-function expectVisibleText(
-  result: LiveGenerateTextResult,
-  expectedFragment: string,
-) {
+function expectVisibleText(result: LiveGenerateTextResult, expectedFragment: string) {
   expect(result.text.trim()).toContain(expectedFragment);
 }
 
@@ -134,8 +128,7 @@ describe("[phase:4] [regression:always] Live AI Gateway smoke", () => {
       model: router.getLanguageModel("chatbot"),
       temperature: 0,
       maxOutputTokens: 256,
-      prompt:
-        'Reply with the exact text "SOCIAL_OSU_LIVE_OK" and nothing else.',
+      prompt: 'Reply with the exact text "SOCIAL_OSU_LIVE_OK" and nothing else.',
     });
 
     expectVisibleText(result, "SOCIAL_OSU_LIVE_OK");

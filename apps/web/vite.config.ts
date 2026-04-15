@@ -13,13 +13,13 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: process.env.VITE_API_URL || "http://localhost:3001",
-        changeOrigin: true
-      }
-    }
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src")
-    }
-  }
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 });

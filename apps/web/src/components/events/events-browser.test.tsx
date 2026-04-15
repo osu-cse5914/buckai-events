@@ -4,18 +4,10 @@ import { delay, http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { useEventsQuery, useInfiniteEventsQuery, useSearchResultsQuery } from "./events-browser";
 import { renderWithProviders } from "@/test/render-with-providers";
-import {
-  makeEventListItem,
-  makeEventsResponse,
-  TEST_API_BASE_URL,
-} from "@/test/msw/handlers";
+import { makeEventListItem, makeEventsResponse, TEST_API_BASE_URL } from "@/test/msw/handlers";
 import { server } from "@/test/msw/server";
 
-function EventsQueryProbe({
-  page = 0,
-}: {
-  page?: number;
-}) {
+function EventsQueryProbe({ page = 0 }: { page?: number }) {
   const query = useEventsQuery(
     {
       type: "EVENT",
@@ -74,9 +66,7 @@ function InfiniteEventsProbe() {
     1,
   );
 
-  const titles =
-    query.data?.pages.flatMap((page) => page.data.map((event) => event.title)) ??
-    [];
+  const titles = query.data?.pages.flatMap((page) => page.data.map((event) => event.title)) ?? [];
 
   if (query.isLoading) {
     return <p>loading</p>;
@@ -101,9 +91,7 @@ describe("[phase:6] [regression:always] Events query hooks", () => {
     server.use(
       http.get(`${TEST_API_BASE_URL}/api/v1/events`, async () => {
         await delay(75);
-        return HttpResponse.json(
-          makeEventsResponse([makeEventListItem({ title: "Hack Night" })]),
-        );
+        return HttpResponse.json(makeEventsResponse([makeEventListItem({ title: "Hack Night" })]));
       }),
     );
 
@@ -120,13 +108,10 @@ describe("[phase:6] [regression:always] Events query hooks", () => {
       http.get(`${TEST_API_BASE_URL}/api/v1/events`, ({ request }) => {
         requests.push(new URL(request.url));
         return HttpResponse.json(
-          makeEventsResponse(
-            [makeEventListItem({ title: "Filtered Event" })],
-            {
-              total: 13,
-              offset: 12,
-            },
-          ),
+          makeEventsResponse([makeEventListItem({ title: "Filtered Event" })], {
+            total: 13,
+            offset: 12,
+          }),
         );
       }),
     );
@@ -161,15 +146,11 @@ describe("[phase:6] [regression:always] Events query hooks", () => {
     server.use(
       http.get(`${TEST_API_BASE_URL}/api/v1/events/semantic-search`, ({ request }) => {
         semanticRequests.push(new URL(request.url));
-        return HttpResponse.json(
-          makeEventsResponse([makeEventListItem({ title: "Robot Expo" })]),
-        );
+        return HttpResponse.json(makeEventsResponse([makeEventListItem({ title: "Robot Expo" })]));
       }),
     );
 
-    renderWithProviders(
-      <SearchResultsProbe search={{ query: "robotics", type: "EVENT" }} />,
-    );
+    renderWithProviders(<SearchResultsProbe search={{ query: "robotics", type: "EVENT" }} />);
 
     expect(await screen.findByText("Robot Expo")).toBeInTheDocument();
     expect(semanticRequests).toHaveLength(1);
@@ -188,15 +169,11 @@ describe("[phase:6] [regression:always] Events query hooks", () => {
       }),
       http.get(`${TEST_API_BASE_URL}/api/v1/events`, ({ request }) => {
         eventsRequests.push(new URL(request.url));
-        return HttpResponse.json(
-          makeEventsResponse([makeEventListItem({ title: "Music Mixer" })]),
-        );
+        return HttpResponse.json(makeEventsResponse([makeEventListItem({ title: "Music Mixer" })]));
       }),
     );
 
-    renderWithProviders(
-      <SearchResultsProbe search={{ type: "EVENT", category: "music" }} />,
-    );
+    renderWithProviders(<SearchResultsProbe search={{ type: "EVENT", category: "music" }} />);
 
     expect(await screen.findByText("Music Mixer")).toBeInTheDocument();
     expect(semanticSearchCalls).toBe(0);

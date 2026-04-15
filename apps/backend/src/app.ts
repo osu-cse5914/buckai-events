@@ -20,9 +20,7 @@ import { users } from "./routes/users";
 
 type ErrorHandlerRegistrable = {
   notFound: (handler: (c: Context) => Response | Promise<Response>) => unknown;
-  onError: (
-    handler: (error: Error, c: Context) => Response | Promise<Response>,
-  ) => unknown;
+  onError: (handler: (error: Error, c: Context) => Response | Promise<Response>) => unknown;
 };
 
 export function registerApiErrorHandlers<T>(app: T): T {
@@ -47,9 +45,7 @@ export function createApiApp() {
   // In production both are served from the same CF Worker origin.
   app.use("/api/*", cors({ origin: "http://localhost:5173" }));
 
-  const routedApp = app
-    .route("/api", health)
-    .route("/api/v1", createVersionedApiRouter());
+  const routedApp = app.route("/api", health).route("/api/v1", createVersionedApiRouter());
 
   return registerApiErrorHandlers(routedApp);
 }

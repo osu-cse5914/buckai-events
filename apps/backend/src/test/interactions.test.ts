@@ -47,9 +47,7 @@ describe("[phase:2] [regression:always] Interaction Tracking API", () => {
   });
 
   it("TC-INT-001: records a view interaction", async () => {
-    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-      { id: "evt_1" } as never,
-    );
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue({ id: "evt_1" } as never);
     vi.mocked(mockPrisma.interaction.create).mockResolvedValue(
       buildInteraction({
         id: "int_1",
@@ -86,9 +84,7 @@ describe("[phase:2] [regression:always] Interaction Tracking API", () => {
   });
 
   it("TC-INT-002: records a dismiss interaction", async () => {
-    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-      { id: "evt_2" } as never,
-    );
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue({ id: "evt_2" } as never);
     vi.mocked(mockPrisma.interaction.create).mockResolvedValue(
       buildInteraction({
         id: "int_2",
@@ -121,9 +117,7 @@ describe("[phase:2] [regression:always] Interaction Tracking API", () => {
   });
 
   it("TC-INT-003: records multiple views separately", async () => {
-    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-      { id: "evt_3" } as never,
-    );
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue({ id: "evt_3" } as never);
     vi.mocked(mockPrisma.interaction.create)
       .mockResolvedValueOnce(
         buildInteraction({

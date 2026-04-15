@@ -1,10 +1,7 @@
 import { Hono } from "hono";
 import { paginatedMeta } from "../lib/pagination";
 import { getPrisma } from "../lib/prisma";
-import {
-  toRecommendationsListInput,
-  validateRecommendationsQuery,
-} from "../lib/validators";
+import { toRecommendationsListInput, validateRecommendationsQuery } from "../lib/validators";
 import type { AppEnv } from "../lib/types";
 import {
   listPopularRecommendations,

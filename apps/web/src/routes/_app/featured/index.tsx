@@ -10,8 +10,7 @@ export const Route = createFileRoute("/_app/featured/")({
 function FeaturedRoute() {
   const navigate = useNavigate({ from: Route.fullPath });
   const search = Route.useSearch();
-  const navigateFeaturedSearch = (next: {
-  }) => {
+  const navigateFeaturedSearch = (next: {}) => {
     const nextType = "type" in next ? next.type : search.type;
 
     return navigate({

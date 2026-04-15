@@ -205,7 +205,13 @@ describe("ProfilePage", () => {
 
   // --- Displays empty fields gracefully ---
   it("displays placeholder for empty optional fields", async () => {
-    const sparseUser = { ...mockUser, displayName: null, major: null, gradYear: null, interests: [] };
+    const sparseUser = {
+      ...mockUser,
+      displayName: null,
+      major: null,
+      gradYear: null,
+      interests: [],
+    };
     mockGet.mockResolvedValue({ ok: true, json: () => Promise.resolve(sparseUser) });
 
     render(<ProfilePage />, { wrapper: createWrapper() });

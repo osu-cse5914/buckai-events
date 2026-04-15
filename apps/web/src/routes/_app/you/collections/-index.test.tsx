@@ -24,14 +24,7 @@ vi.mock("@tanstack/react-router", () => ({
     capturedComponent = config.component;
     return { component: config.component };
   },
-  Link: ({
-    children,
-    to,
-    ...props
-  }: {
-    children: React.ReactNode;
-    to: string;
-  }) => (
+  Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...props}>
       {children}
     </a>
@@ -85,10 +78,7 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
       "href",
       "/you/applications",
     );
-    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute(
-      "href",
-      "/you/events",
-    );
+    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("href", "/you/events");
     expect(screen.getByRole("link", { name: "Collections" })).toHaveAttribute(
       "href",
       "/you/collections",

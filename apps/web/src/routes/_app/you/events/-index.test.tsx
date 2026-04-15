@@ -105,17 +105,12 @@ describe("[phase:6] [regression:always] YouEventsPage", () => {
       "href",
       "/you/applications",
     );
-    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute(
-      "href",
-      "/you/events",
-    );
+    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("href", "/you/events");
     expect(screen.getByRole("link", { name: "Collections" })).toHaveAttribute(
       "href",
       "/you/collections",
     );
-    expect(
-      screen.queryByRole("link", { name: /create event/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /create event/i })).not.toBeInTheDocument();
     expect(mockEventsGet).toHaveBeenCalledWith({
       query: {
         limit: "12",

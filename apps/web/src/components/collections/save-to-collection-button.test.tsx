@@ -68,9 +68,7 @@ describe("[phase:6] [regression:always] SaveToCollectionButton", () => {
     await user.click(screen.getByRole("button", { name: "Save to collection" }));
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    await user.click(
-      await screen.findByRole("button", { name: /Music Events/i }),
-    );
+    await user.click(await screen.findByRole("button", { name: /Music Events/i }));
 
     await waitFor(() => {
       expect(collectionItemPost).toHaveBeenCalledWith({
@@ -80,9 +78,7 @@ describe("[phase:6] [regression:always] SaveToCollectionButton", () => {
     });
 
     expect(collectionsGet).toHaveBeenCalled();
-    expect(
-      screen.getByRole("button", { name: "Saved to Music Events" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Saved to Music Events" })).toBeInTheDocument();
   });
 
   it("TC-COL-021: shows an empty state without inline collection creation controls", async () => {

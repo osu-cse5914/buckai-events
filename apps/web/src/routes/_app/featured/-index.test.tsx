@@ -80,9 +80,7 @@ vi.mock("@tanstack/react-router", () => ({
     let href = params?.eventId ? `/events/${params.eventId}` : to;
     if (search) {
       const query = new URLSearchParams(
-        Object.entries(search).flatMap(([key, value]) =>
-          value == null ? [] : [[key, value]],
-        ),
+        Object.entries(search).flatMap(([key, value]) => (value == null ? [] : [[key, value]])),
       ).toString();
       if (query) {
         href = `${href}?${query}`;
@@ -186,19 +184,10 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
   });
 }
 
-function FeaturedHarness({
-  initialType = "",
-}: {
-  initialType?: FeaturedFilter;
-}) {
+function FeaturedHarness({ initialType = "" }: { initialType?: FeaturedFilter }) {
   const [type, setType] = useState<FeaturedFilter>(initialType);
 
-  return (
-    <FeaturedPage
-      type={type}
-      onTypeChange={setType}
-    />
-  );
+  return <FeaturedPage type={type} onTypeChange={setType} />;
 }
 
 async function renderFeaturedPage(options?: {
@@ -263,9 +252,7 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
 
     await renderFeaturedPage();
 
-    expect(
-      await screen.findByRole("tab", { name: "Recommended" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Recommended" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Following" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Popular" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Upcoming" })).toBeInTheDocument();
@@ -329,33 +316,21 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Events" }));
 
     await waitFor(() => {
-      expect(
-        state.mockRecommendationsGet.mock.calls.at(-1)?.[0]?.query?.type,
-      ).toBe("EVENT");
-      expect(state.mockPopularGet.mock.calls.at(-1)?.[0]?.query?.type).toBe(
-        "EVENT",
-      );
-      expect(state.mockUpcomingGet.mock.calls.at(-1)?.[0]?.query?.type).toBe(
-        "EVENT",
-      );
+      expect(state.mockRecommendationsGet.mock.calls.at(-1)?.[0]?.query?.type).toBe("EVENT");
+      expect(state.mockPopularGet.mock.calls.at(-1)?.[0]?.query?.type).toBe("EVENT");
+      expect(state.mockUpcomingGet.mock.calls.at(-1)?.[0]?.query?.type).toBe("EVENT");
     });
   });
 
-it("TC-FEED-016: featured discovery does not render a keyword search field", async () => {
+  it("TC-FEED-016: featured discovery does not render a keyword search field", async () => {
     state.mockRecommendationsGet.mockResolvedValue(
-      makeRecommendationResponse([
-        makeEvent({ id: "evt_rec", title: "Career Prep Night" }),
-      ]),
+      makeRecommendationResponse([makeEvent({ id: "evt_rec", title: "Career Prep Night" })]),
     );
     state.mockPopularGet.mockResolvedValue(
-      makeSectionResponse([
-        makeEvent({ id: "evt_pop", title: "Career Fair" }),
-      ]),
+      makeSectionResponse([makeEvent({ id: "evt_pop", title: "Career Fair" })]),
     );
     state.mockUpcomingGet.mockResolvedValue(
-      makeSectionResponse([
-        makeEvent({ id: "evt_up", title: "Career Workshop" }),
-      ]),
+      makeSectionResponse([makeEvent({ id: "evt_up", title: "Career Workshop" })]),
     );
 
     await renderFeaturedPage();
@@ -381,13 +356,10 @@ it("TC-FEED-016: featured discovery does not render a keyword search field", asy
   it("TC-FEED-018: signed-out featured users are prompted to sign in before loading more", async () => {
     authState.isSignedIn = false;
     state.mockRecommendationsGet.mockResolvedValue(
-      makeRecommendationResponse(
-        [buildEventRecord({ id: "evt_rec", title: "Recommended Show" })],
-        {
-          total: 10,
-          rankingMode: "PERSONALIZED",
-        },
-      ),
+      makeRecommendationResponse([buildEventRecord({ id: "evt_rec", title: "Recommended Show" })], {
+        total: 10,
+        rankingMode: "PERSONALIZED",
+      }),
     );
     state.mockPopularGet.mockResolvedValue(makeSectionResponse([]));
     state.mockUpcomingGet.mockResolvedValue(makeSectionResponse([]));
@@ -418,13 +390,10 @@ it("TC-FEED-016: featured discovery does not render a keyword search field", asy
   it("TC-FEED-018: signed-out featured users are prompted to sign in before loading more", async () => {
     authState.isSignedIn = false;
     state.mockRecommendationsGet.mockResolvedValue(
-      makeRecommendationResponse(
-        [buildEventRecord({ id: "evt_rec", title: "Recommended Show" })],
-        {
-          total: 10,
-          rankingMode: "PERSONALIZED",
-        },
-      ),
+      makeRecommendationResponse([buildEventRecord({ id: "evt_rec", title: "Recommended Show" })], {
+        total: 10,
+        rankingMode: "PERSONALIZED",
+      }),
     );
     state.mockPopularGet.mockResolvedValue(makeSectionResponse([]));
     state.mockUpcomingGet.mockResolvedValue(makeSectionResponse([]));
@@ -452,25 +421,25 @@ it("TC-FEED-016: featured discovery does not render a keyword search field", asy
   });
 
   it("TC-FEED-014: load more appends only recommended items", async () => {
-    state.mockRecommendationsGet.mockImplementation(
-      ({ query }: { query: { offset: string } }) => {
-        if (query.offset === "0") {
-          return Promise.resolve(
-            makeRecommendationResponse(
-              [makeEvent({ id: "evt_rec_1", title: "Recommended One" })],
-              { total: 2, limit: 1, offset: 0 },
-            ),
-          );
-        }
-
+    state.mockRecommendationsGet.mockImplementation(({ query }: { query: { offset: string } }) => {
+      if (query.offset === "0") {
         return Promise.resolve(
-          makeRecommendationResponse(
-            [makeEvent({ id: "evt_rec_2", title: "Recommended Two" })],
-            { total: 2, limit: 1, offset: 1 },
-          ),
+          makeRecommendationResponse([makeEvent({ id: "evt_rec_1", title: "Recommended One" })], {
+            total: 2,
+            limit: 1,
+            offset: 0,
+          }),
         );
-      },
-    );
+      }
+
+      return Promise.resolve(
+        makeRecommendationResponse([makeEvent({ id: "evt_rec_2", title: "Recommended Two" })], {
+          total: 2,
+          limit: 1,
+          offset: 1,
+        }),
+      );
+    });
     state.mockPopularGet.mockResolvedValue(
       makeSectionResponse([makeEvent({ id: "evt_pop_1", title: "Popular One" })]),
     );
@@ -511,9 +480,7 @@ it("TC-FEED-016: featured discovery does not render a keyword search field", asy
     const popularSection = screen.getByRole("heading", { name: "Popular" }).closest("section");
 
     await userEvent.click(screen.getByRole("tab", { name: "Upcoming" }));
-    const upcomingSection = screen
-      .getByRole("heading", { name: "Upcoming" })
-      .closest("section");
+    const upcomingSection = screen.getByRole("heading", { name: "Upcoming" }).closest("section");
 
     if (!popularSection || !upcomingSection) {
       throw new Error("Expected section containers");
@@ -522,8 +489,6 @@ it("TC-FEED-016: featured discovery does not render a keyword search field", asy
     expect(
       within(popularSection).getByText("Failed to fetch popular recommendations"),
     ).toBeInTheDocument();
-    expect(
-      within(upcomingSection).getByText("No upcoming picks right now"),
-    ).toBeInTheDocument();
+    expect(within(upcomingSection).getByText("No upcoming picks right now")).toBeInTheDocument();
   });
 });

@@ -79,9 +79,7 @@ export async function loadEventsRouteData({
   );
 
   if (selectedEventId) {
-    await queryClient.ensureQueryData(
-      eventDetailQueryOptions(api, selectedEventId),
-    );
+    await queryClient.ensureQueryData(eventDetailQueryOptions(api, selectedEventId));
   }
 
   return data;
@@ -113,9 +111,7 @@ export async function loadSearchRouteData({
   );
 
   if (selectedEventId) {
-    await queryClient.ensureQueryData(
-      eventDetailQueryOptions(api, selectedEventId),
-    );
+    await queryClient.ensureQueryData(eventDetailQueryOptions(api, selectedEventId));
   }
 
   return data;

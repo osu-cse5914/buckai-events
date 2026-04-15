@@ -18,24 +18,24 @@ function EventDetailPage() {
     ? "/search"
     : returnsToCollection
       ? undefined
-    : returnsToFeatured
-      ? "/featured"
-    : returnsToBrowse
-      ? search.browseType === "GIG"
-        ? "/gigs"
-        : "/events"
-      : undefined;
+      : returnsToFeatured
+        ? "/featured"
+        : returnsToBrowse
+          ? search.browseType === "GIG"
+            ? "/gigs"
+            : "/events"
+          : undefined;
   const browseLabel = returnsToSearch
     ? "Search results"
     : returnsToCollection
-      ? search.collectionName ?? "Collection"
-    : returnsToFeatured
-      ? "Featured"
-    : returnsToBrowse
-      ? search.browseType === "GIG"
-        ? "Gigs"
-        : "Events"
-      : undefined;
+      ? (search.collectionName ?? "Collection")
+      : returnsToFeatured
+        ? "Featured"
+        : returnsToBrowse
+          ? search.browseType === "GIG"
+            ? "Gigs"
+            : "Events"
+          : undefined;
   const browseSearch = returnsToSearch
     ? {
         q: search.q,
@@ -49,18 +49,18 @@ function EventDetailPage() {
           collectionId: search.collectionId,
           collectionName: search.collectionName,
         }
-    : returnsToFeatured
-      ? {
-          type: search.type,
-        }
-    : returnsToBrowse
-      ? {
-          statusMode: search.statusMode,
-          source: search.source,
-          sort: search.sort,
-          selected: search.selected,
-        }
-      : undefined;
+      : returnsToFeatured
+        ? {
+            type: search.type,
+          }
+        : returnsToBrowse
+          ? {
+              statusMode: search.statusMode,
+              source: search.source,
+              sort: search.sort,
+              selected: search.selected,
+            }
+          : undefined;
 
   return (
     <EventDetailSurface

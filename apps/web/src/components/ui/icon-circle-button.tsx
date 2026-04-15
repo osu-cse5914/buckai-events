@@ -11,12 +11,10 @@ export function IconCircleButton({
   icon: ReactNode;
 }) {
   return (
-    <Button
-      size="icon"
-      className={cn("size-9 rounded-full", className)}
-      {...props}
-    >
-      {props.asChild ? children : (
+    <Button size="icon" className={cn("size-9 rounded-full", className)} {...props}>
+      {props.asChild ? (
+        children
+      ) : (
         <>
           {icon}
           {children}

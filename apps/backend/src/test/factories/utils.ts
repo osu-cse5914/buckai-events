@@ -1,22 +1,18 @@
 type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
-export type FixtureOverrides<T> =
-  T extends Primitive
-    ? T
-    : T extends Date
-      ? Date
-      : T extends Array<infer Item>
-        ? Array<FixtureOverrides<Item>>
-        : T extends object
-          ? { [Key in keyof T]?: FixtureOverrides<T[Key]> }
-          : T;
+export type FixtureOverrides<T> = T extends Primitive
+  ? T
+  : T extends Date
+    ? Date
+    : T extends Array<infer Item>
+      ? Array<FixtureOverrides<Item>>
+      : T extends object
+        ? { [Key in keyof T]?: FixtureOverrides<T[Key]> }
+        : T;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    !(value instanceof Date)
+    typeof value === "object" && value !== null && !Array.isArray(value) && !(value instanceof Date)
   );
 }
 

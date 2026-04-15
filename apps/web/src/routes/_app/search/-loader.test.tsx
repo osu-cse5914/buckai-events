@@ -3,16 +3,11 @@ import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PAGE_SIZE, queryKeys } from "@/lib/queries";
 import { createTestApiClient, createTestQueryClient } from "@/test/render-with-providers";
-import {
-  makeEventListItem,
-  makeEventsResponse,
-  TEST_API_BASE_URL,
-} from "@/test/msw/handlers";
+import { makeEventListItem, makeEventsResponse, TEST_API_BASE_URL } from "@/test/msw/handlers";
 import { server } from "@/test/msw/server";
 
-let capturedValidateSearch:
-  | ((search: Record<string, unknown>) => Record<string, unknown>)
-  | null = null;
+let capturedValidateSearch: ((search: Record<string, unknown>) => Record<string, unknown>) | null =
+  null;
 let capturedLoaderDeps:
   | ((args: { search: Record<string, unknown> }) => Record<string, unknown>)
   | null = null;
@@ -31,9 +26,7 @@ vi.mock("@tanstack/react-router", () => ({
     (path: string) =>
     (config: {
       validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
-      loaderDeps?: (args: {
-        search: Record<string, unknown>;
-      }) => Record<string, unknown>;
+      loaderDeps?: (args: { search: Record<string, unknown> }) => Record<string, unknown>;
       loader?: (args: {
         context: {
           api: ReturnType<typeof createTestApiClient>;
@@ -71,13 +64,10 @@ describe("[phase:6] [regression:always] SearchRoute loader", () => {
       http.get(`${TEST_API_BASE_URL}/api/v1/events/semantic-search`, ({ request }) => {
         requests.push(new URL(request.url));
         return HttpResponse.json(
-          makeEventsResponse(
-            [makeEventListItem({ id: "evt_robot", title: "Robot Expo" })],
-            {
-              total: 13,
-              offset: PAGE_SIZE,
-            },
-          ),
+          makeEventsResponse([makeEventListItem({ id: "evt_robot", title: "Robot Expo" })], {
+            total: 13,
+            offset: PAGE_SIZE,
+          }),
         );
       }),
     );

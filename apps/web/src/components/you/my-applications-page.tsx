@@ -21,10 +21,7 @@ import {
   FramedListItem,
   FramedListItems,
 } from "@/components/ui/framed-list";
-import {
-  YouSubpageHeader,
-  YouSubpageHeaderSkeleton,
-} from "@/components/you/you-subpage-header";
+import { YouSubpageHeader, YouSubpageHeaderSkeleton } from "@/components/you/you-subpage-header";
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
@@ -52,9 +49,7 @@ export function MyApplicationsPage() {
     return (
       <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
         <EventsErrorState
-          message={
-            error instanceof Error ? error.message : "Failed to load applications"
-          }
+          message={error instanceof Error ? error.message : "Failed to load applications"}
           className="mt-0"
         />
       </section>
@@ -68,11 +63,13 @@ export function MyApplicationsPage() {
       <YouSubpageHeader
         title="Applications"
         showBackLink={false}
-        action={applications.length > 0 ? (
-          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium">
-            {applications.length} total
-          </Badge>
-        ) : undefined}
+        action={
+          applications.length > 0 ? (
+            <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium">
+              {applications.length} total
+            </Badge>
+          ) : undefined
+        }
       />
 
       <FramedList>
@@ -122,8 +119,7 @@ export function MyApplicationsPage() {
                       variant="secondary"
                       className={APPLICATION_STATUS_STYLES[application.status]}
                     >
-                      {APPLICATION_STATUS_LABELS[application.status] ??
-                        application.status}
+                      {APPLICATION_STATUS_LABELS[application.status] ?? application.status}
                     </Badge>
                   </div>
                 </div>

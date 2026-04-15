@@ -4,11 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 function toTimeString(date: Date) {
   const h = String(date.getHours()).padStart(2, "0");
@@ -82,19 +78,9 @@ function DateTimePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={value}
-          onSelect={handleDateSelect}
-          initialFocus
-        />
+        <Calendar mode="single" selected={value} onSelect={handleDateSelect} initialFocus />
         <div className="border-t px-3 py-2">
-          <Input
-            type="time"
-            value={timeValue}
-            onChange={handleTimeChange}
-            className="h-8"
-          />
+          <Input type="time" value={timeValue} onChange={handleTimeChange} className="h-8" />
         </div>
       </PopoverContent>
     </Popover>

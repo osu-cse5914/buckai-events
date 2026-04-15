@@ -14,8 +14,7 @@ const redirectMock = vi.fn((options: { to: string }) => options);
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute:
-    (path: string) =>
-    (config: { beforeLoad?: () => unknown; component?: React.ComponentType }) => {
+    (path: string) => (config: { beforeLoad?: () => unknown; component?: React.ComponentType }) => {
       state.beforeLoads[path] = config.beforeLoad;
       return {
         beforeLoad: config.beforeLoad,

@@ -52,15 +52,10 @@ function dedupeFeedRows(rows: SocialFeedRow[]): SocialFeedRow[] {
     }
   }
 
-  return [...deduped.values()].sort(
-    (a, b) => toTimestamp(b.actionAt) - toTimestamp(a.actionAt),
-  );
+  return [...deduped.values()].sort((a, b) => toTimestamp(b.actionAt) - toTimestamp(a.actionAt));
 }
 
-export async function listSocialFeed(
-  prisma: PrismaClient,
-  input: ListSocialFeedInput,
-) {
+export async function listSocialFeed(prisma: PrismaClient, input: ListSocialFeedInput) {
   const rows = await prisma.$queryRaw<SocialFeedRow[]>(Prisma.sql`
     WITH followed_users AS (
       SELECT "followeeId"

@@ -2,10 +2,9 @@ import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (_c: unknown, next: () => Promise<void>) => {
-      await next();
-    },
+  clerkMiddleware: () => async (_c: unknown, next: () => Promise<void>) => {
+    await next();
+  },
   getAuth: vi.fn(() => ({ userId: null })),
 }));
 

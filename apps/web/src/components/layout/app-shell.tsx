@@ -12,13 +12,7 @@ import {
   UserRoundIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { isE2ETestAuthEnabled } from "@/lib/e2e-auth";
 import { PUBLIC_DISCOVERY_NAV_PATHS } from "@/lib/route-access";
 import { cn } from "@/lib/utils";
@@ -34,9 +28,7 @@ export const navLinks = [
 export const utilityNavLinks = [{ to: "/ai", label: "BuckAI" }] as const;
 
 const publicNavLinks = navLinks.filter((item) =>
-  PUBLIC_DISCOVERY_NAV_PATHS.includes(
-    item.to as (typeof PUBLIC_DISCOVERY_NAV_PATHS)[number],
-  ),
+  PUBLIC_DISCOVERY_NAV_PATHS.includes(item.to as (typeof PUBLIC_DISCOVERY_NAV_PATHS)[number]),
 );
 
 export function getVisibleNavLinks(isSignedIn: boolean) {
@@ -63,12 +55,7 @@ export function AppShellLayout() {
 
         <nav className="mt-6 flex flex-col gap-1.5">
           {visibleNavLinks.map((item) => (
-            <ShellNavLink
-              key={item.to}
-              item={item}
-              pathname={location.pathname}
-              variant="rail"
-            />
+            <ShellNavLink key={item.to} item={item} pathname={location.pathname} variant="rail" />
           ))}
         </nav>
 
@@ -144,9 +131,7 @@ export function AppShellLayout() {
                         <AccountMenu />
                         <div className="min-w-0">
                           <p className="text-sm font-medium">Account</p>
-                          <p className="text-xs text-muted-foreground">
-                            Profile and session
-                          </p>
+                          <p className="text-xs text-muted-foreground">Profile and session</p>
                         </div>
                       </div>
                     </div>
@@ -208,11 +193,7 @@ function ShellNavLink({
           : "text-muted-foreground hover:text-foreground",
       )}
     >
-      <Link
-        to={item.to}
-        onClick={onClick}
-        aria-current={isActive ? "page" : undefined}
-      >
+      <Link to={item.to} onClick={onClick} aria-current={isActive ? "page" : undefined}>
         <Icon className={cn("shrink-0", "size-4")} />
         <span
           className={cn(
@@ -259,11 +240,7 @@ function AccountMenu() {
           href="/profile"
         />
         {import.meta.env.DEV ? (
-          <UserButton.Link
-            label="Debug"
-            labelIcon={<BugIcon className="size-4" />}
-            href="/debug"
-          />
+          <UserButton.Link label="Debug" labelIcon={<BugIcon className="size-4" />} href="/debug" />
         ) : null}
         <UserButton.Action label="manageAccount" />
         <UserButton.Action label="signOut" />

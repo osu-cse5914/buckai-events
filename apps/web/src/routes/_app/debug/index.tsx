@@ -98,9 +98,7 @@ export function DebugPage() {
       const data = (await res.json()) as PipelineJobSummary[];
       setPipelineJobs(data);
     } catch (error) {
-      setPipelineError(
-        error instanceof Error ? error.message : "Failed to load AI pipeline jobs",
-      );
+      setPipelineError(error instanceof Error ? error.message : "Failed to load AI pipeline jobs");
       setPipelineJobs([]);
     } finally {
       setIsLoadingPipelineJobs(false);
@@ -128,9 +126,7 @@ export function DebugPage() {
       setHealth(data);
     } catch (error) {
       setHealth(null);
-      setHealthError(
-        error instanceof Error ? error.message : "Health check failed",
-      );
+      setHealthError(error instanceof Error ? error.message : "Health check failed");
     } finally {
       setIsCheckingHealth(false);
     }
@@ -144,9 +140,7 @@ export function DebugPage() {
     try {
       const res = await api.api.v1.admin["external-ingestion"].sync.$post();
       if (!res.ok) {
-        const problem = (await res
-          .json()
-          .catch(() => ({}))) as ProblemDetails;
+        const problem = (await res.json().catch(() => ({}))) as ProblemDetails;
         throw new Error(problem.detail ?? `Sync failed with status ${res.status}`);
       }
 
@@ -182,9 +176,7 @@ export function DebugPage() {
         json: { mode },
       });
       if (!res.ok) {
-        const problem = (await res
-          .json()
-          .catch(() => ({}))) as ProblemDetails;
+        const problem = (await res.json().catch(() => ({}))) as ProblemDetails;
         throw new Error(problem.detail ?? `Rerun failed with status ${res.status}`);
       }
 
@@ -206,9 +198,7 @@ export function DebugPage() {
     try {
       const res = await api.api.v1.admin["ai-pipeline"].backfill.$post();
       if (!res.ok) {
-        const problem = (await res
-          .json()
-          .catch(() => ({}))) as ProblemDetails;
+        const problem = (await res.json().catch(() => ({}))) as ProblemDetails;
         throw new Error(problem.detail ?? `Backfill failed with status ${res.status}`);
       }
 
@@ -235,30 +225,24 @@ export function DebugPage() {
         </p>
         <div className="mt-3 space-y-1 rounded-md border border-border bg-card p-3 text-sm">
           <p>
-            <span className="font-semibold">Clerk ID:</span>{" "}
-            <code>{authUserId ?? "—"}</code>
+            <span className="font-semibold">Clerk ID:</span> <code>{authUserId ?? "—"}</code>
           </p>
           <p>
-            <span className="font-semibold">DB User ID:</span>{" "}
-            <code>{currentUser?.id ?? "—"}</code>
+            <span className="font-semibold">DB User ID:</span> <code>{currentUser?.id ?? "—"}</code>
           </p>
           <p>
-            <span className="font-semibold">Role:</span>{" "}
-            <code>{currentUser?.role ?? "—"}</code>
+            <span className="font-semibold">Role:</span> <code>{currentUser?.role ?? "—"}</code>
           </p>
           <p>
-            <span className="font-semibold">Session ID:</span>{" "}
-            <code>{sessionId ?? "—"}</code>
+            <span className="font-semibold">Session ID:</span> <code>{sessionId ?? "—"}</code>
           </p>
           <p>
-            <span className="font-semibold">Org ID:</span>{" "}
-            <code>{orgId ?? "—"}</code>
+            <span className="font-semibold">Org ID:</span> <code>{orgId ?? "—"}</code>
           </p>
           {user && (
             <>
               <p>
-                <span className="font-semibold">Name:</span>{" "}
-                {user.fullName ?? "—"}
+                <span className="font-semibold">Name:</span> {user.fullName ?? "—"}
               </p>
               <p>
                 <span className="font-semibold">Email:</span>{" "}
@@ -301,10 +285,7 @@ export function DebugPage() {
           {syncSummary && (
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <SyncSummaryCard title="OSU" summary={syncSummary.sources.osu} />
-              <SyncSummaryCard
-                title="Ticketmaster"
-                summary={syncSummary.sources.ticketmaster}
-              />
+              <SyncSummaryCard title="Ticketmaster" summary={syncSummary.sources.ticketmaster} />
             </div>
           )}
         </div>
@@ -330,9 +311,7 @@ export function DebugPage() {
               onClick={handleEmbeddingBackfill}
               disabled={isBackfillingEmbeddings}
             >
-              {isBackfillingEmbeddings
-                ? "Backfilling..."
-                : "Backfill Missing Embeddings"}
+              {isBackfillingEmbeddings ? "Backfilling..." : "Backfill Missing Embeddings"}
             </Button>
           </div>
 
@@ -377,9 +356,7 @@ export function DebugPage() {
                 No recent AI pipeline jobs
               </div>
             ) : (
-              pipelineJobs.map((job) => (
-                <PipelineJobCard key={job.id} job={job} />
-              ))
+              pipelineJobs.map((job) => <PipelineJobCard key={job.id} job={job} />)
             )}
           </div>
         </div>
@@ -387,33 +364,27 @@ export function DebugPage() {
 
       <div className="rounded-lg border border-dashed border-border p-5">
         <h2 className="text-lg font-semibold">Environment</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Browser and runtime information
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Browser and runtime information</p>
         <div className="mt-3 space-y-1 rounded-md border border-border bg-card p-3 text-sm">
           <p>
             <span className="font-semibold">User Agent:</span>{" "}
             <code className="break-all">{navigator.userAgent}</code>
           </p>
           <p>
-            <span className="font-semibold">Language:</span>{" "}
-            {navigator.language}
+            <span className="font-semibold">Language:</span> {navigator.language}
           </p>
           <p>
-            <span className="font-semibold">Platform:</span>{" "}
-            {navigator.platform}
+            <span className="font-semibold">Platform:</span> {navigator.platform}
           </p>
           <p>
-            <span className="font-semibold">Online:</span>{" "}
-            {navigator.onLine ? "Yes" : "No"}
+            <span className="font-semibold">Online:</span> {navigator.onLine ? "Yes" : "No"}
           </p>
           <p>
-            <span className="font-semibold">Viewport:</span>{" "}
-            {window.innerWidth} × {window.innerHeight}
+            <span className="font-semibold">Viewport:</span> {window.innerWidth} ×{" "}
+            {window.innerHeight}
           </p>
           <p>
-            <span className="font-semibold">Device Pixel Ratio:</span>{" "}
-            {window.devicePixelRatio}
+            <span className="font-semibold">Device Pixel Ratio:</span> {window.devicePixelRatio}
           </p>
           <p>
             <span className="font-semibold">URL:</span>{" "}
@@ -428,9 +399,7 @@ export function DebugPage() {
 
       <div className="rounded-lg border border-dashed border-border p-5">
         <h2 className="text-lg font-semibold">API Health</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Check the API server health status
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Check the API server health status</p>
         <Button
           variant="outline"
           className="mt-3"
@@ -455,8 +424,7 @@ export function DebugPage() {
               <span className="font-semibold">Status:</span> {health.status}
             </p>
             <p>
-              <span className="font-semibold">Timestamp:</span>{" "}
-              {health.timestamp}
+              <span className="font-semibold">Timestamp:</span> {health.timestamp}
             </p>
           </div>
         )}
@@ -483,13 +451,7 @@ export function DebugPage() {
   );
 }
 
-function SyncSummaryCard({
-  title,
-  summary,
-}: {
-  title: string;
-  summary: SyncSourceSummary;
-}) {
+function SyncSummaryCard({ title, summary }: { title: string; summary: SyncSourceSummary }) {
   return (
     <div className="rounded-md border border-border bg-card p-3 text-sm">
       <h3 className="font-semibold">{title}</h3>
@@ -516,17 +478,13 @@ function PipelineJobCard({ job }: { job: PipelineJobSummary }) {
       <p className="mt-2">
         <span className="font-semibold">Stages:</span> {job.stages.join(", ")}
       </p>
-      {job.error ? (
-        <p className="mt-1 text-destructive">{job.error}</p>
-      ) : null}
+      {job.error ? <p className="mt-1 text-destructive">{job.error}</p> : null}
 
       <div className="mt-3 space-y-2">
         {job.runs.map((run) => (
           <div key={run.id} className="rounded border border-border p-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-semibold">
-                {run.event?.title ?? run.eventId}
-              </span>
+              <span className="font-semibold">{run.event?.title ?? run.eventId}</span>
               <span>{run.status}</span>
             </div>
             <p className="mt-1 text-muted-foreground">

@@ -1,9 +1,4 @@
-import {
-  createContext,
-  createElement,
-  type ReactNode,
-  useContext,
-} from "react";
+import { createContext, createElement, type ReactNode, useContext } from "react";
 import { hc } from "hono/client";
 import type { AppType } from "@social-osu/backend";
 import { E2E_TEST_AUTH_HEADER } from "./e2e-auth";
@@ -18,9 +13,7 @@ export function createApiClient(
   getToken: () => Promise<string | null>,
   baseUrl?: string,
 ): ReturnType<typeof hc<AppType>>;
-export function createApiClient(
-  input: CreateApiClientInput,
-): ReturnType<typeof hc<AppType>>;
+export function createApiClient(input: CreateApiClientInput): ReturnType<typeof hc<AppType>>;
 export function createApiClient(
   inputOrGetToken: CreateApiClientInput | (() => Promise<string | null>),
   baseUrl = "/",

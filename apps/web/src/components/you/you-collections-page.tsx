@@ -29,10 +29,7 @@ import {
   SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  YouSubpageHeader,
-  YouSubpageHeaderSkeleton,
-} from "@/components/you/you-subpage-header";
+import { YouSubpageHeader, YouSubpageHeaderSkeleton } from "@/components/you/you-subpage-header";
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
@@ -43,7 +40,7 @@ function readSavedCount(count: number) {
 
 async function readErrorMessage(res: Response, fallback: string) {
   try {
-    const body = await res.json() as { detail?: string };
+    const body = (await res.json()) as { detail?: string };
     return body.detail || fallback;
   } catch {
     return fallback;
@@ -67,22 +64,22 @@ function CollectionsPageSkeleton() {
 
       <FramedList>
         <FramedListItems>
-        {Array.from({ length: 3 }).map((_, index) => (
-          <FramedListItem key={index}>
-            <div className="flex items-start gap-3">
-              <div className="min-w-0 flex-1 space-y-2">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-6 w-40 max-w-full" />
-              </div>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <FramedListItem key={index}>
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-6 w-40 max-w-full" />
+                </div>
 
-              <div className="flex shrink-0 gap-2">
-                <Skeleton className="size-8 rounded-full" />
-                <Skeleton className="size-8 rounded-full" />
-                <Skeleton className="size-8 rounded-full" />
+                <div className="flex shrink-0 gap-2">
+                  <Skeleton className="size-8 rounded-full" />
+                  <Skeleton className="size-8 rounded-full" />
+                  <Skeleton className="size-8 rounded-full" />
+                </div>
               </div>
-            </div>
-          </FramedListItem>
-        ))}
+            </FramedListItem>
+          ))}
         </FramedListItems>
       </FramedList>
     </section>
@@ -95,19 +92,11 @@ export function YouCollectionsPage() {
   const { data, isLoading, error } = useQuery(ownedCollectionsQueryOptions(api));
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
-  const [createVisibility, setCreateVisibility] = useState<"PRIVATE" | "PUBLIC">(
-    "PRIVATE",
-  );
-  const [editingCollectionId, setEditingCollectionId] = useState<string | null>(
-    null,
-  );
+  const [createVisibility, setCreateVisibility] = useState<"PRIVATE" | "PUBLIC">("PRIVATE");
+  const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
-  const [createErrorMessage, setCreateErrorMessage] = useState<string | null>(
-    null,
-  );
-  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
-    null,
-  );
+  const [createErrorMessage, setCreateErrorMessage] = useState<string | null>(null);
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
 
   function resetCreateState() {
     setCreateName("");
@@ -138,26 +127,17 @@ export function YouCollectionsPage() {
     },
     onError: (mutationError) => {
       setCreateErrorMessage(
-        mutationError instanceof Error
-          ? mutationError.message
-          : "Failed to create collection",
+        mutationError instanceof Error ? mutationError.message : "Failed to create collection",
       );
     },
   });
 
   const renameMutation = useMutation({
-    mutationFn: async ({
-      collectionId,
-      name,
-    }: {
-      collectionId: string;
-      name: string;
-    }) => {
-      const patchCollection =
-        api.api.v1.collections[":id"].$patch as (args: {
-          param: { id: string };
-          json: { name: string };
-        }) => Promise<Response>;
+    mutationFn: async ({ collectionId, name }: { collectionId: string; name: string }) => {
+      const patchCollection = api.api.v1.collections[":id"].$patch as (args: {
+        param: { id: string };
+        json: { name: string };
+      }) => Promise<Response>;
       const res = await patchCollection({
         param: { id: collectionId },
         json: { name },
@@ -178,9 +158,7 @@ export function YouCollectionsPage() {
     },
     onError: (mutationError) => {
       setActionErrorMessage(
-        mutationError instanceof Error
-          ? mutationError.message
-          : "Failed to rename collection",
+        mutationError instanceof Error ? mutationError.message : "Failed to rename collection",
       );
     },
   });
@@ -193,19 +171,16 @@ export function YouCollectionsPage() {
       collectionId: string;
       visibility: "PRIVATE" | "PUBLIC";
     }) => {
-      const patchCollection =
-        api.api.v1.collections[":id"].$patch as (args: {
-          param: { id: string };
-          json: { visibility: "PRIVATE" | "PUBLIC" };
-        }) => Promise<Response>;
+      const patchCollection = api.api.v1.collections[":id"].$patch as (args: {
+        param: { id: string };
+        json: { visibility: "PRIVATE" | "PUBLIC" };
+      }) => Promise<Response>;
       const res = await patchCollection({
         param: { id: collectionId },
         json: { visibility },
       });
       if (!res.ok) {
-        throw new Error(
-          await readErrorMessage(res, "Failed to update collection visibility"),
-        );
+        throw new Error(await readErrorMessage(res, "Failed to update collection visibility"));
       }
       return res.json() as Promise<OwnedCollectionSummary>;
     },
@@ -251,9 +226,7 @@ export function YouCollectionsPage() {
     },
     onError: (mutationError) => {
       setActionErrorMessage(
-        mutationError instanceof Error
-          ? mutationError.message
-          : "Failed to delete collection",
+        mutationError instanceof Error ? mutationError.message : "Failed to delete collection",
       );
     },
   });
@@ -290,10 +263,7 @@ export function YouCollectionsPage() {
     setActionErrorMessage(null);
   }
 
-  function handleRenameSubmit(
-    submitEvent: React.FormEvent<HTMLFormElement>,
-    collectionId: string,
-  ) {
+  function handleRenameSubmit(submitEvent: React.FormEvent<HTMLFormElement>, collectionId: string) {
     submitEvent.preventDefault();
     const trimmedName = editingName.trim();
     if (!trimmedName) {
@@ -335,7 +305,7 @@ export function YouCollectionsPage() {
       <YouSubpageHeader
         title="Collections"
         showBackLink={false}
-        action={(
+        action={
           <Sheet open={isCreateOpen} onOpenChange={handleCreateOpenChange}>
             <SheetTrigger asChild>
               <IconCircleButton
@@ -415,7 +385,7 @@ export function YouCollectionsPage() {
               </form>
             </SheetContent>
           </Sheet>
-        )}
+        }
       />
 
       {actionErrorMessage ? (
@@ -436,14 +406,10 @@ export function YouCollectionsPage() {
           <FramedListItems>
             {collections.map((collection) => {
               const isEditing = editingCollectionId === collection.id;
-              const nextVisibility =
-                collection.visibility === "PUBLIC" ? "PRIVATE" : "PUBLIC";
+              const nextVisibility = collection.visibility === "PUBLIC" ? "PRIVATE" : "PUBLIC";
 
               return (
-                <FramedListItem
-                  key={collection.id}
-                  aria-label={`${collection.name} collection`}
-                >
+                <FramedListItem key={collection.id} aria-label={`${collection.name} collection`}>
                   <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
@@ -528,15 +494,10 @@ export function YouCollectionsPage() {
                   {isEditing ? (
                     <form
                       className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-end"
-                      onSubmit={(submitEvent) =>
-                        handleRenameSubmit(submitEvent, collection.id)
-                      }
+                      onSubmit={(submitEvent) => handleRenameSubmit(submitEvent, collection.id)}
                     >
                       <div className="min-w-0 flex-1 space-y-2">
-                        <label
-                          className="text-sm font-medium"
-                          htmlFor={`rename-${collection.id}`}
-                        >
+                        <label className="text-sm font-medium" htmlFor={`rename-${collection.id}`}>
                           Rename collection
                         </label>
                         <Input

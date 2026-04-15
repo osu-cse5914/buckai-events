@@ -71,8 +71,7 @@ vi.mock("@tanstack/react-router", () => ({
   }) => (
     <a
       href={(() => {
-        let href =
-        params?.eventId
+        let href = params?.eventId
           ? `/events/${params.eventId}`
           : params?.collectionId
             ? `/you/collections/${params.collectionId}`
@@ -159,82 +158,91 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
     mockCollectionItemsGet
       .mockResolvedValueOnce(
         okJson(
-          buildPaginatedResponse([
-            buildEventRecord({
-              id: "evt_1",
-              title: "Hackathon",
-              description: "Build night",
-              category: "tech",
-              locationName: "Ohio Union",
-              startAt: "2026-04-01T18:00:00.000Z",
-              creatorId: "user_2",
-              creator: {
-                id: "user_2",
-                displayName: "Alex",
-                email: "alex@osu.edu",
-              },
-            }),
-            buildEventRecord({
-              id: "evt_2",
-              title: "Open Mic",
-              description: "Music night",
-              category: "music",
-              locationName: "Drake",
-              startAt: "2026-04-02T18:00:00.000Z",
-              creatorId: "user_3",
-              creator: {
-                id: "user_3",
-                displayName: "Jamie",
-                email: "jamie@osu.edu",
-              },
-            }),
-          ], {
-            pagination: { total: 2, limit: 12, offset: 0 },
-          }),
+          buildPaginatedResponse(
+            [
+              buildEventRecord({
+                id: "evt_1",
+                title: "Hackathon",
+                description: "Build night",
+                category: "tech",
+                locationName: "Ohio Union",
+                startAt: "2026-04-01T18:00:00.000Z",
+                creatorId: "user_2",
+                creator: {
+                  id: "user_2",
+                  displayName: "Alex",
+                  email: "alex@osu.edu",
+                },
+              }),
+              buildEventRecord({
+                id: "evt_2",
+                title: "Open Mic",
+                description: "Music night",
+                category: "music",
+                locationName: "Drake",
+                startAt: "2026-04-02T18:00:00.000Z",
+                creatorId: "user_3",
+                creator: {
+                  id: "user_3",
+                  displayName: "Jamie",
+                  email: "jamie@osu.edu",
+                },
+              }),
+            ],
+            {
+              pagination: { total: 2, limit: 12, offset: 0 },
+            },
+          ),
         ),
       )
       .mockResolvedValueOnce(
         okJson(
-          buildPaginatedResponse([
-            buildEventRecord({
-              id: "evt_2",
-              title: "Open Mic",
-              description: "Music night",
-              category: "music",
-              locationName: "Drake",
-              startAt: "2026-04-02T18:00:00.000Z",
-              creatorId: "user_3",
-              creator: {
-                id: "user_3",
-                displayName: "Jamie",
-                email: "jamie@osu.edu",
-              },
-            }),
-          ], {
-            pagination: { total: 1, limit: 12, offset: 0 },
-          }),
+          buildPaginatedResponse(
+            [
+              buildEventRecord({
+                id: "evt_2",
+                title: "Open Mic",
+                description: "Music night",
+                category: "music",
+                locationName: "Drake",
+                startAt: "2026-04-02T18:00:00.000Z",
+                creatorId: "user_3",
+                creator: {
+                  id: "user_3",
+                  displayName: "Jamie",
+                  email: "jamie@osu.edu",
+                },
+              }),
+            ],
+            {
+              pagination: { total: 1, limit: 12, offset: 0 },
+            },
+          ),
         ),
       )
       .mockResolvedValue(
         okJson(
-          buildPaginatedResponse([
-            buildEventRecord({
-              id: "evt_2",
-              title: "Open Mic",
-              description: "Music night",
-              category: "music",
-              locationName: "Drake",
-              startAt: "2026-04-02T18:00:00.000Z",
-              creatorId: "user_3",
-              creator: {
-                id: "user_3",
-                displayName: "Jamie",
-                email: "jamie@osu.edu",
-              },
-            }),
-          ], {
-            pagination: { total: 1, limit: 12, offset: 0 },
-          }),
+          buildPaginatedResponse(
+            [
+              buildEventRecord({
+                id: "evt_2",
+                title: "Open Mic",
+                description: "Music night",
+                category: "music",
+                locationName: "Drake",
+                startAt: "2026-04-02T18:00:00.000Z",
+                creatorId: "user_3",
+                creator: {
+                  id: "user_3",
+                  displayName: "Jamie",
+                  email: "jamie@osu.edu",
+                },
+              }),
+            ],
+            {
+              pagination: { total: 1, limit: 12, offset: 0 },
+            },
+          ),
         ),
       );
     mockCollectionItemDelete.mockResolvedValue({
@@ -329,6 +337,8 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
       "/you/collections",
     );
     expect(screen.getByText("Public · 1 saved item")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Remove from collection" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove from collection" }),
+    ).not.toBeInTheDocument();
   });
 });

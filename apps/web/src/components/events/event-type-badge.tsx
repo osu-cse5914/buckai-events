@@ -22,11 +22,7 @@ export function EventTypeBadge({
   type: string;
 }) {
   return (
-    <Badge
-      variant="secondary"
-      className={cn(TYPE_STYLES[type] ?? "", className)}
-      {...props}
-    >
+    <Badge variant="secondary" className={cn(TYPE_STYLES[type] ?? "", className)} {...props}>
       {readEventTypeLabel(type)}
     </Badge>
   );

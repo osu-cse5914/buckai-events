@@ -38,11 +38,7 @@ vi.mock("@/components/ui/date-time-picker", () => ({
       onClick={() =>
         onChange(
           value ??
-            new Date(
-              id === "endAt"
-                ? "2026-04-01T14:00:00.000Z"
-                : "2026-04-01T12:00:00.000Z",
-            ),
+            new Date(id === "endAt" ? "2026-04-01T14:00:00.000Z" : "2026-04-01T12:00:00.000Z"),
         )
       }
     >
@@ -52,13 +48,13 @@ vi.mock("@/components/ui/date-time-picker", () => ({
 }));
 
 let capturedComponent: React.ComponentType | null = null;
-let capturedValidateSearch:
-  | ((search: Record<string, unknown>) => Record<string, unknown>)
-  | null = null;
+let capturedValidateSearch: ((search: Record<string, unknown>) => Record<string, unknown>) | null =
+  null;
 let routeSearch: Record<string, unknown> = {};
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () =>
+  createFileRoute:
+    () =>
     (config: {
       validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
       component: React.ComponentType;
@@ -71,14 +67,7 @@ vi.mock("@tanstack/react-router", () => ({
         useSearch: () => routeSearch,
       };
     },
-  Link: ({
-    children,
-    to,
-    ...props
-  }: {
-    children: React.ReactNode;
-    to: string;
-  }) => (
+  Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...props}>
       {children}
     </a>
@@ -132,10 +121,7 @@ describe("[phase:6] [regression:always] EventCreationPage", () => {
     await renderCreationPage();
 
     await user.type(screen.getByLabelText("Title"), "Campus Hack Night");
-    await user.type(
-      screen.getByLabelText("Description"),
-      "Build with classmates all evening.",
-    );
+    await user.type(screen.getByLabelText("Description"), "Build with classmates all evening.");
     await user.type(screen.getByLabelText("Location"), "Ohio Union");
     await user.click(screen.getByRole("button", { name: "Start Date" }));
     await user.click(screen.getByRole("button", { name: "End Date" }));
@@ -165,9 +151,7 @@ describe("[phase:6] [regression:always] EventCreationPage", () => {
   it("TC-EVT-029: hides the type selector and fixes gig creation from route state", async () => {
     await renderCreationPage({ type: "GIG" });
 
-    expect(
-      await screen.findByRole("heading", { name: "Create Gig" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Create Gig" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Type")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Amount ($)")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create Gig" })).toBeInTheDocument();
@@ -189,16 +173,11 @@ describe("[phase:6] [regression:always] EventCreationPage", () => {
 
     await renderCreationPage();
     await user.type(screen.getByLabelText("Title"), "Campus Hack Night");
-    await user.type(
-      screen.getByLabelText("Description"),
-      "Build with classmates all evening.",
-    );
+    await user.type(screen.getByLabelText("Description"), "Build with classmates all evening.");
     await user.type(screen.getByLabelText("Location"), "Ohio Union");
     await user.click(screen.getByRole("button", { name: "Create Event" }));
 
-    expect(
-      await screen.findByText("Please fill in all required fields."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Please fill in all required fields.")).toBeInTheDocument();
     expect(mockEventsPost).not.toHaveBeenCalled();
   });
 });

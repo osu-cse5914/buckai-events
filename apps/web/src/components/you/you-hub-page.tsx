@@ -1,9 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  BookmarkIcon,
-  BriefcaseBusinessIcon,
-  PlusSquareIcon,
-} from "lucide-react";
+import { BookmarkIcon, BriefcaseBusinessIcon, PlusSquareIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";

@@ -214,9 +214,7 @@ export function EventDetailSurface({
   const queryClient = useQueryClient();
   const isPageMode = mode === "page";
 
-  const { data: event, isLoading, error } = useQuery(
-    eventDetailQueryOptions(api, eventId),
-  );
+  const { data: event, isLoading, error } = useQuery(eventDetailQueryOptions(api, eventId));
   const { data: currentUser } = useQuery(currentUserQueryOptions(api));
 
   const isCreator = !!(
@@ -246,14 +244,9 @@ export function EventDetailSurface({
   const [statusValue, setStatusValue] = useState("");
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
   const [applyMessage, setApplyMessage] = useState("");
-  const [applyErrorMessage, setApplyErrorMessage] = useState<string | null>(
-    null,
-  );
-  const [applySuccessMessage, setApplySuccessMessage] = useState<string | null>(
-    null,
-  );
-  const [submittedApplication, setSubmittedApplication] =
-    useState<ApplicationSummary | null>(null);
+  const [applyErrorMessage, setApplyErrorMessage] = useState<string | null>(null);
+  const [applySuccessMessage, setApplySuccessMessage] = useState<string | null>(null);
+  const [submittedApplication, setSubmittedApplication] = useState<ApplicationSummary | null>(null);
   const lastRecordedViewEventId = useRef<string | null>(null);
 
   const statusMutation = useMutation({
@@ -306,12 +299,10 @@ export function EventDetailSurface({
 
   const applyMutation = useMutation({
     mutationFn: async (message: string) => {
-      const postApplication = api.api.v1.gigs[":gigId"].applications.$post as (
-        args: {
-          param: { gigId: string };
-          json: { message: string };
-        },
-      ) => Promise<Response>;
+      const postApplication = api.api.v1.gigs[":gigId"].applications.$post as (args: {
+        param: { gigId: string };
+        json: { message: string };
+      }) => Promise<Response>;
       const res = await postApplication({
         param: { gigId: eventId },
         json: { message },
@@ -345,9 +336,7 @@ export function EventDetailSurface({
     },
     onError: (mutationError) => {
       setApplyErrorMessage(
-        mutationError instanceof Error
-          ? mutationError.message
-          : "Failed to submit application",
+        mutationError instanceof Error ? mutationError.message : "Failed to submit application",
       );
     },
   });
@@ -441,10 +430,7 @@ export function EventDetailSurface({
         <div className="mt-4 flex items-center gap-3">
           {isPageMode ? (
             <Button asChild>
-              <Link
-                to={fallbackBrowsePath}
-                search={fallbackBrowseSearch as never}
-              >
+              <Link to={fallbackBrowsePath} search={fallbackBrowseSearch as never}>
                 Back to {fallbackBrowseLabel}
               </Link>
             </Button>
@@ -466,12 +452,12 @@ export function EventDetailSurface({
     (resolvedBrowsePath === "/search"
       ? "Search results"
       : resolvedBrowsePath === "/you/collections/$collectionId"
-        ? detailSearch?.collectionName ?? "Collection"
-      : resolvedBrowsePath === "/featured"
-        ? "Featured"
-      : event.type === "GIG"
-        ? "Gigs"
-        : "Events");
+        ? (detailSearch?.collectionName ?? "Collection")
+        : resolvedBrowsePath === "/featured"
+          ? "Featured"
+          : event.type === "GIG"
+            ? "Gigs"
+            : "Events");
   const previousEventSearch = detailSearch ? toPreviousEventSearch(detailSearch) : undefined;
   const relatedEventSearch = buildRelatedEventSearch({
     event,
@@ -481,8 +467,7 @@ export function EventDetailSurface({
     browseSearch,
   });
   const validTransitions = VALID_TRANSITIONS[event.status] || [];
-  const currentApplication =
-    submittedApplication ?? applicationsQuery.data ?? null;
+  const currentApplication = submittedApplication ?? applicationsQuery.data ?? null;
   const hasApplied = !!currentApplication;
 
   return (
@@ -533,18 +518,19 @@ export function EventDetailSurface({
 
             <h1 className="mt-3 text-3xl font-bold tracking-tight">{event.title}</h1>
 
-            {event.summary ? (
-              <p className="mt-2 text-muted-foreground">{event.summary}</p>
-            ) : null}
+            {event.summary ? <p className="mt-2 text-muted-foreground">{event.summary}</p> : null}
           </div>
 
           <div className="mt-0.5 flex shrink-0 items-center gap-2">
             {isCreator && event.type === "GIG" ? (
-              <IconCircleButton asChild variant="outline" aria-label="Manage applications" title="Manage applications" icon={<UserIcon className="size-4" />}>
-                <Link
-                  to="/events/$eventId/applications"
-                  params={{ eventId: event.id }}
-                >
+              <IconCircleButton
+                asChild
+                variant="outline"
+                aria-label="Manage applications"
+                title="Manage applications"
+                icon={<UserIcon className="size-4" />}
+              >
+                <Link to="/events/$eventId/applications" params={{ eventId: event.id }}>
                   <UserIcon className="size-4" />
                   <span className="sr-only">Manage applications</span>
                 </Link>
@@ -552,11 +538,14 @@ export function EventDetailSurface({
             ) : null}
 
             {isCreator ? (
-              <IconCircleButton asChild variant="outline" aria-label="Edit event" title="Edit event" icon={<PencilIcon className="size-4" />}>
-                <Link
-                  to="/events/$eventId/edit"
-                  params={{ eventId: event.id }}
-                >
+              <IconCircleButton
+                asChild
+                variant="outline"
+                aria-label="Edit event"
+                title="Edit event"
+                icon={<PencilIcon className="size-4" />}
+              >
+                <Link to="/events/$eventId/edit" params={{ eventId: event.id }}>
                   <PencilIcon className="size-4" />
                   <span className="sr-only">Edit event</span>
                 </Link>
@@ -598,9 +587,7 @@ export function EventDetailSurface({
           <div>
             <p>{formatDateLong(event.startAt)}</p>
             {event.endAt ? (
-              <p className="text-muted-foreground">
-                to {formatDateLong(event.endAt)}
-              </p>
+              <p className="text-muted-foreground">to {formatDateLong(event.endAt)}</p>
             ) : null}
           </div>
         </div>
@@ -613,11 +600,7 @@ export function EventDetailSurface({
         {event.creator ? (
           <div className="flex items-center gap-2 text-sm">
             <UserIcon className="size-4 shrink-0 text-muted-foreground" />
-            <Link
-              to="/users/$id"
-              params={{ id: event.creator.id }}
-              className="hover:underline"
-            >
+            <Link to="/users/$id" params={{ id: event.creator.id }} className="hover:underline">
               {event.creator.displayName ?? event.creator.email}
             </Link>
           </div>
@@ -676,9 +659,7 @@ export function EventDetailSurface({
 
       <div>
         <h2 className="text-lg font-semibold">Description</h2>
-        <MarkdownContent className="mt-2">
-          {eventDescription}
-        </MarkdownContent>
+        <MarkdownContent className="mt-2">{eventDescription}</MarkdownContent>
       </div>
 
       {event.ticketUrl ? (
@@ -719,16 +700,11 @@ export function EventDetailSurface({
                 </p>
               </div>
               {canApplyToGig ? (
-                <Dialog
-                  open={isApplyDialogOpen}
-                  onOpenChange={setIsApplyDialogOpen}
-                >
+                <Dialog open={isApplyDialogOpen} onOpenChange={setIsApplyDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
                       disabled={
-                        hasApplied ||
-                        applyMutation.isPending ||
-                        applicationsQuery.isLoading
+                        hasApplied || applyMutation.isPending || applicationsQuery.isLoading
                       }
                     >
                       {hasApplied ? "Applied" : "Apply"}
@@ -738,34 +714,25 @@ export function EventDetailSurface({
                     <DialogHeader>
                       <DialogTitle>Apply to this gig</DialogTitle>
                       <DialogDescription>
-                        Include any context that helps the owner evaluate your
-                        application.
+                        Include any context that helps the owner evaluate your application.
                       </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={handleApplySubmit}>
                       <div className="space-y-2">
-                        <Label htmlFor="application-message">
-                          Message (optional)
-                        </Label>
+                        <Label htmlFor="application-message">Message (optional)</Label>
                         <Textarea
                           id="application-message"
                           value={applyMessage}
-                          onChange={(eventValue) =>
-                            setApplyMessage(eventValue.target.value)
-                          }
+                          onChange={(eventValue) => setApplyMessage(eventValue.target.value)}
                           placeholder="Share relevant experience or availability"
                         />
                       </div>
                       {applyErrorMessage ? (
-                        <p className="text-sm text-destructive">
-                          {applyErrorMessage}
-                        </p>
+                        <p className="text-sm text-destructive">{applyErrorMessage}</p>
                       ) : null}
                       <DialogFooter>
                         <Button type="submit" disabled={applyMutation.isPending}>
-                          {applyMutation.isPending
-                            ? "Submitting..."
-                            : "Submit application"}
+                          {applyMutation.isPending ? "Submitting..." : "Submit application"}
                         </Button>
                       </DialogFooter>
                     </form>
@@ -783,9 +750,7 @@ export function EventDetailSurface({
                   {APPLICATION_STATUS_LABELS[currentApplication.status] ??
                     currentApplication.status}
                 </Badge>
-                <span className="text-muted-foreground">
-                  You have already applied to this gig.
-                </span>
+                <span className="text-muted-foreground">You have already applied to this gig.</span>
               </div>
             ) : null}
             {applySuccessMessage ? (
@@ -808,10 +773,7 @@ export function EventDetailSurface({
           <div className="mt-2 flex flex-wrap gap-2">
             {displayTags.map((tag) => (
               <Badge key={tag} variant="outline" asChild>
-                <Link
-                  to="/search"
-                  search={{ tag: normalizeSearchTag(tag) }}
-                >
+                <Link to="/search" search={{ tag: normalizeSearchTag(tag) }}>
                   {tag}
                 </Link>
               </Badge>
@@ -835,7 +797,7 @@ export function EventDetailSurface({
                 className="h-full rounded-xl border p-4 transition-colors hover:bg-muted/30"
               >
                 <p className="font-medium leading-tight">{relatedEvent.title}</p>
-                {relatedEvent.summary ?? relatedEvent.category ? (
+                {(relatedEvent.summary ?? relatedEvent.category) ? (
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                     {relatedEvent.summary ?? relatedEvent.category}
                   </p>
@@ -855,15 +817,10 @@ export function EventDetailSurface({
           </div>
         </div>
       ) : null}
-
     </section>
   );
 }
 
 function surfaceClassName(mode: "page" | "panel") {
-  return cn(
-    mode === "page"
-      ? `${STANDARD_PAGE_WIDTH} py-10`
-      : "px-6 py-6 lg:px-8 lg:py-8",
-  );
+  return cn(mode === "page" ? `${STANDARD_PAGE_WIDTH} py-10` : "px-6 py-6 lg:px-8 lg:py-8");
 }

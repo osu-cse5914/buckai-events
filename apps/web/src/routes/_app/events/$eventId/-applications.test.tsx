@@ -186,12 +186,15 @@ describe("[phase:2] [regression:always] EventDetailPage Gig Applications", () =>
       )
       .mockResolvedValueOnce(
         okJson(
-          buildPaginatedResponse([
-            buildMyApplication({
-              message: "I can help",
-              gig: buildMyApplication().gig,
-            }),
-          ], { pagination: { total: 1, limit: 20, offset: 0 } }),
+          buildPaginatedResponse(
+            [
+              buildMyApplication({
+                message: "I can help",
+                gig: buildMyApplication().gig,
+              }),
+            ],
+            { pagination: { total: 1, limit: 20, offset: 0 } },
+          ),
         ),
       );
     mockGigApplicationsPost.mockResolvedValue(
@@ -225,8 +228,7 @@ describe("[phase:2] [regression:always] EventDetailPage Gig Applications", () =>
     mockGigApplicationsPost.mockResolvedValue({
       ok: false,
       status: 409,
-      json: () =>
-        Promise.resolve({ detail: "You have already applied to this gig" }),
+      json: () => Promise.resolve({ detail: "You have already applied to this gig" }),
     });
     const user = userEvent.setup();
 
@@ -236,17 +238,13 @@ describe("[phase:2] [regression:always] EventDetailPage Gig Applications", () =>
     await user.click(screen.getByRole("button", { name: "Apply" }));
     await user.click(screen.getByRole("button", { name: "Submit application" }));
 
-    expect(
-      await screen.findByText("You have already applied to this gig"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("You have already applied to this gig")).toBeInTheDocument();
   });
 });
 
 describe("[phase:6] [regression:always] EventDetailPage Gig Application Availability", () => {
   it("TC-APP-016: hides the apply action for a non-open gig", async () => {
-    mockEventGet.mockResolvedValue(
-      okJson(makeEvent({ status: "IN_PROGRESS" })),
-    );
+    mockEventGet.mockResolvedValue(okJson(makeEvent({ status: "IN_PROGRESS" })));
     mockUserGet.mockResolvedValue(okJson({ id: "user_2", email: "bob@osu.edu" }));
 
     await renderPage();

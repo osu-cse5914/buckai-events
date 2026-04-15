@@ -1,11 +1,15 @@
 import { http, HttpResponse } from "msw";
-import { PAGE_SIZE, type CurrentUser, type EventListItem, type EventsResponse, type SocialFeedItem } from "@/lib/queries";
+import {
+  PAGE_SIZE,
+  type CurrentUser,
+  type EventListItem,
+  type EventsResponse,
+  type SocialFeedItem,
+} from "@/lib/queries";
 
 export const TEST_API_BASE_URL = "http://localhost";
 
-export function makeCurrentUser(
-  overrides: Partial<CurrentUser> = {},
-): CurrentUser {
+export function makeCurrentUser(overrides: Partial<CurrentUser> = {}): CurrentUser {
   return {
     id: "user_1",
     email: "brutus@osu.edu",
@@ -22,9 +26,7 @@ export function makeCurrentUser(
   };
 }
 
-export function makeEventListItem(
-  overrides: Partial<EventListItem> = {},
-): EventListItem {
+export function makeEventListItem(overrides: Partial<EventListItem> = {}): EventListItem {
   return {
     id: "evt_1",
     title: "Hack Night",
@@ -71,9 +73,7 @@ export function makeEventsResponse(
   };
 }
 
-export function makeSocialFeedItem(
-  overrides: Partial<SocialFeedItem> = {},
-): SocialFeedItem {
+export function makeSocialFeedItem(overrides: Partial<SocialFeedItem> = {}): SocialFeedItem {
   return {
     event: {
       id: "evt_1",
@@ -111,12 +111,8 @@ export function makeSocialFeedResponse(
 }
 
 export const handlers = [
-  http.get(`${TEST_API_BASE_URL}/api/v1/users/me`, () =>
-    HttpResponse.json(makeCurrentUser()),
-  ),
-  http.get(`${TEST_API_BASE_URL}/api/v1/events`, () =>
-    HttpResponse.json(makeEventsResponse()),
-  ),
+  http.get(`${TEST_API_BASE_URL}/api/v1/users/me`, () => HttpResponse.json(makeCurrentUser())),
+  http.get(`${TEST_API_BASE_URL}/api/v1/events`, () => HttpResponse.json(makeEventsResponse())),
   http.get(`${TEST_API_BASE_URL}/api/v1/events/semantic-search`, () =>
     HttpResponse.json(makeEventsResponse()),
   ),

@@ -82,10 +82,7 @@ async function readErrorMessage(res: Response, fallback: string) {
   }
 }
 
-async function readSseText(
-  res: Response,
-  onChunk: (chunk: string) => void,
-) {
+async function readSseText(res: Response, onChunk: (chunk: string) => void) {
   const reader = res.body?.getReader();
   if (!reader) {
     throw new Error("Streaming response body is unavailable");
@@ -104,9 +101,7 @@ async function readSseText(
       const dataLines = rawEvent
         .split("\n")
         .filter((line) => line.startsWith("data:"))
-        .map((line) =>
-          line.startsWith("data: ") ? line.slice("data: ".length) : line.slice(5),
-        );
+        .map((line) => (line.startsWith("data: ") ? line.slice("data: ".length) : line.slice(5)));
 
       if (!dataLines.length) {
         continue;
@@ -133,9 +128,7 @@ async function readSseText(
       .replace(/\r\n/g, "\n")
       .split("\n")
       .filter((line) => line.startsWith("data:"))
-      .map((line) =>
-        line.startsWith("data: ") ? line.slice("data: ".length) : line.slice(5),
-      );
+      .map((line) => (line.startsWith("data: ") ? line.slice("data: ".length) : line.slice(5)));
 
     if (trailingDataLines.length) {
       const chunk = trailingDataLines.join("\n");
@@ -152,11 +145,9 @@ function normalizeAssistantText(value: string) {
 }
 
 function getChatRequestHeaders() {
-  const timezone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone?.trim() || "UTC";
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone?.trim() || "UTC";
   const locale =
-    (typeof navigator !== "undefined" ? navigator.language : undefined)?.trim() ||
-    "en-US";
+    (typeof navigator !== "undefined" ? navigator.language : undefined)?.trim() || "en-US";
 
   return {
     "x-user-timezone": timezone,
@@ -180,11 +171,7 @@ function formatCompensation(
   return compensation.type === "HOURLY" ? `${amount}/hr` : amount;
 }
 
-function SearchResultsCards({
-  part,
-}: {
-  part: ConversationSearchResultsPart;
-}) {
+function SearchResultsCards({ part }: { part: ConversationSearchResultsPart }) {
   if (!part.items.length) {
     return null;
   }
@@ -206,9 +193,7 @@ function SearchResultsCards({
               <Card className="gap-0 rounded-2xl border-border/70 py-0 shadow-none transition-colors hover:bg-accent/20">
                 <CardContent className="space-y-3 px-4 py-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    {item.type ? (
-                      <EventTypeBadge type={item.type} />
-                    ) : null}
+                    {item.type ? <EventTypeBadge type={item.type} /> : null}
                     {item.category ? (
                       <Badge variant="outline" className="capitalize">
                         {item.category}
@@ -241,9 +226,7 @@ function SearchResultsCards({
                   </div>
 
                   {compensation ? (
-                    <p className="text-sm font-medium text-foreground">
-                      {compensation}
-                    </p>
+                    <p className="text-sm font-medium text-foreground">{compensation}</p>
                   ) : null}
                 </CardContent>
               </Card>
@@ -311,9 +294,7 @@ function getPendingActionDescription(action: ConversationPendingAction) {
   }
 }
 
-function getPendingActionDetails(
-  action: ConversationPendingAction,
-): PendingActionDetail[] {
+function getPendingActionDetails(action: ConversationPendingAction): PendingActionDetail[] {
   switch (action.toolName) {
     case "applyToGig":
       return action.args.message
@@ -378,26 +359,17 @@ export function AiPage({
   const [draft, setDraft] = useState(prompt);
   const [isSending, setIsSending] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
-  const [pendingConversationId, setPendingConversationId] = useState<string | null>(
-    null,
-  );
+  const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const [streamingAssistantMessage, setStreamingAssistantMessage] = useState("");
   const [assistantNotice, setAssistantNotice] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [conversationActionError, setConversationActionError] = useState<string | null>(null);
 
-  const conversationsQuery = useQuery(
-    conversationsQueryOptions(api, CONVERSATION_LIMIT, 0),
-  );
+  const conversationsQuery = useQuery(conversationsQueryOptions(api, CONVERSATION_LIMIT, 0));
   const activeConversationId = pendingConversationId ?? conversationId ?? null;
   const messagesQuery = useQuery({
-    ...conversationMessagesQueryOptions(
-      api,
-      activeConversationId ?? "",
-      MESSAGE_LIMIT,
-      0,
-    ),
+    ...conversationMessagesQueryOptions(api, activeConversationId ?? "", MESSAGE_LIMIT, 0),
     enabled: Boolean(activeConversationId),
   });
   const deleteConversationMutation = useMutation({
@@ -510,19 +482,15 @@ export function AiPage({
           message.parts?.some((part) => part.type === "reply-suggestions"),
       )?.id ?? null;
   const conversationCount =
-    conversationsQuery.data?.pagination.total ??
-    conversationsQuery.data?.data.length ??
-    0;
+    conversationsQuery.data?.pagination.total ?? conversationsQuery.data?.data.length ?? 0;
   const activeConversation =
     conversationsQuery.data?.data.find(
       (conversation) => conversation.id === activeConversationId,
     ) ?? null;
   const pendingAction = activeConversation?.pendingAction ?? null;
-  const pendingActionDetails = pendingAction
-    ? getPendingActionDetails(pendingAction)
-    : [];
+  const pendingActionDetails = pendingAction ? getPendingActionDetails(pendingAction) : [];
   const activeConversationTitle = activeConversationId
-    ? activeConversation?.title ?? "New chat"
+    ? (activeConversation?.title ?? "New chat")
     : "Start a new chat";
 
   async function refreshConversationState(targetConversationId: string) {
@@ -546,9 +514,7 @@ export function AiPage({
     try {
       const res = await api.api.v1.conversations.$post();
       if (!res.ok) {
-        throw new Error(
-          await readErrorMessage(res, "Failed to create conversation"),
-        );
+        throw new Error(await readErrorMessage(res, "Failed to create conversation"));
       }
 
       const created = (await res.json()) as {
@@ -582,9 +548,7 @@ export function AiPage({
       setDraft("");
       setPendingConversationId(createdConversationId);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to create conversation",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Failed to create conversation");
     }
   }
 
@@ -613,12 +577,11 @@ export function AiPage({
 
     try {
       const targetConversationId = await ensureConversationId();
-      const sendConversationMessage =
-        api.api.v1.conversations[":id"].messages.$post as (args: {
-          param: { id: string };
-          json: { content: string };
-          header: Record<string, string>;
-        }) => Promise<Response>;
+      const sendConversationMessage = api.api.v1.conversations[":id"].messages.$post as (args: {
+        param: { id: string };
+        json: { content: string };
+        header: Record<string, string>;
+      }) => Promise<Response>;
       const response = await sendConversationMessage({
         param: { id: targetConversationId },
         json: { content: trimmedContent },
@@ -626,9 +589,7 @@ export function AiPage({
       });
 
       if (!response.ok) {
-        throw new Error(
-          await readErrorMessage(response, "Failed to send message"),
-        );
+        throw new Error(await readErrorMessage(response, "Failed to send message"));
       }
 
       const assistantText = await readSseText(response, (chunk) => {
@@ -649,9 +610,7 @@ export function AiPage({
       if (shouldClearDraft) {
         setDraft(previousDraft);
       }
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send message",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Failed to send message");
     } finally {
       setIsSending(false);
       setPendingUserMessage(null);
@@ -683,9 +642,7 @@ export function AiPage({
           {pendingAction ? (
             <div className="flex flex-col gap-4">
               <div className="rounded-2xl border bg-muted/30 px-4 py-4">
-                <p className="text-sm font-semibold text-foreground">
-                  {pendingAction.summary}
-                </p>
+                <p className="text-sm font-semibold text-foreground">{pendingAction.summary}</p>
 
                 {pendingActionDetails.length ? (
                   <dl className="mt-3 flex flex-col gap-2">
@@ -694,9 +651,7 @@ export function AiPage({
                         key={`${pendingAction.id}-${detail.label}`}
                         className="flex flex-col gap-1 text-sm sm:flex-row sm:gap-2"
                       >
-                        <dt className="font-medium text-foreground sm:min-w-28">
-                          {detail.label}
-                        </dt>
+                        <dt className="font-medium text-foreground sm:min-w-28">{detail.label}</dt>
                         <dd className="text-muted-foreground">{detail.value}</dd>
                       </div>
                     ))}
@@ -735,9 +690,7 @@ export function AiPage({
                 <p className="text-sm text-muted-foreground">
                   {conversationCount} conversation{conversationCount === 1 ? "" : "s"}
                 </p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight">
-                  Recent chats
-                </h2>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight">Recent chats</h2>
               </div>
 
               <Button
@@ -759,10 +712,10 @@ export function AiPage({
             </div>
           </div>
 
-            <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-              {conversationsQuery.isLoading ? (
-                <AiConversationsSkeleton />
-              ) : conversationsQuery.error ? (
+          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            {conversationsQuery.isLoading ? (
+              <AiConversationsSkeleton />
+            ) : conversationsQuery.error ? (
               <p className="px-4 py-4 text-sm text-destructive sm:px-5">
                 {conversationsQuery.error instanceof Error
                   ? conversationsQuery.error.message
@@ -833,9 +786,7 @@ export function AiPage({
             <p className="text-sm text-muted-foreground">
               {activeConversationId ? "Conversation" : "Draft"}
             </p>
-            <h2 className="mt-1 text-xl font-semibold tracking-tight">
-              {activeConversationTitle}
-            </h2>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight">{activeConversationTitle}</h2>
           </div>
 
           <div className="flex flex-1 flex-col lg:min-h-0">
@@ -870,7 +821,7 @@ export function AiPage({
                         </article>
                       ) : null}
 
-                      {message.parts?.map((part, index) => (
+                      {message.parts?.map((part, index) =>
                         part.type === "search-results" ? (
                           <SearchResultsCards
                             key={`${message.id}-${part.type}-${index}`}
@@ -885,8 +836,8 @@ export function AiPage({
                               void sendMessage(suggestion, { clearDraft: false });
                             }}
                           />
-                        ) : null
-                      ))}
+                        ) : null,
+                      )}
                     </div>
                   ),
                 )
@@ -918,14 +869,11 @@ export function AiPage({
 
                 {pendingAction ? (
                   <p className="text-sm text-muted-foreground">
-                    Confirm or cancel the pending action to keep chatting in this
-                    conversation.
+                    Confirm or cancel the pending action to keep chatting in this conversation.
                   </p>
                 ) : null}
 
-                {errorMessage ? (
-                  <p className="text-sm text-destructive">{errorMessage}</p>
-                ) : null}
+                {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
 
                 {conversationActionError ? (
                   <p className="text-sm text-destructive">{conversationActionError}</p>

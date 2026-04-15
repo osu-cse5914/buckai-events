@@ -50,10 +50,7 @@ export async function listOwnApplications(
   };
 }
 
-export async function getPublicProfile(
-  prisma: PrismaClient,
-  input: PublicProfileInput,
-) {
+export async function getPublicProfile(prisma: PrismaClient, input: PublicProfileInput) {
   const user = await prisma.user.findUnique({ where: { id: input.targetId } });
   if (!user) {
     throw new NotFoundError(`User ${input.targetId} was not found`);
@@ -105,10 +102,7 @@ export async function getPublicProfile(
   };
 }
 
-export async function getCurrentUserOrThrow(
-  prisma: PrismaClient,
-  userId: string,
-) {
+export async function getCurrentUserOrThrow(prisma: PrismaClient, userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     throw new NotFoundError("User not found");

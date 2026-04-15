@@ -1,15 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": [
-      "bun",
-      "node"
-    ],
+    "types": ["bun", "node"],
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": [
-    "src",
-    "worker-configuration.d.ts"
-  ]
+  "include": ["src", "worker-configuration.d.ts"]
 }

@@ -109,9 +109,7 @@ function looksLikePromptLeak(text: string) {
 
 function deriveConversationTitleFromMessage(message: string) {
   const words = extractTitleWords(message);
-  const filtered = words.filter(
-    (word) => !TITLE_STOPWORDS.has(word.toLowerCase()),
-  );
+  const filtered = words.filter((word) => !TITLE_STOPWORDS.has(word.toLowerCase()));
 
   return formatConversationTitle(filtered.length ? filtered : words);
 }
@@ -124,10 +122,8 @@ export async function generateConversationTitle(input: {
   generateText?: GenerateTextLike;
   resolveTitleModel?: ResolveTitleModelLike;
 }) {
-  const generateTextImpl =
-    input.generateText ?? (generateText as unknown as GenerateTextLike);
-  const resolveTitleModel =
-    input.resolveTitleModel ?? resolveTitleModelFromEnv;
+  const generateTextImpl = input.generateText ?? (generateText as unknown as GenerateTextLike);
+  const resolveTitleModel = input.resolveTitleModel ?? resolveTitleModelFromEnv;
 
   try {
     const resolvedModel = resolveTitleModel(input.env);
@@ -153,9 +149,6 @@ export async function generateConversationTitle(input: {
       data: { title },
     });
   } catch (error) {
-    console.error(
-      `Failed to generate conversation title for ${input.conversationId}`,
-      error,
-    );
+    console.error(`Failed to generate conversation title for ${input.conversationId}`, error);
   }
 }

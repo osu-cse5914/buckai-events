@@ -7,11 +7,7 @@ import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { buildAuthUser, buildEvent } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { registerApiErrorHandlers } from "../app";
-import {
-  createEventsRouter,
-  events,
-  isValidStatusTransition,
-} from "../routes/events";
+import { createEventsRouter, events, isValidStatusTransition } from "../routes/events";
 
 // --- Test data ---
 
@@ -68,9 +64,7 @@ function createRelatedEventsTestApp({
   searchRelatedEvents,
 }: {
   user?: typeof USER_A;
-  searchRelatedEvents: NonNullable<
-    Parameters<typeof createEventsRouter>[0]
-  >["searchRelatedEvents"];
+  searchRelatedEvents: NonNullable<Parameters<typeof createEventsRouter>[0]>["searchRelatedEvents"];
 }) {
   const app = new Hono();
   registerApiErrorHandlers(app);
@@ -496,9 +490,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
 
-      const res = await createTestApp().request(
-        "/events?statusMode=ACTIVE&sort=START_DESC",
-      );
+      const res = await createTestApp().request("/events?statusMode=ACTIVE&sort=START_DESC");
 
       expect(res.status).toBe(200);
       expect(mockPrisma.event.findMany).toHaveBeenCalledWith(

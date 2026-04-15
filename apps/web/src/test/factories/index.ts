@@ -18,9 +18,7 @@ export { type FixtureOverrides } from "./utils";
 
 export type CollectionDetailItem = CollectionDetail["items"][number];
 
-export function buildCurrentUser(
-  overrides: FixtureOverrides<CurrentUser> = {},
-): CurrentUser {
+export function buildCurrentUser(overrides: FixtureOverrides<CurrentUser> = {}): CurrentUser {
   return mergeFixture<CurrentUser>(
     {
       id: "user_1",
@@ -39,9 +37,7 @@ export function buildCurrentUser(
   );
 }
 
-export function buildEventRecord(
-  overrides: FixtureOverrides<EventRecord> = {},
-): EventRecord {
+export function buildEventRecord(overrides: FixtureOverrides<EventRecord> = {}): EventRecord {
   return mergeFixture<EventRecord>(
     {
       id: "evt_1",
@@ -95,9 +91,7 @@ export function buildGigApplication(
   );
 }
 
-export function buildMyApplication(
-  overrides: FixtureOverrides<MyApplication> = {},
-): MyApplication {
+export function buildMyApplication(overrides: FixtureOverrides<MyApplication> = {}): MyApplication {
   return mergeFixture<MyApplication>(
     {
       id: "app_1",

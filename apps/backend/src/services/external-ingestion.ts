@@ -1,8 +1,7 @@
 import type { EventSource, PrismaClient } from "@prisma/client";
 
 const OSU_EVENTS_URL = "https://content.osu.edu/v2/events";
-const TICKETMASTER_EVENTS_URL =
-  "https://app.ticketmaster.com/discovery/v2/events.json";
+const TICKETMASTER_EVENTS_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 const TICKETMASTER_PAGE_SIZE = "200";
 
 type FetchLike = typeof fetch;
@@ -106,9 +105,7 @@ export type ExternalSyncOptions = {
   ticketmasterApiKey?: string;
   fetchImpl?: FetchLike;
   now?: Date;
-  scheduleEventPipeline?: (
-    input: ExternalEventPipelineScheduleInput,
-  ) => Promise<unknown> | unknown;
+  scheduleEventPipeline?: (input: ExternalEventPipelineScheduleInput) => Promise<unknown> | unknown;
 };
 
 export type ExternalSyncSourceSummary = {
@@ -347,10 +344,7 @@ async function scheduleExternalEventPipeline(
   try {
     await scheduleEventPipeline(input);
   } catch (error) {
-    console.error(
-      `Failed to schedule external event pipeline for event ${input.eventId}`,
-      error,
-    );
+    console.error(`Failed to schedule external event pipeline for event ${input.eventId}`, error);
   }
 }
 
@@ -462,7 +456,7 @@ export async function syncExternalEvents(
     now = new Date(),
     scheduleEventPipeline,
   }: ExternalSyncOptions,
-) : Promise<ExternalSyncSummary> {
+): Promise<ExternalSyncSummary> {
   const startedAt = new Date();
   const normalizedTicketmasterApiKey = ticketmasterApiKey?.trim();
   const ticketmasterCandidatesPromise = normalizedTicketmasterApiKey

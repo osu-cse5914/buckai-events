@@ -4,10 +4,7 @@ import type { ChatMessagePart } from "./chat-message-parts";
 
 export const CHATBOT_CONTEXT_WINDOW_LIMIT = 20;
 
-export async function createConversation(
-  prisma: PrismaClient,
-  userId: string,
-) {
+export async function createConversation(prisma: PrismaClient, userId: string) {
   return prisma.conversation.create({
     data: {
       userId,

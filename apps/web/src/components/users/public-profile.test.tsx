@@ -11,13 +11,9 @@ import {
 
 // Mock TanStack Router's Link
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    to,
-  }: {
-    children: React.ReactNode;
-    to: string;
-  }) => <a href={to}>{children}</a>,
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 
 const baseUser: PublicProfileData = {
@@ -131,9 +127,7 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     render(<ProfileNotFound />);
 
     expect(screen.getByText("User not found")).toBeInTheDocument();
-    expect(
-      screen.getByText("The user you're looking for doesn't exist."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("The user you're looking for doesn't exist.")).toBeInTheDocument();
     expect(screen.getByText("Go home")).toBeInTheDocument();
   });
 

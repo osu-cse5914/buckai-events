@@ -197,9 +197,7 @@ describe("[phase:6] [regression:always] Debug Page admin sync", () => {
       expect(mockUsersMeGet).toHaveBeenCalled();
     });
 
-    expect(
-      screen.queryByRole("button", { name: "Sync External Events" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sync External Events" })).not.toBeInTheDocument();
   });
 
   it("TC-DBG-010: successful external sync shows returned counts", async () => {
@@ -361,7 +359,9 @@ describe("[phase:6] [regression:always] Debug Page admin sync", () => {
     render(<DebugPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Backfill Missing Embeddings" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Backfill Missing Embeddings" }),
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "Backfill Missing Embeddings" }));

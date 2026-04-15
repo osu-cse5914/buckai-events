@@ -78,14 +78,8 @@ function buildEmbeddingProviderOptions(task: ResolvedAITask) {
   }
 }
 
-function assertEmbeddingDimensions(
-  embedding: number[],
-  expectedDimensions?: number,
-): number[] {
-  if (
-    expectedDimensions !== undefined &&
-    embedding.length !== expectedDimensions
-  ) {
+function assertEmbeddingDimensions(embedding: number[], expectedDimensions?: number): number[] {
+  if (expectedDimensions !== undefined && embedding.length !== expectedDimensions) {
     throw new AIConfigurationError(
       `Embedding task "embedding" expected ${expectedDimensions} dimensions, received ${embedding.length}`,
     );
@@ -103,13 +97,14 @@ export function buildEventEmbeddingText(input: EventEmbeddingSource): string {
     normalizeText(input.title),
     normalizeText(input.description),
     `Category: ${normalizeText(input.category)}`,
-    `Tags: ${input.tags.map((tag) => tag.trim()).filter(Boolean).join(", ")}`,
+    `Tags: ${input.tags
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .join(", ")}`,
   ].join(". ");
 }
 
-export async function createEventEmbeddingTextHash(
-  input: EventEmbeddingSource,
-): Promise<string> {
+export async function createEventEmbeddingTextHash(input: EventEmbeddingSource): Promise<string> {
   const message = new TextEncoder().encode(
     [
       normalizeText(input.title),
@@ -177,29 +172,19 @@ function buildSemanticSearchWhereClauses(input: Omit<SemanticSearchInput, "limit
     `);
   }
   if (input.startDate) {
-    whereClauses.push(
-      Prisma.sql`e."startAt" >= ${input.startDate.toISOString()}`,
-    );
+    whereClauses.push(Prisma.sql`e."startAt" >= ${input.startDate.toISOString()}`);
   }
   if (input.endDate) {
-    whereClauses.push(
-      Prisma.sql`e."startAt" <= ${input.endDate.toISOString()}`,
-    );
+    whereClauses.push(Prisma.sql`e."startAt" <= ${input.endDate.toISOString()}`);
   }
   if (input.minCompensation !== undefined) {
-    whereClauses.push(
-      Prisma.sql`e."compensationAmount" >= ${input.minCompensation}`,
-    );
+    whereClauses.push(Prisma.sql`e."compensationAmount" >= ${input.minCompensation}`);
   }
   if (input.maxCompensation !== undefined) {
-    whereClauses.push(
-      Prisma.sql`e."compensationAmount" <= ${input.maxCompensation}`,
-    );
+    whereClauses.push(Prisma.sql`e."compensationAmount" <= ${input.maxCompensation}`);
   }
   if (input.compensationType) {
-    whereClauses.push(
-      Prisma.sql`e."compensationType" = ${input.compensationType}`,
-    );
+    whereClauses.push(Prisma.sql`e."compensationType" = ${input.compensationType}`);
   }
 
   return whereClauses;
@@ -308,17 +293,12 @@ export async function storeEventEmbedding(
   );
 }
 
-export async function searchEventsSemantically(
-  prisma: PrismaClient,
-  input: SemanticSearchInput,
-) {
+export async function searchEventsSemantically(prisma: PrismaClient, input: SemanticSearchInput) {
   const vector = await resolveQueryEmbedding(input);
   const vectorLiteral = `[${vector.join(",")}]`;
   const whereClauses = buildSemanticSearchWhereClauses(input);
 
-  return prisma.$queryRaw<
-    Array<Record<string, unknown> & { similarity: number }>
-  >(Prisma.sql`
+  return prisma.$queryRaw<Array<Record<string, unknown> & { similarity: number }>>(Prisma.sql`
     SELECT
       e.id,
       e.title,

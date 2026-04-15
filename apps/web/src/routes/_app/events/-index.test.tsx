@@ -68,13 +68,11 @@ vi.mock("@clerk/clerk-react", () => ({
 }));
 
 vi.mock("@/lib/route-loaders", () => ({
-  loadEventsRouteData: (...args: unknown[]) =>
-    state.loadEventsRouteDataMock(...args),
+  loadEventsRouteData: (...args: unknown[]) => state.loadEventsRouteDataMock(...args),
 }));
 
-let capturedValidateSearch:
-  | ((search: Record<string, unknown>) => Record<string, unknown>)
-  | null = null;
+let capturedValidateSearch: ((search: Record<string, unknown>) => Record<string, unknown>) | null =
+  null;
 let capturedLoaderDeps:
   | ((args: { search: Record<string, unknown> }) => Record<string, unknown>)
   | null = null;
@@ -91,9 +89,7 @@ vi.mock("@tanstack/react-router", () => ({
     (path: string) =>
     (config: {
       validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
-      loaderDeps?: (args: {
-        search: Record<string, unknown>;
-      }) => Record<string, unknown>;
+      loaderDeps?: (args: { search: Record<string, unknown> }) => Record<string, unknown>;
       loader?: (args: {
         context: { api: typeof mockApiClient; queryClient: unknown };
         deps: Record<string, unknown>;
@@ -297,9 +293,7 @@ beforeEach(() => {
   capturedLoaderDeps = null;
   capturedLoader = null;
   intersectionObserverCallback = null;
-  state.mockUserGet.mockResolvedValue(
-    okJson({ id: "user_2", email: "bob@osu.edu" }),
-  );
+  state.mockUserGet.mockResolvedValue(okJson({ id: "user_2", email: "bob@osu.edu" }));
   state.mockInteractionsPost.mockResolvedValue(okJson({}, 201));
   vi.unstubAllGlobals();
   vi.resetModules();
@@ -490,16 +484,12 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     expect(within(row).getByText("Concert")).toBeInTheDocument();
     expect(screen.queryByText("EVENT")).not.toBeInTheDocument();
     expect(within(row).queryByText("Open")).not.toBeInTheDocument();
-    expect(
-      within(row).getByRole("button", { name: "Save to collection" }),
-    ).toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: "Save to collection" })).toBeInTheDocument();
   });
 
   it("renders a closed badge for closed event rows", async () => {
     state.mockGet.mockResolvedValue(
-      makeResponse([
-        makeEvent({ id: "1", title: "Concert", status: "COMPLETED" }),
-      ]),
+      makeResponse([makeEvent({ id: "1", title: "Concert", status: "COMPLETED" })]),
     );
 
     await renderEventsPage();
@@ -537,9 +527,7 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     expect(triggers).toHaveLength(2);
     await user.click(triggers[0]);
     await user.click(await screen.findByRole("option", { name: "Completed" }));
-    await user.click(
-      screen.getByRole("button", { name: "Sort by latest first" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Sort by latest first" }));
 
     await vi.waitFor(() => {
       const lastCall = state.mockGet.mock.calls.at(-1);
@@ -562,12 +550,10 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     });
 
     expect(
-      statusTrigger.compareDocumentPosition(sourceTrigger) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      statusTrigger.compareDocumentPosition(sourceTrigger) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      sourceTrigger.compareDocumentPosition(sortButton) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      sourceTrigger.compareDocumentPosition(sortButton) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -578,9 +564,7 @@ describe("[phase:1] [regression:always] EventsPage", () => {
     await screen.findByText("No events found");
 
     expect(screen.getAllByRole("combobox")).toHaveLength(2);
-    expect(
-      screen.queryByPlaceholderText("Search events..."),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search events...")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Category")).not.toBeInTheDocument();
     expect(screen.queryByText("All Types")).not.toBeInTheDocument();
   });
@@ -673,9 +657,7 @@ describe("[phase:1] [regression:always] EventsPage", () => {
 
     const resetTriggers = screen.getAllByRole("combobox");
     expect(resetTriggers[0]).toHaveTextContent("Active");
-    expect(
-      screen.getByRole("button", { name: "Sort by latest first" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sort by latest first" })).toBeInTheDocument();
   });
 });
 
@@ -693,8 +675,7 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
         makeEvent({
           id: "1",
           title: "Hackathon",
-          description:
-            "### What to bring\n\n- Laptop\n- Charger",
+          description: "### What to bring\n\n- Laptop\n- Charger",
           summary: "Build all night.",
         }),
       ),
@@ -705,15 +686,11 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole("link", { name: /Hackathon/i }));
 
-    expect(
-      await screen.findByRole("heading", { name: "What to bring" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "What to bring" })).toBeInTheDocument();
     expect(screen.getByText("Laptop")).toBeInTheDocument();
     expect(screen.queryByText("EVENT")).not.toBeInTheDocument();
     expect(screen.queryByText("Listing details")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Open full page" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open full page" })).not.toBeInTheDocument();
     expect(state.mockEventDetailGet).toHaveBeenCalledWith({
       param: { id: "1" },
     });
@@ -727,9 +704,7 @@ describe("[phase:6] [regression:always] EventsPage split view", () => {
         makeEvent({ id: "2", title: "Jazz Night" }),
       ]),
     );
-    state.mockEventDetailGet.mockResolvedValue(
-      okJson(makeEvent({ id: "1", title: "Hackathon" })),
-    );
+    state.mockEventDetailGet.mockResolvedValue(okJson(makeEvent({ id: "1", title: "Hackathon" })));
 
     await renderEventsPage();
 

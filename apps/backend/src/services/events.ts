@@ -1,9 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import {
-  BadRequestError,
-  ForbiddenError,
-  NotFoundError,
-} from "../lib/problem-details";
+import { BadRequestError, ForbiddenError, NotFoundError } from "../lib/problem-details";
 
 export const CREATOR_SELECT = {
   id: true,
@@ -13,12 +9,7 @@ export const CREATOR_SELECT = {
 
 export const EVENT_TYPES = ["EVENT", "GIG"] as const;
 export const EVENT_SOURCES = ["OSU_API", "TICKETMASTER", "USER"] as const;
-export const EVENT_STATUSES = [
-  "OPEN",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "CANCELLED",
-] as const;
+export const EVENT_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as const;
 export const EVENT_LIST_STATUS_MODES = [
   "ACTIVE",
   "OPEN",
@@ -118,11 +109,7 @@ type UserOwnedEvent = {
   status: string;
 };
 
-function ensureOwnedUserEvent(
-  event: UserOwnedEvent,
-  userId: string,
-  action: "update" | "delete",
-) {
+function ensureOwnedUserEvent(event: UserOwnedEvent, userId: string, action: "update" | "delete") {
   if (event.source !== "USER") {
     throw new ForbiddenError(
       action === "update"
@@ -140,11 +127,7 @@ function ensureOwnedUserEvent(
   }
 }
 
-export async function createEvent(
-  prisma: PrismaClient,
-  userId: string,
-  input: EventCreateInput,
-) {
+export async function createEvent(prisma: PrismaClient, userId: string, input: EventCreateInput) {
   return prisma.event.create({
     data: {
       title: input.title,
@@ -170,10 +153,7 @@ export async function createEvent(
   });
 }
 
-export async function listEvents(
-  prisma: PrismaClient,
-  input: EventListInput,
-) {
+export async function listEvents(prisma: PrismaClient, input: EventListInput) {
   const where: Record<string, unknown> = {};
   const andClauses: Record<string, unknown>[] = [];
   const now = new Date();
@@ -273,11 +253,7 @@ export function toEventUpdateData(input: EventUpdateInput) {
   return data;
 }
 
-export async function updateEvent(
-  prisma: PrismaClient,
-  id: string,
-  input: EventUpdateInput,
-) {
+export async function updateEvent(prisma: PrismaClient, id: string, input: EventUpdateInput) {
   return prisma.event.update({
     where: { id },
     data: toEventUpdateData(input),
@@ -285,10 +261,7 @@ export async function updateEvent(
   });
 }
 
-export async function getEventByIdOrThrow(
-  prisma: PrismaClient,
-  id: string,
-) {
+export async function getEventByIdOrThrow(prisma: PrismaClient, id: string) {
   const event = await prisma.event.findUnique({
     where: { id },
     include: { creator: { select: CREATOR_SELECT } },
@@ -319,19 +292,13 @@ export async function updateOwnedEvent(
     input.status !== event.status &&
     !isValidStatusTransition(event.status, input.status)
   ) {
-    throw new BadRequestError(
-      `Invalid status transition from ${event.status} to ${input.status}`,
-    );
+    throw new BadRequestError(`Invalid status transition from ${event.status} to ${input.status}`);
   }
 
   return updateEvent(prisma, id, input);
 }
 
-export async function deleteOwnedEvent(
-  prisma: PrismaClient,
-  id: string,
-  userId: string,
-) {
+export async function deleteOwnedEvent(prisma: PrismaClient, id: string, userId: string) {
   const event = await prisma.event.findUnique({ where: { id } });
   if (!event) {
     throw new NotFoundError("Event not found");

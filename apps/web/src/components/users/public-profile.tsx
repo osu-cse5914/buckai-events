@@ -4,12 +4,7 @@ import { STATUS_STYLES, STATUS_LABELS } from "@/lib/event-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   FramedList,
@@ -106,7 +101,11 @@ export function ProfileView({
           aria-label={user.isFollowing ? "Unfollow" : "Follow"}
           title={user.isFollowing ? "Unfollow" : "Follow"}
           icon={
-            user.isFollowing ? <UserCheckIcon className="size-4" /> : <UserPlusIcon className="size-4" />
+            user.isFollowing ? (
+              <UserCheckIcon className="size-4" />
+            ) : (
+              <UserPlusIcon className="size-4" />
+            )
           }
           disabled={!hasFollowAction || followPending}
           onClick={user.isFollowing ? onUnfollow : onFollow}
@@ -144,9 +143,7 @@ export function ProfileView({
           <FramedList>
             {user.createdEvents.items.length === 0 ? (
               <FramedListInset>
-                <p className="text-sm text-center text-muted-foreground">
-                  No active events.
-                </p>
+                <p className="text-sm text-center text-muted-foreground">No active events.</p>
               </FramedListInset>
             ) : (
               <FramedListItems>
@@ -168,10 +165,7 @@ export function ProfileView({
                           <CalendarIcon className="size-3.5 shrink-0" />
                           <span>{new Date(event.createdAt).toLocaleDateString()}</span>
                         </span>
-                        <Badge
-                          variant="secondary"
-                          className={STATUS_STYLES[event.status] ?? ""}
-                        >
+                        <Badge variant="secondary" className={STATUS_STYLES[event.status] ?? ""}>
                           {STATUS_LABELS[event.status] ?? event.status}
                         </Badge>
                       </div>
@@ -221,9 +215,7 @@ export function FollowListDialog({
             </div>
           )}
           {!isLoading && users.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No users yet.
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-4">No users yet.</p>
           )}
           {!isLoading &&
             users.map((u) => (
@@ -235,13 +227,13 @@ export function FollowListDialog({
                 className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-muted transition-colors"
               >
                 <Avatar size="sm" className="shrink-0">
-                  {u.imageUrl ? <AvatarImage src={u.imageUrl} alt={u.displayName ?? "User"} /> : null}
+                  {u.imageUrl ? (
+                    <AvatarImage src={u.imageUrl} alt={u.displayName ?? "User"} />
+                  ) : null}
                   <AvatarFallback>{(u.displayName ?? "?")[0]?.toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium truncate">
-                    {u.displayName ?? "Unknown"}
-                  </span>
+                  <span className="text-sm font-medium truncate">{u.displayName ?? "Unknown"}</span>
                   {u.major && (
                     <span className="text-xs text-muted-foreground truncate">
                       {u.major}
@@ -261,9 +253,7 @@ export function ProfileNotFound() {
   return (
     <section className={cn(STANDARD_PAGE_WIDTH, "py-10 text-center")}>
       <h1 className="text-2xl font-bold tracking-tight">User not found</h1>
-      <p className="mt-2 text-muted-foreground">
-        The user you're looking for doesn't exist.
-      </p>
+      <p className="mt-2 text-muted-foreground">The user you're looking for doesn't exist.</p>
       <Button asChild className="mt-6" variant="outline">
         <Link to="/">Go home</Link>
       </Button>
@@ -274,9 +264,7 @@ export function ProfileNotFound() {
 export function ProfileError() {
   return (
     <section className={cn(STANDARD_PAGE_WIDTH, "py-10 text-center")}>
-      <h1 className="text-2xl font-bold tracking-tight">
-        Something went wrong
-      </h1>
+      <h1 className="text-2xl font-bold tracking-tight">Something went wrong</h1>
       <p className="mt-2 text-muted-foreground">
         Could not load this profile. Please try again later.
       </p>
@@ -307,7 +295,10 @@ export function ProfileSkeleton() {
       <FramedList>
         <FramedListItems>
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="flex flex-col gap-1 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
+            <div
+              key={index}
+              className="flex flex-col gap-1 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5"
+            >
               <Skeleton className="h-4 w-28" />
               <Skeleton className="h-4 w-32" />
             </div>

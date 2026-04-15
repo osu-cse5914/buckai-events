@@ -67,10 +67,7 @@ vi.mock("@tanstack/react-router", () => ({
     to: string;
     params?: Record<string, string>;
   }) => (
-    <a
-      href={params?.eventId ? `/events/${params.eventId}` : to}
-      {...props}
-    >
+    <a href={params?.eventId ? `/events/${params.eventId}` : to} {...props}>
       {children}
     </a>
   ),
@@ -156,33 +153,30 @@ describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
     );
     mockApplicationsGet.mockResolvedValue(
       okJson(
-        buildPaginatedResponse([
-          buildGigApplication({
-            applicant: {
-              id: "user_a",
-              displayName: "Alice",
-              email: "alice@osu.edu",
-            },
-          }),
-        ], {
-          pagination: { total: 1, limit: 20, offset: 0 },
-        }),
+        buildPaginatedResponse(
+          [
+            buildGigApplication({
+              applicant: {
+                id: "user_a",
+                displayName: "Alice",
+                email: "alice@osu.edu",
+              },
+            }),
+          ],
+          {
+            pagination: { total: 1, limit: 20, offset: 0 },
+          },
+        ),
       ),
     );
 
     await renderPage();
 
-    const card = (await screen.findByText("Alice")).closest(
-      '[data-slot="card"]',
-    ) as HTMLElement;
+    const card = (await screen.findByText("Alice")).closest('[data-slot="card"]') as HTMLElement;
     expect(within(card).getByText("alice@osu.edu")).toBeInTheDocument();
     expect(within(card).getByText("I can help")).toBeInTheDocument();
-    expect(
-      within(card).getByRole("button", { name: "Accept" }),
-    ).toBeInTheDocument();
-    expect(
-      within(card).getByRole("button", { name: "Reject" }),
-    ).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Accept" })).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Reject" })).toBeInTheDocument();
   });
 
   it("TC-APP-012: updates application status immediately after an owner decision", async () => {
@@ -197,17 +191,20 @@ describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
     );
     mockApplicationsGet.mockResolvedValue(
       okJson(
-        buildPaginatedResponse([
-          buildGigApplication({
-            applicant: {
-              id: "user_a",
-              displayName: "Alice",
-              email: "alice@osu.edu",
-            },
-          }),
-        ], {
-          pagination: { total: 1, limit: 20, offset: 0 },
-        }),
+        buildPaginatedResponse(
+          [
+            buildGigApplication({
+              applicant: {
+                id: "user_a",
+                displayName: "Alice",
+                email: "alice@osu.edu",
+              },
+            }),
+          ],
+          {
+            pagination: { total: 1, limit: 20, offset: 0 },
+          },
+        ),
       ),
     );
     mockApplicationPatch.mockResolvedValue(
@@ -226,9 +223,7 @@ describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
 
     await renderPage();
 
-    const card = (await screen.findByText("Alice")).closest(
-      '[data-slot="card"]',
-    ) as HTMLElement;
+    const card = (await screen.findByText("Alice")).closest('[data-slot="card"]') as HTMLElement;
     await user.click(within(card).getByRole("button", { name: "Accept" }));
 
     await vi.waitFor(() => {

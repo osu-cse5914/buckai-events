@@ -5,11 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { ApiClientProvider, createApiClient } from "./lib/api";
-import {
-  isE2ETestAuthEnabled,
-  readStoredE2ETestUserId,
-  type AppAuth,
-} from "./lib/e2e-auth";
+import { isE2ETestAuthEnabled, readStoredE2ETestUserId, type AppAuth } from "./lib/e2e-auth";
 import { getClerkPublishableKey } from "./lib/env";
 import "./index.css";
 

@@ -9,13 +9,7 @@ import { browsePathForEventType } from "@/lib/event-utils";
 import { queryKeys, type EventRecord } from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,9 +52,7 @@ function EventEditPage() {
     return (
       <section className="mx-auto max-w-2xl px-6 py-10 text-center">
         <h1 className="text-2xl font-bold">Cannot be edited</h1>
-        <p className="mt-2 text-muted-foreground">
-          External events cannot be edited.
-        </p>
+        <p className="mt-2 text-muted-foreground">External events cannot be edited.</p>
         <Button asChild className="mt-4">
           <Link to="/events/$eventId" params={{ eventId }}>
             Back to Event
@@ -74,9 +66,7 @@ function EventEditPage() {
     return (
       <section className="mx-auto max-w-2xl px-6 py-10 text-center">
         <h1 className="text-2xl font-bold">Not authorized</h1>
-        <p className="mt-2 text-muted-foreground">
-          Only the event creator can edit this event.
-        </p>
+        <p className="mt-2 text-muted-foreground">Only the event creator can edit this event.</p>
         <Button asChild className="mt-4">
           <Link to="/events/$eventId" params={{ eventId }}>
             Back to Event
@@ -89,13 +79,7 @@ function EventEditPage() {
   return <EditForm event={event} eventId={eventId} />;
 }
 
-function EditForm({
-  event,
-  eventId,
-}: {
-  event: EventRecord;
-  eventId: string;
-}) {
+function EditForm({ event, eventId }: { event: EventRecord; eventId: string }) {
   const api = useApiClient();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -103,18 +87,14 @@ function EditForm({
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description);
   const [locationName, setLocationName] = useState(event.locationName);
-  const [startAt, setStartAt] = useState<Date | undefined>(
-    new Date(event.startAt),
-  );
+  const [startAt, setStartAt] = useState<Date | undefined>(new Date(event.startAt));
   const [endAt, setEndAt] = useState<Date | undefined>(
     event.endAt ? new Date(event.endAt) : undefined,
   );
   const [compAmount, setCompAmount] = useState(
     event.compensationAmount != null ? String(event.compensationAmount) : "",
   );
-  const [compType, setCompType] = useState(
-    event.compensationType ?? "FIXED",
-  );
+  const [compType, setCompType] = useState(event.compensationType ?? "FIXED");
 
   const mutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
@@ -173,9 +153,12 @@ function EditForm({
         <Badge variant="outline" className="w-fit">
           {event.type === "GIG" ? "Gig" : "Event"}
         </Badge>
-        <h1 className="text-3xl font-bold tracking-tight">Edit {event.type === "GIG" ? "Gig" : "Event"}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Edit {event.type === "GIG" ? "Gig" : "Event"}
+        </h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Update the key details for this listing so the timing, location, and compensation stay accurate for people viewing it.
+          Update the key details for this listing so the timing, location, and compensation stay
+          accurate for people viewing it.
         </p>
       </div>
 
@@ -280,10 +263,7 @@ function EditForm({
 
                   <div className="space-y-2">
                     <Label htmlFor="compType">Compensation Type</Label>
-                    <Select
-                      value={compType}
-                      onValueChange={(v) => setCompType(v)}
-                    >
+                    <Select value={compType} onValueChange={(v) => setCompType(v)}>
                       <SelectTrigger id="compType" className="w-full">
                         <SelectValue />
                       </SelectTrigger>

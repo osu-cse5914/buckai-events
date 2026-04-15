@@ -43,13 +43,11 @@ vi.mock("@clerk/clerk-react", () => ({
 }));
 
 vi.mock("@/lib/route-loaders", () => ({
-  loadEventsRouteData: (...args: unknown[]) =>
-    state.loadEventsRouteDataMock(...args),
+  loadEventsRouteData: (...args: unknown[]) => state.loadEventsRouteDataMock(...args),
 }));
 
-let capturedValidateSearch:
-  | ((search: Record<string, unknown>) => Record<string, unknown>)
-  | null = null;
+let capturedValidateSearch: ((search: Record<string, unknown>) => Record<string, unknown>) | null =
+  null;
 let capturedLoaderDeps:
   | ((args: { search: Record<string, unknown> }) => Record<string, unknown>)
   | null = null;
@@ -65,9 +63,7 @@ vi.mock("@tanstack/react-router", () => ({
     (path: string) =>
     (config: {
       validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
-      loaderDeps?: (args: {
-        search: Record<string, unknown>;
-      }) => Record<string, unknown>;
+      loaderDeps?: (args: { search: Record<string, unknown> }) => Record<string, unknown>;
       loader?: (args: {
         context: { api: typeof mockApiClient; queryClient: unknown };
         deps: Record<string, unknown>;
@@ -386,9 +382,7 @@ describe("[phase:1] [regression:always] GigsPage", () => {
   });
 
   it("renders open gig rows without a type badge or open badge, and keeps compensation", async () => {
-    state.mockGet.mockResolvedValue(
-      makeResponse([makeGig({ id: "1", title: "Tutoring" })]),
-    );
+    state.mockGet.mockResolvedValue(makeResponse([makeGig({ id: "1", title: "Tutoring" })]));
 
     await renderGigsPage();
 
@@ -397,9 +391,7 @@ describe("[phase:1] [regression:always] GigsPage", () => {
     expect(within(row).getByText("Tutoring")).toBeInTheDocument();
     expect(screen.queryByText("GIG")).not.toBeInTheDocument();
     expect(within(row).queryByText("Open")).not.toBeInTheDocument();
-    expect(
-      within(row).getByRole("button", { name: "Save to collection" }),
-    ).toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: "Save to collection" })).toBeInTheDocument();
     expect(within(row).getByText("$25/hr")).toBeInTheDocument();
   });
 
@@ -466,9 +458,7 @@ describe("[phase:6] [regression:always] GigsPage split view", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("GIG")).not.toBeInTheDocument();
     expect(screen.queryByText("Listing details")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Open full page" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open full page" })).not.toBeInTheDocument();
     expect(state.mockEventDetailGet).toHaveBeenCalledWith({
       param: { id: "1" },
     });

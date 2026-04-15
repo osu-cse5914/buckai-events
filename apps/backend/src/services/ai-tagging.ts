@@ -1,10 +1,6 @@
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import {
-  createAIModelRouter,
-  type AIEnvironment,
-  type ResolvedAITask,
-} from "../lib/ai/router";
+import { createAIModelRouter, type AIEnvironment, type ResolvedAITask } from "../lib/ai/router";
 
 export type EventTaggingInput = {
   title: string;
@@ -46,12 +42,7 @@ function buildTaggingPrompt(input: EventTaggingInput) {
 }
 
 function normalizeTag(value: string): string | null {
-  const normalized = value
-    .trim()
-    .replace(/^#+/, "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-");
+  const normalized = value.trim().replace(/^#+/, "").trim().toLowerCase().replace(/\s+/g, "-");
   if (!normalized || normalized.length > 50) {
     return null;
   }

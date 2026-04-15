@@ -3,9 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { autoCompleteEvents, syncExternalEvents, runWithPrisma } = vi.hoisted(() => ({
   autoCompleteEvents: vi.fn(),
   syncExternalEvents: vi.fn(),
-  runWithPrisma: vi.fn(
-    async (_databaseUrl: string, operation: (prisma: unknown) => unknown) =>
-      operation({}),
+  runWithPrisma: vi.fn(async (_databaseUrl: string, operation: (prisma: unknown) => unknown) =>
+    operation({}),
   ),
 }));
 
@@ -41,10 +40,7 @@ describe("[phase:4] [regression:always] Scheduled worker dispatch", () => {
       { waitUntil } as unknown as ExecutionContext,
     );
 
-    expect(runWithPrisma).toHaveBeenCalledWith(
-      "postgresql://db",
-      autoCompleteEvents,
-    );
+    expect(runWithPrisma).toHaveBeenCalledWith("postgresql://db", autoCompleteEvents);
     expect(autoCompleteEvents).toHaveBeenCalledTimes(1);
     expect(syncExternalEvents).not.toHaveBeenCalled();
     expect(waitUntil).toHaveBeenCalledTimes(1);

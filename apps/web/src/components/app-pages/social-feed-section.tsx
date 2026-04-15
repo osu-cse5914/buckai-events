@@ -3,10 +3,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { CalendarIcon, UserPlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  EventsEmptyState,
-  EventsErrorState,
-} from "@/components/events/events-browser";
+import { EventsEmptyState, EventsErrorState } from "@/components/events/events-browser";
 import { useApiClient } from "@/lib/api";
 import {
   currentUserQueryOptions,
@@ -17,11 +14,7 @@ import {
   type SocialFeedItem,
 } from "@/lib/queries";
 import type { EventDetailRouteSearch } from "@/lib/event-route-search";
-import {
-  STATUS_LABELS,
-  STATUS_STYLES,
-  formatDateLong,
-} from "@/lib/event-utils";
+import { STATUS_LABELS, STATUS_STYLES, formatDateLong } from "@/lib/event-utils";
 import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,10 +74,7 @@ function useSocialFeedSectionData() {
         limit: PAGE_SIZE,
       }),
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce(
-        (count, page) => count + page.data.length,
-        0,
-      );
+      const loaded = allPages.reduce((count, page) => count + page.data.length, 0);
 
       return loaded < lastPage.pagination.total ? loaded : undefined;
     },
@@ -141,9 +131,7 @@ function SocialFeedBody({
       <div className="px-4 py-5 sm:px-5">
         <EventsErrorState
           className="mt-0"
-          message={
-            error instanceof Error ? error.message : "Failed to fetch social feed"
-          }
+          message={error instanceof Error ? error.message : "Failed to fetch social feed"}
         />
       </div>
     );
@@ -172,9 +160,7 @@ function SocialFeedBody({
         <EventsEmptyState
           className={cn(
             "mt-0",
-            variant === "page"
-              ? "rounded-3xl border border-dashed bg-muted/40 px-8 py-12"
-              : "",
+            variant === "page" ? "rounded-3xl border border-dashed bg-muted/40 px-8 py-12" : "",
           )}
           title={
             variant === "page"
@@ -312,10 +298,7 @@ function SocialFeedListItem({
   );
 }
 
-function buildFollowGuidance(
-  major: string | null,
-  interests: string[],
-) {
+function buildFollowGuidance(major: string | null, interests: string[]) {
   const trimmedInterests = interests.filter(Boolean);
 
   if (major && trimmedInterests.length > 0) {

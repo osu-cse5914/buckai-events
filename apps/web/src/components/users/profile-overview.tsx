@@ -1,14 +1,6 @@
 import type { ReactNode } from "react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import {
-  FramedList,
-  FramedListInset,
-  FramedListItems,
-} from "@/components/ui/framed-list";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FramedList, FramedListInset, FramedListItems } from "@/components/ui/framed-list";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
 
@@ -80,11 +72,7 @@ export function ProfileOverview({
   );
 }
 
-function ProfileOverviewFieldBlock({
-  label,
-  value,
-  className,
-}: ProfileOverviewField) {
+function ProfileOverviewFieldBlock({ label, value, className }: ProfileOverviewField) {
   return (
     <div className={className}>
       <div className="flex flex-col gap-1 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">

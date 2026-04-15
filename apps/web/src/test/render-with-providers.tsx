@@ -1,11 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { render, type RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  ApiClientProvider,
-  createApiClient,
-  type ApiClient,
-} from "@/lib/api";
+import { ApiClientProvider, createApiClient, type ApiClient } from "@/lib/api";
 import { TEST_API_BASE_URL } from "@/test/msw/handlers";
 
 export function createTestQueryClient() {

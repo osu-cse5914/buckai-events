@@ -26,21 +26,14 @@ function parseNumeric(value: string | undefined, fallback: number): number {
 
 export function parsePagination(
   c: Context,
-  {
-    defaultLimit = 20,
-    defaultOffset = 0,
-    maxLimit = 100,
-    strict = false,
-  }: PaginationOptions = {},
+  { defaultLimit = 20, defaultOffset = 0, maxLimit = 100, strict = false }: PaginationOptions = {},
 ): PaginationResult {
   const rawLimit = c.req.query("limit");
   const rawOffset = c.req.query("offset");
 
   if (strict) {
-    const hasInvalidLimit =
-      rawLimit !== undefined && !Number.isFinite(Number(rawLimit));
-    const hasInvalidOffset =
-      rawOffset !== undefined && !Number.isFinite(Number(rawOffset));
+    const hasInvalidLimit = rawLimit !== undefined && !Number.isFinite(Number(rawLimit));
+    const hasInvalidOffset = rawOffset !== undefined && !Number.isFinite(Number(rawOffset));
 
     if (hasInvalidLimit || hasInvalidOffset) {
       return {
@@ -54,10 +47,7 @@ export function parsePagination(
     }
   }
 
-  const limit = Math.min(
-    Math.max(parseNumeric(rawLimit, defaultLimit), 1),
-    maxLimit,
-  );
+  const limit = Math.min(Math.max(parseNumeric(rawLimit, defaultLimit), 1), maxLimit);
   const offset = Math.max(parseNumeric(rawOffset, defaultOffset), 0);
 
   return { limit, offset };

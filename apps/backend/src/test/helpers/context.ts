@@ -17,10 +17,7 @@ export const TEST_USER = {
  *
  *   const res = await app.request(makeAuthRequest("/api/v1/users/me"));
  */
-export function makeAuthRequest(
-  path: string,
-  init?: RequestInit
-): Request {
+export function makeAuthRequest(path: string, init?: RequestInit): Request {
   const method = (init?.method ?? "GET").toUpperCase();
   const hasBody = ["POST", "PUT", "PATCH"].includes(method);
 

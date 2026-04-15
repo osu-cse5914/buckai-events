@@ -57,11 +57,7 @@ export function FeaturedPage({
   const normalizedType = type || "ALL";
   const normalizedSearchQuery = searchQuery.trim();
   const recommendedQuery = useInfiniteQuery({
-    queryKey: queryKeys.recommendationsFeed(
-      normalizedType,
-      "",
-      PAGE_SIZE,
-    ),
+    queryKey: queryKeys.recommendationsFeed(normalizedType, "", PAGE_SIZE),
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       fetchRecommendationsPage(api, {
@@ -76,11 +72,7 @@ export function FeaturedPage({
     },
   });
   const popularQuery = useQuery({
-    queryKey: queryKeys.recommendationsPopular(
-      normalizedType,
-      "",
-      FEATURED_PREVIEW_LIMIT,
-    ),
+    queryKey: queryKeys.recommendationsPopular(normalizedType, "", FEATURED_PREVIEW_LIMIT),
     queryFn: () =>
       fetchPopularRecommendationsPage(api, {
         type: type || undefined,
@@ -89,11 +81,7 @@ export function FeaturedPage({
       }),
   });
   const upcomingQuery = useQuery({
-    queryKey: queryKeys.recommendationsUpcoming(
-      normalizedType,
-      "",
-      FEATURED_PREVIEW_LIMIT,
-    ),
+    queryKey: queryKeys.recommendationsUpcoming(normalizedType, "", FEATURED_PREVIEW_LIMIT),
     queryFn: () =>
       fetchUpcomingRecommendationsPage(api, {
         type: type || undefined,
@@ -158,8 +146,8 @@ export function FeaturedPage({
       {rankingMode === "POPULARITY_FALLBACK" ? (
         <div className="mx-auto w-full max-w-3xl animate-in fade-in-0 slide-in-from-bottom-3 duration-700">
           <div className="rounded-2xl border border-dashed bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-            Showing popular upcoming picks while your interests and activity build
-            a more personalized feed.
+            Showing popular upcoming picks while your interests and activity build a more
+            personalized feed.
           </div>
         </div>
       ) : null}
@@ -202,9 +190,7 @@ export function FeaturedPage({
                 <EventsEmptyState
                   className="mt-0"
                   title={
-                    normalizedSearchQuery
-                      ? "No matching recommendations"
-                      : "No recommendations yet"
+                    normalizedSearchQuery ? "No matching recommendations" : "No recommendations yet"
                   }
                   description={
                     normalizedSearchQuery
@@ -222,24 +208,24 @@ export function FeaturedPage({
                     Showing {recommendedItems.length} of{" "}
                     {recommendedMeta?.total ?? recommendedItems.length}
                   </p>
-                   {recommendedQuery.hasNextPage ? (
-                     <Button
-                       variant="outline"
-                       onClick={() =>
-                         isSignedIn ? recommendedQuery.fetchNextPage() : undefined
-                       }
-                       disabled={isSignedIn && recommendedQuery.isFetchingNextPage}
-                       asChild={!isSignedIn}
-                     >
-                       {isSignedIn ? (
-                         recommendedQuery.isFetchingNextPage
-                           ? "Loading..."
-                           : "Load more"
-                       ) : (
-                         <Link to="/sign-in">Sign in to load more</Link>
-                       )}
-                     </Button>
-                   ) : null}
+                  {recommendedQuery.hasNextPage ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => (isSignedIn ? recommendedQuery.fetchNextPage() : undefined)}
+                      disabled={isSignedIn && recommendedQuery.isFetchingNextPage}
+                      asChild={!isSignedIn}
+                    >
+                      {isSignedIn ? (
+                        recommendedQuery.isFetchingNextPage ? (
+                          "Loading..."
+                        ) : (
+                          "Load more"
+                        )
+                      ) : (
+                        <Link to="/sign-in">Sign in to load more</Link>
+                      )}
+                    </Button>
+                  ) : null}
                 </div>
               </>
             ) : null}
@@ -300,9 +286,7 @@ export function FeaturedPage({
               isError={popularQuery.isError}
               error={popularQuery.error}
               emptyTitle={
-                normalizedSearchQuery
-                  ? "No matching popular picks"
-                  : "No popular picks right now"
+                normalizedSearchQuery ? "No matching popular picks" : "No popular picks right now"
               }
               emptyDescription={
                 normalizedSearchQuery
@@ -334,9 +318,7 @@ export function FeaturedPage({
               isError={upcomingQuery.isError}
               error={upcomingQuery.error}
               emptyTitle={
-                normalizedSearchQuery
-                  ? "No matching upcoming picks"
-                  : "No upcoming picks right now"
+                normalizedSearchQuery ? "No matching upcoming picks" : "No upcoming picks right now"
               }
               emptyDescription={
                 normalizedSearchQuery
@@ -373,9 +355,7 @@ function FeaturedSection({
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
 
-        {summary ? (
-          <p className="text-sm text-muted-foreground">{summary}</p>
-        ) : null}
+        {summary ? <p className="text-sm text-muted-foreground">{summary}</p> : null}
       </div>
 
       <div className="overflow-hidden rounded-2xl border bg-background">
@@ -409,13 +389,7 @@ function FeaturedPreviewSectionState({
   errorMessage: string;
 }) {
   if (isPending) {
-    return (
-      <EventsListSkeleton
-        rows={FEATURED_PREVIEW_LIMIT}
-        showHeader={false}
-        framed={false}
-      />
-    );
+    return <EventsListSkeleton rows={FEATURED_PREVIEW_LIMIT} showHeader={false} framed={false} />;
   }
 
   if (isError) {
@@ -432,11 +406,7 @@ function FeaturedPreviewSectionState({
   if (items.length === 0) {
     return (
       <FeaturedSectionInset>
-        <EventsEmptyState
-          className="mt-0"
-          title={emptyTitle}
-          description={emptyDescription}
-        />
+        <EventsEmptyState className="mt-0" title={emptyTitle} description={emptyDescription} />
       </FeaturedSectionInset>
     );
   }

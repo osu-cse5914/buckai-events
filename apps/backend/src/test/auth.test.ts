@@ -5,8 +5,8 @@ import { Prisma } from "@prisma/client";
 const mockClerkGetUser = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },
@@ -90,7 +90,6 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         detail: "Authentication is required",
       });
     });
-
   });
 
   // S-AUTH-4 → TC-AUTH-004: Valid JWT on API request
@@ -131,9 +130,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
       vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(null);
       mockClerkGetUser.mockResolvedValue({
         primaryEmailAddressId: "email_1",
-        emailAddresses: [
-          { id: "email_1", emailAddress: "newstudent@osu.edu" },
-        ],
+        emailAddresses: [{ id: "email_1", emailAddress: "newstudent@osu.edu" }],
       });
       vi.mocked(mockPrisma.user.create).mockResolvedValue(createdUser as never);
 
@@ -194,7 +191,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
           code: "P2002",
           clientVersion: "7.4.0",
-        })
+        }),
       );
 
       const res = await createTestApp().request("/test");

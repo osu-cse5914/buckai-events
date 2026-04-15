@@ -2,10 +2,7 @@ import type { ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function PillTabs({
-  className,
-  ...props
-}: ComponentProps<"div">) {
+export function PillTabs({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("flex flex-wrap gap-2", className)} {...props} />;
 }
 

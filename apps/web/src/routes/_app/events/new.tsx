@@ -7,17 +7,17 @@ import { requireSignedInBeforeLoad } from "@/lib/route-access";
 import { validateCreateEventSearch } from "@/lib/event-route-search";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { browsePathForEventType } from "@/lib/event-utils";
 
@@ -108,7 +108,8 @@ function EventCreationPage() {
           Create {type === "GIG" ? "Gig" : "Event"}
         </h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Add the essentials for your listing so people can discover it, understand the timing, and know how to show up.
+          Add the essentials for your listing so people can discover it, understand the timing, and
+          know how to show up.
         </p>
       </div>
 
@@ -165,7 +166,8 @@ function EventCreationPage() {
               <div className="mb-5 space-y-1">
                 <h2 className="text-base font-semibold">Schedule</h2>
                 <p className="text-sm text-muted-foreground">
-                  Pick the start time, and add an end time if attendees should know when it wraps up.
+                  Pick the start time, and add an end time if attendees should know when it wraps
+                  up.
                 </p>
               </div>
 

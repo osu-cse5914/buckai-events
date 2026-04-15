@@ -23,9 +23,7 @@ describe("[phase:6] [regression:always] API error handling", () => {
   });
 
   it("TC-API-002: returns RFC 7807 problem details for uncaught exceptions", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const app = createErrorTestApp();
     app.get("/api/boom", () => {
       throw new Error("boom");

@@ -38,13 +38,7 @@ function normalizeMarkdownSource(value: string) {
   return normalized;
 }
 
-export function MarkdownContent({
-  children,
-  className,
-}: {
-  children: string;
-  className?: string;
-}) {
+export function MarkdownContent({ children, className }: { children: string; className?: string }) {
   const normalizedContent = normalizeMarkdownSource(children);
 
   return (
@@ -58,9 +52,7 @@ export function MarkdownContent({
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           a: ({ href, ...props }) => {
-            const isExternal = typeof href === "string"
-              ? /^(https?:)?\/\//.test(href)
-              : false;
+            const isExternal = typeof href === "string" ? /^(https?:)?\/\//.test(href) : false;
 
             return (
               <a
@@ -72,22 +64,13 @@ export function MarkdownContent({
             );
           },
           p: ({ className: paragraphClassName, ...props }) => (
-            <p
-              className={cn("whitespace-pre-line", paragraphClassName)}
-              {...props}
-            />
+            <p className={cn("whitespace-pre-line", paragraphClassName)} {...props} />
           ),
           strong: ({ className: strongClassName, ...props }) => (
-            <strong
-              className={cn("font-bold text-foreground", strongClassName)}
-              {...props}
-            />
+            <strong className={cn("font-bold text-foreground", strongClassName)} {...props} />
           ),
           em: ({ className: emphasisClassName, ...props }) => (
-            <em
-              className={cn("italic", emphasisClassName)}
-              {...props}
-            />
+            <em className={cn("italic", emphasisClassName)} {...props} />
           ),
         }}
       >

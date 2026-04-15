@@ -33,10 +33,7 @@ vi.mock("@tanstack/react-router", () => ({
     to: string;
     params?: Record<string, string>;
   }) => (
-    <a
-      href={params?.eventId ? `/events/${params.eventId}` : to}
-      {...props}
-    >
+    <a href={params?.eventId ? `/events/${params.eventId}` : to} {...props}>
       {children}
     </a>
   ),
@@ -126,10 +123,7 @@ describe("[phase:2] [regression:always] MyApplicationsPage", () => {
       "href",
       "/you/applications",
     );
-    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute(
-      "href",
-      "/you/events",
-    );
+    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("href", "/you/events");
     expect(screen.getByRole("link", { name: "Collections" })).toHaveAttribute(
       "href",
       "/you/collections",

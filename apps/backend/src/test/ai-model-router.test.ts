@@ -166,9 +166,7 @@ describe("[phase:4] [regression:always] AI model router", () => {
       },
     });
 
-    expect(() => router.getLanguageModel("tagging")).toThrow(
-      AIProviderUnavailableError,
-    );
+    expect(() => router.getLanguageModel("tagging")).toThrow(AIProviderUnavailableError);
   });
 
   it("TC-AI-006: supports swapping chatbot to a Cloudflare custom-provider route via config only", async () => {
@@ -279,9 +277,7 @@ describe("[phase:4] [regression:always] AI model router", () => {
     expect(embedding.provider.id).toBe("cf-aig");
     expect(embedding.provider.type).toBe("CF_AI_GATEWAY");
     expect(embedding.model.id).toBe("social-osu-embedding");
-    expect(embedding.model.modelId).toBe(
-      "nvidia/llama-nemotron-embed-vl-1b-v2:free",
-    );
+    expect(embedding.model.modelId).toBe("nvidia/llama-nemotron-embed-vl-1b-v2:free");
     expect(embedding.model.dimensions).toBe(768);
     expect(router.getEmbeddingModel("embedding")).toBeDefined();
   });
@@ -368,9 +364,7 @@ describe("[phase:4] [regression:always] AI model router", () => {
       env: buildEnv(),
     });
 
-    expect(() => router.resolveTask("nonexistent" as never)).toThrow(
-      AIConfigurationError,
-    );
+    expect(() => router.resolveTask("nonexistent" as never)).toThrow(AIConfigurationError);
   });
 
   it("TC-AI-005: resolves the embedding task to the configured embedding model", () => {

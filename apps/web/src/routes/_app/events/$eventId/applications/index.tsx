@@ -11,18 +11,13 @@ import {
   type GigApplication,
   type PaginatedResponse,
 } from "@/lib/queries";
-import {
-  APPLICATION_STATUS_LABELS,
-  APPLICATION_STATUS_STYLES,
-} from "@/lib/event-utils";
+import { APPLICATION_STATUS_LABELS, APPLICATION_STATUS_STYLES } from "@/lib/event-utils";
 import { ApplicationsListSkeleton } from "@/components/events/applications-list-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const Route = createFileRoute(
-  "/_app/events/$eventId/applications/",
-)({
+export const Route = createFileRoute("/_app/events/$eventId/applications/")({
   beforeLoad: requireSignedInBeforeLoad,
   loader: ({ context, params }) =>
     loadOwnedEventRouteData({
@@ -51,18 +46,11 @@ function ManageApplicationsPage() {
   });
 
   const decisionMutation = useMutation({
-    mutationFn: async ({
-      appId,
-      status,
-    }: {
-      appId: string;
-      status: "ACCEPTED" | "REJECTED";
-    }) => {
-      const patchApplication =
-        api.api.v1.gigs[":gigId"].applications[":appId"].$patch as (args: {
-          param: { gigId: string; appId: string };
-          json: { status: "ACCEPTED" | "REJECTED" };
-        }) => Promise<Response>;
+    mutationFn: async ({ appId, status }: { appId: string; status: "ACCEPTED" | "REJECTED" }) => {
+      const patchApplication = api.api.v1.gigs[":gigId"].applications[":appId"].$patch as (args: {
+        param: { gigId: string; appId: string };
+        json: { status: "ACCEPTED" | "REJECTED" };
+      }) => Promise<Response>;
       const res = await patchApplication({
         param: { gigId: eventId, appId },
         json: { status },
@@ -78,9 +66,7 @@ function ManageApplicationsPage() {
             ? {
                 ...current,
                 data: current.data.map((application) =>
-                  application.id === updated.id
-                    ? { ...application, ...updated }
-                    : application,
+                  application.id === updated.id ? { ...application, ...updated } : application,
                 ),
               }
             : current,
@@ -121,9 +107,7 @@ function ManageApplicationsPage() {
       </Link>
 
       <div className="mt-6 space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Manage Applications
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Manage Applications</h1>
         <p className="text-sm text-muted-foreground">{event.title}</p>
       </div>
 
@@ -147,8 +131,7 @@ function ManageApplicationsPage() {
           {applicationsQuery.data?.data.map((application) => {
             const isPending = application.status === "PENDING";
             const isUpdating =
-              decisionMutation.isPending &&
-              decisionMutation.variables?.appId === application.id;
+              decisionMutation.isPending && decisionMutation.variables?.appId === application.id;
 
             return (
               <Card key={application.id}>
@@ -156,19 +139,15 @@ function ManageApplicationsPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
                       <CardTitle>
-                        {application.applicant.displayName ||
-                          application.applicant.email}
+                        {application.applicant.displayName || application.applicant.email}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        {application.applicant.email}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{application.applicant.email}</p>
                     </div>
                     <Badge
                       variant="secondary"
                       className={APPLICATION_STATUS_STYLES[application.status]}
                     >
-                      {APPLICATION_STATUS_LABELS[application.status] ??
-                        application.status}
+                      {APPLICATION_STATUS_LABELS[application.status] ?? application.status}
                     </Badge>
                   </div>
                 </CardHeader>

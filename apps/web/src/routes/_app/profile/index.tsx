@@ -5,21 +5,12 @@ import { useUser } from "@clerk/clerk-react";
 import { PencilIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useApiClient } from "@/lib/api";
 import { requireSignedInBeforeLoad } from "@/lib/route-access";
-import {
-  currentUserQueryOptions,
-  queryKeys,
-  type CurrentUser,
-} from "@/lib/queries";
+import { currentUserQueryOptions, queryKeys, type CurrentUser } from "@/lib/queries";
 import {
   FollowListDialog,
   ProfileSkeleton,
@@ -106,14 +97,18 @@ export function ProfilePage() {
         <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
           <h1 className="text-3xl font-bold tracking-tight">Edit profile</h1>
 
-        <Card className="gap-4 overflow-hidden rounded-2xl border bg-background py-0">
-          <CardHeader className="border-b px-6 py-6 sm:px-8">
-            <CardTitle>Edit profile</CardTitle>
-          </CardHeader>
-          <CardContent className="px-6 py-6 sm:px-8">
-            <ProfileEditForm user={user} onCancel={() => setIsEditing(false)} onSaved={() => setIsEditing(false)} />
-          </CardContent>
-        </Card>
+          <Card className="gap-4 overflow-hidden rounded-2xl border bg-background py-0">
+            <CardHeader className="border-b px-6 py-6 sm:px-8">
+              <CardTitle>Edit profile</CardTitle>
+            </CardHeader>
+            <CardContent className="px-6 py-6 sm:px-8">
+              <ProfileEditForm
+                user={user}
+                onCancel={() => setIsEditing(false)}
+                onSaved={() => setIsEditing(false)}
+              />
+            </CardContent>
+          </Card>
         </section>
       ) : (
         <ProfileOverview
@@ -139,7 +134,17 @@ export function ProfilePage() {
               </button>
             </>
           }
-          action={<IconCircleButton variant="outline" aria-label="Edit profile" title="Edit profile" icon={<PencilIcon className="size-4" />} onClick={() => setIsEditing(true)}><span className="sr-only">Edit profile</span></IconCircleButton>}
+          action={
+            <IconCircleButton
+              variant="outline"
+              aria-label="Edit profile"
+              title="Edit profile"
+              icon={<PencilIcon className="size-4" />}
+              onClick={() => setIsEditing(true)}
+            >
+              <span className="sr-only">Edit profile</span>
+            </IconCircleButton>
+          }
           imageUrl={clerkUser?.imageUrl ?? null}
           avatarFallback={(user.displayName ?? user.email).charAt(0).toUpperCase()}
           detailFields={[
@@ -218,7 +223,10 @@ function ProfileEditForm({
       major: major || null,
       gradYear: gradYear ? parseInt(gradYear, 10) : null,
       interests: interestsInput
-        ? interestsInput.split(",").map((s) => s.trim()).filter(Boolean)
+        ? interestsInput
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
         : [],
     };
 

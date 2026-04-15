@@ -12,11 +12,7 @@ import {
   createSseTextResponse,
 } from "../services/chatbot";
 import { createConversationsRouter } from "../routes/conversations";
-import {
-  buildAuthUser,
-  buildConversation,
-  buildMessage,
-} from "./factories";
+import { buildAuthUser, buildConversation, buildMessage } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 
 const USER_A = buildAuthUser({
@@ -47,10 +43,7 @@ function decodeSseText(payload: string) {
 }
 
 type StreamTextToolStub = {
-  execute: (
-    input: Record<string, unknown>,
-    context: unknown,
-  ) => Promise<unknown>;
+  execute: (input: Record<string, unknown>, context: unknown) => Promise<unknown>;
 };
 
 type StreamTextStubOptions = Record<string, unknown> & {
@@ -131,11 +124,7 @@ function createTestApp({
   return app;
 }
 
-function postMessage(
-  app: Hono,
-  content: string,
-  headers?: Record<string, string>,
-) {
+function postMessage(app: Hono, content: string, headers?: Record<string, string>) {
   return app.request("/conversations/conv_1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
@@ -150,12 +139,8 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     vi.resetAllMocks();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
-    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
-      createConversation() as never,
-    );
-    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(
-      createConversation() as never,
-    );
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(createConversation() as never);
+    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(createConversation() as never);
   });
 
   it("keeps the chatbot system prompt scoped to BuckAI Events event workflows", () => {
@@ -193,7 +178,8 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     const assistantMessage = createMessage({
       id: "msg_assistant_6",
       role: "ASSISTANT",
-      content: "I can help with events and gigs on BuckAI Events, but I can't help with the weather.",
+      content:
+        "I can help with events and gigs on BuckAI Events, but I can't help with the weather.",
     });
     const streamText = createStreamTextStub(async ({ tools }) => {
       expect(tools.searchEvents.execute).toBeTypeOf("function");
@@ -209,14 +195,10 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       .mockResolvedValueOnce(assistantMessage as never);
     vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
 
-    const res = await postMessage(
-      createTestApp({ streamText }),
-      userMessage.content,
-      {
-        "X-User-Timezone": "America/New_York",
-        "X-User-Locale": "en-US",
-      },
-    );
+    const res = await postMessage(createTestApp({ streamText }), userMessage.content, {
+      "X-User-Timezone": "America/New_York",
+      "X-User-Locale": "en-US",
+    });
 
     expect(res.status).toBe(200);
     expect(decodeSseText(await res.text())).toBe(
@@ -279,9 +261,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       expect(system).toContain("Today's date is 2026-04-01.");
       expect(system).toContain("User timezone: America/New_York.");
       expect(system).toContain("User locale: en-US.");
-      expect(messages).toEqual([
-        { role: "user", content: userMessage.content },
-      ]);
+      expect(messages).toEqual([{ role: "user", content: userMessage.content }]);
 
       const result = await tools.searchEvents.execute(
         {
@@ -312,20 +292,14 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     vi.mocked(mockPrisma.event.findMany).mockResolvedValue([event] as never);
     vi.mocked(mockPrisma.event.count).mockResolvedValue(1 as never);
 
-    const res = await postMessage(
-      createTestApp({ streamText }),
-      userMessage.content,
-      {
-        "X-User-Timezone": "America/New_York",
-        "X-User-Locale": "en-US",
-      },
-    );
+    const res = await postMessage(createTestApp({ streamText }), userMessage.content, {
+      "X-User-Timezone": "America/New_York",
+      "X-User-Locale": "en-US",
+    });
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/event-stream");
-    expect(decodeSseText(await res.text())).toBe(
-      "I found a few music events this weekend.",
-    );
+    expect(decodeSseText(await res.text())).toBe("I found a few music events this weekend.");
     expect(mockPrisma.event.findMany).toHaveBeenCalled();
     expect(mockPrisma.event.count).toHaveBeenCalled();
     expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
@@ -392,9 +366,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(decodeSseText(await res.text())).toBe(
-      "I found a few free events this weekend.",
-    );
+    expect(decodeSseText(await res.text())).toBe("I found a few free events this weekend.");
     expect(generateConversationTitle).toHaveBeenCalledWith({
       prisma: mockPrisma,
       conversationId: "conv_1",
@@ -456,10 +428,13 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       .mockResolvedValueOnce(assistantMessage as never);
     vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
 
-    const res = await postMessage(createTestApp({
-      streamText,
-      searchSemanticEvents,
-    }), userMessage.content);
+    const res = await postMessage(
+      createTestApp({
+        streamText,
+        searchSemanticEvents,
+      }),
+      userMessage.content,
+    );
 
     expect(res.status).toBe(200);
     expect(decodeSseText(await res.text())).toBe(
@@ -613,9 +588,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       status: "PENDING",
     };
 
-    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
-      conversation as never,
-    );
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(conversation as never);
     vi.mocked(mockPrisma.message.create)
       .mockResolvedValueOnce(userMessage as never)
       .mockResolvedValueOnce(assistantMessage as never);
@@ -627,9 +600,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     const res = await postMessage(createTestApp(), "confirm");
 
     expect(res.status).toBe(200);
-    expect(decodeSseText(await res.text())).toBe(
-      "Done! I've submitted your application.",
-    );
+    expect(decodeSseText(await res.text())).toBe("Done! I've submitted your application.");
     expect(mockPrisma.application.create).toHaveBeenCalled();
     expect(mockPrisma.interaction.create).toHaveBeenCalledWith({
       data: {
@@ -736,9 +707,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
           content: "Using the last 20 messages only.",
         }) as never,
       );
-    vi.mocked(mockPrisma.message.findMany).mockResolvedValue(
-      recentMessages as never,
-    );
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue(recentMessages as never);
 
     const res = await postMessage(createTestApp({ streamText }), "continue");
 
@@ -761,9 +730,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       role: "ASSISTANT",
       content: "Here are a few music events this weekend.",
     });
-    const generateConversationTitle = vi
-      .fn()
-      .mockRejectedValue(new Error("AI unavailable"));
+    const generateConversationTitle = vi.fn().mockRejectedValue(new Error("AI unavailable"));
     const streamText = createStreamTextStub(async () => [
       "Here are a few music events this weekend.",
     ]);
@@ -782,9 +749,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(decodeSseText(await res.text())).toBe(
-      "Here are a few music events this weekend.",
-    );
+    expect(decodeSseText(await res.text())).toBe("Here are a few music events this weekend.");
     expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
@@ -817,21 +782,19 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
           content: "Let's look for gigs.",
         }) as never,
       );
-    vi.mocked(mockPrisma.message.findMany).mockResolvedValue(
-      [
-        createMessage({
-          id: "msg_prior_conv_8",
-          role: "USER",
-          content: "What free events are happening this weekend?",
-        }),
-        createMessage({
-          id: "msg_user_conv_8",
-          role: "USER",
-          content: "What tutoring gigs are available?",
-          createdAt: new Date("2026-04-01T12:01:00.000Z"),
-        }),
-      ] as never,
-    );
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([
+      createMessage({
+        id: "msg_prior_conv_8",
+        role: "USER",
+        content: "What free events are happening this weekend?",
+      }),
+      createMessage({
+        id: "msg_user_conv_8",
+        role: "USER",
+        content: "What tutoring gigs are available?",
+        createdAt: new Date("2026-04-01T12:01:00.000Z"),
+      }),
+    ] as never);
 
     const res = await postMessage(
       createTestApp({
@@ -890,9 +853,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(decodeSseText(await res.text())).toBe(
-      "I couldn't find any free events tonight.",
-    );
+    expect(decodeSseText(await res.text())).toBe("I couldn't find any free events tonight.");
     expect(searchSemanticEvents).toHaveBeenCalledWith(
       mockPrisma,
       expect.objectContaining({
@@ -984,15 +945,13 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
           content: "Hello there",
         }) as never,
       );
-    vi.mocked(mockPrisma.message.findMany).mockResolvedValue(
-      [
-        createMessage({
-          id: "msg_user_stream",
-          role: "USER",
-          content: "hello",
-        }),
-      ] as never,
-    );
+    vi.mocked(mockPrisma.message.findMany).mockResolvedValue([
+      createMessage({
+        id: "msg_user_stream",
+        role: "USER",
+        content: "hello",
+      }),
+    ] as never);
 
     const res = await postMessage(
       createTestApp({
@@ -1040,12 +999,8 @@ describe("[phase:6] [regression:always] Chatbot security hardening", () => {
     vi.resetAllMocks();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
-    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
-      createConversation() as never,
-    );
-    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(
-      createConversation() as never,
-    );
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(createConversation() as never);
+    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(createConversation() as never);
   });
 
   it("TC-CHAT-016: keeps the chatbot prompt scoped and treats retrieved content as untrusted", () => {
@@ -1150,12 +1105,8 @@ describe("[phase:6] [regression:always] Chatbot reply suggestions", () => {
     vi.resetAllMocks();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
-    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
-      createConversation() as never,
-    );
-    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(
-      createConversation() as never,
-    );
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(createConversation() as never);
+    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(createConversation() as never);
   });
 
   it("TC-CHAT-013: records suggested replies as assistant message parts", async () => {
@@ -1200,9 +1151,7 @@ describe("[phase:6] [regression:always] Chatbot reply suggestions", () => {
     const res = await postMessage(createTestApp({ streamText }), userMessage.content);
 
     expect(res.status).toBe(200);
-    expect(decodeSseText(await res.text())).toBe(
-      "Here are a few ways we can narrow it down.",
-    );
+    expect(decodeSseText(await res.text())).toBe("Here are a few ways we can narrow it down.");
     expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
@@ -1248,9 +1197,7 @@ describe("[phase:6] [regression:always] Chatbot reply suggestions", () => {
     const res = await postMessage(createTestApp({ streamText }), userMessage.content);
 
     expect(res.status).toBe(200);
-    expect(decodeSseText(await res.text())).toBe(
-      "I found a few fitness events on campus.",
-    );
+    expect(decodeSseText(await res.text())).toBe("I found a few fitness events on campus.");
     expect(mockPrisma.message.create).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({

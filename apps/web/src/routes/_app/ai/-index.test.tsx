@@ -50,9 +50,8 @@ vi.mock("@/lib/api", () => ({
 }));
 
 let capturedComponent: React.ComponentType | null = null;
-let capturedValidateSearch:
-  | ((search: Record<string, unknown>) => Record<string, unknown>)
-  | null = null;
+let capturedValidateSearch: ((search: Record<string, unknown>) => Record<string, unknown>) | null =
+  null;
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute:
@@ -145,9 +144,7 @@ function createControlledSseResponse() {
         const encoder = new TextEncoder();
 
         await released;
-        controller.enqueue(
-          encoder.encode("data: Here are a few fitness events.\n\n"),
-        );
+        controller.enqueue(encoder.encode("data: Here are a few fitness events.\n\n"));
         controller.close();
       },
     }),
@@ -263,8 +260,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
         ),
       ),
     );
-    state.messagesGet.mockImplementation(
-      ({ param }: { param: { id: string } }) =>
+    state.messagesGet.mockImplementation(({ param }: { param: { id: string } }) =>
       Promise.resolve(
         jsonResponse(
           paginated(
@@ -304,9 +300,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
 
     const route = await renderAiRoute({ conversationId: "conv_2" });
 
-    expect(
-      await screen.findByRole("button", { name: /Most recent/ }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Most recent/ })).toBeInTheDocument();
     expect(
       await screen.findByText("There are a few free events this weekend."),
     ).toBeInTheDocument();
@@ -318,9 +312,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
     });
     route.rerenderRoute(getNextSearchFromNavigateCall());
     expect(
-      await screen.findByText(
-        "Here are a few quieter options from earlier this week.",
-      ),
+      await screen.findByText("Here are a few quieter options from earlier this week."),
     ).toBeInTheDocument();
   });
 
@@ -339,9 +331,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
       )
       .mockImplementation(() =>
         Promise.resolve(
-          jsonResponse(
-            paginated([makeConversation({ id: "conv_2", title: "Most recent" })]),
-          ),
+          jsonResponse(paginated([makeConversation({ id: "conv_2", title: "Most recent" })])),
         ),
       );
     state.messagesGet.mockResolvedValue(jsonResponse(paginated([])));
@@ -382,24 +372,18 @@ describe("[phase:5] [regression:always] AI Route", () => {
       .mockImplementationOnce(() => Promise.resolve(jsonResponse(paginated([]))))
       .mockImplementationOnce(() =>
         Promise.resolve(
-          jsonResponse(
-            paginated([makeConversation({ id: "conv_new", title: null })]),
-          ),
+          jsonResponse(paginated([makeConversation({ id: "conv_new", title: null })])),
         ),
       )
       .mockImplementation(() =>
         Promise.resolve(
-          jsonResponse(
-            paginated([makeConversation({ id: "conv_new", title: null })]),
-          ),
+          jsonResponse(paginated([makeConversation({ id: "conv_new", title: null })])),
         ),
       );
     state.conversationsPost.mockResolvedValue(
       jsonResponse(makeConversation({ id: "conv_new", title: null }), 201),
     );
-    state.messagesPost.mockResolvedValue(
-      sseResponse([multilineAssistantReply]),
-    );
+    state.messagesPost.mockResolvedValue(sseResponse([multilineAssistantReply]));
     state.messagesGet.mockImplementation(() =>
       Promise.resolve(
         jsonResponse(
@@ -486,16 +470,12 @@ describe("[phase:5] [regression:always] AI Route", () => {
       .mockImplementationOnce(() => Promise.resolve(jsonResponse(paginated([]))))
       .mockImplementationOnce(() =>
         Promise.resolve(
-          jsonResponse(
-            paginated([makeConversation({ id: "conv_new", title: null })]),
-          ),
+          jsonResponse(paginated([makeConversation({ id: "conv_new", title: null })])),
         ),
       )
       .mockImplementation(() =>
         Promise.resolve(
-          jsonResponse(
-            paginated([makeConversation({ id: "conv_new", title: null })]),
-          ),
+          jsonResponse(paginated([makeConversation({ id: "conv_new", title: null })])),
         ),
       );
     state.conversationsPost.mockResolvedValue(
@@ -529,20 +509,14 @@ describe("[phase:5] [regression:always] AI Route", () => {
     });
     route.rerenderRoute(getNextSearchFromNavigateCall());
 
-    expect(
-      await screen.findByText("Are there any events about fitness?"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Are there any events about fitness?")).toBeInTheDocument();
     await waitFor(() => {
-      expect(
-        screen.getAllByText("Are there any events about fitness?"),
-      ).toHaveLength(1);
+      expect(screen.getAllByText("Are there any events about fitness?")).toHaveLength(1);
     });
 
     controlledStream.release();
 
-    expect(
-      await screen.findByText("Here are a few fitness events."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Here are a few fitness events.")).toBeInTheDocument();
   });
 
   it("TC-CHAT-012: renders mutation confirmation dialogs and sends confirm or cancel through the conversation flow", async () => {
@@ -576,69 +550,63 @@ describe("[phase:5] [regression:always] AI Route", () => {
     state.messagesGet.mockImplementation(() =>
       Promise.resolve(jsonResponse(paginated(currentMessages))),
     );
-    state.messagesPost.mockImplementation(
-      ({ json }: { json: { content: string } }) => {
-        if (json.content === "Confirm") {
-          currentConversation = makeConversation({
-            id: "conv_apply",
-            title: "Gig help",
-            pendingAction: null,
-          });
-          currentMessages = [
-            currentMessages[0]!,
-            makeMessage({
-              id: "msg_apply_confirm",
-              conversationId: "conv_apply",
-              role: "USER",
-              content: "Confirm",
-            }),
-            makeMessage({
-              id: "msg_apply_done",
-              conversationId: "conv_apply",
-              role: "ASSISTANT",
-              content: "Done! I've submitted your application.",
-            }),
-          ];
-          return Promise.resolve(
-            sseResponse(["Done! I've submitted your application."]),
-          );
-        }
+    state.messagesPost.mockImplementation(({ json }: { json: { content: string } }) => {
+      if (json.content === "Confirm") {
+        currentConversation = makeConversation({
+          id: "conv_apply",
+          title: "Gig help",
+          pendingAction: null,
+        });
+        currentMessages = [
+          currentMessages[0]!,
+          makeMessage({
+            id: "msg_apply_confirm",
+            conversationId: "conv_apply",
+            role: "USER",
+            content: "Confirm",
+          }),
+          makeMessage({
+            id: "msg_apply_done",
+            conversationId: "conv_apply",
+            role: "ASSISTANT",
+            content: "Done! I've submitted your application.",
+          }),
+        ];
+        return Promise.resolve(sseResponse(["Done! I've submitted your application."]));
+      }
 
-        if (json.content === "Cancel") {
-          currentConversation = makeConversation({
-            id: "conv_apply",
-            title: "Gig help",
-            pendingAction: null,
-          });
-          currentMessages = [
-            currentMessages[0]!,
-            makeMessage({
-              id: "msg_apply_cancel",
-              conversationId: "conv_apply",
-              role: "USER",
-              content: "Cancel",
-            }),
-            makeMessage({
-              id: "msg_apply_skipped",
-              conversationId: "conv_apply",
-              role: "ASSISTANT",
-              content: "No problem, I won't apply.",
-            }),
-          ];
-          return Promise.resolve(sseResponse(["No problem, I won't apply."]));
-        }
+      if (json.content === "Cancel") {
+        currentConversation = makeConversation({
+          id: "conv_apply",
+          title: "Gig help",
+          pendingAction: null,
+        });
+        currentMessages = [
+          currentMessages[0]!,
+          makeMessage({
+            id: "msg_apply_cancel",
+            conversationId: "conv_apply",
+            role: "USER",
+            content: "Cancel",
+          }),
+          makeMessage({
+            id: "msg_apply_skipped",
+            conversationId: "conv_apply",
+            role: "ASSISTANT",
+            content: "No problem, I won't apply.",
+          }),
+        ];
+        return Promise.resolve(sseResponse(["No problem, I won't apply."]));
+      }
 
-        return Promise.reject(new Error(`Unexpected message: ${json.content}`));
-      },
-    );
+      return Promise.reject(new Error(`Unexpected message: ${json.content}`));
+    });
 
     const applyRoute = await renderAiRoute({ conversationId: "conv_apply" });
 
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
     expect(screen.getByText("Apply to Calculus Tutor")).toBeInTheDocument();
-    expect(
-      screen.getByText("I can tutor evenings after 5 PM."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("I can tutor evenings after 5 PM.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Confirm" }));
 
@@ -655,9 +623,7 @@ describe("[phase:5] [regression:always] AI Route", () => {
     await waitFor(() => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     });
-    expect(
-      await screen.findByText("Done! I've submitted your application."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Done! I've submitted your application.")).toBeInTheDocument();
 
     applyRoute.unmount();
     state.messagesPost.mockClear();
@@ -683,35 +649,33 @@ describe("[phase:5] [regression:always] AI Route", () => {
         content: "Want me to save Jazz Night for later?",
       }),
     ];
-    state.messagesPost.mockImplementation(
-      ({ json }: { json: { content: string } }) => {
-        if (json.content === "Cancel") {
-          currentConversation = makeConversation({
-            id: "conv_save",
-            title: "Music ideas",
-            pendingAction: null,
-          });
-          currentMessages = [
-            currentMessages[0]!,
-            makeMessage({
-              id: "msg_save_cancel",
-              conversationId: "conv_save",
-              role: "USER",
-              content: "Cancel",
-            }),
-            makeMessage({
-              id: "msg_save_skipped",
-              conversationId: "conv_save",
-              role: "ASSISTANT",
-              content: "No problem, I won't save it.",
-            }),
-          ];
-          return Promise.resolve(sseResponse(["No problem, I won't save it."]));
-        }
+    state.messagesPost.mockImplementation(({ json }: { json: { content: string } }) => {
+      if (json.content === "Cancel") {
+        currentConversation = makeConversation({
+          id: "conv_save",
+          title: "Music ideas",
+          pendingAction: null,
+        });
+        currentMessages = [
+          currentMessages[0]!,
+          makeMessage({
+            id: "msg_save_cancel",
+            conversationId: "conv_save",
+            role: "USER",
+            content: "Cancel",
+          }),
+          makeMessage({
+            id: "msg_save_skipped",
+            conversationId: "conv_save",
+            role: "ASSISTANT",
+            content: "No problem, I won't save it.",
+          }),
+        ];
+        return Promise.resolve(sseResponse(["No problem, I won't save it."]));
+      }
 
-        return Promise.reject(new Error(`Unexpected message: ${json.content}`));
-      },
-    );
+      return Promise.reject(new Error(`Unexpected message: ${json.content}`));
+    });
 
     const saveRoute = await renderAiRoute({ conversationId: "conv_save" });
 
@@ -836,9 +800,7 @@ describe("[phase:6] [regression:always] AI prompt carryover", () => {
         ]),
       ),
     );
-    state.messagesPost.mockResolvedValue(
-      sseResponse(["Here are the free music events tonight."]),
-    );
+    state.messagesPost.mockResolvedValue(sseResponse(["Here are the free music events tonight."]));
 
     await renderAiRoute({ conversationId: "conv_suggestions" });
 
@@ -846,9 +808,7 @@ describe("[phase:6] [regression:always] AI prompt carryover", () => {
       await screen.findByRole("button", { name: "Show me music events tonight" }),
     ).toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole("button", { name: "Only free music events" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Only free music events" }));
 
     await waitFor(() => {
       expect(state.messagesPost).toHaveBeenCalledWith(

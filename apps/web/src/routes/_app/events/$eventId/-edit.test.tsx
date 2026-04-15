@@ -63,14 +63,7 @@ vi.mock("@tanstack/react-router", () => ({
       useLoaderData: () => mockLoaderData,
     };
   },
-  Link: ({
-    children,
-    to,
-    ...props
-  }: {
-    children: React.ReactNode;
-    to: string;
-  }) => (
+  Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...props}>
       {children}
     </a>
@@ -157,9 +150,7 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
 
     await renderPage();
 
-    expect(
-      await screen.findByText(/not authorized/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/not authorized/i)).toBeInTheDocument();
   });
 
   it("TC-EVT-019: external events cannot be edited", async () => {
@@ -168,16 +159,12 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
       event: makeEvent({ source: "OSU_API", creatorId: "user_1" }),
       currentUser: mockCreatorUser,
     };
-    mockEventGet.mockResolvedValue(
-      okJson(makeEvent({ source: "OSU_API", creatorId: "user_1" })),
-    );
+    mockEventGet.mockResolvedValue(okJson(makeEvent({ source: "OSU_API", creatorId: "user_1" })));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
 
     await renderPage();
 
-    expect(
-      await screen.findByRole("heading", { name: /cannot be edited/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /cannot be edited/i })).toBeInTheDocument();
   });
 
   it("TC-EVT-019: submits to PATCH /api/v1/events/:id", async () => {
@@ -189,9 +176,7 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
     };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
     mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
-    mockEventPatch.mockResolvedValue(
-      okJson(makeEvent({ title: "Mega Hackathon" })),
-    );
+    mockEventPatch.mockResolvedValue(okJson(makeEvent({ title: "Mega Hackathon" })));
 
     await renderPage();
 
@@ -253,9 +238,7 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
     await user.click(screen.getByRole("button", { name: /save/i }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/failed to update event/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/failed to update event/i)).toBeInTheDocument();
     });
   });
 
@@ -297,8 +280,6 @@ describe("[phase:1] [regression:always] EventEditForm", () => {
 
     await renderPage();
 
-    expect(
-      await screen.findByRole("heading", { name: /event not found/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /event not found/i })).toBeInTheDocument();
   });
 });

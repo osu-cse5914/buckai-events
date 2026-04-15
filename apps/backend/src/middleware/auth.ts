@@ -38,9 +38,8 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
     const clerk = c.get("clerk");
     const clerkUser = await clerk.users.getUser(clerkId);
     const email =
-      clerkUser.emailAddresses.find(
-        (e) => e.id === clerkUser.primaryEmailAddressId
-      )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
+      clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)
+        ?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
 
     if (!email) {
       return badRequest(c, "No email associated with account");

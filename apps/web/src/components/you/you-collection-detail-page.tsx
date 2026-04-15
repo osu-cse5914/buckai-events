@@ -9,16 +9,9 @@ import {
   currentUserQueryOptions,
   queryKeys,
 } from "@/lib/queries";
-import {
-  EventsList,
-  EventsEmptyState,
-  EventsPagination,
-} from "@/components/events/events-browser";
+import { EventsList, EventsEmptyState, EventsPagination } from "@/components/events/events-browser";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  YouSubpageHeader,
-  YouSubpageHeaderSkeleton,
-} from "@/components/you/you-subpage-header";
+import { YouSubpageHeader, YouSubpageHeaderSkeleton } from "@/components/you/you-subpage-header";
 import {
   FramedList,
   FramedListFooter,
@@ -34,7 +27,7 @@ function readCountLabel(count: number) {
 
 async function readErrorMessage(res: Response, fallback: string) {
   try {
-    const body = await res.json() as { detail?: string };
+    const body = (await res.json()) as { detail?: string };
     return body.detail || fallback;
   } catch {
     return fallback;
@@ -88,17 +81,11 @@ function CollectionDetailPageSkeleton() {
   );
 }
 
-export function YouCollectionDetailPage({
-  collectionId,
-}: {
-  collectionId: string;
-}) {
+export function YouCollectionDetailPage({ collectionId }: { collectionId: string }) {
   const api = useApiClient();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const { data: currentUser, isLoading: isLoadingUser } = useQuery(
-    currentUserQueryOptions(api),
-  );
+  const { data: currentUser, isLoading: isLoadingUser } = useQuery(currentUserQueryOptions(api));
   const {
     data: collection,
     isLoading: isLoadingCollection,
@@ -115,17 +102,13 @@ export function YouCollectionDetailPage({
 
   const removeMutation = useMutation({
     mutationFn: async (eventId: string) => {
-      const deleteCollectionItem =
-        api.api.v1.collections[":id"].items[":eventId"].$delete as (args: {
-          param: { id: string; eventId: string };
-        }) => Promise<Response>;
+      const deleteCollectionItem = api.api.v1.collections[":id"].items[":eventId"]
+        .$delete as (args: { param: { id: string; eventId: string } }) => Promise<Response>;
       const res = await deleteCollectionItem({
         param: { id: collectionId, eventId },
       });
       if (!res.ok) {
-        throw new Error(
-          await readErrorMessage(res, "Failed to remove item from collection"),
-        );
+        throw new Error(await readErrorMessage(res, "Failed to remove item from collection"));
       }
       return eventId;
     },
@@ -148,9 +131,7 @@ export function YouCollectionDetailPage({
     return (
       <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          {collectionError instanceof Error
-            ? collectionError.message
-            : "Failed to load collection"}
+          {collectionError instanceof Error ? collectionError.message : "Failed to load collection"}
         </div>
       </section>
     );
@@ -186,9 +167,7 @@ export function YouCollectionDetailPage({
 
       {itemsError ? (
         <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          {itemsError instanceof Error
-            ? itemsError.message
-            : "Failed to load saved items"}
+          {itemsError instanceof Error ? itemsError.message : "Failed to load saved items"}
         </div>
       ) : null}
 

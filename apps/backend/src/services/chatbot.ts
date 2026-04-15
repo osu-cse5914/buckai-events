@@ -6,22 +6,14 @@ import { createAIModelRouter, type AIEnvironment } from "../lib/ai/router";
 import { BadRequestError, NotFoundError } from "../lib/problem-details";
 import type { AppEnv } from "../lib/types";
 import { trackBackgroundTask } from "../lib/worker-runtime";
-import {
-  addItemToOwnedCollection,
-  createOwnedCollection,
-} from "./collections";
+import { addItemToOwnedCollection, createOwnedCollection } from "./collections";
 import type {
   ChatMessagePart,
   ReplySuggestionsMessagePart,
   SearchResultsMessagePart,
 } from "./chat-message-parts";
 import { searchEventsSemantically } from "./event-embeddings";
-import {
-  COMPENSATION_TYPES,
-  CREATOR_SELECT,
-  createEvent,
-  type CompensationType,
-} from "./events";
+import { COMPENSATION_TYPES, CREATOR_SELECT, createEvent, type CompensationType } from "./events";
 import { scheduleEventPipelineFromContext } from "./event-pipeline";
 import { applyToGig } from "./gigs";
 import { getCurrentUserOrThrow } from "./users";
@@ -78,10 +70,7 @@ export function buildChatbotSystemPrompt(input: {
   timezone?: string;
   locale?: string;
 }) {
-  const timezone = normalizePromptContextValue(
-    input.timezone,
-    DEFAULT_CHATBOT_TIMEZONE,
-  );
+  const timezone = normalizePromptContextValue(input.timezone, DEFAULT_CHATBOT_TIMEZONE);
   const locale = normalizePromptContextValue(input.locale, DEFAULT_CHATBOT_LOCALE);
 
   return `${CHATBOT_SYSTEM_PROMPT} Today's date is ${formatPromptDate(input.currentDate)}. User timezone: ${timezone}. User locale: ${locale}.`;
@@ -328,9 +317,7 @@ function extractSuggestionTopic(text: string) {
     "what",
   ]);
   const words = text.match(/[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g) ?? [];
-  const topicalWords = words.filter(
-    (word) => !stopwords.has(word.toLowerCase()),
-  );
+  const topicalWords = words.filter((word) => !stopwords.has(word.toLowerCase()));
 
   return topicalWords.slice(0, 2).join(" ").toLowerCase();
 }
@@ -371,25 +358,15 @@ export function buildFallbackReplySuggestions(input: {
     extractSuggestionTopic(
       latestSearchResults
         ? latestSearchResults.total > 0
-          ? latestSearchResults.items[0]?.category ??
-            latestSearchResults.items[0]?.title ??
-            ""
+          ? (latestSearchResults.items[0]?.category ?? latestSearchResults.items[0]?.title ?? "")
           : ""
         : input.lastUserMessage,
     ) || (inferredType === "GIG" ? "gigs" : "events");
 
   const suggestions =
     inferredType === "GIG"
-      ? [
-          `Show me more ${topicalLabel} gigs`,
-          "Only hourly gigs",
-          "What pays at least $20/hr?",
-        ]
-      : [
-          `Show me more ${topicalLabel} events`,
-          "Only free options",
-          "What about this weekend?",
-        ];
+      ? [`Show me more ${topicalLabel} gigs`, "Only hourly gigs", "What pays at least $20/hr?"]
+      : [`Show me more ${topicalLabel} events`, "Only free options", "What about this weekend?"];
 
   return {
     type: "reply-suggestions",
@@ -430,10 +407,7 @@ async function listStructuredEvents(
     where.category = input.category;
   }
 
-  if (
-    input.minCompensation !== undefined ||
-    input.maxCompensation !== undefined
-  ) {
+  if (input.minCompensation !== undefined || input.maxCompensation !== undefined) {
     const compensationAmount: Record<string, number> = {};
     if (input.minCompensation !== undefined) {
       compensationAmount.gte = input.minCompensation;
@@ -464,10 +438,7 @@ async function listStructuredEvents(
   };
 }
 
-async function assertNoPendingAction(
-  prisma: PrismaClient,
-  conversationId: string,
-) {
+async function assertNoPendingAction(prisma: PrismaClient, conversationId: string) {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
     select: {
@@ -501,10 +472,7 @@ async function stagePendingChatAction(
   });
 }
 
-async function resolveDefaultCollectionId(
-  prisma: PrismaClient,
-  userId: string,
-) {
+async function resolveDefaultCollectionId(prisma: PrismaClient, userId: string) {
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { updatedAt: "desc" },
@@ -527,10 +495,7 @@ async function resolveDefaultCollectionId(
   return created.id;
 }
 
-async function buildApplyToGigSummary(
-  prisma: PrismaClient,
-  gigId: string,
-) {
+async function buildApplyToGigSummary(prisma: PrismaClient, gigId: string) {
   const gig = await prisma.event.findUnique({
     where: { id: gigId },
     select: {
@@ -551,10 +516,7 @@ async function buildApplyToGigSummary(
   return `Apply to ${gig.title}`;
 }
 
-async function buildSaveEventSummary(
-  prisma: PrismaClient,
-  eventId: string,
-) {
+async function buildSaveEventSummary(prisma: PrismaClient, eventId: string) {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: {
@@ -570,10 +532,7 @@ async function buildSaveEventSummary(
   return `Save ${event.title}`;
 }
 
-function buildCreateEventSummary(input: {
-  title: string;
-  type: "EVENT" | "GIG";
-}) {
+function buildCreateEventSummary(input: { title: string; type: "EVENT" | "GIG" }) {
   return `Create ${input.type === "GIG" ? "gig" : "event"} "${input.title}"`;
 }
 
@@ -582,9 +541,7 @@ export function parsePendingChatAction(value: unknown): PendingChatAction | null
   return parsed.success ? parsed.data : null;
 }
 
-export function interpretPendingActionDecision(
-  content: string,
-): "CONFIRM" | "CANCEL" | null {
+export function interpretPendingActionDecision(content: string): "CONFIRM" | "CANCEL" | null {
   const normalized = content.trim().toLowerCase();
 
   if (
@@ -647,11 +604,7 @@ export function createSseTextResponse(input: {
   }
 
   function isClosedControllerError(error: unknown) {
-    return (
-      error instanceof TypeError &&
-      "code" in error &&
-      error.code === "ERR_INVALID_STATE"
-    );
+    return error instanceof TypeError && "code" in error && error.code === "ERR_INVALID_STATE";
   }
 
   let clientDisconnected = false;
@@ -732,19 +685,16 @@ export function createStaticSseTextResponse(text: string) {
   });
 }
 
-export function createChatbotTools(
-  input: {
-    prisma: PrismaClient;
-    userId: string;
-    conversationId: string;
-    env?: AIEnvironment;
-    currentDate: Date;
-    searchSemanticEvents?: SearchSemanticEventsLike;
-    recordMessagePart?: (part: ChatMessagePart) => void;
-  },
-) {
-  const searchSemanticEvents =
-    input.searchSemanticEvents ?? searchEventsSemantically;
+export function createChatbotTools(input: {
+  prisma: PrismaClient;
+  userId: string;
+  conversationId: string;
+  env?: AIEnvironment;
+  currentDate: Date;
+  searchSemanticEvents?: SearchSemanticEventsLike;
+  recordMessagePart?: (part: ChatMessagePart) => void;
+}) {
+  const searchSemanticEvents = input.searchSemanticEvents ?? searchEventsSemantically;
 
   function recordSearchResults(part: SearchResultsMessagePart) {
     input.recordMessagePart?.(part);
@@ -1050,35 +1000,29 @@ export function createChatbotTools(
   };
 }
 
-export function createChatbotStreamResponse(
-  input: {
-    messages: Array<{ role: string; content: string }>;
-    prisma: PrismaClient;
-    userId: string;
-    conversationId: string;
-    env?: AIEnvironment;
-    currentDate: Date;
-    timezone?: string;
-    locale?: string;
-    streamText?: StreamTextLike;
-    searchSemanticEvents?: SearchSemanticEventsLike;
-    resolveChatbotModel?: ResolveChatbotModelLike;
-    onComplete?: (result: {
-      assistantText: string;
-      parts: ChatMessagePart[];
-    }) => Promise<void>;
-  },
-) {
-  const streamTextImpl =
-    input.streamText ?? (streamText as unknown as StreamTextLike);
+export function createChatbotStreamResponse(input: {
+  messages: Array<{ role: string; content: string }>;
+  prisma: PrismaClient;
+  userId: string;
+  conversationId: string;
+  env?: AIEnvironment;
+  currentDate: Date;
+  timezone?: string;
+  locale?: string;
+  streamText?: StreamTextLike;
+  searchSemanticEvents?: SearchSemanticEventsLike;
+  resolveChatbotModel?: ResolveChatbotModelLike;
+  onComplete?: (result: { assistantText: string; parts: ChatMessagePart[] }) => Promise<void>;
+}) {
+  const streamTextImpl = input.streamText ?? (streamText as unknown as StreamTextLike);
   const resolveChatbotModel =
     input.resolveChatbotModel ??
     (input.streamText
-      ? (() => ({
+      ? () => ({
           model: undefined,
           temperature: undefined,
           maxOutputTokens: undefined,
-        }))
+        })
       : resolveChatbotModelFromEnv);
   const resolvedModel = resolveChatbotModel(input.env);
   const messagePartsByType = new Map<string, ChatMessagePart>();
@@ -1208,7 +1152,7 @@ export async function executePendingChatAction(
         location: input.pendingAction.args.location,
         startAt: parseRequiredDate(input.pendingAction.args.startAt, "startAt"),
         endAt: input.pendingAction.args.endAt
-          ? parseOptionalDate(input.pendingAction.args.endAt, "endAt") ?? null
+          ? (parseOptionalDate(input.pendingAction.args.endAt, "endAt") ?? null)
           : null,
         compensation: input.pendingAction.args.compensation,
         imageUrl: input.pendingAction.args.imageUrl,
@@ -1247,10 +1191,7 @@ export async function executePendingChatAction(
   }
 }
 
-export async function cancelPendingChatAction(
-  prisma: PrismaClient,
-  conversationId: string,
-) {
+export async function cancelPendingChatAction(prisma: PrismaClient, conversationId: string) {
   await prisma.conversation.update({
     where: { id: conversationId },
     data: {

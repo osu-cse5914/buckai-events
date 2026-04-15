@@ -4,11 +4,7 @@ import { Hono } from "hono";
 vi.mock("../lib/prisma");
 
 import { getPrismaClient, getPrisma } from "../lib/prisma";
-import {
-  buildApplicationWithApplicant,
-  buildAuthUser,
-  buildEvent,
-} from "./factories";
+import { buildApplicationWithApplicant, buildAuthUser, buildEvent } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { registerApiErrorHandlers } from "../app";
 import { gigs } from "../routes/gigs";
@@ -47,12 +43,7 @@ function getApplications(app: Hono, gigId: string, query = "") {
   return app.request(`/gigs/${gigId}/applications${query}`);
 }
 
-function patchApplication(
-  app: Hono,
-  gigId: string,
-  appId: string,
-  body: Record<string, unknown>,
-) {
+function patchApplication(app: Hono, gigId: string, appId: string, body: Record<string, unknown>) {
   return app.request(`/gigs/${gigId}/applications/${appId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -60,11 +51,7 @@ function patchApplication(
   });
 }
 
-function postApplication(
-  app: Hono,
-  gigId: string,
-  body?: Record<string, unknown>,
-) {
+function postApplication(app: Hono, gigId: string, body?: Record<string, unknown>) {
   const init: RequestInit = { method: "POST" };
   if (body !== undefined) {
     init.headers = { "Content-Type": "application/json" };
@@ -124,12 +111,8 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
       const application = makeApplication();
 
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(gig as never);
-      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
-        null as never,
-      );
-      vi.mocked(mockPrisma.application.create).mockResolvedValue(
-        application as never,
-      );
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(null as never);
+      vi.mocked(mockPrisma.application.create).mockResolvedValue(application as never);
       vi.mocked(mockPrisma.interaction.create).mockResolvedValue({} as never);
 
       const res = await postApplication(createTestApp(APPLICANT_A), "gig_1", {
@@ -161,19 +144,13 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
     });
 
     it("TC-APP-013: still creates the application when APPLY interaction persistence fails", async () => {
-      const consoleError = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => undefined);
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
       const gig = makeGig();
       const application = makeApplication();
 
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(gig as never);
-      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
-        null as never,
-      );
-      vi.mocked(mockPrisma.application.create).mockResolvedValue(
-        application as never,
-      );
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(null as never);
+      vi.mocked(mockPrisma.application.create).mockResolvedValue(application as never);
       vi.mocked(mockPrisma.interaction.create).mockRejectedValue(
         new Error("interaction write failed"),
       );
@@ -195,10 +172,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
     it("returns 404 when gig does not exist", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
 
-      const res = await postApplication(
-        createTestApp(APPLICANT_A),
-        "nonexistent",
-      );
+      const res = await postApplication(createTestApp(APPLICANT_A), "nonexistent");
 
       expect(res.status).toBe(404);
       expect(mockPrisma.application.create).not.toHaveBeenCalled();
@@ -211,9 +185,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
   describe("POST /:gigId/applications — validation (#59)", () => {
     // S-APP-2 → TC-APP-002
     it("TC-APP-002 / TC-AUTHZ-004: cannot apply to own gig (403)", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        makeGig() as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeGig() as never);
 
       const res = await postApplication(createTestApp(OWNER), "gig_1");
 
@@ -223,17 +195,10 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
     // S-APP-3 → TC-APP-003
     it("TC-APP-003: cannot apply twice (409)", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        makeGig() as never,
-      );
-      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
-        makeApplication() as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeGig() as never);
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(makeApplication() as never);
 
-      const res = await postApplication(
-        createTestApp(APPLICANT_A),
-        "gig_1",
-      );
+      const res = await postApplication(createTestApp(APPLICANT_A), "gig_1");
 
       expect(res.status).toBe(409);
       expect(res.headers.get("content-type")).toContain("application/problem+json");
@@ -242,14 +207,9 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
     // S-APP-7 → TC-APP-007
     it("TC-APP-007: cannot apply to non-gig event (400)", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        makeGig({ type: "EVENT" }) as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeGig({ type: "EVENT" }) as never);
 
-      const res = await postApplication(
-        createTestApp(APPLICANT_A),
-        "gig_1",
-      );
+      const res = await postApplication(createTestApp(APPLICANT_A), "gig_1");
 
       expect(res.status).toBe(400);
       expect(res.headers.get("content-type")).toContain("application/problem+json");
@@ -262,10 +222,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeGig({ status: "CANCELLED" }) as never,
       );
 
-      const res = await postApplication(
-        createTestApp(APPLICANT_A),
-        "gig_1",
-      );
+      const res = await postApplication(createTestApp(APPLICANT_A), "gig_1");
 
       expect(res.status).toBe(400);
       expect(mockPrisma.application.create).not.toHaveBeenCalled();
@@ -278,10 +235,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeGig({ status: "IN_PROGRESS" }) as never,
       );
 
-      const res = await postApplication(
-        createTestApp(APPLICANT_A),
-        "gig_1",
-      );
+      const res = await postApplication(createTestApp(APPLICANT_A), "gig_1");
 
       expect(res.status).toBe(400);
       expect(mockPrisma.application.create).not.toHaveBeenCalled();
@@ -299,9 +253,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeApplication({ id: "app_1", applicantId: APPLICANT_A.id }),
         makeApplication({ id: "app_2", applicantId: APPLICANT_B.id }),
       ];
-      vi.mocked(mockPrisma.application.findMany).mockResolvedValue(
-        apps as never,
-      );
+      vi.mocked(mockPrisma.application.findMany).mockResolvedValue(apps as never);
       vi.mocked(mockPrisma.application.count).mockResolvedValue(2 as never);
 
       const res = await getApplications(createTestApp(OWNER), GIG.id);
@@ -326,18 +278,11 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeApplication({ id: "app_1", applicantId: APPLICANT_A.id }) as never,
       );
 
-      const ownApp = [
-        makeApplication({ id: "app_1", applicantId: APPLICANT_A.id }),
-      ];
-      vi.mocked(mockPrisma.application.findMany).mockResolvedValue(
-        ownApp as never,
-      );
+      const ownApp = [makeApplication({ id: "app_1", applicantId: APPLICANT_A.id })];
+      vi.mocked(mockPrisma.application.findMany).mockResolvedValue(ownApp as never);
       vi.mocked(mockPrisma.application.count).mockResolvedValue(1 as never);
 
-      const res = await getApplications(
-        createTestApp(APPLICANT_A),
-        GIG.id,
-      );
+      const res = await getApplications(createTestApp(APPLICANT_A), GIG.id);
       expect(res.status).toBe(200);
 
       const body = (await res.json()) as {
@@ -357,9 +302,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
     it("TC-AUTHZ-006: non-owner who has not applied cannot view gig applications", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(GIG as never);
-      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
-        null as never,
-      );
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(null as never);
 
       const res = await getApplications(createTestApp(APPLICANT_B), GIG.id);
 
@@ -376,16 +319,10 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
     it("respects limit and offset pagination", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(GIG as never);
-      vi.mocked(mockPrisma.application.findMany).mockResolvedValue(
-        [] as never,
-      );
+      vi.mocked(mockPrisma.application.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.application.count).mockResolvedValue(50 as never);
 
-      const res = await getApplications(
-        createTestApp(OWNER),
-        GIG.id,
-        "?limit=10&offset=20",
-      );
+      const res = await getApplications(createTestApp(OWNER), GIG.id, "?limit=10&offset=20");
       expect(res.status).toBe(200);
 
       const body = (await res.json()) as {
@@ -400,16 +337,10 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
     it("clamps limit to max 100 and min 1", async () => {
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(GIG as never);
-      vi.mocked(mockPrisma.application.findMany).mockResolvedValue(
-        [] as never,
-      );
+      vi.mocked(mockPrisma.application.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.application.count).mockResolvedValue(0 as never);
 
-      const res = await getApplications(
-        createTestApp(OWNER),
-        GIG.id,
-        "?limit=999",
-      );
+      const res = await getApplications(createTestApp(OWNER), GIG.id, "?limit=999");
       expect(res.status).toBe(200);
 
       const body = (await res.json()) as { pagination: { limit: number } };
@@ -424,9 +355,11 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
     });
 
     it("returns 400 when event is not a gig", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        { id: "evt_1", type: "EVENT", creatorId: OWNER.id } as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue({
+        id: "evt_1",
+        type: "EVENT",
+        creatorId: OWNER.id,
+      } as never);
 
       const res = await getApplications(createTestApp(OWNER), "evt_1");
       expect(res.status).toBe(400);
@@ -440,16 +373,11 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
   // ===========================================================================
   describe("PATCH /:gigId/applications/:appId", () => {
     it("TC-AUTHZ-008: non-owner cannot update application status", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        makeGig() as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeGig() as never);
 
-      const res = await patchApplication(
-        createTestApp(APPLICANT_A),
-        "gig_1",
-        "app_1",
-        { status: "ACCEPTED" },
-      );
+      const res = await patchApplication(createTestApp(APPLICANT_A), "gig_1", "app_1", {
+        status: "ACCEPTED",
+      });
 
       expect(res.status).toBe(403);
       expect(await res.json()).toMatchObject({
@@ -464,9 +392,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
     // S-APP-4 → TC-APP-004
     it("TC-APP-004: accept a PENDING application", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        makeGig() as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeGig() as never);
       vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
         makeApplication({ status: "PENDING" }) as never,
       );
@@ -477,12 +403,9 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeApplication({ status: "ACCEPTED" }) as never,
       );
 
-      const res = await patchApplication(
-        createTestApp(OWNER),
-        "gig_1",
-        "app_1",
-        { status: "ACCEPTED" },
-      );
+      const res = await patchApplication(createTestApp(OWNER), "gig_1", "app_1", {
+        status: "ACCEPTED",
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -491,9 +414,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
     // S-APP-5 → TC-APP-005
     it("TC-APP-005: reject a PENDING application", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        makeGig() as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeGig() as never);
       vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
         makeApplication({ status: "PENDING" }) as never,
       );
@@ -504,12 +425,9 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeApplication({ status: "REJECTED" }) as never,
       );
 
-      const res = await patchApplication(
-        createTestApp(OWNER),
-        "gig_1",
-        "app_1",
-        { status: "REJECTED" },
-      );
+      const res = await patchApplication(createTestApp(OWNER), "gig_1", "app_1", {
+        status: "REJECTED",
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -532,9 +450,7 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
 
       // Accept applicant A
       vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(gig as never);
-      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
-        appB as never,
-      );
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(appB as never);
       vi.mocked(mockPrisma.application.updateMany).mockResolvedValue({
         count: 1,
       } as never);
@@ -542,21 +458,14 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeApplication({ id: "app_b", status: "ACCEPTED" }) as never,
       );
 
-      const resB = await patchApplication(
-        createTestApp(OWNER),
-        "gig_1",
-        "app_b",
-        { status: "ACCEPTED" },
-      );
+      const resB = await patchApplication(createTestApp(OWNER), "gig_1", "app_b", {
+        status: "ACCEPTED",
+      });
       expect(resB.status).toBe(200);
-      expect(
-        ((await resB.json()) as Record<string, unknown>).status,
-      ).toBe("ACCEPTED");
+      expect(((await resB.json()) as Record<string, unknown>).status).toBe("ACCEPTED");
 
       // Accept applicant B
-      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
-        appC as never,
-      );
+      vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(appC as never);
       vi.mocked(mockPrisma.application.updateMany).mockResolvedValue({
         count: 1,
       } as never);
@@ -564,33 +473,23 @@ describe("[phase:2] [regression:always] Gig Applications API", () => {
         makeApplication({ id: "app_c", status: "ACCEPTED" }) as never,
       );
 
-      const resC = await patchApplication(
-        createTestApp(OWNER),
-        "gig_1",
-        "app_c",
-        { status: "ACCEPTED" },
-      );
+      const resC = await patchApplication(createTestApp(OWNER), "gig_1", "app_c", {
+        status: "ACCEPTED",
+      });
       expect(resC.status).toBe(200);
-      expect(
-        ((await resC.json()) as Record<string, unknown>).status,
-      ).toBe("ACCEPTED");
+      expect(((await resC.json()) as Record<string, unknown>).status).toBe("ACCEPTED");
     });
 
     // S-APP-9 → TC-APP-009
     it("TC-APP-009: cannot change status of non-PENDING application (400)", async () => {
-      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-        makeGig() as never,
-      );
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeGig() as never);
       vi.mocked(mockPrisma.application.findUnique).mockResolvedValue(
         makeApplication({ status: "ACCEPTED" }) as never,
       );
 
-      const res = await patchApplication(
-        createTestApp(OWNER),
-        "gig_1",
-        "app_1",
-        { status: "REJECTED" },
-      );
+      const res = await patchApplication(createTestApp(OWNER), "gig_1", "app_1", {
+        status: "REJECTED",
+      });
 
       expect(res.status).toBe(400);
       expect(mockPrisma.application.updateMany).not.toHaveBeenCalled();

@@ -1,10 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BrowsePage } from "@/components/events/browse-page";
 import { PAGE_SIZE } from "@/lib/queries";
-import {
-  defaultBrowseFiltersForType,
-  validateBrowseSearch,
-} from "@/lib/event-route-search";
+import { defaultBrowseFiltersForType, validateBrowseSearch } from "@/lib/event-route-search";
 import { loadEventsRouteData } from "@/lib/route-loaders";
 
 const DEFAULT_FILTERS = defaultBrowseFiltersForType("GIG");

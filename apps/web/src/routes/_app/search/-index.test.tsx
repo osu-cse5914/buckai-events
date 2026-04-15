@@ -37,13 +37,11 @@ vi.mock("@/lib/api", () => ({
 }));
 
 vi.mock("@/lib/route-loaders", () => ({
-  loadSearchRouteData: (...args: unknown[]) =>
-    state.loadSearchRouteDataMock(...args),
+  loadSearchRouteData: (...args: unknown[]) => state.loadSearchRouteDataMock(...args),
 }));
 
-let capturedValidateSearch:
-  | ((search: Record<string, unknown>) => Record<string, unknown>)
-  | null = null;
+let capturedValidateSearch: ((search: Record<string, unknown>) => Record<string, unknown>) | null =
+  null;
 let capturedLoaderDeps:
   | ((args: { search: Record<string, unknown> }) => Record<string, unknown>)
   | null = null;
@@ -59,9 +57,7 @@ vi.mock("@tanstack/react-router", () => ({
     (path: string) =>
     (config: {
       validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
-      loaderDeps?: (args: {
-        search: Record<string, unknown>;
-      }) => Record<string, unknown>;
+      loaderDeps?: (args: { search: Record<string, unknown> }) => Record<string, unknown>;
       loader?: (args: {
         context: { api: typeof mockApiClient; queryClient: unknown };
         deps: Record<string, unknown>;
@@ -291,9 +287,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
   it("TC-PAGES-032: shows filter syntax hints when the search box is empty", async () => {
     await renderSearchPage();
 
-    expect(
-      screen.getByText(/Try filters like/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Try filters like/i)).toBeInTheDocument();
     expect(screen.getByText("tag:group-fitness")).toBeInTheDocument();
     expect(screen.getByText("type:gig")).toBeInTheDocument();
     expect(screen.getByText("category:fitness")).toBeInTheDocument();
@@ -364,10 +358,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     await renderSearchPage();
 
     const searchInput = screen.getByRole("textbox", { name: "Search query" });
-    await user.type(
-      searchInput,
-      "pickup type:gig category:fitness tag:group-fitness",
-    );
+    await user.type(searchInput, "pickup type:gig category:fitness tag:group-fitness");
     await user.keyboard("{Enter}");
 
     await vi.waitFor(() => {
@@ -378,10 +369,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       expect(lastCall?.[0].query.tag).toBe("group-fitness");
     });
 
-    expect(screen.getAllByText("type:gig")[0]).toHaveAttribute(
-      "data-search-token-type",
-      "filter",
-    );
+    expect(screen.getAllByText("type:gig")[0]).toHaveAttribute("data-search-token-type", "filter");
     expect(screen.getAllByText("category:fitness")[0]).toHaveAttribute(
       "data-search-token-type",
       "filter",
@@ -486,10 +474,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     const handoffLink = await screen.findByRole("link", {
       name: "Ask BuckAI Events",
     });
-    expect(handoffLink).toHaveAttribute(
-      "href",
-      "/ai?prompt=campus+jazz+tonight",
-    );
+    expect(handoffLink).toHaveAttribute("href", "/ai?prompt=campus+jazz+tonight");
   });
 
   it("TC-PAGES-012: search page executes a new query on Enter and resets pagination", async () => {
@@ -510,21 +495,19 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     });
 
     await user.clear(screen.getByRole("textbox", { name: "Search query" }));
-    await user.type(
-      screen.getByRole("textbox", { name: "Search query" }),
-      "hackathon",
-    );
+    await user.type(screen.getByRole("textbox", { name: "Search query" }), "hackathon");
 
-    expect(state.mockSemanticSearchGet.mock.calls.at(-1)?.[0].query.query).toBe(
-      "music",
-    );
+    expect(state.mockSemanticSearchGet.mock.calls.at(-1)?.[0].query.query).toBe("music");
 
     await user.keyboard("{Enter}");
 
-    await waitFor(() => {
-      const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
-      expect(lastCall?.[0].query.query).toBe("hackathon");
-      expect(lastCall?.[0].query.offset).toBe("0");
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
+        expect(lastCall?.[0].query.query).toBe("hackathon");
+        expect(lastCall?.[0].query.offset).toBe("0");
+      },
+      { timeout: 1000 },
+    );
   });
 });

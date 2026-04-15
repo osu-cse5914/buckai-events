@@ -6,14 +6,12 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  createFileRoute:
-    (path: string) =>
-    (config: { component: React.ComponentType }) => {
-      state.components[path] = config.component;
-      return {
-        component: config.component,
-      };
-    },
+  createFileRoute: (path: string) => (config: { component: React.ComponentType }) => {
+    state.components[path] = config.component;
+    return {
+      component: config.component,
+    };
+  },
 }));
 
 vi.mock("@clerk/clerk-react", () => ({

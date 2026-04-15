@@ -13,21 +13,17 @@ export function YouTabsNav({ currentTab }: { currentTab: YouTabValue }) {
   return (
     <nav aria-label="You sections">
       <PillTabs>
-      {YOU_TABS.map((tab) => {
-        const isActive = tab.value === currentTab;
+        {YOU_TABS.map((tab) => {
+          const isActive = tab.value === currentTab;
 
-        return (
-          <PillTabButton
-            key={tab.value}
-            active={isActive}
-            asChild
-          >
-            <Link to={tab.to} aria-current={isActive ? "page" : undefined}>
-              {tab.label}
-            </Link>
-          </PillTabButton>
-        );
-      })}
+          return (
+            <PillTabButton key={tab.value} active={isActive} asChild>
+              <Link to={tab.to} aria-current={isActive ? "page" : undefined}>
+                {tab.label}
+              </Link>
+            </PillTabButton>
+          );
+        })}
       </PillTabs>
     </nav>
   );

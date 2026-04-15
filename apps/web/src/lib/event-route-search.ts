@@ -1,10 +1,5 @@
 export const EVENT_TYPES = ["EVENT", "GIG"] as const;
-export const EVENT_STATUSES = [
-  "OPEN",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "CANCELLED",
-] as const;
+export const EVENT_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as const;
 export const EVENT_SOURCES = ["USER", "OSU_API", "TICKETMASTER"] as const;
 export const BROWSE_STATUS_MODES = [
   "ACTIVE",
@@ -127,23 +122,15 @@ export function parseSearchInputValue(value: string) {
     normalizedValue.matchAll(/(?:^|\s)(tag|type|category):\s*([^\s]+)/gi),
   );
   const tag = normalizeSearchTagValue(
-    filterMatches
-      .filter((match) => match[1]?.toLowerCase() === "tag")
-      .at(-1)?.[2],
+    filterMatches.filter((match) => match[1]?.toLowerCase() === "tag").at(-1)?.[2],
   );
   const type = normalizeSearchTypeValue(
-    filterMatches
-      .filter((match) => match[1]?.toLowerCase() === "type")
-      .at(-1)?.[2],
+    filterMatches.filter((match) => match[1]?.toLowerCase() === "type").at(-1)?.[2],
   );
   const category = normalizeSearchCategoryValue(
-    filterMatches
-      .filter((match) => match[1]?.toLowerCase() === "category")
-      .at(-1)?.[2],
+    filterMatches.filter((match) => match[1]?.toLowerCase() === "category").at(-1)?.[2],
   );
-  const query = normalizedValue
-    .replace(/(?:^|\s)(tag|type|category):\s*([^\s]+)/gi, " ")
-    .trim();
+  const query = normalizedValue.replace(/(?:^|\s)(tag|type|category):\s*([^\s]+)/gi, " ").trim();
 
   return {
     query: query || undefined,
@@ -206,9 +193,7 @@ function normalizePage(value: unknown) {
   return Number.isInteger(parsed) && parsed > 1 ? parsed : undefined;
 }
 
-export function validateBrowseSearch(
-  search: Record<string, unknown>,
-): BrowseRouteSearch {
+export function validateBrowseSearch(search: Record<string, unknown>): BrowseRouteSearch {
   const legacyStatus = normalizeEnumValue(search.status, EVENT_STATUSES);
 
   return {
@@ -221,53 +206,39 @@ export function validateBrowseSearch(
   };
 }
 
-export function validateFeaturedSearch(
-  search: Record<string, unknown>,
-): FeaturedRouteSearch {
+export function validateFeaturedSearch(search: Record<string, unknown>): FeaturedRouteSearch {
   return {
     type: normalizeEnumValue(search.type, EVENT_TYPES),
     q: normalizeTrimmedString(search.q),
   };
 }
 
-export function validateEventSearch(
-  search: Record<string, unknown>,
-): SearchRouteSearch {
-  const parsedSearchInput = parseSearchInputValue(
-    normalizeTrimmedString(search.q) ?? "",
-  );
+export function validateEventSearch(search: Record<string, unknown>): SearchRouteSearch {
+  const parsedSearchInput = parseSearchInputValue(normalizeTrimmedString(search.q) ?? "");
 
   return {
     q: parsedSearchInput.query,
-    type:
-      normalizeEnumValue(search.type, EVENT_TYPES) ?? parsedSearchInput.type,
-    category:
-      normalizeTrimmedString(search.category) ?? parsedSearchInput.category,
+    type: normalizeEnumValue(search.type, EVENT_TYPES) ?? parsedSearchInput.type,
+    category: normalizeTrimmedString(search.category) ?? parsedSearchInput.category,
     tag: normalizeSearchTagValue(normalizeTrimmedString(search.tag)) ?? parsedSearchInput.tag,
     page: normalizePage(search.page),
   };
 }
 
-export function validateAiSearch(
-  search: Record<string, unknown>,
-): AiRouteSearch {
+export function validateAiSearch(search: Record<string, unknown>): AiRouteSearch {
   return {
     conversationId: normalizeTrimmedString(search.conversationId),
     prompt: normalizeTrimmedString(search.prompt),
   };
 }
 
-export function validateCreateEventSearch(
-  search: Record<string, unknown>,
-): CreateEventRouteSearch {
+export function validateCreateEventSearch(search: Record<string, unknown>): CreateEventRouteSearch {
   return {
     type: normalizeEnumValue(search.type, EVENT_TYPES),
   };
 }
 
-export function validateEventDetailSearch(
-  search: Record<string, unknown>,
-): EventDetailRouteSearch {
+export function validateEventDetailSearch(search: Record<string, unknown>): EventDetailRouteSearch {
   const baseSearch = validateEventSearch(search);
   const browseSearch = validateBrowseSearch(search);
 
@@ -283,7 +254,7 @@ export function validateEventDetailSearch(
             ? "featured"
             : search.returnTo === "collections"
               ? "collections"
-           : undefined,
+              : undefined,
     browseType: normalizeEnumValue(search.browseType, EVENT_TYPES),
     collectionId: normalizeTrimmedString(search.collectionId),
     collectionName: normalizeTrimmedString(search.collectionName),

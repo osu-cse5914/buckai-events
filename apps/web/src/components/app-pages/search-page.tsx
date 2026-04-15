@@ -256,9 +256,7 @@ export function SearchPage({
     const normalizedTag = parsedSearch.tag ?? "";
     const normalizedCategory = parsedSearch.category ?? "";
     const normalizedType =
-      options?.typeOverride !== undefined
-        ? options.typeOverride
-        : (parsedSearch.type ?? "");
+      options?.typeOverride !== undefined ? options.typeOverride : (parsedSearch.type ?? "");
 
     if (
       normalizedQuery === trimmedSearch &&
@@ -277,12 +275,9 @@ export function SearchPage({
     });
   }
 
-  function clearPendingSearchUpdate() {
-  }
+  function clearPendingSearchUpdate() {}
 
-  function submitCurrentSearch(
-    nextTypeOverride?: NonNullable<SearchRouteSearch["type"]> | "",
-  ) {
+  function submitCurrentSearch(nextTypeOverride?: NonNullable<SearchRouteSearch["type"]> | "") {
     clearPendingSearchUpdate();
     submitSearch(draftSearchInput, { typeOverride: nextTypeOverride });
   }
@@ -329,9 +324,7 @@ export function SearchPage({
     <section
       className={cn(
         "mx-auto flex w-full max-w-6xl flex-col px-6",
-        hasStartedSearch
-          ? "gap-10 py-10"
-          : "min-h-[calc(100vh-9rem)] justify-center gap-6 py-16",
+        hasStartedSearch ? "gap-10 py-10" : "min-h-[calc(100vh-9rem)] justify-center gap-6 py-16",
       )}
     >
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
@@ -402,9 +395,7 @@ export function SearchPage({
       {hasStartedSearch && isError ? (
         <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
           <EventsErrorState
-            message={
-              error instanceof Error ? error.message : "Failed to fetch events"
-            }
+            message={error instanceof Error ? error.message : "Failed to fetch events"}
           />
         </div>
       ) : null}
@@ -413,15 +404,13 @@ export function SearchPage({
           <div className="overflow-hidden rounded-2xl border bg-background">
             <div className="flex flex-col gap-4 border-b px-4 py-4 sm:px-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {data.pagination.total} results
-                </p>
+                <p className="text-sm text-muted-foreground">{data.pagination.total} results</p>
                 <h2 className="mt-1 text-xl font-semibold tracking-tight">
                   {trimmedSearch
                     ? `Results for "${trimmedSearch}"`
                     : trimmedTag
                       ? `Results for tag "${trimmedTag}"`
-                    : "Filtered results"}
+                      : "Filtered results"}
                 </h2>
                 {trimmedTag && trimmedSearch ? (
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -431,11 +420,7 @@ export function SearchPage({
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-3">
-                <div
-                  className="flex flex-wrap gap-2"
-                  role="group"
-                  aria-label="Type filter"
-                >
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Type filter">
                   {TYPE_FILTER_OPTIONS.map((option) => (
                     <Button
                       key={option.value || "ALL"}
@@ -473,7 +458,9 @@ export function SearchPage({
                     ? `No results matched tag "${trimmedTag}"`
                     : "No results matched your search"
                 }
-                description={trimmedTag && !trimmedSearch ? "Try a different tag." : "Try a broader query."}
+                description={
+                  trimmedTag && !trimmedSearch ? "Try a different tag." : "Try a broader query."
+                }
               />
             ) : (
               <>

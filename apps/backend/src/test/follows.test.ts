@@ -45,8 +45,8 @@ describe("[phase:3] [regression:always] Follow API", () => {
     mockClerkGetUser.mockResolvedValue({ imageUrl: "https://example.com/avatar.png" });
     // Default $transaction: execute all ops
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (mockPrisma.$transaction as any).mockImplementation(
-      (ops: Promise<unknown>[]) => Promise.all(ops),
+    (mockPrisma.$transaction as any).mockImplementation((ops: Promise<unknown>[]) =>
+      Promise.all(ops),
     );
   });
 
@@ -175,7 +175,7 @@ describe("[phase:3] [regression:always] Follow API", () => {
     const res = await createTestApp().request(`/users/${USER_B_ID}/followers`);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as { data: unknown[]; pagination: { total: number } };
+    const body = (await res.json()) as { data: unknown[]; pagination: { total: number } };
     expect(body.data).toHaveLength(3);
     expect(body.pagination.total).toBe(3);
     expect(body.data[0]).toMatchObject({
@@ -205,7 +205,7 @@ describe("[phase:3] [regression:always] Follow API", () => {
     const res = await createTestApp().request(`/users/${USER_A.id}/following`);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as { data: unknown[]; pagination: { total: number } };
+    const body = (await res.json()) as { data: unknown[]; pagination: { total: number } };
     expect(body.data).toHaveLength(5);
     expect(body.pagination.total).toBe(5);
     expect(body.data[0]).toMatchObject({ imageUrl: "https://example.com/avatar.png" });

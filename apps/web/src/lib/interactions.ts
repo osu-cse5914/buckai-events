@@ -1,11 +1,6 @@
 import type { ApiClient } from "./api";
 
-export type InteractionAction =
-  | "VIEW"
-  | "SAVE"
-  | "CLICK"
-  | "APPLY"
-  | "DISMISS";
+export type InteractionAction = "VIEW" | "SAVE" | "CLICK" | "APPLY" | "DISMISS";
 
 export async function createInteraction(
   api: ApiClient,

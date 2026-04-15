@@ -16,12 +16,7 @@ import {
   listOwnApplications,
   updateCurrentUser,
 } from "../services/users";
-import {
-  followUser,
-  unfollowUser,
-  listFollowers,
-  listFollowing,
-} from "../services/social";
+import { followUser, unfollowUser, listFollowers, listFollowing } from "../services/social";
 
 function readClerkProfileExtras(clerkUser?: {
   imageUrl?: string | null;
@@ -45,7 +40,13 @@ async function loadClerkProfileExtras(c: { get: (key: string) => any }, clerkId:
 
 async function enrichUsersWithClerkImages(
   c: { get: (key: string) => any },
-  users: Array<{ id: string; clerkId?: string | null; displayName: string | null; major: string | null; gradYear: number | null }>,
+  users: Array<{
+    id: string;
+    clerkId?: string | null;
+    displayName: string | null;
+    major: string | null;
+    gradYear: number | null;
+  }>,
 ) {
   const clerk = c.get("clerk");
 
@@ -156,7 +157,9 @@ export const users = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const result = await listFollowers(prisma, { userId, limit, offset });
     const data = await enrichUsersWithClerkImages(c, result.data as Array<any>);
-    return c.json(paginated(data, { total: result.total, limit: result.limit, offset: result.offset }));
+    return c.json(
+      paginated(data, { total: result.total, limit: result.limit, offset: result.offset }),
+    );
   })
   .get("/:id/following", validateUserIdParam, validatePaginationQuery, async (c) => {
     const { id: userId } = c.req.valid("param");
@@ -164,5 +167,7 @@ export const users = new Hono<AppEnv>()
     const prisma = getPrisma(c);
     const result = await listFollowing(prisma, { userId, limit, offset });
     const data = await enrichUsersWithClerkImages(c, result.data as Array<any>);
-    return c.json(paginated(data, { total: result.total, limit: result.limit, offset: result.offset }));
+    return c.json(
+      paginated(data, { total: result.total, limit: result.limit, offset: result.offset }),
+    );
   });

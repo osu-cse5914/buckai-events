@@ -84,13 +84,13 @@ vi.mock("@tanstack/react-router", () => ({
       component: React.ComponentType;
       validateSearch?: (search: Record<string, unknown>) => Record<string, unknown>;
     }) => {
-    capturedComponent = config.component;
-    return {
-      component: config.component,
-      useParams: () => ({ eventId: "evt_1" }),
-      useSearch: () => mockRouteSearch,
-    };
-  },
+      capturedComponent = config.component;
+      return {
+        component: config.component,
+        useParams: () => ({ eventId: "evt_1" }),
+        useSearch: () => mockRouteSearch,
+      };
+    },
   Link: ({
     children,
     to,
@@ -205,9 +205,7 @@ async function renderDetailSurface(
     typeof import("@/components/events/event-detail-surface").EventDetailSurface
   >,
 ) {
-  const { EventDetailSurface } = await import(
-    "@/components/events/event-detail-surface"
-  );
+  const { EventDetailSurface } = await import("@/components/events/event-detail-surface");
   const queryClient = createQueryClient();
   const view = render(
     <QueryClientProvider client={queryClient}>
@@ -257,9 +255,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     await renderPage();
 
-    expect(
-      await screen.findByRole("link", { name: "Back to Search results" }),
-    ).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "Back to Search results" })).toHaveAttribute(
       "href",
       "/search?q=hackathon&type=EVENT&category=music&tag=live-music&page=3",
     );
@@ -281,9 +277,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     await renderPage();
 
-    expect(
-      await screen.findByRole("link", { name: "Back to Campus Jazz Night" }),
-    ).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "Back to Campus Jazz Night" })).toHaveAttribute(
       "href",
       "/events/evt_prev?returnTo=search&q=hackathon&type=EVENT&category=music&tag=live-music&page=3",
     );
@@ -355,15 +349,12 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     const view = await renderPage();
 
-    expect(
-      await screen.findByRole("heading", { name: "Schedule" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Build overnight", { selector: "strong" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "docs" }),
-    ).toHaveAttribute("href", "https://example.com");
+    expect(await screen.findByRole("heading", { name: "Schedule" })).toBeInTheDocument();
+    expect(screen.getByText("Build overnight", { selector: "strong" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "docs" })).toHaveAttribute(
+      "href",
+      "https://example.com",
+    );
     expect(view.container.querySelector("br")).not.toBeNull();
     expect(view.container.textContent).toContain("Next line");
   });
@@ -387,9 +378,10 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     await renderPage();
 
     expect(await screen.findByText("Jim Breuer")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "View on Ticketmaster" }),
-    ).toHaveAttribute("href", "https://www.ticketmaster.com/event/tm_67890");
+    expect(screen.getByRole("link", { name: "View on Ticketmaster" })).toHaveAttribute(
+      "href",
+      "https://www.ticketmaster.com/event/tm_67890",
+    );
   });
 
   it("TC-EVT-039: appends a Ticketmaster link to non-empty Ticketmaster descriptions", async () => {
@@ -411,12 +403,8 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     await renderPage();
 
     expect(await screen.findByText("Miss Saigon")).toBeInTheDocument();
-    expect(
-      screen.getByText("The celebrated musical returns to Columbus."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "View on Ticketmaster" }),
-    ).toHaveAttribute(
+    expect(screen.getByText("The celebrated musical returns to Columbus.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View on Ticketmaster" })).toHaveAttribute(
       "href",
       "https://www.ticketmaster.com/event/tm_miss_saigon",
     );
@@ -509,9 +497,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     expect(
       await screen.findByRole("heading", { name: "You might also be interested in" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /Late Night Jam Session/i }),
-    ).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Late Night Jam Session/i })).toHaveAttribute(
       "href",
       "/events/evt_related_1?returnTo=search&q=hackathon&type=EVENT&category=music&tag=live-music&page=3&previousEventId=evt_1&previousEventTitle=Hackathon",
     );
@@ -548,9 +534,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       },
     });
 
-    expect(
-      await screen.findByRole("link", { name: /Late Night Jam Session/i }),
-    ).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: /Late Night Jam Session/i })).toHaveAttribute(
       "href",
       "/events/evt_related_1?statusMode=ACTIVE&source=USER&sort=START_ASC&selected=evt_1&returnTo=browse&browseType=EVENT",
     );
@@ -637,9 +621,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
         json: { eventId: "evt_1" },
       });
     });
-    expect(
-      screen.getByRole("button", { name: "Saved to Favorites" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Saved to Favorites" })).toBeInTheDocument();
   });
 
   it("TC-INT-007: clicking the ticket CTA records CLICK", async () => {
@@ -666,10 +648,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     await user.click(ticketLink);
 
-    expect(ticketLink).toHaveAttribute(
-      "href",
-      "https://tickets.example.com/hackathon",
-    );
+    expect(ticketLink).toHaveAttribute("href", "https://tickets.example.com/hackathon");
     await vi.waitFor(() => {
       expect(mockInteractionsPost).toHaveBeenCalledWith({
         json: { eventId: "evt_1", action: "CLICK" },
@@ -788,9 +767,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       expect(mockEventDelete).toHaveBeenCalled();
     });
     await vi.waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        expect.objectContaining({ to: "/events" }),
-      );
+      expect(mockNavigate).toHaveBeenCalledWith(expect.objectContaining({ to: "/events" }));
     });
   });
 
@@ -807,9 +784,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     await user.click(await screen.findByRole("button", { name: "Delete" }));
 
     await vi.waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        expect.objectContaining({ to: "/gigs" }),
-      );
+      expect(mockNavigate).toHaveBeenCalledWith(expect.objectContaining({ to: "/gigs" }));
     });
   });
 
@@ -828,8 +803,6 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     await renderPage();
 
-    expect(
-      await screen.findByText(/failed to load event/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/failed to load event/i)).toBeInTheDocument();
   });
 });

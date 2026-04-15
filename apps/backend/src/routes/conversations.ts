@@ -32,12 +32,8 @@ import type { AppEnv } from "../lib/types";
 type ConversationsRouteOptions = {
   streamText?: Parameters<typeof createChatbotStreamResponse>[0]["streamText"];
   generateConversationTitle?: typeof generateConversationTitle;
-  searchSemanticEvents?: Parameters<
-    typeof createChatbotStreamResponse
-  >[0]["searchSemanticEvents"];
-  resolveChatbotModel?: Parameters<
-    typeof createChatbotStreamResponse
-  >[0]["resolveChatbotModel"];
+  searchSemanticEvents?: Parameters<typeof createChatbotStreamResponse>[0]["searchSemanticEvents"];
+  resolveChatbotModel?: Parameters<typeof createChatbotStreamResponse>[0]["resolveChatbotModel"];
   currentDate?: () => Date;
 };
 
@@ -101,32 +97,27 @@ export function createConversationsRouter({
 
       return c.body(null, 204);
     })
-    .get(
-      "/:id/messages",
-      validateConversationIdParam,
-      validatePaginationQuery,
-      async (c) => {
-        const user = c.get("user");
-        const prisma = getPrisma(c);
-        const { id } = c.req.valid("param");
-        const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
+    .get("/:id/messages", validateConversationIdParam, validatePaginationQuery, async (c) => {
+      const user = c.get("user");
+      const prisma = getPrisma(c);
+      const { id } = c.req.valid("param");
+      const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
 
-        const result = await listConversationMessagesForUser(prisma, {
-          conversationId: id,
-          userId: user.id,
-          limit,
-          offset,
-        });
+      const result = await listConversationMessagesForUser(prisma, {
+        conversationId: id,
+        userId: user.id,
+        limit,
+        offset,
+      });
 
-        return c.json(
-          paginated(result.data, {
-            total: result.total,
-            limit: result.limit,
-            offset: result.offset,
-          }),
-        );
-      },
-    )
+      return c.json(
+        paginated(result.data, {
+          total: result.total,
+          limit: result.limit,
+          offset: result.offset,
+        }),
+      );
+    })
     .post("/:id/messages", validateConversationIdParam, async (c) => {
       const user = c.get("user");
       const prisma = getPrisma(c);
@@ -176,8 +167,7 @@ export function createConversationsRouter({
           return createStaticSseTextResponse(text);
         }
 
-        const text =
-          "Please confirm or cancel the pending action before we continue.";
+        const text = "Please confirm or cancel the pending action before we continue.";
         await createConversationMessage(prisma, {
           conversationId: id,
           role: "ASSISTANT",
@@ -188,8 +178,7 @@ export function createConversationsRouter({
       }
 
       const messages = await listRecentConversationMessages(prisma, id);
-      const shouldGenerateTitle =
-        conversation.title == null && messages.length === 1;
+      const shouldGenerateTitle = conversation.title == null && messages.length === 1;
 
       try {
         return createChatbotStreamResponse({
