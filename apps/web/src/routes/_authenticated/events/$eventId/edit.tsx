@@ -4,8 +4,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import { loadOwnedEventRouteData } from "@/lib/route-loaders";
+import { browsePathForEventType } from "@/lib/event-utils";
 import { queryKeys, type EventRecord } from "@/lib/queries";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,7 +46,7 @@ function EventEditPage() {
       <section className="mx-auto max-w-2xl px-6 py-10 text-center">
         <h1 className="text-2xl font-bold">Event not found</h1>
         <Button asChild className="mt-4">
-          <Link to="/events">Back to Events</Link>
+          <Link to={browsePathForEventType(event?.type)}>Back to Events</Link>
         </Button>
       </section>
     );
@@ -148,7 +157,7 @@ function EditForm({
   }
 
   return (
-    <section className="mx-auto max-w-2xl px-6 py-10">
+    <section className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
       <Link
         to="/events/$eventId"
         params={{ eventId }}
@@ -158,116 +167,157 @@ function EditForm({
         Back to Event
       </Link>
 
-      <h1 className="mt-6 text-2xl font-bold tracking-tight">Edit Event</h1>
+      <div className="space-y-2">
+        <Badge variant="outline" className="w-fit">
+          {event.type === "GIG" ? "Gig" : "Event"}
+        </Badge>
+        <h1 className="text-3xl font-bold tracking-tight">Edit {event.type === "GIG" ? "Gig" : "Event"}</h1>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          Update the key details for this listing so the timing, location, and compensation stay accurate for people viewing it.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={200}
-          />
-        </div>
+      <Card className="gap-0 overflow-hidden rounded-2xl border bg-background py-0">
+        <CardHeader className="border-b px-6 py-6 sm:px-8">
+          <CardTitle>Listing details</CardTitle>
+          <CardDescription>
+            Edit the basics here, then adjust schedule details and compensation if this is a gig.
+          </CardDescription>
+        </CardHeader>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            maxLength={5000}
-            rows={4}
-          />
-        </div>
+        <CardContent className="px-0 py-0">
+          <form onSubmit={handleSubmit} className="space-y-0">
+            <div className="space-y-5 px-6 py-6 sm:px-8">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  maxLength={200}
+                />
+              </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
-          <Input
-            id="location"
-            value={locationName}
-            onChange={(e) => setLocationName(e.target.value)}
-            required
-            maxLength={500}
-          />
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                  maxLength={5000}
+                  rows={5}
+                />
+              </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="startAt">Start Date</Label>
-            <DateTimePicker
-              id="startAt"
-              value={startAt}
-              onChange={setStartAt}
-              placeholder="Pick start date & time"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="endAt">End Date</Label>
-            <DateTimePicker
-              id="endAt"
-              value={endAt}
-              onChange={setEndAt}
-              placeholder="Pick end date & time"
-            />
-          </div>
-        </div>
-
-        {event.type === "GIG" && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="compAmount">Amount ($)</Label>
-              <Input
-                id="compAmount"
-                type="number"
-                min="0"
-                step="0.01"
-                value={compAmount}
-                onChange={(e) => setCompAmount(e.target.value)}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={locationName}
+                  onChange={(e) => setLocationName(e.target.value)}
+                  required
+                  maxLength={500}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="compType">Compensation Type</Label>
-              <Select
-                value={compType}
-                onValueChange={(v) => setCompType(v)}
-              >
-                <SelectTrigger id="compType" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="FIXED">Fixed</SelectItem>
-                  <SelectItem value="HOURLY">Hourly</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="border-t px-6 py-6 sm:px-8">
+              <div className="mb-5 space-y-1">
+                <h2 className="text-base font-semibold">Schedule</h2>
+                <p className="text-sm text-muted-foreground">
+                  Keep the start and end times current so attendees know when to show up.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="startAt">Start Date</Label>
+                  <DateTimePicker
+                    id="startAt"
+                    value={startAt}
+                    onChange={setStartAt}
+                    placeholder="Pick start date & time"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endAt">End Date</Label>
+                  <DateTimePicker
+                    id="endAt"
+                    value={endAt}
+                    onChange={setEndAt}
+                    placeholder="Pick end date & time"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        )}
 
-        {mutation.error && (
-          <p className="text-sm text-destructive">
-            {mutation.error instanceof Error
-              ? mutation.error.message
-              : "Failed to update event"}
-          </p>
-        )}
+            {event.type === "GIG" ? (
+              <div className="border-t px-6 py-6 sm:px-8">
+                <div className="mb-5 space-y-1">
+                  <h2 className="text-base font-semibold">Compensation</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Update pay details if this gig includes a fixed amount or hourly rate.
+                  </p>
+                </div>
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "Saving..." : "Save Changes"}
-          </Button>
-          <Button type="button" variant="outline" asChild>
-            <Link to="/events/$eventId" params={{ eventId }}>
-              Cancel
-            </Link>
-          </Button>
-        </div>
-      </form>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="compAmount">Amount ($)</Label>
+                    <Input
+                      id="compAmount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={compAmount}
+                      onChange={(e) => setCompAmount(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="compType">Compensation Type</Label>
+                    <Select
+                      value={compType}
+                      onValueChange={(v) => setCompType(v)}
+                    >
+                      <SelectTrigger id="compType" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FIXED">Fixed</SelectItem>
+                        <SelectItem value="HOURLY">Hourly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-4 border-t px-6 py-6 sm:px-8">
+              {mutation.error ? (
+                <p className="text-sm text-destructive">
+                  {mutation.error instanceof Error
+                    ? mutation.error.message
+                    : "Failed to update event"}
+                </p>
+              ) : null}
+
+              <div className="flex items-center gap-3">
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button type="button" variant="outline" asChild>
+                  <Link to="/events/$eventId" params={{ eventId }}>
+                    Cancel
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </section>
   );
 }
