@@ -351,6 +351,8 @@ export const queryKeys = {
   gigApplications: (eventId: string) => ["gig-applications", eventId] as const,
   gigApplicationStatus: (eventId: string) =>
     ["gig", eventId, "applications", "me"] as const,
+  relatedEvents: (eventId: string, limit: number) =>
+    ["events", eventId, "related", limit] as const,
 };
 
 export function currentUserQueryOptions(api: ApiClient) {
@@ -448,6 +450,32 @@ export function eventDetailQueryOptions(api: ApiClient, eventId: string) {
         throw new Error("Failed to load event");
       }
       return res.json() as Promise<EventRecord>;
+    },
+  });
+}
+
+export function relatedEventsQueryOptions(
+  api: ApiClient,
+  eventId: string,
+  limit = 3,
+) {
+  return queryOptions<EventsResponse>({
+    queryKey: queryKeys.relatedEvents(eventId, limit),
+    queryFn: async () => {
+      const getRelatedEvents = api.api.v1.events[":id"].related.$get as (args: {
+        param: { id: string };
+        query: { limit: string };
+      }) => Promise<Response>;
+      const res = await getRelatedEvents({
+        param: { id: eventId },
+        query: {
+          limit: String(limit),
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to load related events");
+      }
+      return res.json() as Promise<EventsResponse>;
     },
   });
 }

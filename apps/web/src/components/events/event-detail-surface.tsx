@@ -17,9 +17,14 @@ import {
   currentUserQueryOptions,
   eventDetailQueryOptions,
   queryKeys,
+  relatedEventsQueryOptions,
   type ApplicationSummary,
 } from "@/lib/queries";
-import type { SearchRouteSearch } from "@/lib/event-route-search";
+import type {
+  BrowseRouteSearch,
+  EventDetailRouteSearch,
+  SearchRouteSearch,
+} from "@/lib/event-route-search";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
@@ -77,9 +82,110 @@ type EventDetailSurfaceProps = {
   mode?: "page" | "panel";
   browsePath?: "/events" | "/gigs" | "/search";
   browseLabel?: string;
-  browseSearch?: SearchRouteSearch;
+  browseSearch?: SearchRouteSearch | BrowseRouteSearch;
+  detailSearch?: EventDetailRouteSearch;
   onDeleteSuccess?: () => void;
 };
+
+function toPreviousEventSearch(search: EventDetailRouteSearch) {
+  return {
+    returnTo: search.returnTo,
+    q: search.q,
+    type: search.type,
+    category: search.category,
+    page: search.page,
+    browseType: search.browseType,
+    statusMode: search.statusMode,
+    source: search.source,
+    sort: search.sort,
+    selected: search.selected,
+  } satisfies EventDetailRouteSearch;
+}
+
+function buildRelatedEventSearch({
+  event,
+  mode,
+  detailSearch,
+  browsePath,
+  browseSearch,
+}: {
+  event: { id: string; title: string; type: string };
+  mode: "page" | "panel";
+  detailSearch?: EventDetailRouteSearch;
+  browsePath?: "/events" | "/gigs" | "/search";
+  browseSearch?: SearchRouteSearch | BrowseRouteSearch;
+}) {
+  if (mode === "page") {
+    return {
+      ...detailSearch,
+      previousEventId: event.id,
+      previousEventTitle: event.title,
+    } satisfies EventDetailRouteSearch;
+  }
+
+  if (browsePath === "/search") {
+    return {
+      ...(browseSearch as SearchRouteSearch | undefined),
+      returnTo: "search",
+    } satisfies EventDetailRouteSearch;
+  }
+
+  return {
+    ...(browseSearch as BrowseRouteSearch | undefined),
+    returnTo: "browse",
+    browseType: event.type === "GIG" ? "GIG" : "EVENT",
+    selected: event.id,
+  } satisfies EventDetailRouteSearch;
+}
+
+function buildEventDescription(event: {
+  description: string;
+  source: string;
+  ticketUrl: string | null;
+}) {
+  const trimmedDescription = event.description.trim();
+
+  if (event.source === "TICKETMASTER" && event.ticketUrl) {
+    if (/ticketmaster\.com/i.test(trimmedDescription)) {
+      return trimmedDescription;
+    }
+
+    const ticketmasterLink = `[View on Ticketmaster](${event.ticketUrl})`;
+
+    return trimmedDescription
+      ? `${trimmedDescription}\n\n${ticketmasterLink}`
+      : `More details are available on ${ticketmasterLink} for this event.`;
+  }
+
+  return trimmedDescription || "Description unavailable.";
+}
+
+function normalizeDisplayTag(tag: string): string | null {
+  const normalized = tag.trim().replace(/^#+/, "").trim();
+  return normalized || null;
+}
+
+function buildDisplayTags(tags: string[]) {
+  const seen = new Set<string>();
+  const normalizedTags: string[] = [];
+
+  for (const tag of tags) {
+    const normalized = normalizeDisplayTag(tag);
+    if (!normalized) {
+      continue;
+    }
+
+    const dedupeKey = normalized.toLowerCase();
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+    normalizedTags.push(normalized);
+  }
+
+  return normalizedTags;
+}
 
 export function EventDetailSurface({
   eventId,
@@ -87,6 +193,7 @@ export function EventDetailSurface({
   browsePath,
   browseLabel,
   browseSearch,
+  detailSearch,
   onDeleteSuccess,
 }: EventDetailSurfaceProps) {
   const api = useApiClient();
@@ -116,6 +223,13 @@ export function EventDetailSurface({
     ...currentGigApplicationQueryOptions(api, eventId),
     enabled: showGigApplicationSection,
   });
+  const relatedEventsQuery = useQuery({
+    ...relatedEventsQueryOptions(api, eventId, 3),
+    enabled: !!event,
+  });
+  const eventDescription = event ? buildEventDescription(event) : "";
+  const displayTags = event ? buildDisplayTags(event.tags) : [];
+  const relatedEvents = relatedEventsQuery.data?.data ?? [];
   const [statusValue, setStatusValue] = useState("");
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
   const [applyMessage, setApplyMessage] = useState("");
@@ -168,8 +282,7 @@ export function EventDetailSurface({
       }
 
       const deleteBrowsePath = browsePath ?? browsePathForEventType(event?.type);
-      const deleteBrowseSearch =
-        deleteBrowsePath === "/search" ? browseSearch : undefined;
+      const deleteBrowseSearch = browseSearch;
 
       navigate({
         to: deleteBrowsePath,
@@ -283,8 +396,7 @@ export function EventDetailSurface({
   if (!event) {
     const fallbackBrowsePath = browsePath ?? "/events";
     const fallbackBrowseLabel = browseLabel ?? "Events";
-    const fallbackBrowseSearch =
-      fallbackBrowsePath === "/search" ? browseSearch : undefined;
+    const fallbackBrowseSearch = browseSearch;
     return (
       <section className={surfaceClassName(mode)}>
         <h1 className="text-2xl font-bold">Event not found</h1>
@@ -313,8 +425,7 @@ export function EventDetailSurface({
   }
 
   const resolvedBrowsePath = browsePath ?? browsePathForEventType(event.type);
-  const resolvedBrowseSearch =
-    resolvedBrowsePath === "/search" ? browseSearch : undefined;
+  const resolvedBrowseSearch = browseSearch;
   const resolvedBrowseLabel =
     browseLabel ??
     (resolvedBrowsePath === "/search"
@@ -322,6 +433,16 @@ export function EventDetailSurface({
       : event.type === "GIG"
         ? "Gigs"
         : "Events");
+  const previousEventSearch = detailSearch
+    ? toPreviousEventSearch(detailSearch)
+    : undefined;
+  const relatedEventSearch = buildRelatedEventSearch({
+    event,
+    mode,
+    detailSearch,
+    browsePath,
+    browseSearch,
+  });
   const validTransitions = VALID_TRANSITIONS[event.status] || [];
   const currentApplication =
     submittedApplication ?? applicationsQuery.data ?? null;
@@ -330,14 +451,26 @@ export function EventDetailSurface({
   return (
     <section className={surfaceClassName(mode)}>
       {isPageMode ? (
-        <Link
-          to={resolvedBrowsePath}
-          search={resolvedBrowseSearch as never}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeftIcon className="size-4" />
-          Back to {resolvedBrowseLabel}
-        </Link>
+        detailSearch?.previousEventId ? (
+          <Link
+            to="/events/$eventId"
+            params={{ eventId: detailSearch.previousEventId }}
+            search={previousEventSearch as never}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Back to {detailSearch.previousEventTitle ?? "previous event"}
+          </Link>
+        ) : (
+          <Link
+            to={resolvedBrowsePath}
+            search={resolvedBrowseSearch as never}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Back to {resolvedBrowseLabel}
+          </Link>
+        )
       ) : null}
 
       <div className={cn(isPageMode ? "mt-6" : "")}>
@@ -428,7 +561,7 @@ export function EventDetailSurface({
       <div>
         <h2 className="text-lg font-semibold">Description</h2>
         <MarkdownContent className="mt-2">
-          {event.description}
+          {eventDescription}
         </MarkdownContent>
       </div>
 
@@ -452,9 +585,6 @@ export function EventDetailSurface({
                 Get tickets
               </a>
             </Button>
-            <p className="text-sm text-muted-foreground">
-              Opens the ticket page in a new tab.
-            </p>
           </div>
         </>
       ) : null}
@@ -556,14 +686,50 @@ export function EventDetailSurface({
         </>
       ) : null}
 
-      {event.tags.length > 0 ? (
+      {displayTags.length > 0 ? (
         <div className="mt-6">
           <h2 className="text-lg font-semibold">Tags</h2>
           <div className="mt-2 flex flex-wrap gap-2">
-            {event.tags.map((tag) => (
+            {displayTags.map((tag) => (
               <Badge key={tag} variant="outline">
                 {tag}
               </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {relatedEvents.length > 0 ? (
+        <div className="mt-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">You might also be interested in</h2>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {relatedEvents.map((relatedEvent) => (
+              <Link
+                key={relatedEvent.id}
+                to="/events/$eventId"
+                params={{ eventId: relatedEvent.id }}
+                search={relatedEventSearch as never}
+                className="h-full rounded-xl border p-4 transition-colors hover:bg-muted/30"
+              >
+                <p className="font-medium leading-tight">{relatedEvent.title}</p>
+                {relatedEvent.summary ?? relatedEvent.category ? (
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                    {relatedEvent.summary ?? relatedEvent.category}
+                  </p>
+                ) : null}
+                <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarIcon className="size-3.5 shrink-0" />
+                    <span>{formatDateLong(relatedEvent.startAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <MapPinIcon className="size-3.5 shrink-0" />
+                    <span>{relatedEvent.locationName}</span>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

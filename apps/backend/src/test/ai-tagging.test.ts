@@ -10,9 +10,9 @@ describe("[phase:4] [regression:always] AI tagging service", () => {
     const generateText = vi.fn().mockResolvedValue({
       output: {
         tags: [
-          " Jazz ",
+          " #Jazz ",
           "MUSIC",
-          "music",
+          "#music",
           "",
           "tag-that-is-way-too-long-to-keep-because-it-exceeds-fifty-characters",
         ],

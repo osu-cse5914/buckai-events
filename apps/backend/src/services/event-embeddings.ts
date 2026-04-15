@@ -39,6 +39,12 @@ export type PaginatedSemanticSearchResult = {
   offset: number;
 };
 
+export type RelatedEventsInput = {
+  eventId: string;
+  type?: string;
+  limit: number;
+};
+
 type EmbedLike = typeof embed;
 
 function buildEmbeddingProviderOptions(task: ResolvedAITask) {
@@ -203,6 +209,36 @@ function parseTotalCount(value: unknown) {
   return 0;
 }
 
+async function fetchOrderedEventsByIds(prisma: PrismaClient, orderedIds: string[]) {
+  if (orderedIds.length === 0) {
+    return [];
+  }
+
+  const events = await prisma.event.findMany({
+    where: {
+      id: {
+        in: orderedIds,
+      },
+    },
+    include: {
+      creator: {
+        select: {
+          id: true,
+          displayName: true,
+          email: true,
+        },
+      },
+    },
+  });
+  const order = new Map(orderedIds.map((id, index) => [id, index]));
+
+  return events.sort(
+    (left, right) =>
+      (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+      (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
 export async function generateEventEmbedding(
   input: EventEmbeddingSource,
   {
@@ -337,32 +373,59 @@ export async function searchEventsSemanticallyPaginated(
   }
 
   const orderedIds = matches.map((row) => row.id);
-  const events = await prisma.event.findMany({
-    where: {
-      id: {
-        in: orderedIds,
-      },
-    },
-    include: {
-      creator: {
-        select: {
-          id: true,
-          displayName: true,
-          email: true,
-        },
-      },
-    },
-  });
-  const order = new Map(orderedIds.map((id, index) => [id, index]));
+  const events = await fetchOrderedEventsByIds(prisma, orderedIds);
 
   return {
-    data: events.sort(
-      (left, right) =>
-        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
-    ),
+    data: events,
     total: parseTotalCount(matches[0]?.totalCount),
     limit: input.limit,
     offset: input.offset,
+  };
+}
+
+export async function searchRelatedEventsByEvent(
+  prisma: PrismaClient,
+  input: RelatedEventsInput,
+): Promise<PaginatedSemanticSearchResult> {
+  const whereClauses = [
+    ...buildSemanticSearchWhereClauses({
+      query: "",
+      limit: input.limit,
+      type: input.type,
+    }),
+    Prisma.sql`e.id <> ${input.eventId}`,
+  ];
+
+  const matches = await prisma.$queryRaw<
+    Array<{ id: string; totalCount: number | bigint | string }>
+  >(Prisma.sql`
+    SELECT
+      e.id,
+      COUNT(*) OVER() AS "totalCount"
+    FROM "Event" e
+    INNER JOIN "EventEmbedding" ee ON ee."eventId" = e.id
+    INNER JOIN "EventEmbedding" source_ee ON source_ee."eventId" = ${input.eventId}
+    WHERE ${Prisma.join(whereClauses, " AND ")}
+    ORDER BY (1 - (ee.embedding <=> source_ee.embedding))::double precision DESC
+    LIMIT ${input.limit}
+  `);
+
+  if (matches.length === 0) {
+    return {
+      data: [],
+      total: 0,
+      limit: input.limit,
+      offset: 0,
+    };
+  }
+
+  const orderedIds = matches.map((row) => row.id);
+  const events = await fetchOrderedEventsByIds(prisma, orderedIds);
+
+  return {
+    data: events,
+    total: parseTotalCount(matches[0]?.totalCount),
+    limit: input.limit,
+    offset: 0,
   };
 }

@@ -172,3 +172,14 @@ Spec: [`external-ingestion`](../../specs/events/external-ingestion.md)
 - **When**: The sync runs
 - **Then**: Only the future event is considered for create or update
 - **And**: Only the future event is eligible for pipeline scheduling
+
+## TC-ING-016: Ticketmaster description falls back to promoter text
+
+- **Spec scenario**: S-ING-3
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/external-ingestion.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A Ticketmaster event omits `info` and `pleaseNote` but includes promoter description text
+- **When**: The sync runs
+- **Then**: The created Event uses the promoter description as its `description`

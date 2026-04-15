@@ -53,7 +53,14 @@ export type CreateEventRouteSearch = {
 };
 
 export type EventDetailRouteSearch = SearchRouteSearch & {
-  returnTo?: "search";
+  returnTo?: "search" | "browse";
+  browseType?: (typeof EVENT_TYPES)[number];
+  statusMode?: BrowseStatusMode;
+  source?: (typeof EVENT_SOURCES)[number];
+  sort?: BrowseSort;
+  selected?: string;
+  previousEventId?: string;
+  previousEventTitle?: string;
 };
 
 function normalizeTrimmedString(value: unknown) {
@@ -144,10 +151,20 @@ export function validateEventDetailSearch(
   search: Record<string, unknown>,
 ): EventDetailRouteSearch {
   const baseSearch = validateEventSearch(search);
+  const browseSearch = validateBrowseSearch(search);
 
   return {
     ...baseSearch,
-    returnTo: search.returnTo === "search" ? "search" : undefined,
+    ...browseSearch,
+    returnTo:
+      search.returnTo === "search"
+        ? "search"
+        : search.returnTo === "browse"
+          ? "browse"
+          : undefined,
+    browseType: normalizeEnumValue(search.browseType, EVENT_TYPES),
+    previousEventId: normalizeTrimmedString(search.previousEventId),
+    previousEventTitle: normalizeTrimmedString(search.previousEventTitle),
   };
 }
 

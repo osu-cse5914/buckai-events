@@ -347,6 +347,54 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
     );
   });
 
+  it("TC-ING-016: falls back to Ticketmaster promoter text when info is missing", async () => {
+    stubExternalFetch({
+      ticketmasterPages: [
+        {
+          _embedded: {
+            events: [
+              makeTicketmasterEvent({
+                info: null,
+                pleaseNote: null,
+                promoter: {
+                  description: "NHL REGULAR SEASON / NTL / USA",
+                },
+              }),
+            ],
+          },
+          page: {
+            totalPages: 1,
+            number: 0,
+          },
+        },
+      ],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(
+      makeStoredExternalEvent({
+        source: "TICKETMASTER",
+        externalId: "tm_67890",
+        description: "NHL REGULAR SEASON / NTL / USA",
+      }) as never,
+    );
+
+    await syncExternalEvents(mockPrisma, {
+      ticketmasterApiKey: "ticketmaster_test_key",
+    });
+
+    expect(mockPrisma.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          source: "TICKETMASTER",
+          externalId: "tm_67890",
+          description: "NHL REGULAR SEASON / NTL / USA",
+        }),
+      }),
+    );
+  });
+
   // S-ING-6 → TC-ING-007
   it("TC-ING-007: still creates the external event when AI pipeline scheduling fails", async () => {
     const scheduleEventPipeline = vi

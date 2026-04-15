@@ -412,3 +412,80 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: The events endpoint returns a non-success response for a browse request
 - **When**: The shared events query hook runs
 - **Then**: It exposes a fetch failure that the page can render as an error state
+
+## TC-EVT-038: Event detail falls back when Ticketmaster description is blank
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A Ticketmaster event detail has an empty `description`
+- **When**: A user opens the event detail page
+- **Then**: The Description section shows fallback copy with a Ticketmaster link instead of rendering blank content
+
+## TC-EVT-039: Event detail appends a Ticketmaster link to populated descriptions
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A Ticketmaster event detail has a populated `description` and a `ticketUrl`
+- **When**: A user opens the event detail page
+- **Then**: The Description section keeps the event description and also includes a Ticketmaster link
+
+## TC-EVT-040: Event detail normalizes displayed hashtag-prefixed tags
+
+- **Spec scenario**: S-EVT-12
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An event detail includes stored tags like `#coding` and `##music`
+- **When**: A user opens the event detail page
+- **Then**: The tag badges display normalized labels without leading `#`
+
+## TC-EVT-041: Event detail shows related events below tags
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: The current event has related vector matches available
+- **When**: A user opens the event detail page
+- **Then**: The page shows a related-events section below Tags with links to those events
+
+## TC-EVT-042: Event detail back link returns to the previous related event
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens an event from another event's related-items section
+- **When**: The destination event detail page renders
+- **Then**: The Back link targets the previous event while preserving the prior fallback context
+
+## TC-EVT-043: Event detail back link restores selected browse context
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens an event from a selected item in the browse panel
+- **When**: The destination event detail page renders
+- **Then**: The Back link targets the browse page with the preserved selected listing and filters
+
+## TC-EVT-044: Related event links preserve selected browse context
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user is viewing an event in the browse preview panel with an item selected
+- **When**: They open a related event from that panel
+- **Then**: The related-event link carries the browse selection and filters so Back returns to the selected listing

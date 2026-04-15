@@ -41,6 +41,11 @@ type TicketmasterEventRecord = {
   name: string;
   info?: string | null;
   pleaseNote?: string | null;
+  promoter?: TicketmasterPromoter | null;
+  promoters?: TicketmasterPromoter[] | null;
+  accessibility?: {
+    info?: string | null;
+  } | null;
   url?: string | null;
   dates?: {
     start?: {
@@ -53,6 +58,10 @@ type TicketmasterEventRecord = {
   _embedded?: {
     venues?: TicketmasterVenue[];
   };
+};
+
+type TicketmasterPromoter = {
+  description?: string | null;
 };
 
 type TicketmasterVenue = {
@@ -151,6 +160,16 @@ function normalizeText(...values: Array<string | null | undefined>): string {
   }
 
   return "";
+}
+
+function resolveTicketmasterDescription(event: TicketmasterEventRecord): string {
+  return normalizeText(
+    event.info,
+    event.pleaseNote,
+    event.promoter?.description,
+    event.promoters?.map((promoter) => promoter.description).find(Boolean),
+    event.accessibility?.info,
+  );
 }
 
 async function createSourceHash(payload: Record<string, unknown>): Promise<string> {
@@ -253,7 +272,7 @@ export async function fetchTicketmasterEvents(
         source: "TICKETMASTER" as const,
         externalId: event.id,
         title: event.name.trim(),
-        description: normalizeText(event.info, event.pleaseNote),
+        description: resolveTicketmasterDescription(event),
         ticketUrl: event.url?.trim() || null,
         externalUrl: null,
         locationName: normalizeText(venue?.name, "TBD"),

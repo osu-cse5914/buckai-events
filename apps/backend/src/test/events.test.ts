@@ -63,6 +63,31 @@ function createSemanticSearchTestApp({
   return app;
 }
 
+function createRelatedEventsTestApp({
+  user = USER_A,
+  searchRelatedEvents,
+}: {
+  user?: typeof USER_A;
+  searchRelatedEvents: NonNullable<
+    Parameters<typeof createEventsRouter>[0]
+  >["searchRelatedEvents"];
+}) {
+  const app = new Hono();
+  registerApiErrorHandlers(app);
+  app.use("/*", async (c, next) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c as any).set("user", user);
+    await next();
+  });
+  app.route(
+    "/events",
+    createEventsRouter({
+      searchRelatedEvents,
+    }),
+  );
+  return app;
+}
+
 function createPipelineScheduleTestApp({
   user = USER_A,
   scheduleEventPipeline,
@@ -526,6 +551,59 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
         total: 9,
         limit: 10,
         offset: 20,
+      });
+    });
+  });
+
+  describe("[phase:6] [regression:always] GET /events/:id/related", () => {
+    it("TC-EMBED-015: returns paginated related-event results for the current event", async () => {
+      const searchRelatedEvents = vi.fn().mockResolvedValue({
+        data: [
+          makeEvent({
+            id: "evt_related_1",
+            title: "Late Night Jam Session",
+            creator: {
+              id: USER_A.id,
+              displayName: null,
+              email: USER_A.email,
+            },
+          }),
+        ],
+        total: 2,
+        limit: 2,
+        offset: 0,
+      });
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
+        makeEvent({ id: "evt_source" }) as never,
+      );
+
+      const res = await createRelatedEventsTestApp({
+        searchRelatedEvents,
+      }).request("/events/evt_source/related?limit=2");
+
+      expect(res.status).toBe(200);
+      expect(searchRelatedEvents).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          eventId: "evt_source",
+          type: "EVENT",
+          limit: 2,
+        }),
+      );
+      const body = (await res.json()) as {
+        data: Array<{ id: string; title: string }>;
+        pagination: { total: number; limit: number; offset: number };
+      };
+      expect(body.data).toEqual([
+        expect.objectContaining({
+          id: "evt_related_1",
+          title: "Late Night Jam Session",
+        }),
+      ]);
+      expect(body.pagination).toEqual({
+        total: 2,
+        limit: 2,
+        offset: 0,
       });
     });
   });

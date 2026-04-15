@@ -293,13 +293,19 @@ export function BrowsePage({
               </div>
             </div>
 
-            <div className="hidden lg:block lg:min-h-0 lg:overflow-y-auto">
+        <div className="hidden lg:block lg:min-h-0 lg:overflow-y-auto">
               {selectedEventId && hasSelectedEvent ? (
                 <EventDetailSurface
                   eventId={selectedEventId}
                   mode="panel"
                   browsePath={browseType === "GIG" ? "/gigs" : "/events"}
                   browseLabel={title}
+                  browseSearch={{
+                    statusMode: resolvedFilters.statusMode as never,
+                    source: resolvedFilters.source || undefined,
+                    sort: resolvedFilters.sort as never,
+                    selected: selectedEventId,
+                  }}
                   onDeleteSuccess={onClearSelectedEvent}
                 />
               ) : (
