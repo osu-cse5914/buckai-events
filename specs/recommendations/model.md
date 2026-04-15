@@ -8,15 +8,17 @@ The recommendation model provides personalized ranking of events and gigs for ea
 
 ## Interim Ranking (Planned First Release)
 
-Until the custom model is designed, the planned `GET /recommendations` endpoint uses a simple heuristic ranking:
+Until the custom model is designed, the `GET /recommendations` endpoint uses a weighted scoring model:
 
 1. **Candidate selection**: Events with status OPEN or IN_PROGRESS and startAt in the future.
-2. **Interest matching**: Events whose category matches any of the user's interests are boosted.
-3. **Popularity**: Events with more total interactions rank higher.
-4. **Recency**: Events starting sooner rank higher.
-5. **Dismiss penalty**: Events the user has dismissed are excluded.
+2. **Dismiss exclusion**: Events the user has dismissed are excluded before scoring.
+3. **Scoring**: Each candidate receives a score combining:
+   - **Interest alignment** (dominant weight): events whose category matches any stated user interest receive a large fixed bonus that cannot be overcome by popularity alone.
+   - **Popularity** (secondary, capped): log-normalized interaction count, capped so even very popular events cannot outrank an interest-matched one.
+4. **Tiebreakers**: Equal-score events are ordered by recency (sooner start first), then by stable id.
+5. **Fallback**: Users with no interests and no interactions receive popularity-then-recency ranking (`POPULARITY_FALLBACK` mode).
 
-This is a deterministic query-time sort — no model training, no vectors, no caching layer. It is implemented as a database query with ORDER BY clauses.
+This is a deterministic query-time computation — no model training, no vectors, no caching layer.
 
 ## Input Signals (interim)
 
@@ -69,6 +71,16 @@ GIVEN event A starts tomorrow and event B starts in 30 days
 AND both have equal popularity and interest match
 WHEN user A sends GET /recommendations
 THEN event A ranks higher than event B
+```
+
+### S-REC-MODEL-7: Profile alignment outranks high popularity
+
+```
+GIVEN user A has interests ["music"]
+AND event E has category "music" and 0 interactions
+AND event F has category "sports" and 100 interactions
+WHEN user A sends GET /recommendations
+THEN event E ranks higher than event F
 ```
 
 ### S-REC-MODEL-4: Dismissed events excluded
