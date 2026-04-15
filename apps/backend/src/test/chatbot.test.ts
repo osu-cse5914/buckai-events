@@ -1245,11 +1245,7 @@ describe("[phase:6] [regression:always] Chatbot reply suggestions", () => {
             {
               type: "reply-suggestions",
               toolName: "suggestReplies",
-              suggestions: [
-                "Show me more events",
-                "Any free options?",
-                "What else is happening?",
-              ],
+              suggestions: ["Show me more events", "Any free options?", "What else is happening?"],
             },
           ],
         }),

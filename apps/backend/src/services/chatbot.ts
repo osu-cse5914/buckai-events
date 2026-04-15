@@ -285,43 +285,6 @@ function mapSearchResult(event: Record<string, unknown>) {
   };
 }
 
-function extractSuggestionTopic(text: string) {
-  const stopwords = new Set([
-    "a",
-    "an",
-    "and",
-    "about",
-    "any",
-    "are",
-    "at",
-    "can",
-    "campus",
-    "event",
-    "events",
-    "find",
-    "for",
-    "gig",
-    "gigs",
-    "help",
-    "i",
-    "looking",
-    "me",
-    "on",
-    "options",
-    "show",
-    "tell",
-    "that",
-    "the",
-    "there",
-    "to",
-    "what",
-  ]);
-  const words = text.match(/[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g) ?? [];
-  const topicalWords = words.filter((word) => !stopwords.has(word.toLowerCase()));
-
-  return topicalWords.slice(0, 2).join(" ").toLowerCase();
-}
-
 function getLatestSearchResultsPart(parts: ChatMessagePart[]) {
   for (let index = parts.length - 1; index >= 0; index -= 1) {
     const part = parts[index];
@@ -362,9 +325,7 @@ export function buildFallbackReplySuggestions(input: {
     const categories = [...new Set(items.map((i) => i.category).filter(Boolean))];
     const hasHourly = items.some((i) => i.compensation?.type === "HOURLY");
     const hasFixed = items.some((i) => i.compensation?.type !== "HOURLY");
-    const amounts = items
-      .map((i) => i.compensation?.amount)
-      .filter((a): a is number => a != null);
+    const amounts = items.map((i) => i.compensation?.amount).filter((a): a is number => a != null);
     const maxAmount = amounts.length > 0 ? Math.max(...amounts) : null;
 
     if (categories.length > 0) {
@@ -377,8 +338,7 @@ export function buildFallbackReplySuggestions(input: {
       suggestions.push("Only hourly gigs");
     } else if (hasHourly) {
       const avgHourly =
-        amounts.reduce((s, a, _, arr) => s + a / arr.length, 0) /
-        (amounts.length || 1);
+        amounts.reduce((s, a, _, arr) => s + a / arr.length, 0) / (amounts.length || 1);
       if (avgHourly > 15) {
         suggestions.push("What about lower pay?");
       } else {

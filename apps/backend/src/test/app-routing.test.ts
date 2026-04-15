@@ -3,11 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@hono/clerk-auth", () => ({
   clerkMiddleware:
-    () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>,
-    ) => {
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerkAuth", () => ({ userId: null }));
       await next();
     },
