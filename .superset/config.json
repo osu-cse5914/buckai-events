@@ -1,6 +1,0 @@
-{
-  "setup": [
-    "sh scripts/setup-worktree.sh"
-  ],
-  "teardown": []
-}
