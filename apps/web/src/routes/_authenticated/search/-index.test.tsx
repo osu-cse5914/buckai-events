@@ -155,16 +155,19 @@ function SearchHarness({
   initialSearch = "",
   initialType = "",
   initialCategory = "",
+  initialTag = "",
   initialPage = 0,
 }: {
   initialSearch?: string;
   initialType?: NonNullable<SearchRouteSearch["type"]> | "";
   initialCategory?: string;
+  initialTag?: string;
   initialPage?: number;
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [type, setType] = useState(initialType);
   const [category, setCategory] = useState(initialCategory);
+  const [tag, setTag] = useState(initialTag);
   const [page, setPage] = useState(initialPage);
 
   return (
@@ -172,11 +175,13 @@ function SearchHarness({
       search={search}
       type={type}
       category={category}
+      tag={tag}
       page={page}
       onSearchSubmit={(value) => {
         setSearch(value.search);
         setType(value.type);
         setCategory(value.category);
+        setTag(value.tag);
         setPage(0);
       }}
       onPageChange={setPage}
@@ -188,6 +193,7 @@ async function renderSearchPage(options?: {
   initialSearch?: string;
   initialType?: NonNullable<SearchRouteSearch["type"]> | "";
   initialCategory?: string;
+  initialTag?: string;
   initialPage?: number;
 }) {
   const queryClient = createQueryClient();
@@ -210,6 +216,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       q: "  hackathon ",
       type: "EVENT",
       category: " music ",
+      tag: " live-music ",
       page: "3",
     });
     const deps = capturedLoaderDeps({ search });
@@ -223,6 +230,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       q: "hackathon",
       type: "EVENT",
       category: "music",
+      tag: "live-music",
       page: 3,
     });
     expect(state.loadSearchRouteDataMock).toHaveBeenCalledWith({
@@ -232,6 +240,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
         query: "hackathon",
         type: "EVENT",
         category: "music",
+        tag: "live-music",
       },
       page: 2,
       enabled: true,
@@ -264,6 +273,144 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       expect(lastCall?.[0].query.category).toBe("music");
     });
     expect(state.mockSemanticSearchGet).not.toHaveBeenCalled();
+  });
+
+  it("TC-PAGES-027: uses the structured events listing when only a tag filter is active", async () => {
+    state.mockEventsGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage({ initialTag: "music" });
+
+    await vi.waitFor(() => {
+      const lastCall = state.mockEventsGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.tag).toBe("music");
+    });
+    expect(state.mockSemanticSearchGet).not.toHaveBeenCalled();
+    expect(await screen.findByText('Results for tag "music"')).toBeInTheDocument();
+  });
+
+  it("TC-PAGES-032: shows filter syntax hints when the search box is empty", async () => {
+    await renderSearchPage();
+
+    expect(
+      screen.getByText(/Try filters like/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("tag:group-fitness")).toBeInTheDocument();
+    expect(screen.getByText("type:gig")).toBeInTheDocument();
+    expect(screen.getByText("category:fitness")).toBeInTheDocument();
+  });
+
+  it("TC-PAGES-028: parses tag query syntax into a structured tag filter", async () => {
+    const user = userEvent.setup();
+    state.mockEventsGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage();
+
+    const searchInput = screen.getByRole("textbox", { name: "Search query" });
+    await user.type(searchInput, "tag: group-fitness");
+
+    await vi.waitFor(() => {
+      const lastCall = state.mockEventsGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.tag).toBe("group-fitness");
+    });
+    expect(state.mockSemanticSearchGet).not.toHaveBeenCalled();
+    expect(searchInput).toHaveTextContent("tag: group-fitness");
+    expect(screen.getAllByText("tag: group-fitness")[0]).toHaveAttribute(
+      "data-search-token-type",
+      "filter",
+    );
+  });
+
+  it("TC-PAGES-029: equivalent tag syntax does not trigger a redundant refetch", async () => {
+    const user = userEvent.setup();
+    state.mockEventsGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage({ initialTag: "group-fitness" });
+
+    await vi.waitFor(() => {
+      expect(state.mockEventsGet).toHaveBeenCalledTimes(1);
+    });
+
+    const searchInput = screen.getByRole("textbox", { name: "Search query" });
+    await user.clear(searchInput);
+    await user.type(searchInput, "tag: group-fitness");
+
+    expect(searchInput).toHaveTextContent("tag: group-fitness");
+    expect(screen.getAllByText("tag: group-fitness")[0]).toHaveAttribute(
+      "data-search-token-type",
+      "filter",
+    );
+    expect(state.mockEventsGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("TC-PAGES-030: keeps typed characters in order while entering tag syntax", async () => {
+    const user = userEvent.setup();
+    state.mockEventsGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage();
+
+    const searchInput = screen.getByRole("textbox", { name: "Search query" });
+    await user.type(searchInput, "tag:g");
+    expect(searchInput).toHaveTextContent("tag:g");
+
+    await user.type(searchInput, "r");
+    expect(searchInput).toHaveTextContent("tag:gr");
+  });
+
+  it("TC-PAGES-031: parses multiple inline filters into structured search state", async () => {
+    const user = userEvent.setup();
+    state.mockSemanticSearchGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage();
+
+    const searchInput = screen.getByRole("textbox", { name: "Search query" });
+    await user.type(
+      searchInput,
+      "pickup type:gig category:fitness tag:group-fitness",
+    );
+
+    await vi.waitFor(() => {
+      const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.query).toBe("pickup");
+      expect(lastCall?.[0].query.type).toBe("GIG");
+      expect(lastCall?.[0].query.category).toBe("fitness");
+      expect(lastCall?.[0].query.tag).toBe("group-fitness");
+    });
+
+    expect(screen.getAllByText("type:gig")[0]).toHaveAttribute(
+      "data-search-token-type",
+      "filter",
+    );
+    expect(screen.getAllByText("category:fitness")[0]).toHaveAttribute(
+      "data-search-token-type",
+      "filter",
+    );
+    expect(screen.getAllByText("tag:group-fitness")[0]).toHaveAttribute(
+      "data-search-token-type",
+      "filter",
+    );
+  });
+
+  it("TC-PAGES-033: shows plain-text suggestions while typing and replaces the whole query when selected", async () => {
+    const user = userEvent.setup();
+    state.mockSemanticSearchGet.mockResolvedValue(makeResponse([]));
+
+    await renderSearchPage();
+
+    const searchInput = screen.getByRole("textbox", { name: "Search query" });
+    await user.type(searchInput, "group fitness");
+
+    expect(await screen.findByRole("button", { name: "group fitness" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "group fitness events" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "group fitness gigs" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "group fitness this week" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "group fitness gigs" }));
+
+    expect(searchInput).toHaveTextContent("group fitness gigs");
+    await vi.waitFor(() => {
+      const lastCall = state.mockSemanticSearchGet.mock.calls.at(-1);
+      expect(lastCall?.[0].query.query).toBe("group fitness gigs");
+    });
   });
 
   it("TC-PAGES-020: shows a results-shaped skeleton while an active search is loading", async () => {
@@ -314,6 +461,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
       initialSearch: "hackathon",
       initialType: "EVENT",
       initialCategory: "music",
+      initialTag: "live-music",
       initialPage: 2,
     });
 
@@ -322,7 +470,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
 
     expect(detailLink).toHaveAttribute(
       "href",
-      "/events/evt_1?returnTo=search&q=hackathon&type=EVENT&category=music&page=3",
+      "/events/evt_1?returnTo=search&q=hackathon&type=EVENT&category=music&tag=live-music&page=3",
     );
   });
 
