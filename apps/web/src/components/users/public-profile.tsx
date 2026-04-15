@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { CalendarIcon, UserCheckIcon, UserPlusIcon } from "lucide-react";
 import { STATUS_STYLES, STATUS_LABELS } from "@/lib/event-utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +50,7 @@ export interface PublicProfileData {
 export interface FollowUser {
   id: string;
   displayName: string | null;
+  imageUrl?: string | null;
   major: string | null;
   gradYear: number | null;
 }
@@ -232,9 +234,10 @@ export function FollowListDialog({
                 onClick={() => onOpenChange(false)}
                 className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-muted transition-colors"
               >
-                <div className="size-8 rounded-full bg-muted-foreground/20 flex items-center justify-center text-sm font-semibold shrink-0">
-                  {(u.displayName ?? "?")[0]?.toUpperCase()}
-                </div>
+                <Avatar size="sm" className="shrink-0">
+                  {u.imageUrl ? <AvatarImage src={u.imageUrl} alt={u.displayName ?? "User"} /> : null}
+                  <AvatarFallback>{(u.displayName ?? "?")[0]?.toUpperCase()}</AvatarFallback>
+                </Avatar>
                 <div className="flex flex-col min-w-0">
                   <span className="text-sm font-medium truncate">
                     {u.displayName ?? "Unknown"}
@@ -287,36 +290,29 @@ export function ProfileError() {
 export function ProfileSkeleton() {
   return (
     <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
-      <div className="flex items-start gap-4 sm:gap-5">
-        <Skeleton className="size-20 rounded-full" />
-        <div className="flex-1 space-y-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-4">
+          <Skeleton className="size-20 rounded-full" />
           <div className="space-y-2">
             <Skeleton className="h-10 w-48" />
             <Skeleton className="h-4 w-40" />
           </div>
           <div className="flex flex-wrap gap-6">
-            <Skeleton className="h-14 w-20" />
-            <Skeleton className="h-14 w-20" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-24" />
           </div>
-          <Skeleton className="h-10 w-24" />
         </div>
+        <Skeleton className="size-9 rounded-full" />
       </div>
       <FramedList>
         <FramedListItems>
-          {Array.from({ length: 3 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="flex flex-col gap-1 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
               <Skeleton className="h-4 w-28" />
               <Skeleton className="h-4 w-32" />
             </div>
           ))}
         </FramedListItems>
-        <FramedListInset className="border-t py-6">
-          <Skeleton className="h-4 w-20" />
-          <div className="mt-3 flex gap-2">
-            <Skeleton className="h-6 w-16 rounded-full" />
-            <Skeleton className="h-6 w-20 rounded-full" />
-          </div>
-        </FramedListInset>
       </FramedList>
       <div className="rounded-2xl border p-6">
         <Skeleton className="h-7 w-20" />

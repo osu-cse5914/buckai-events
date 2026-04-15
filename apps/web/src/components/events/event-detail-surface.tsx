@@ -32,7 +32,6 @@ import {
   browsePathForEventType,
   formatDateLong,
   STATUS_LABELS,
-  STATUS_STYLES,
 } from "@/lib/event-utils";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";

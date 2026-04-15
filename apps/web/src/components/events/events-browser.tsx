@@ -25,13 +25,10 @@ import {
 } from "@/lib/queries";
 import {
   buildEventMetaLine,
-  STATUS_LABELS,
-  STATUS_STYLES,
   formatDate,
 } from "@/lib/event-utils";
 import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -288,7 +285,6 @@ export function EventsEmptyState({
 export function EventsList({
   events,
   selectedEventId,
-  showTypeBadge = true,
   showSaveAction = true,
   detailSearch,
   getItemAriaLabel,
@@ -297,7 +293,6 @@ export function EventsList({
 }: {
   events: EventListItem[];
   selectedEventId?: string;
-  showTypeBadge?: boolean;
   showSaveAction?: boolean;
   detailSearch?: EventDetailRouteSearch;
   getItemAriaLabel?: (event: EventListItem) => string;

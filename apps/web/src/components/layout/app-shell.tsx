@@ -31,7 +31,7 @@ export const navLinks = [
   { to: "/you", label: "You" },
 ] as const;
 
-export const utilityNavLinks = [{ to: "/ai", label: "BuckAI" }] as const;
+export const utilityNavLinks = [{ to: "/ai", label: "BuckAI Events" }] as const;
 
 const publicNavLinks = navLinks.filter((item) =>
   PUBLIC_DISCOVERY_NAV_PATHS.includes(

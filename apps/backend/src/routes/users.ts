@@ -23,16 +23,16 @@ import {
   listFollowing,
 } from "../services/social";
 
-function readClerkProfileExtras(clerkUser: {
+function readClerkProfileExtras(clerkUser?: {
   imageUrl?: string | null;
   publicMetadata?: Record<string, unknown>;
   unsafeMetadata?: Record<string, unknown>;
 }) {
   const metadataPronouns =
-    clerkUser.publicMetadata?.pronouns ?? clerkUser.unsafeMetadata?.pronouns;
+    clerkUser?.publicMetadata?.pronouns ?? clerkUser?.unsafeMetadata?.pronouns;
 
   return {
-    imageUrl: clerkUser.imageUrl ?? null,
+    imageUrl: clerkUser?.imageUrl ?? null,
     pronouns: typeof metadataPronouns === "string" ? metadataPronouns : null,
   };
 }
@@ -41,6 +41,28 @@ async function loadClerkProfileExtras(c: { get: (key: string) => any }, clerkId:
   const clerk = c.get("clerk");
   const clerkUser = await clerk.users.getUser(clerkId);
   return readClerkProfileExtras(clerkUser);
+}
+
+async function enrichUsersWithClerkImages(
+  c: { get: (key: string) => any },
+  users: Array<{ id: string; clerkId?: string | null; displayName: string | null; major: string | null; gradYear: number | null }>,
+) {
+  const clerk = c.get("clerk");
+
+  return Promise.all(
+    users.map(async (user) => {
+      const clerkUser = user.clerkId ? await clerk.users.getUser(user.clerkId) : undefined;
+      const extras = readClerkProfileExtras(clerkUser);
+
+      return {
+        id: user.id,
+        displayName: user.displayName,
+        major: user.major,
+        gradYear: user.gradYear,
+        imageUrl: extras.imageUrl,
+      };
+    }),
+  );
 }
 
 export const users = new Hono<AppEnv>()
@@ -133,12 +155,14 @@ export const users = new Hono<AppEnv>()
     const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
     const prisma = getPrisma(c);
     const result = await listFollowers(prisma, { userId, limit, offset });
-    return c.json(paginated(result.data, { total: result.total, limit: result.limit, offset: result.offset }));
+    const data = await enrichUsersWithClerkImages(c, result.data as Array<any>);
+    return c.json(paginated(data, { total: result.total, limit: result.limit, offset: result.offset }));
   })
   .get("/:id/following", validateUserIdParam, validatePaginationQuery, async (c) => {
     const { id: userId } = c.req.valid("param");
     const { limit, offset } = resolvePaginationQuery(c.req.valid("query"));
     const prisma = getPrisma(c);
     const result = await listFollowing(prisma, { userId, limit, offset });
-    return c.json(paginated(result.data, { total: result.total, limit: result.limit, offset: result.offset }));
+    const data = await enrichUsersWithClerkImages(c, result.data as Array<any>);
+    return c.json(paginated(data, { total: result.total, limit: result.limit, offset: result.offset }));
   });

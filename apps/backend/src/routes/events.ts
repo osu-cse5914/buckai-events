@@ -107,8 +107,8 @@ async function handleRelatedEvents(
 
 export function createEventsRouter({
   scheduleEventPipeline: schedulePipeline = scheduleEventPipeline,
-  searchSemanticEvents: searchSemanticEvents = handleSemanticSearch,
-  searchRelatedEvents: searchRelatedEvents = handleRelatedEvents,
+  searchSemanticEvents: semanticSearchHandler = handleSemanticSearch,
+  searchRelatedEvents: relatedEventsHandler = handleRelatedEvents,
 }: {
   scheduleEventPipeline?: EventPipelineScheduler;
   searchSemanticEvents?: SemanticSearchHandler;
@@ -143,7 +143,7 @@ export function createEventsRouter({
         defaultLimit: 10,
         maxLimit: 25,
       });
-      const results = await searchSemanticEvents(c, {
+      const results = await semanticSearchHandler(c, {
         query: query.query ?? "",
         limit: pagination.limit,
         offset: pagination.offset,
@@ -170,7 +170,7 @@ export function createEventsRouter({
         maxLimit: 6,
       });
       const event = await getEventByIdOrThrow(prisma, id);
-      const results = await searchRelatedEvents(c, {
+      const results = await relatedEventsHandler(c, {
         eventId: id,
         type: event.type,
         limit: pagination.limit,

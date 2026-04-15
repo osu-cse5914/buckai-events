@@ -1,4 +1,4 @@
-# Social OSU — Agent Development Workflow
+# BuckAI Events — Agent Development Workflow
 
 This file defines the development workflow for all agents working on this codebase.
 

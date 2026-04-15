@@ -3,6 +3,8 @@ import { Hono } from "hono";
 
 vi.mock("../lib/prisma");
 
+const mockClerkGetUser = vi.fn();
+
 import { getPrisma, getPrismaClient } from "../lib/prisma";
 import { ProblemError, notFound, problemFromError } from "../lib/problem-details";
 import { buildAuthUser, buildFollow } from "./factories";
@@ -24,7 +26,11 @@ function createTestApp(user = USER_A) {
     return problemFromError(c, error);
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.use("/*", async (c, next) => { (c as any).set("user", user); await next(); });
+  app.use("/*", async (c, next) => {
+    (c as any).set("user", user);
+    (c as any).set("clerk", { users: { getUser: mockClerkGetUser } });
+    await next();
+  });
   app.route("/users", users);
   return app;
 }
@@ -36,6 +42,7 @@ describe("[phase:3] [regression:always] Follow API", () => {
     mockPrisma = createMockPrisma();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+    mockClerkGetUser.mockResolvedValue({ imageUrl: "https://example.com/avatar.png" });
     // Default $transaction: execute all ops
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (mockPrisma.$transaction as any).mockImplementation(
@@ -156,9 +163,9 @@ describe("[phase:3] [regression:always] Follow API", () => {
   // TC-FOL-006
   it("TC-FOL-006: GET /:id/followers returns paginated follower profiles", async () => {
     const followerProfiles = [
-      { id: "user_c", displayName: "User C", major: "CS", gradYear: 2026 },
-      { id: "user_d", displayName: "User D", major: "Math", gradYear: 2025 },
-      { id: "user_e", displayName: "User E", major: "ECE", gradYear: 2027 },
+      { id: "user_c", clerkId: "clerk_c", displayName: "User C", major: "CS", gradYear: 2026 },
+      { id: "user_d", clerkId: "clerk_d", displayName: "User D", major: "Math", gradYear: 2025 },
+      { id: "user_e", clerkId: "clerk_e", displayName: "User E", major: "ECE", gradYear: 2027 },
     ];
     vi.mocked(mockPrisma.follow.findMany).mockResolvedValue(
       followerProfiles.map((p) => ({ follower: p })) as never,
@@ -171,7 +178,11 @@ describe("[phase:3] [regression:always] Follow API", () => {
     const body = await res.json() as { data: unknown[]; pagination: { total: number } };
     expect(body.data).toHaveLength(3);
     expect(body.pagination.total).toBe(3);
-    expect(body.data[0]).toMatchObject({ id: "user_c", displayName: "User C" });
+    expect(body.data[0]).toMatchObject({
+      id: "user_c",
+      displayName: "User C",
+      imageUrl: "https://example.com/avatar.png",
+    });
     expect(mockPrisma.follow.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { followeeId: USER_B_ID } }),
     );
@@ -181,6 +192,7 @@ describe("[phase:3] [regression:always] Follow API", () => {
   it("TC-FOL-007: GET /:id/following returns paginated following profiles", async () => {
     const followingProfiles = Array.from({ length: 5 }, (_, i) => ({
       id: `user_${i}`,
+      clerkId: `clerk_${i}`,
       displayName: `User ${i}`,
       major: "CS",
       gradYear: 2026,
@@ -196,6 +208,7 @@ describe("[phase:3] [regression:always] Follow API", () => {
     const body = await res.json() as { data: unknown[]; pagination: { total: number } };
     expect(body.data).toHaveLength(5);
     expect(body.pagination.total).toBe(5);
+    expect(body.data[0]).toMatchObject({ imageUrl: "https://example.com/avatar.png" });
     expect(mockPrisma.follow.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { followerId: USER_A.id } }),
     );

@@ -484,7 +484,7 @@ describe("[phase:6] [regression:always] SearchPage", () => {
     await renderSearchPage({ initialSearch: "campus jazz tonight" });
 
     const handoffLink = await screen.findByRole("link", {
-      name: "Ask BuckAI",
+      name: "Ask BuckAI Events",
     });
     expect(handoffLink).toHaveAttribute(
       "href",

@@ -16,9 +16,7 @@ function FeaturedRoute() {
     const nextType = "type" in next ? next.type : search.type;
 
     return navigate({
-      search: {
-        ...(nextType ? { type: nextType } : {}),
-      },
+      search: nextType ? { type: nextType } : {},
       replace: true,
     });
   };

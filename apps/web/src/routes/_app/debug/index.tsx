@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
@@ -86,15 +86,7 @@ export function DebugPage() {
       .catch(() => {});
   }, [api]);
 
-  useEffect(() => {
-    if (currentUser?.role !== "ADMIN") {
-      return;
-    }
-
-    void refreshPipelineJobs();
-  }, [api, currentUser?.role]);
-
-  const refreshPipelineJobs = async () => {
+  const refreshPipelineJobs = useCallback(async () => {
     setIsLoadingPipelineJobs(true);
     setPipelineError(null);
 
@@ -113,7 +105,15 @@ export function DebugPage() {
     } finally {
       setIsLoadingPipelineJobs(false);
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    if (currentUser?.role !== "ADMIN") {
+      return;
+    }
+
+    void refreshPipelineJobs();
+  }, [currentUser?.role, refreshPipelineJobs]);
 
   const handleViewApiHealth = async () => {
     setIsCheckingHealth(true);

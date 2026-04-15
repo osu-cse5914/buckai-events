@@ -35,7 +35,6 @@ import {
 } from "@/components/you/you-subpage-header";
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
-import { IconLabelButton } from "@/components/ui/icon-label-button";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 
 function readSavedCount(count: number) {
@@ -339,14 +338,15 @@ export function YouCollectionsPage() {
         action={(
           <Sheet open={isCreateOpen} onOpenChange={handleCreateOpenChange}>
             <SheetTrigger asChild>
-              <IconLabelButton
+              <IconCircleButton
                 type="button"
                 icon={<PlusIcon className="size-4" />}
+                className="rounded-xl"
                 aria-label="New collection"
                 title="New collection"
               >
-                New collection
-              </IconLabelButton>
+                <span className="sr-only">New collection</span>
+              </IconCircleButton>
             </SheetTrigger>
 
             <SheetContent className="sm:max-w-md">

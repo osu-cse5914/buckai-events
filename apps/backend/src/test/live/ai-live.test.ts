@@ -150,7 +150,7 @@ describe("[phase:4] [regression:always] Live AI Gateway smoke", () => {
 
     const result = await embed({
       model: router.getEmbeddingModel("embedding"),
-      value: "Social OSU live embedding smoke test",
+      value: "BuckAI Events live embedding smoke test",
       providerOptions: {
         [task.provider.id]: {
           dimensions: task.model.dimensions,

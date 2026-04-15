@@ -459,7 +459,7 @@ export function SearchPage({
                       }}
                     >
                       <SparklesIcon />
-                      Ask BuckAI
+                      Ask BuckAI Events
                     </Link>
                   </Button>
                 ) : null}

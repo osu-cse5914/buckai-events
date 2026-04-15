@@ -158,7 +158,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     );
   });
 
-  it("keeps the chatbot system prompt scoped to Social OSU event workflows", () => {
+  it("keeps the chatbot system prompt scoped to BuckAI Events event workflows", () => {
     expect(CHATBOT_SYSTEM_PROMPT).toContain("Ohio State University");
     expect(CHATBOT_SYSTEM_PROMPT).toContain("events, gigs, and campus activities");
     expect(CHATBOT_SYSTEM_PROMPT).toContain("decline");
@@ -193,14 +193,14 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     const assistantMessage = createMessage({
       id: "msg_assistant_6",
       role: "ASSISTANT",
-      content: "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+      content: "I can help with events and gigs on BuckAI Events, but I can't help with the weather.",
     });
     const streamText = createStreamTextStub(async ({ tools }) => {
       expect(tools.searchEvents.execute).toBeTypeOf("function");
       expect(tools.searchGigs.execute).toBeTypeOf("function");
 
       return [
-        "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+        "I can help with events and gigs on BuckAI Events, but I can't help with the weather.",
       ];
     });
 
@@ -220,7 +220,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
 
     expect(res.status).toBe(200);
     expect(decodeSseText(await res.text())).toBe(
-      "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+      "I can help with events and gigs on BuckAI Events, but I can't help with the weather.",
     );
     expect(mockPrisma.event.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.application.create).not.toHaveBeenCalled();
@@ -230,7 +230,7 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
         data: expect.objectContaining({
           role: "ASSISTANT",
           content:
-            "I can help with events and gigs on Social OSU, but I can't help with the weather.",
+            "I can help with events and gigs on BuckAI Events, but I can't help with the weather.",
         }),
       }),
     );

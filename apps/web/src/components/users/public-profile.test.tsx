@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
+  FollowListDialog,
   ProfileView,
   ProfileNotFound,
   ProfileError,
@@ -147,5 +148,29 @@ describe("[phase:1] [regression:always] Public profile page", () => {
 
     const skeletons = container.querySelectorAll('[data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it("renders avatar rows in follow lists when profile images are available", () => {
+    render(
+      <FollowListDialog
+        open
+        onOpenChange={() => {}}
+        title="Followers"
+        isLoading={false}
+        users={[
+          {
+            id: "user-1",
+            displayName: "Brutus Buckeye",
+            imageUrl: "https://example.com/avatar.png",
+            major: "Computer Science",
+            gradYear: 2025,
+          },
+        ]}
+      />,
+    );
+
+    const avatar = document.querySelector('[data-slot="avatar"]');
+    expect(avatar).not.toBeNull();
+    expect(screen.getByText("Brutus Buckeye")).toBeInTheDocument();
   });
 });

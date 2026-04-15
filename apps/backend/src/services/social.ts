@@ -220,7 +220,15 @@ export async function listFollowers(prisma: PrismaClient, input: ListFollowInput
     prisma.follow.findMany({
       where: { followeeId: userId },
       include: {
-        follower: { select: { id: true, displayName: true, major: true, gradYear: true } },
+        follower: {
+          select: {
+            id: true,
+            clerkId: true,
+            displayName: true,
+            major: true,
+            gradYear: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -244,7 +252,15 @@ export async function listFollowing(prisma: PrismaClient, input: ListFollowInput
     prisma.follow.findMany({
       where: { followerId: userId },
       include: {
-        followee: { select: { id: true, displayName: true, major: true, gradYear: true } },
+        followee: {
+          select: {
+            id: true,
+            clerkId: true,
+            displayName: true,
+            major: true,
+            gradYear: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       take: limit,

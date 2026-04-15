@@ -14,7 +14,6 @@ import {
   EventsEmptyState,
   EventsPagination,
 } from "@/components/events/events-browser";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   YouSubpageHeader,
@@ -27,7 +26,6 @@ import {
   FramedListItems,
 } from "@/components/ui/framed-list";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
-import { IconLabelButton } from "@/components/ui/icon-label-button";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 
 function readCountLabel(count: number) {

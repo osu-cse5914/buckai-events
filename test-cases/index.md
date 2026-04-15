@@ -1,6 +1,6 @@
 # Test Case Registry
 
-This directory manages all test cases — automated and manual — for the Social OSU platform. Test cases are derived from [specs](/specs) and organized by feature area.
+This directory manages all test cases — automated and manual — for the BuckAI Events platform. Test cases are derived from [specs](/specs) and organized by feature area.
 
 ## Structure
 

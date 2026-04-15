@@ -12,7 +12,7 @@ export function SocialFeedPage() {
           </p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight">Social Feed</h1>
           <p className="mt-3 text-base text-muted-foreground">
-            Track what people you follow are creating and saving across Social OSU.
+            Track what people you follow are creating and saving across BuckAI Events.
           </p>
         </div>
       </header>

@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useApiClient } from "@/lib/api";
 import { requireSignedInBeforeLoad } from "@/lib/route-access";
 import {
@@ -24,6 +22,7 @@ import {
 } from "@/lib/queries";
 import {
   FollowListDialog,
+  ProfileSkeleton,
   type FollowUser,
 } from "@/components/users/public-profile";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
@@ -88,46 +87,7 @@ export function ProfilePage() {
         : null;
 
   if (isLoading) {
-    return (
-      <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-4 w-72 max-w-full" />
-          </div>
-          <Skeleton className="h-10 w-20" />
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
-          <Card className="gap-4">
-            <CardHeader>
-              <Skeleton className="h-7 w-32" />
-              <Skeleton className="h-4 w-40" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-20 w-full rounded-xl" />
-              <Skeleton className="h-20 w-full rounded-xl" />
-            </CardContent>
-          </Card>
-
-          <Card className="gap-4">
-            <CardHeader>
-              <Skeleton className="h-7 w-36" />
-              <Skeleton className="h-4 w-56" />
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  className={index === 4 ? "h-24 rounded-xl sm:col-span-2" : "h-24 rounded-xl"}
-                />
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (error || !user) {

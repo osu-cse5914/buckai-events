@@ -42,7 +42,7 @@ import { Textarea } from "@/components/ui/textarea";
 const CONVERSATION_LIMIT = 50;
 const MESSAGE_LIMIT = 100;
 const INITIAL_BUCKAI_MESSAGE =
-  "Hi, I'm BuckAI. I can help you find events, gigs, and campus activity around Social OSU. Ask for recommendations, what's happening tonight, or help narrowing down options.";
+  "Hi, I'm BuckAI Events. I can help you find events, gigs, and campus activity around BuckAI Events. Ask for recommendations, what's happening tonight, or help narrowing down options.";
 
 function AiConversationsSkeleton() {
   return (
@@ -303,11 +303,11 @@ type PendingActionDetail = {
 function getPendingActionDescription(action: ConversationPendingAction) {
   switch (action.toolName) {
     case "applyToGig":
-      return "BuckAI is ready to submit this gig application for you.";
+      return "BuckAI Events is ready to submit this gig application for you.";
     case "saveEvent":
-      return "BuckAI is ready to save this event to one of your collections.";
+      return "BuckAI Events is ready to save this event to one of your collections.";
     case "createEvent":
-      return "BuckAI is ready to create this listing on Social OSU.";
+      return "BuckAI Events is ready to create this listing on BuckAI Events.";
   }
 }
 
@@ -724,7 +724,7 @@ export function AiPage({
       </AlertDialog>
 
       <div className="min-w-0">
-        <h1 className="text-3xl font-bold tracking-tight">Ask BuckAI</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Ask BuckAI Events</h1>
       </div>
 
       <div className="overflow-hidden rounded-2xl border bg-background lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">

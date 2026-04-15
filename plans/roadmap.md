@@ -1,4 +1,4 @@
-# Social OSU — Project Roadmap
+# BuckAI Events — Project Roadmap
 
 > Generated from `/specs`. This is the living plan for implementation.
 > Each phase is ~1 sprint (1–2 weeks depending on team size).

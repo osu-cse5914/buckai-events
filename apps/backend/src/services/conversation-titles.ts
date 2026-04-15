@@ -19,7 +19,7 @@ type ResolveTitleModelLike = (env?: AIEnvironment) => {
 };
 
 const CONVERSATION_TITLE_PROMPT = [
-  "Generate a concise title for a Social OSU conversation.",
+  "Generate a concise title for a BuckAI Events conversation.",
   "Use no more than 5 words.",
   "Return only the title text with no quotes or punctuation decoration.",
 ].join(" ");
