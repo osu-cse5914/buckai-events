@@ -18,6 +18,7 @@ import {
   PAGE_SIZE,
   queryKeys,
 } from "@/lib/queries";
+import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { cn } from "@/lib/utils";
 
 type FeaturedFilter = "" | "EVENT" | "GIG";
@@ -94,6 +95,10 @@ export function FeaturedPage({
   const recommendedItems = recommendedPages.flatMap((page) => page.items);
   const recommendedMeta = recommendedPages[0]?.meta;
   const rankingMode = recommendedMeta?.rankingMode;
+  const detailSearch = {
+    returnTo: "featured" as const,
+    type: type || undefined,
+  };
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
@@ -192,7 +197,7 @@ export function FeaturedPage({
             ) : null}
             {recommendedItems.length > 0 ? (
               <>
-                <EventsList events={recommendedItems} />
+                <EventsList events={recommendedItems} detailSearch={detailSearch} />
                 <div className="flex items-center justify-between gap-4 border-t px-4 py-4 sm:px-5">
                   <p className="text-sm text-muted-foreground">
                     Showing {recommendedItems.length} of{" "}
@@ -222,7 +227,10 @@ export function FeaturedPage({
           hidden={activeLane !== "following"}
           className={cn(activeLane === "following" ? "block" : "hidden")}
         >
-          <FollowingSection className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700" />
+          <FollowingSection
+            className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700"
+            detailSearch={detailSearch}
+          />
         </div>
 
         <div
@@ -240,6 +248,7 @@ export function FeaturedPage({
           >
             <FeaturedPreviewSectionState
               items={popularQuery.data?.items ?? []}
+              detailSearch={detailSearch}
               isPending={popularQuery.isPending}
               isError={popularQuery.isError}
               error={popularQuery.error}
@@ -265,6 +274,7 @@ export function FeaturedPage({
           >
             <FeaturedPreviewSectionState
               items={upcomingQuery.data?.items ?? []}
+              detailSearch={detailSearch}
               isPending={upcomingQuery.isPending}
               isError={upcomingQuery.isError}
               error={upcomingQuery.error}
@@ -318,6 +328,7 @@ function FeaturedSectionInset({ children }: { children: ReactNode }) {
 
 function FeaturedPreviewSectionState({
   items,
+  detailSearch,
   isPending,
   isError,
   error,
@@ -326,6 +337,7 @@ function FeaturedPreviewSectionState({
   errorMessage,
 }: {
   items: Parameters<typeof EventsList>[0]["events"];
+  detailSearch?: EventDetailRouteSearch;
   isPending: boolean;
   isError: boolean;
   error: Error | null;
@@ -366,5 +378,5 @@ function FeaturedPreviewSectionState({
     );
   }
 
-  return <EventsList events={items} />;
+  return <EventsList events={items} detailSearch={detailSearch} />;
 }

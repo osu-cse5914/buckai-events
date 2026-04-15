@@ -511,3 +511,14 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: An event detail displays one or more tags
 - **When**: A user clicks a tag badge
 - **Then**: The app navigates to Search with that normalized tag applied as a filter
+
+## TC-EVT-047: Event detail returns to Featured when opened from Featured discovery
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens an event from the Featured page
+- **When**: The event detail page renders
+- **Then**: The Back link targets Featured and preserves any Featured type filter

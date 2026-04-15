@@ -63,13 +63,25 @@ vi.mock("@tanstack/react-router", () => ({
     children,
     to,
     params,
+    search,
     ...props
   }: {
     children: React.ReactNode;
     to: string;
     params?: Record<string, string>;
+    search?: Record<string, string | undefined>;
   }) => {
-    const href = params?.eventId ? `/events/${params.eventId}` : to;
+    let href = params?.eventId ? `/events/${params.eventId}` : to;
+    if (search) {
+      const query = new URLSearchParams(
+        Object.entries(search).flatMap(([key, value]) =>
+          value == null ? [] : [[key, value]],
+        ),
+      ).toString();
+      if (query) {
+        href = `${href}?${query}`;
+      }
+    }
     return (
       <a href={href} {...props}>
         {children}
@@ -341,6 +353,21 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
     await renderFeaturedPage();
 
     expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+  });
+
+  it("TC-FEED-017: featured event links preserve Featured return context", async () => {
+    state.mockRecommendationsGet.mockResolvedValue(
+      makeRecommendationResponse([makeEvent({ id: "evt_rec", title: "Recommended Show" })]),
+    );
+    state.mockPopularGet.mockResolvedValue(makeSectionResponse([]));
+    state.mockUpcomingGet.mockResolvedValue(makeSectionResponse([]));
+
+    await renderFeaturedPage({ initialType: "EVENT" });
+
+    expect(await screen.findByRole("link", { name: /Recommended Show/i })).toHaveAttribute(
+      "href",
+      "/events/evt_rec?returnTo=featured&type=EVENT",
+    );
   });
 
   it("TC-FEED-013: shows the fallback banner only from the personalized section state", async () => {

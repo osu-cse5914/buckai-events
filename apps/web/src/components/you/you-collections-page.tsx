@@ -51,6 +51,7 @@ import {
   YouSubpageHeaderSkeleton,
 } from "@/components/you/you-subpage-header";
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { IconLabelButton } from "@/components/ui/icon-label-button";
 
 function readSavedCount(count: number) {
@@ -481,18 +482,22 @@ export function YouCollectionsPage() {
                     </div>
 
                     <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                      <IconLabelButton
+                      <IconCircleButton
                         type="button"
                         variant="outline"
+                        aria-label="Rename"
+                        title="Rename"
                         icon={<PencilIcon className="size-4" />}
                         onClick={() => beginRename(collection)}
                         disabled={isMutating}
                       >
-                        Rename
-                      </IconLabelButton>
-                      <IconLabelButton
+                        <span className="sr-only">Rename</span>
+                      </IconCircleButton>
+                      <IconCircleButton
                         type="button"
                         variant="outline"
+                        aria-label={nextVisibility === "PUBLIC" ? "Make public" : "Make private"}
+                        title={nextVisibility === "PUBLIC" ? "Make public" : "Make private"}
                         icon={
                           nextVisibility === "PUBLIC" ? (
                             <GlobeIcon className="size-4" />
@@ -508,21 +513,25 @@ export function YouCollectionsPage() {
                         }
                         disabled={isMutating}
                       >
-                        {nextVisibility === "PUBLIC" ? "Make public" : "Make private"}
-                      </IconLabelButton>
+                        <span className="sr-only">
+                          {nextVisibility === "PUBLIC" ? "Make public" : "Make private"}
+                        </span>
+                      </IconCircleButton>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <IconLabelButton
+                          <IconCircleButton
                             type="button"
                             variant="outline"
+                            aria-label="Delete"
+                            title="Delete"
                             icon={<TrashIcon className="size-4" />}
                             className={cn(
                               "border-destructive/30 text-destructive hover:text-destructive",
                             )}
                             disabled={isMutating}
                           >
-                            Delete
-                          </IconLabelButton>
+                            <span className="sr-only">Delete</span>
+                          </IconCircleButton>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>

@@ -6,6 +6,7 @@ import {
   PlusIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { defaultBrowseFiltersForType } from "@/lib/event-route-search";
 import {
   Select,
@@ -154,9 +155,9 @@ export function BrowsePage({
     <section className="flex w-full flex-col gap-8 px-6 py-10 lg:h-screen lg:min-h-0 lg:gap-6 lg:overflow-hidden lg:py-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <Button
-          size="icon"
+        <IconCircleButton
           asChild
+          icon={<PlusIcon className="size-5" />}
           aria-label={browseType === "GIG" ? "Create gig" : "Create event"}
         >
           <Link
@@ -164,8 +165,11 @@ export function BrowsePage({
             search={browseType === "GIG" ? { type: "GIG" } : undefined}
           >
             <PlusIcon className="size-5" />
+            <span className="sr-only">
+              {browseType === "GIG" ? "Create gig" : "Create event"}
+            </span>
           </Link>
-        </Button>
+        </IconCircleButton>
       </div>
 
       {isLoading ? <EventsBrowseSkeleton /> : null}

@@ -13,6 +13,7 @@ import {
 } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import {
   Dialog,
   DialogContent,
@@ -34,9 +35,11 @@ async function readErrorMessage(res: Response, fallback: string) {
 export function SaveToCollectionButton({
   eventId,
   className,
+  variant = "ghost",
 }: {
   eventId: string;
   className?: string;
+  variant?: "ghost" | "outline";
 }) {
   const api = useApiClient();
   const queryClient = useQueryClient();
@@ -125,22 +128,24 @@ export function SaveToCollectionButton({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
+        <IconCircleButton
           type="button"
-          variant="ghost"
-          size="icon"
-          className={cn("size-8 rounded-full", className)}
+          variant={variant}
+          className={cn(className)}
           aria-label={triggerLabel}
           title={triggerLabel}
+          icon={
+            isMutating ? (
+              <LoaderCircleIcon className="size-4 animate-spin" />
+            ) : savedCollectionName ? (
+              <BookmarkCheckIcon className="size-4" />
+            ) : (
+              <BookmarkIcon className="size-4" />
+            )
+          }
         >
-          {isMutating ? (
-            <LoaderCircleIcon className="size-4 animate-spin" />
-          ) : savedCollectionName ? (
-            <BookmarkCheckIcon className="size-4" />
-          ) : (
-            <BookmarkIcon className="size-4" />
-          )}
-        </Button>
+          <span className="sr-only">{triggerLabel}</span>
+        </IconCircleButton>
       </DialogTrigger>
 
       <DialogContent>

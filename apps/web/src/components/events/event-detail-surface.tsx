@@ -25,10 +25,10 @@ import type {
   EventDetailRouteSearch,
   SearchRouteSearch,
 } from "@/lib/event-route-search";
-import { EventTypeBadge } from "@/components/events/event-type-badge";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
+  buildEventMetaLine,
   browsePathForEventType,
   formatDateLong,
   STATUS_LABELS,
@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import {
   Dialog,
   DialogContent,
@@ -81,7 +82,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 type EventDetailSurfaceProps = {
   eventId: string;
   mode?: "page" | "panel";
-  browsePath?: "/events" | "/gigs" | "/search";
+  browsePath?: "/events" | "/gigs" | "/search" | "/featured";
   browseLabel?: string;
   browseSearch?: SearchRouteSearch | BrowseRouteSearch;
   detailSearch?: EventDetailRouteSearch;
@@ -114,7 +115,7 @@ function buildRelatedEventSearch({
   event: { id: string; title: string; type: string };
   mode: "page" | "panel";
   detailSearch?: EventDetailRouteSearch;
-  browsePath?: "/events" | "/gigs" | "/search";
+  browsePath?: "/events" | "/gigs" | "/search" | "/featured";
   browseSearch?: SearchRouteSearch | BrowseRouteSearch;
 }) {
   if (mode === "page") {
@@ -129,6 +130,13 @@ function buildRelatedEventSearch({
     return {
       ...(browseSearch as SearchRouteSearch | undefined),
       returnTo: "search",
+    } satisfies EventDetailRouteSearch;
+  }
+
+  if (browsePath === "/featured") {
+    return {
+      ...(browseSearch as SearchRouteSearch | undefined),
+      returnTo: "featured",
     } satisfies EventDetailRouteSearch;
   }
 
@@ -436,6 +444,8 @@ export function EventDetailSurface({
     browseLabel ??
     (resolvedBrowsePath === "/search"
       ? "Search results"
+      : resolvedBrowsePath === "/featured"
+        ? "Featured"
       : event.type === "GIG"
         ? "Gigs"
         : "Events");
@@ -482,35 +492,86 @@ export function EventDetailSurface({
       <div className={cn(isPageMode ? "mt-6" : "")}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              {isPageMode ? (
-                <EventTypeBadge type={event.type} />
-              ) : null}
-              <Badge
-                variant="secondary"
-                className={STATUS_STYLES[event.status] ?? ""}
-              >
-                {STATUS_LABELS[event.status] ?? event.status}
-              </Badge>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              {buildEventMetaLine({
+                type: event.type,
+                source: event.source,
+                category: event.category,
+                status: event.status,
+              })}
+            </p>
 
             <h1 className="mt-3 text-3xl font-bold tracking-tight">{event.title}</h1>
-
-            {event.category ? (
-              <p className="mt-1 text-sm capitalize text-muted-foreground">
-                {event.category}
-              </p>
-            ) : null}
 
             {event.summary ? (
               <p className="mt-2 text-muted-foreground">{event.summary}</p>
             ) : null}
           </div>
 
-          <SaveToCollectionButton
-            eventId={event.id}
-            className="mt-0.5 size-9 rounded-full border"
-          />
+          <div className="mt-0.5 flex shrink-0 items-center gap-2">
+            {isCreator && event.type === "GIG" ? (
+              <IconCircleButton asChild variant="outline" aria-label="Manage applications" title="Manage applications" icon={<UserIcon className="size-4" />}>
+                <Link
+                  to="/events/$eventId/applications"
+                  params={{ eventId: event.id }}
+                >
+                  <UserIcon className="size-4" />
+                  <span className="sr-only">Manage applications</span>
+                </Link>
+              </IconCircleButton>
+            ) : null}
+
+            {isCreator ? (
+              <IconCircleButton asChild variant="outline" aria-label="Edit event" title="Edit event" icon={<PencilIcon className="size-4" />}>
+                <Link
+                  to="/events/$eventId/edit"
+                  params={{ eventId: event.id }}
+                >
+                  <PencilIcon className="size-4" />
+                  <span className="sr-only">Edit event</span>
+                </Link>
+              </IconCircleButton>
+            ) : null}
+
+            {isCreator ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <IconCircleButton
+                    variant="outline"
+                    aria-label="Delete"
+                    title="Delete event"
+                    icon={<TrashIcon className="size-4" />}
+                    className="border-destructive/30 text-destructive hover:text-destructive"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <span className="sr-only">
+                      {deleteMutation.isPending ? "Deleting" : "Delete"}
+                    </span>
+                  </IconCircleButton>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete event</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this event? This action
+                      cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={() => deleteMutation.mutate()}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : null}
+
+            <SaveToCollectionButton eventId={event.id} variant="outline" className="mt-0" />
+          </div>
         </div>
       </div>
 
@@ -559,6 +620,42 @@ export function EventDetailSurface({
           </div>
         ) : null}
       </div>
+
+      {isCreator && validTransitions.length > 0 ? (
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Select
+            value={statusValue || undefined}
+            onValueChange={handleStatusChange}
+            disabled={statusMutation.isPending}
+          >
+            <SelectTrigger className="w-auto">
+              <SelectValue placeholder="Change status..." />
+            </SelectTrigger>
+            <SelectContent>
+              {validTransitions.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {STATUS_LABELS[status] ?? status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {statusMutation.error ? (
+            <p className="text-sm text-destructive">
+              {statusMutation.error instanceof Error
+                ? statusMutation.error.message
+                : "Failed to update status"}
+            </p>
+          ) : null}
+          {deleteMutation.error ? (
+            <p className="text-sm text-destructive">
+              {deleteMutation.error instanceof Error
+                ? deleteMutation.error.message
+                : "Failed to delete event"}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <Separator className="my-6" />
 
@@ -744,101 +841,6 @@ export function EventDetailSurface({
         </div>
       ) : null}
 
-      {isCreator ? (
-        <>
-          <Separator className="my-6" />
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Actions</h2>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  to="/events/$eventId/edit"
-                  params={{ eventId: event.id }}
-                >
-                  <PencilIcon className="mr-1 size-4" />
-                  Edit
-                </Link>
-              </Button>
-
-              {event.type === "GIG" ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link
-                    to="/events/$eventId/applications"
-                    params={{ eventId: event.id }}
-                  >
-                    Manage Applications
-                  </Link>
-                </Button>
-              ) : null}
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={deleteMutation.isPending}
-                  >
-                    <TrashIcon className="mr-1 size-4" />
-                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete event</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this event? This action
-                      cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      onClick={() => deleteMutation.mutate()}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              {validTransitions.length > 0 ? (
-                <Select
-                  value={statusValue || undefined}
-                  onValueChange={handleStatusChange}
-                  disabled={statusMutation.isPending}
-                >
-                  <SelectTrigger className="w-auto">
-                    <SelectValue placeholder="Change status..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {validTransitions.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {STATUS_LABELS[status] ?? status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : null}
-            </div>
-
-            {statusMutation.error ? (
-              <p className="text-sm text-destructive">
-                {statusMutation.error instanceof Error
-                  ? statusMutation.error.message
-                  : "Failed to update status"}
-              </p>
-            ) : null}
-            {deleteMutation.error ? (
-              <p className="text-sm text-destructive">
-                {deleteMutation.error instanceof Error
-                  ? deleteMutation.error.message
-                  : "Failed to delete event"}
-              </p>
-            ) : null}
-          </div>
-        </>
-      ) : null}
     </section>
   );
 }

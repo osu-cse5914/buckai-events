@@ -54,7 +54,7 @@ export type CreateEventRouteSearch = {
 };
 
 export type EventDetailRouteSearch = SearchRouteSearch & {
-  returnTo?: "search" | "browse";
+  returnTo?: "search" | "browse" | "featured";
   browseType?: (typeof EVENT_TYPES)[number];
   statusMode?: BrowseStatusMode;
   source?: (typeof EVENT_SOURCES)[number];
@@ -223,7 +223,6 @@ export function validateFeaturedSearch(
 ): FeaturedRouteSearch {
   return {
     type: normalizeEnumValue(search.type, EVENT_TYPES),
-    q: normalizeTrimmedString(search.q),
   };
 }
 
@@ -276,6 +275,8 @@ export function validateEventDetailSearch(
         ? "search"
         : search.returnTo === "browse"
           ? "browse"
+          : search.returnTo === "featured"
+            ? "featured"
           : undefined,
     browseType: normalizeEnumValue(search.browseType, EVENT_TYPES),
     previousEventId: normalizeTrimmedString(search.previousEventId),

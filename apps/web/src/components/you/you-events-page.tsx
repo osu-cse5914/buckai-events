@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
 import { useApiClient } from "@/lib/api";
 import {
   currentUserQueryOptions,
@@ -80,11 +79,6 @@ export function YouEventsPage() {
       <YouSubpageHeader
         title="Your Events"
         showBackLink={false}
-        action={(data?.pagination.total ?? 0) > 0 ? (
-          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium">
-            {data?.pagination.total ?? 0} total
-          </Badge>
-        ) : undefined}
       />
 
       {isError ? (

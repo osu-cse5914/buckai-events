@@ -31,6 +31,7 @@ import {
   FramedListFooter,
   FramedListInset,
 } from "@/components/ui/framed-list";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { IconLabelButton } from "@/components/ui/icon-label-button";
 
 function readCountLabel(count: number) {
@@ -231,15 +232,18 @@ export function YouCollectionDetailPage({
                 getItemAriaLabel={(event) => `${event.title} saved event`}
                 renderRightAccessory={(event) =>
                   isOwner ? (
-                    <IconLabelButton
+                    <IconCircleButton
                       type="button"
-                      variant="outline"
+                      variant="ghost"
+                      aria-label="Remove from collection"
+                      title="Remove from collection"
                       icon={<TrashIcon className="size-4" />}
+                      className="size-8 shadow-none"
                       onClick={() => removeMutation.mutate(event.id)}
                       disabled={removeMutation.isPending}
                     >
-                      Remove from collection
-                    </IconLabelButton>
+                      <span className="sr-only">Remove from collection</span>
+                    </IconCircleButton>
                   ) : null
                 }
               />

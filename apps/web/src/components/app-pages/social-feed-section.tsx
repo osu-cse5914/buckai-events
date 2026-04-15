@@ -17,6 +17,7 @@ import {
   type CurrentUser,
   type SocialFeedItem,
 } from "@/lib/queries";
+import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import {
   STATUS_LABELS,
   STATUS_STYLES,
@@ -27,7 +28,13 @@ import { cn } from "@/lib/utils";
 
 type SocialFeedVariant = "featured" | "page";
 
-export function FollowingSection({ className }: { className?: string }) {
+export function FollowingSection({
+  className,
+  detailSearch,
+}: {
+  className?: string;
+  detailSearch?: EventDetailRouteSearch;
+}) {
   const socialFeed = useSocialFeedSectionData();
 
   return (
@@ -46,7 +53,7 @@ export function FollowingSection({ className }: { className?: string }) {
       </div>
 
       <div className="overflow-hidden rounded-2xl border bg-background">
-        <SocialFeedBody variant="featured" {...socialFeed} />
+        <SocialFeedBody variant="featured" detailSearch={detailSearch} {...socialFeed} />
       </div>
     </section>
   );
@@ -102,6 +109,7 @@ function useSocialFeedSectionData() {
 
 function SocialFeedBody({
   variant,
+  detailSearch,
   currentUser,
   items,
   total,
@@ -113,6 +121,7 @@ function SocialFeedBody({
   fetchNextPage,
 }: {
   variant: SocialFeedVariant;
+  detailSearch?: EventDetailRouteSearch;
   currentUser: CurrentUser | undefined;
   items: SocialFeedItem[];
   total: number;
@@ -200,7 +209,11 @@ function SocialFeedBody({
 
       <div className="divide-y">
         {items.map((item) => (
-          <SocialFeedListItem key={`${item.actor.id}:${item.event.id}`} item={item} />
+          <SocialFeedListItem
+            key={`${item.actor.id}:${item.event.id}`}
+            item={item}
+            detailSearch={detailSearch}
+          />
         ))}
       </div>
 
@@ -224,7 +237,13 @@ function SocialFeedBody({
   );
 }
 
-function SocialFeedListItem({ item }: { item: SocialFeedItem }) {
+function SocialFeedListItem({
+  item,
+  detailSearch,
+}: {
+  item: SocialFeedItem;
+  detailSearch?: EventDetailRouteSearch;
+}) {
   const actorName = item.actor.displayName ?? "Someone";
   const actionLabel = item.action === "created" ? "created" : "saved";
 
@@ -250,6 +269,7 @@ function SocialFeedListItem({ item }: { item: SocialFeedItem }) {
           <Link
             to="/events/$eventId"
             params={{ eventId: item.event.id }}
+            search={detailSearch as never}
             className="mt-3 block text-xl font-semibold tracking-tight hover:underline"
           >
             {item.event.title}

@@ -176,3 +176,14 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 - **Regression**: Always
 - **Given**: A user opens the Featured page
 - **Then**: The page does not render a keyword search field and remains focused on discovery modules and feed filters
+
+## TC-FEED-017: Featured discovery links preserve Featured return context
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A Featured module renders an event link
+- **When**: A user opens that event detail page
+- **Then**: The link carries Featured return context so Back returns to Featured instead of browse pages

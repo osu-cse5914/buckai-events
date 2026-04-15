@@ -24,6 +24,7 @@ import {
   type SearchResultsFilters,
 } from "@/lib/queries";
 import {
+  buildEventMetaLine,
   STATUS_LABELS,
   STATUS_STYLES,
   formatDate,
@@ -424,8 +425,6 @@ export function EventsList({
     <div className="divide-y">
       {events.map((event) => {
         const isSelected = selectedEventId === event.id;
-        const showClosedBadge =
-          event.status === "COMPLETED" || event.status === "CANCELLED";
 
         return (
           <article
@@ -458,7 +457,12 @@ export function EventsList({
               >
                 <div className="min-w-0 space-y-1">
                   <p className="truncate text-sm text-muted-foreground">
-                    {formatEventAttribution(event)}
+                    {buildEventMetaLine({
+                      type: event.type,
+                      source: event.source,
+                      category: event.category,
+                      status: event.status,
+                    })}
                   </p>
                   <h2 className="line-clamp-2 text-base font-semibold leading-tight">
                     {event.title}
@@ -471,9 +475,6 @@ export function EventsList({
                       ${event.compensationAmount}
                       {event.compensationType === "HOURLY" ? "/hr" : " fixed"}
                     </span>
-                  ) : null}
-                  {event.category ? (
-                    <span className="capitalize">{event.category}</span>
                   ) : null}
                   <span className="inline-flex items-center gap-1.5">
                     <MapPinIcon className="size-3.5 shrink-0" />
@@ -488,14 +489,6 @@ export function EventsList({
               </Link>
 
               <div className="flex shrink-0 items-start gap-2">
-                {showTypeBadge ? (
-                  <EventTypeBadge type={event.type} />
-                ) : null}
-                {showClosedBadge ? (
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-                    Closed
-                  </Badge>
-                ) : null}
                 {renderRightAccessory ? renderRightAccessory(event) : null}
                 {showSaveAction ? <SaveToCollectionButton eventId={event.id} /> : null}
               </div>

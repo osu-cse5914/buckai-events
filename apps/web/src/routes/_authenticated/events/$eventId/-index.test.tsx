@@ -233,11 +233,9 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     expect(await screen.findByText("Hackathon")).toBeInTheDocument();
     expect(screen.getByText("A 24-hour hackathon at Ohio Union")).toBeInTheDocument();
-    expect(screen.getByText("EVENT")).toBeInTheDocument();
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getByText("Event · User · Tech")).toBeInTheDocument();
     expect(screen.getByText("Ohio Union")).toBeInTheDocument();
     expect(screen.getAllByText(/Apr/).length).toBeGreaterThan(0);
-    expect(screen.getByText("tech")).toBeInTheDocument();
     expect(screen.getByText("A hackathon event")).toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
   });
@@ -305,6 +303,22 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
     expect(await screen.findByRole("link", { name: "Back to Events" })).toHaveAttribute(
       "href",
       "/events?statusMode=ACTIVE&source=USER&sort=START_ASC&selected=evt_prev",
+    );
+  });
+
+  it("TC-EVT-047: uses Featured as the back destination when arriving from featured discovery", async () => {
+    mockRouteSearch = {
+      returnTo: "featured",
+      type: "EVENT",
+    };
+    mockEventGet.mockResolvedValue(okJson(makeEvent()));
+    mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
+
+    await renderPage();
+
+    expect(await screen.findByRole("link", { name: "Back to Featured" })).toHaveAttribute(
+      "href",
+      "/featured?type=EVENT",
     );
   });
 

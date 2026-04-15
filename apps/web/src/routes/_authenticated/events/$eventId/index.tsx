@@ -12,8 +12,11 @@ function EventDetailPage() {
   const search = Route.useSearch();
   const returnsToSearch = search.returnTo === "search";
   const returnsToBrowse = search.returnTo === "browse";
+  const returnsToFeatured = search.returnTo === "featured";
   const browsePath = returnsToSearch
     ? "/search"
+    : returnsToFeatured
+      ? "/featured"
     : returnsToBrowse
       ? search.browseType === "GIG"
         ? "/gigs"
@@ -21,18 +24,24 @@ function EventDetailPage() {
       : undefined;
   const browseLabel = returnsToSearch
     ? "Search results"
+    : returnsToFeatured
+      ? "Featured"
     : returnsToBrowse
       ? search.browseType === "GIG"
         ? "Gigs"
         : "Events"
       : undefined;
   const browseSearch = returnsToSearch
+    ? {
+        q: search.q,
+        type: search.type,
+        category: search.category,
+        tag: search.tag,
+        page: search.page,
+      }
+    : returnsToFeatured
       ? {
-          q: search.q,
           type: search.type,
-          category: search.category,
-          tag: search.tag,
-          page: search.page,
         }
     : returnsToBrowse
       ? {
