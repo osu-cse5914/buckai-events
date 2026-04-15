@@ -71,3 +71,14 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 - **Given**: User A has no interests and no interactions
 - **When**: User A sends `GET /recommendations`
 - **Then**: Events are sorted by popularity then recency
+
+## TC-REC-MODEL-007: Interest match outweighs a large popularity gap
+
+- **Spec scenario**: S-REC-MODEL-1, S-REC-MODEL-2
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/recommendations.test.ts`
+- **Phase introduced**: 4
+- **Regression**: Phase 4+
+- **Given**: One event matches user A's interests and another is much more popular but does not match
+- **When**: User A sends `GET /recommendations`
+- **Then**: The interest-matched event still ranks ahead of the unmatched event
