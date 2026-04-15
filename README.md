@@ -17,7 +17,7 @@ An AI-powered campus discovery platform for The Ohio State University students. 
 - Backend: Hono on Cloudflare Workers
 - Database: Neon PostgreSQL via Prisma ORM
 - Auth: Clerk (OSU email restricted)
-- AI: Vercel AI SDK with Google Gemini via Cloudflare AI Gateway
+- AI: Vercel AI SDK with OpenAI- and Google-compatible provider support via Cloudflare AI Gateway
 
 ## Project Structure
 
