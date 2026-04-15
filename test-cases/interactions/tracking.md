@@ -52,7 +52,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-1
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: User A opens event E in the full detail page
@@ -64,7 +64,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: S-INT-1
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: User A is browsing events in the desktop split-view layout
@@ -75,7 +75,7 @@ Spec: [`tracking`](../../specs/interactions/tracking.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Event E has a `ticketUrl` and User A is on its detail page

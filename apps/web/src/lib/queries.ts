@@ -6,6 +6,8 @@ export type CurrentUser = {
   email: string;
   role: "USER" | "ADMIN";
   displayName: string | null;
+  imageUrl?: string | null;
+  pronouns?: string | null;
   major: string | null;
   gradYear: number | null;
   interests: string[];

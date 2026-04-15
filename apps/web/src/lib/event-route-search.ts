@@ -54,12 +54,14 @@ export type CreateEventRouteSearch = {
 };
 
 export type EventDetailRouteSearch = SearchRouteSearch & {
-  returnTo?: "search" | "browse" | "featured";
+  returnTo?: "search" | "browse" | "featured" | "collections";
   browseType?: (typeof EVENT_TYPES)[number];
   statusMode?: BrowseStatusMode;
   source?: (typeof EVENT_SOURCES)[number];
   sort?: BrowseSort;
   selected?: string;
+  collectionId?: string;
+  collectionName?: string;
   previousEventId?: string;
   previousEventTitle?: string;
 };
@@ -277,8 +279,12 @@ export function validateEventDetailSearch(
           ? "browse"
           : search.returnTo === "featured"
             ? "featured"
-          : undefined,
+            : search.returnTo === "collections"
+              ? "collections"
+           : undefined,
     browseType: normalizeEnumValue(search.browseType, EVENT_TYPES),
+    collectionId: normalizeTrimmedString(search.collectionId),
+    collectionName: normalizeTrimmedString(search.collectionName),
     previousEventId: normalizeTrimmedString(search.previousEventId),
     previousEventTitle: normalizeTrimmedString(search.previousEventTitle),
   };

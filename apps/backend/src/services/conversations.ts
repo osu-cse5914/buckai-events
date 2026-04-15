@@ -32,6 +32,20 @@ export async function getConversationForUserOrThrow(
   return conversation;
 }
 
+export async function deleteConversationForUser(
+  prisma: PrismaClient,
+  input: {
+    conversationId: string;
+    userId: string;
+  },
+) {
+  await getConversationForUserOrThrow(prisma, input.conversationId, input.userId);
+
+  await prisma.conversation.delete({
+    where: { id: input.conversationId },
+  });
+}
+
 export async function listUserConversations(
   prisma: PrismaClient,
   input: {

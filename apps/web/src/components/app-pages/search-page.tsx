@@ -16,6 +16,7 @@ import {
   useSearchResultsQuery,
 } from "@/components/events/events-browser";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const TYPE_FILTER_OPTIONS = [
@@ -129,6 +130,33 @@ function buildSearchInputHighlightParts(value: string) {
   }
 
   return parts;
+}
+
+function SearchResultsSkeleton({ hasActiveQuery }: { hasActiveQuery: boolean }) {
+  return (
+    <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
+      <div className="overflow-hidden rounded-2xl border bg-background">
+        <div className="flex flex-col gap-4 border-b px-4 py-4 sm:px-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-6 w-56" />
+            {hasActiveQuery ? <Skeleton className="h-4 w-40" /> : null}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-8 w-16 rounded-full" />
+              <Skeleton className="h-8 w-20 rounded-full" />
+              <Skeleton className="h-8 w-16 rounded-full" />
+            </div>
+            {hasActiveQuery ? <Skeleton className="h-9 w-28 rounded-md" /> : null}
+          </div>
+        </div>
+
+        <EventsListSkeleton showHeader={false} />
+      </div>
+    </div>
+  );
 }
 
 export function SearchPage({
@@ -369,9 +397,7 @@ export function SearchPage({
       </div>
 
       {hasStartedSearch && isLoading ? (
-        <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">
-          <EventsListSkeleton showPagination />
-        </div>
+        <SearchResultsSkeleton hasActiveQuery={hasActiveQuery} />
       ) : null}
       {hasStartedSearch && isError ? (
         <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700">

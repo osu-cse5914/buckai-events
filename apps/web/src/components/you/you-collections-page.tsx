@@ -10,25 +10,8 @@ import {
   type OwnedCollectionSummary,
 } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -71,39 +54,38 @@ async function readErrorMessage(res: Response, fallback: string) {
 function CollectionsPageSkeleton() {
   return (
     <section
-      className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10"
+      className={`${STANDARD_PAGE_WIDTH} flex flex-col gap-6 py-10`}
       aria-busy="true"
       aria-label="Collections loading"
     >
-      <YouSubpageHeaderSkeleton action={<Skeleton className="size-9 rounded-md" />} />
+      <YouTabsNav currentTab="collections" />
 
-      <div className="grid gap-4">
+      <YouSubpageHeaderSkeleton
+        showBackLink={false}
+        showDescription={false}
+        action={<Skeleton className="h-11 w-36 rounded-xl" />}
+      />
+
+      <FramedList>
+        <FramedListItems>
         {Array.from({ length: 3 }).map((_, index) => (
-          <Card key={index} className="gap-4">
-            <CardHeader className="gap-3">
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Skeleton className="h-6 w-20 rounded-full" />
-                  <Skeleton className="h-5 w-16" />
-                </div>
-                <CardTitle>
-                  <Skeleton className="h-8 w-40 max-w-full" />
-                </CardTitle>
+          <FramedListItem key={index}>
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-6 w-40 max-w-full" />
               </div>
 
-              <CardAction className="flex flex-wrap gap-2">
-                <Skeleton className="h-8 w-24 rounded-md" />
-                <Skeleton className="h-8 w-28 rounded-md" />
-                <Skeleton className="h-8 w-20 rounded-md" />
-              </CardAction>
-            </CardHeader>
-
-            <CardContent>
-              <Skeleton className="h-4 w-48 max-w-full" />
-            </CardContent>
-          </Card>
+              <div className="flex shrink-0 gap-2">
+                <Skeleton className="size-8 rounded-full" />
+                <Skeleton className="size-8 rounded-full" />
+                <Skeleton className="size-8 rounded-full" />
+              </div>
+            </div>
+          </FramedListItem>
         ))}
-      </div>
+        </FramedListItems>
+      </FramedList>
     </section>
   );
 }
@@ -520,8 +502,11 @@ export function YouCollectionsPage() {
                           {nextVisibility === "PUBLIC" ? "Make public" : "Make private"}
                         </span>
                       </IconCircleButton>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                      <DeleteConfirmDialog
+                        title="Delete collection"
+                        description="This removes the collection and its saved-item links. Events and gigs themselves will remain available."
+                        onConfirm={() => deleteMutation.mutate(collection.id)}
+                        trigger={
                           <IconCircleButton
                             type="button"
                             variant="ghost"
@@ -535,25 +520,8 @@ export function YouCollectionsPage() {
                           >
                             <span className="sr-only">Delete</span>
                           </IconCircleButton>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete collection</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This removes the collection and its saved-item links.
-                              Events and gigs themselves will remain available.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteMutation.mutate(collection.id)}
-                            >
-                              Delete collection
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        }
+                      />
                     </div>
                   </div>
 

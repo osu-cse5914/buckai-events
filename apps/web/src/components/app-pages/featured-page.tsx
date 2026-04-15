@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/clerk-react";
 import { FollowingSection } from "@/components/app-pages/social-feed-section";
 import { Button } from "@/components/ui/button";
 import { PillTabButton, PillTabs } from "@/components/ui/pill-tabs";
@@ -47,6 +49,7 @@ export function FeaturedPage({
 }) {
   const [activeLane, setActiveLane] = useState<FeaturedLane>("recommended");
   const api = useApiClient();
+  const { isSignedIn } = useAuth();
   const normalizedType = type || "ALL";
   const recommendedQuery = useInfiniteQuery({
     queryKey: queryKeys.recommendationsFeed(
@@ -203,17 +206,24 @@ export function FeaturedPage({
                     Showing {recommendedItems.length} of{" "}
                     {recommendedMeta?.total ?? recommendedItems.length}
                   </p>
-                  {recommendedQuery.hasNextPage ? (
-                    <Button
-                      variant="outline"
-                      onClick={() => recommendedQuery.fetchNextPage()}
-                      disabled={recommendedQuery.isFetchingNextPage}
-                    >
-                      {recommendedQuery.isFetchingNextPage
-                        ? "Loading..."
-                        : "Load more"}
-                    </Button>
-                  ) : null}
+                   {recommendedQuery.hasNextPage ? (
+                     <Button
+                       variant="outline"
+                       onClick={() =>
+                         isSignedIn ? recommendedQuery.fetchNextPage() : undefined
+                       }
+                       disabled={isSignedIn && recommendedQuery.isFetchingNextPage}
+                       asChild={!isSignedIn}
+                     >
+                       {isSignedIn ? (
+                         recommendedQuery.isFetchingNextPage
+                           ? "Loading..."
+                           : "Load more"
+                       ) : (
+                         <Link to="/sign-in">Sign in to load more</Link>
+                       )}
+                     </Button>
+                   ) : null}
                 </div>
               </>
             ) : null}
@@ -227,10 +237,31 @@ export function FeaturedPage({
           hidden={activeLane !== "following"}
           className={cn(activeLane === "following" ? "block" : "hidden")}
         >
-          <FollowingSection
-            className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700"
-            detailSearch={detailSearch}
-          />
+          {isSignedIn ? (
+            <FollowingSection
+              className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700"
+              detailSearch={detailSearch}
+            />
+          ) : (
+            <FeaturedSection
+              title="Following"
+              description="Recent activity from people you follow."
+              className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700"
+            >
+              <FeaturedSectionInset>
+                <EventsEmptyState
+                  className="mt-0"
+                  title="Sign in to see your following feed"
+                  description="Follow classmates and creators, then come back here to track their latest activity."
+                  action={
+                    <Button asChild>
+                      <Link to="/sign-in">Sign in</Link>
+                    </Button>
+                  }
+                />
+              </FeaturedSectionInset>
+            </FeaturedSection>
+          )}
         </div>
 
         <div

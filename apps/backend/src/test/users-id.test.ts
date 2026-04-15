@@ -71,6 +71,11 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: AUTH_USER.clerkId } as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
 
     // Auth middleware looks up by clerkId; route handler looks up by id
     vi.mocked(mockPrisma.user.findUnique).mockImplementation(
@@ -98,6 +103,8 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     expect(data).toMatchObject({
       id: TARGET_USER.id,
       displayName: TARGET_USER.displayName,
+      imageUrl: "https://example.com/avatar.png",
+      pronouns: "he/him",
       major: TARGET_USER.major,
       gradYear: TARGET_USER.gradYear,
       interests: TARGET_USER.interests,

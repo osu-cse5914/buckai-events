@@ -266,7 +266,7 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
     expect(await screen.findByRole("button", { name: "Make private" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Delete" }));
-    await user.click(screen.getByRole("button", { name: "Delete collection" }));
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" }));
 
     await waitFor(() => {
       expect(mockCollectionDelete).toHaveBeenCalledWith({

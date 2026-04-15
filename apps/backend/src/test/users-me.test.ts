@@ -45,6 +45,11 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
   });
 
   it("TC-USER-001: returns the authenticated user's full profile", async () => {
@@ -56,6 +61,8 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
       id: FULL_USER.id,
       email: FULL_USER.email,
       displayName: FULL_USER.displayName,
+      imageUrl: "https://example.com/avatar.png",
+      pronouns: "he/him",
       major: FULL_USER.major,
       gradYear: FULL_USER.gradYear,
       interests: FULL_USER.interests,
@@ -98,6 +105,11 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
   });
 
   it("TC-USER-002: updates displayName and refreshes updatedAt", async () => {
@@ -289,6 +301,11 @@ describe("[phase:6] [regression:always] GET /api/v1/users/me role contract", () 
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
   });
 
   it("TC-USER-009: includes the authenticated user's persisted role", async () => {

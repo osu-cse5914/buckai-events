@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "@clerk/clerk-react";
 import {
   ArrowDownWideNarrowIcon,
   ArrowUpNarrowWideIcon,
@@ -76,6 +77,7 @@ export function BrowsePage({
           { value: "ALL", label: "All statuses" },
         ];
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const { isSignedIn } = useAuth();
   const {
     data,
     isLoading,
@@ -137,7 +139,7 @@ export function BrowsePage({
   ]);
 
   useEffect(() => {
-    if (!loadMoreRef.current || !hasNextPage) {
+    if (!loadMoreRef.current || !hasNextPage || !isSignedIn) {
       return;
     }
 
@@ -151,7 +153,7 @@ export function BrowsePage({
 
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isSignedIn]);
 
   return (
     <section
@@ -293,9 +295,15 @@ export function BrowsePage({
                     ref={loadMoreRef}
                     className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5"
                   >
-                    {isFetchingNextPage
-                      ? `Loading more ${itemLabel}...`
-                      : "Scroll to load more"}
+                    {isSignedIn ? (
+                      isFetchingNextPage
+                        ? `Loading more ${itemLabel}...`
+                        : "Scroll to load more"
+                    ) : (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/sign-in">Sign in to load more</Link>
+                      </Button>
+                    )}
                   </div>
                 ) : events.length > 0 ? (
                   <div className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5">

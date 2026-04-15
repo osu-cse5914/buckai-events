@@ -23,6 +23,26 @@ import {
   listFollowing,
 } from "../services/social";
 
+function readClerkProfileExtras(clerkUser: {
+  imageUrl?: string | null;
+  publicMetadata?: Record<string, unknown>;
+  unsafeMetadata?: Record<string, unknown>;
+}) {
+  const metadataPronouns =
+    clerkUser.publicMetadata?.pronouns ?? clerkUser.unsafeMetadata?.pronouns;
+
+  return {
+    imageUrl: clerkUser.imageUrl ?? null,
+    pronouns: typeof metadataPronouns === "string" ? metadataPronouns : null,
+  };
+}
+
+async function loadClerkProfileExtras(c: { get: (key: string) => any }, clerkId: string) {
+  const clerk = c.get("clerk");
+  const clerkUser = await clerk.users.getUser(clerkId);
+  return readClerkProfileExtras(clerkUser);
+}
+
 export const users = new Hono<AppEnv>()
   .get("/me/applications", validatePaginationQuery, async (c) => {
     const { id } = c.get("user");
@@ -44,10 +64,15 @@ export const users = new Hono<AppEnv>()
     );
   })
   .get("/me", async (c) => {
-    const { id } = c.get("user");
+    const { id, clerkId } = c.get("user");
     const prisma = getPrisma(c);
     const user = await getCurrentUserOrThrow(prisma, id);
-    return c.json(user);
+    const clerkProfile = await loadClerkProfileExtras(c, clerkId);
+    return c.json({
+      ...user,
+      imageUrl: clerkProfile.imageUrl,
+      pronouns: clerkProfile.pronouns,
+    });
   })
   .patch("/me", async (c) => {
     const { id } = c.get("user");
@@ -74,7 +99,20 @@ export const users = new Hono<AppEnv>()
       offset,
     });
 
-    return c.json(profile);
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetId },
+      select: { clerkId: true },
+    });
+    if (!targetUser) {
+      throw new Error("Target user vanished while loading Clerk profile metadata");
+    }
+    const clerkProfile = await loadClerkProfileExtras(c, targetUser.clerkId);
+
+    return c.json({
+      ...profile,
+      imageUrl: clerkProfile.imageUrl,
+      pronouns: clerkProfile.pronouns,
+    });
   })
   .post("/:id/follow", validateUserIdParam, async (c) => {
     const { id: followerId } = c.get("user");

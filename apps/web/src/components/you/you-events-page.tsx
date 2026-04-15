@@ -53,8 +53,9 @@ export function YouEventsPage() {
 
   if (isLoadingUser || isLoadingEvents) {
     return (
-      <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
-        <YouSubpageHeaderSkeleton />
+      <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
+        <YouTabsNav currentTab="events" />
+        <YouSubpageHeaderSkeleton showBackLink={false} showDescription={false} />
         <EventsListSkeleton showPagination />
       </section>
     );

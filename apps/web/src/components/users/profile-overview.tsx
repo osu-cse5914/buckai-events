@@ -12,12 +12,6 @@ import {
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
 
-type ProfileOverviewStat = {
-  value: number;
-  label: string;
-  onClick?: () => void;
-};
-
 type ProfileOverviewField = {
   label: string;
   value: ReactNode;
@@ -26,64 +20,39 @@ type ProfileOverviewField = {
 
 export function ProfileOverview({
   title,
-  subtitle,
+  metaLine,
   action,
   imageUrl,
   avatarFallback,
-  stats,
-  heroFooter,
   detailFields,
   detailFooter,
   extraSection,
 }: {
   title: string;
-  subtitle?: ReactNode;
+  metaLine?: ReactNode;
   action?: ReactNode;
   imageUrl?: string | null;
   avatarFallback: string;
-  stats: ProfileOverviewStat[];
-  heroFooter?: ReactNode;
   detailFields: ProfileOverviewField[];
   detailFooter?: ReactNode;
   extraSection?: ReactNode;
 }) {
   return (
     <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4 sm:gap-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-4">
           <Avatar size="lg" className="size-20">
             {imageUrl ? <AvatarImage src={imageUrl} alt={title} /> : null}
             <AvatarFallback>{avatarFallback}</AvatarFallback>
           </Avatar>
 
-          <div className="space-y-3">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-              {subtitle ? (
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {subtitle}
-                </div>
-              ) : null}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-6">
-              {stats.map((stat) => (
-                <button
-                  key={stat.label}
-                  type="button"
-                  className="text-left disabled:pointer-events-none"
-                  onClick={stat.onClick}
-                  disabled={!stat.onClick}
-                >
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-                    {stat.label}
-                  </p>
-                </button>
-              ))}
-            </div>
-
-            {heroFooter ? <div>{heroFooter}</div> : null}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+            {metaLine ? (
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                {metaLine}
+              </div>
+            ) : null}
           </div>
         </div>
 

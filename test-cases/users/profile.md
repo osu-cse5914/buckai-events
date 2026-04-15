@@ -96,7 +96,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/profile/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/profile/-index.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: The authenticated user is on their profile page
@@ -107,7 +107,7 @@ Spec: [`profile`](../../specs/users/profile.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/profile/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/profile/-index.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: The authenticated user has opened the profile edit form

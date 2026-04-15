@@ -61,20 +61,34 @@ vi.mock("@tanstack/react-router", () => ({
     children,
     to,
     params,
+    search,
     ...props
   }: {
     children: React.ReactNode;
     to: string;
     params?: Record<string, string>;
+    search?: Record<string, string | number | undefined>;
   }) => (
     <a
-      href={
+      href={(() => {
+        let href =
         params?.eventId
           ? `/events/${params.eventId}`
           : params?.collectionId
             ? `/you/collections/${params.collectionId}`
-            : to
-      }
+            : to;
+        if (search) {
+          const query = new URLSearchParams(
+            Object.entries(search).flatMap(([key, value]) =>
+              value == null ? [] : [[key, String(value)]],
+            ),
+          ).toString();
+          if (query) {
+            href = `${href}?${query}`;
+          }
+        }
+        return href;
+      })()}
       {...props}
     >
       {children}
@@ -237,6 +251,10 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
     expect(screen.getByRole("link", { name: "Back to Collections" })).toHaveAttribute(
       "href",
       "/you/collections",
+    );
+    expect(screen.getByRole("link", { name: /Hackathon/i })).toHaveAttribute(
+      "href",
+      "/events/evt_1?returnTo=collections&collectionId=col_1&collectionName=Music",
     );
     expect(screen.getByText("Private · 2 saved items")).toBeInTheDocument();
 

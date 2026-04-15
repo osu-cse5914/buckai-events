@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarIcon,
   LoaderCircleIcon,
   MapPinIcon,
   MessageSquarePlusIcon,
   SendHorizontalIcon,
+  TrashIcon,
 } from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import {
@@ -30,15 +31,47 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 
 const CONVERSATION_LIMIT = 50;
 const MESSAGE_LIMIT = 100;
 const INITIAL_BUCKAI_MESSAGE =
   "Hi, I'm BuckAI. I can help you find events, gigs, and campus activity around Social OSU. Ask for recommendations, what's happening tonight, or help narrowing down options.";
+
+function AiConversationsSkeleton() {
+  return (
+    <div className="space-y-0">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="border-b px-4 py-4 sm:px-5">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="mt-2 h-3 w-28" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AiConversationSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="ml-auto max-w-[85%] sm:max-w-xl">
+        <Skeleton className="h-16 w-64 rounded-2xl" />
+      </div>
+      <div className="mr-auto max-w-[85%] sm:max-w-2xl">
+        <Skeleton className="h-24 w-full rounded-2xl" />
+      </div>
+      <div className="mr-auto max-w-[85%] sm:max-w-xl">
+        <Skeleton className="h-16 w-72 rounded-2xl" />
+      </div>
+    </div>
+  );
+}
 
 async function readErrorMessage(res: Response, fallback: string) {
   try {
@@ -352,6 +385,7 @@ export function AiPage({
   const [streamingAssistantMessage, setStreamingAssistantMessage] = useState("");
   const [assistantNotice, setAssistantNotice] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [conversationActionError, setConversationActionError] = useState<string | null>(null);
 
   const conversationsQuery = useQuery(
     conversationsQueryOptions(api, CONVERSATION_LIMIT, 0),
@@ -365,6 +399,29 @@ export function AiPage({
       0,
     ),
     enabled: Boolean(activeConversationId),
+  });
+  const deleteConversationMutation = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const deleteConversation = api.api.v1.conversations[":id"].$delete as (args: {
+        param: { id: string };
+      }) => Promise<Response>;
+      const res = await deleteConversation({ param: { id: conversationId } });
+      if (!res.ok) {
+        throw new Error(await readErrorMessage(res, "Failed to delete conversation"));
+      }
+    },
+    onSuccess: async (_, conversationId) => {
+      if (conversationId === activeConversationId) {
+        onConversationSelect("");
+      }
+      await queryClient.invalidateQueries({ queryKey: queryKeys.conversations() });
+      setConversationActionError(null);
+    },
+    onError: (error) => {
+      setConversationActionError(
+        error instanceof Error ? error.message : "Failed to delete conversation",
+      );
+    },
   });
 
   useEffect(() => {
@@ -702,12 +759,10 @@ export function AiPage({
             </div>
           </div>
 
-          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-            {conversationsQuery.isLoading ? (
-              <p className="px-4 py-4 text-sm text-muted-foreground sm:px-5">
-                Loading conversations...
-              </p>
-            ) : conversationsQuery.error ? (
+            <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+              {conversationsQuery.isLoading ? (
+                <AiConversationsSkeleton />
+              ) : conversationsQuery.error ? (
               <p className="px-4 py-4 text-sm text-destructive sm:px-5">
                 {conversationsQuery.error instanceof Error
                   ? conversationsQuery.error.message
@@ -718,29 +773,51 @@ export function AiPage({
                 const isActive = conversation.id === activeConversationId;
 
                 return (
-                  <button
+                  <div
                     key={conversation.id}
-                    type="button"
                     className={cn(
-                      "w-full border-b px-4 py-4 text-left transition-colors last:border-b-0 sm:px-5",
-                      isActive
-                        ? "bg-accent/50 text-accent-foreground"
-                        : "hover:bg-muted/40",
+                      "flex items-start gap-3 border-b px-4 py-4 last:border-b-0 sm:px-5",
+                      isActive ? "bg-accent/50 text-accent-foreground" : "hover:bg-muted/40",
                     )}
-                    disabled={isSending}
-                    onClick={() => {
-                      setAssistantNotice(null);
-                      setErrorMessage(null);
-                      onConversationSelect(conversation.id);
-                    }}
                   >
-                    <p className="truncate text-sm font-medium">
-                      {conversation.title ?? "New chat"}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(conversation.updatedAt).toLocaleString()}
-                    </p>
-                  </button>
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 text-left"
+                      disabled={isSending}
+                      onClick={() => {
+                        setAssistantNotice(null);
+                        setErrorMessage(null);
+                        setConversationActionError(null);
+                        onConversationSelect(conversation.id);
+                      }}
+                    >
+                      <p className="truncate text-sm font-medium">
+                        {conversation.title ?? "New chat"}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(conversation.updatedAt).toLocaleString()}
+                      </p>
+                    </button>
+
+                    <DeleteConfirmDialog
+                      title="Delete conversation"
+                      description="This removes the conversation thread and its messages."
+                      onConfirm={() => deleteConversationMutation.mutate(conversation.id)}
+                      trigger={
+                        <IconCircleButton
+                          type="button"
+                          variant="ghost"
+                          aria-label="Delete conversation"
+                          title="Delete conversation"
+                          icon={<TrashIcon className="size-4" />}
+                          className="size-8 shrink-0 shadow-none"
+                          disabled={deleteConversationMutation.isPending}
+                        >
+                          <span className="sr-only">Delete conversation</span>
+                        </IconCircleButton>
+                      }
+                    />
+                  </div>
                 );
               })
             ) : (
@@ -764,9 +841,7 @@ export function AiPage({
           <div className="flex flex-1 flex-col lg:min-h-0">
             <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
               {messagesQuery.isLoading && !displayedMessages.length ? (
-                <p className="text-sm text-muted-foreground">
-                  Loading conversation...
-                </p>
+                <AiConversationSkeleton />
               ) : displayedMessages.length ? (
                 displayedMessages.map((message) =>
                   message.role === "USER" ? (
@@ -850,6 +925,10 @@ export function AiPage({
 
                 {errorMessage ? (
                   <p className="text-sm text-destructive">{errorMessage}</p>
+                ) : null}
+
+                {conversationActionError ? (
+                  <p className="text-sm text-destructive">{conversationActionError}</p>
                 ) : null}
 
                 <div className="flex items-center justify-end gap-3">

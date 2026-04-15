@@ -184,7 +184,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-new.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-new.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: The authenticated user is on the event creation page
@@ -208,7 +208,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-edit.test.tsx`, `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-edit.test.tsx`, `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 1
 - **Regression**: Always
 - **Given**: A user opens an event detail or edit surface
@@ -263,7 +263,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The desktop events browse page renders multiple results
@@ -274,7 +274,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The desktop gigs browse page renders multiple results
@@ -285,7 +285,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The events browse page has more results than the first loaded batch
@@ -296,7 +296,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/components/ui/markdown-content.test.tsx`, `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/components/ui/markdown-content.test.tsx`, `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: An event description includes Markdown formatting, including imported content with malformed emphasis spacing
@@ -307,7 +307,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Two loaded browse batches contain the same event ID
@@ -318,7 +318,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-new.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-new.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens the shared create form from the Gigs browse page
@@ -340,7 +340,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens `/events` without explicit browse filters
@@ -351,7 +351,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens `/gigs` without explicit browse filters
@@ -362,7 +362,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`, `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-index.test.tsx`, `apps/web/src/routes/_app/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Browse results include external events from OSU or Ticketmaster
@@ -373,7 +373,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-4
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/-index.test.tsx`, `apps/web/src/routes/_authenticated/gigs/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/-index.test.tsx`, `apps/web/src/routes/_app/gigs/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user-created event or gig has a null creator display name but a creator email
@@ -417,7 +417,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A Ticketmaster event detail has an empty `description`
@@ -428,7 +428,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A Ticketmaster event detail has a populated `description` and a `ticketUrl`
@@ -439,7 +439,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: S-EVT-12
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: An event detail includes stored tags like `#coding` and `##music`
@@ -450,7 +450,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The current event has related vector matches available
@@ -461,7 +461,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens an event from another event's related-items section
@@ -472,7 +472,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens an event from a selected item in the browse panel
@@ -483,7 +483,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user is viewing an event in the browse preview panel with an item selected
@@ -505,7 +505,7 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: An event detail displays one or more tags
@@ -516,9 +516,20 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A user opens an event from the Featured page
 - **When**: The event detail page renders
 - **Then**: The Back link targets Featured and preserves any Featured type filter
+
+## TC-EVT-048: Event detail returns to a collection when opened from collection detail
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user opens an event from a collection detail page
+- **When**: The event detail page renders
+- **Then**: The Back link targets that collection instead of falling back to a browse page

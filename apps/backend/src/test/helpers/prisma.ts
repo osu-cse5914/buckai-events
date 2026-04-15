@@ -107,6 +107,7 @@ export function createMockPrisma(): PrismaClient {
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
       count: vi.fn(),
     },
     message: {

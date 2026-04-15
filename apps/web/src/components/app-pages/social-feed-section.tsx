@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   EventsEmptyState,
   EventsErrorState,
-  EventsListSkeleton,
 } from "@/components/events/events-browser";
 import { useApiClient } from "@/lib/api";
 import {
@@ -25,6 +24,7 @@ import {
 } from "@/lib/event-utils";
 import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SocialFeedVariant = "featured" | "page";
 
@@ -133,13 +133,7 @@ function SocialFeedBody({
   fetchNextPage: () => Promise<unknown>;
 }) {
   if (isPending) {
-    return (
-      <EventsListSkeleton
-        rows={variant === "featured" ? 3 : 6}
-        showHeader={false}
-        framed={false}
-      />
-    );
+    return <SocialFeedSkeleton variant={variant} />;
   }
 
   if (isError) {
@@ -233,6 +227,36 @@ function SocialFeedBody({
           </Button>
         </div>
       ) : null}
+    </>
+  );
+}
+
+function SocialFeedSkeleton({ variant }: { variant: SocialFeedVariant }) {
+  return (
+    <>
+      {variant === "page" ? (
+        <div className="border-b bg-muted/30 px-5 py-4">
+          <Skeleton className="h-4 w-28" />
+        </div>
+      ) : null}
+
+      <div className="divide-y">
+        {Array.from({ length: variant === "featured" ? 3 : 5 }).map((_, index) => (
+          <div key={index} className="px-4 py-4 sm:px-5">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </>
   );
 }

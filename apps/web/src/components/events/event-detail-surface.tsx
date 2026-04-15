@@ -36,19 +36,9 @@ import {
 } from "@/lib/event-utils";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import {
   Dialog,
@@ -83,7 +73,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 type EventDetailSurfaceProps = {
   eventId: string;
   mode?: "page" | "panel";
-  browsePath?: "/events" | "/gigs" | "/search" | "/featured";
+  browsePath?: "/events" | "/gigs" | "/search" | "/featured" | "/you/collections/$collectionId";
   browseLabel?: string;
   browseSearch?: SearchRouteSearch | BrowseRouteSearch;
   detailSearch?: EventDetailRouteSearch;
@@ -103,6 +93,8 @@ function toPreviousEventSearch(search: EventDetailRouteSearch) {
     source: search.source,
     sort: search.sort,
     selected: search.selected,
+    collectionId: search.collectionId,
+    collectionName: search.collectionName,
   } satisfies EventDetailRouteSearch;
 }
 
@@ -116,7 +108,7 @@ function buildRelatedEventSearch({
   event: { id: string; title: string; type: string };
   mode: "page" | "panel";
   detailSearch?: EventDetailRouteSearch;
-  browsePath?: "/events" | "/gigs" | "/search" | "/featured";
+  browsePath?: "/events" | "/gigs" | "/search" | "/featured" | "/you/collections/$collectionId";
   browseSearch?: SearchRouteSearch | BrowseRouteSearch;
 }) {
   if (mode === "page") {
@@ -138,6 +130,13 @@ function buildRelatedEventSearch({
     return {
       ...(browseSearch as SearchRouteSearch | undefined),
       returnTo: "featured",
+    } satisfies EventDetailRouteSearch;
+  }
+
+  if (browsePath === "/you/collections/$collectionId") {
+    return {
+      ...(browseSearch as SearchRouteSearch | undefined),
+      returnTo: "collections",
     } satisfies EventDetailRouteSearch;
   }
 
@@ -389,11 +388,33 @@ export function EventDetailSurface({
   if (isLoading) {
     return (
       <section className={surfaceClassName(mode)}>
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="mt-6 h-6 w-32" />
-        <Skeleton className="mt-3 h-8 w-1/2" />
-        <Skeleton className="mt-4 h-4 w-full" />
-        <Skeleton className="mt-2 h-4 w-3/4" />
+        <Skeleton className="h-4 w-32" />
+        <div className="mt-6 flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1 space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-10 w-2/3" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <Skeleton className="size-9 rounded-full" />
+        </div>
+
+        <div className="my-6 h-px bg-border" />
+
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-56" />
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-5 w-36" />
+        </div>
+
+        <div className="my-6 h-px bg-border" />
+
+        <div className="space-y-3">
+          <Skeleton className="h-6 w-28" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
       </section>
     );
   }
@@ -445,14 +466,14 @@ export function EventDetailSurface({
     browseLabel ??
     (resolvedBrowsePath === "/search"
       ? "Search results"
+      : resolvedBrowsePath === "/you/collections/$collectionId"
+        ? detailSearch?.collectionName ?? "Collection"
       : resolvedBrowsePath === "/featured"
         ? "Featured"
       : event.type === "GIG"
         ? "Gigs"
         : "Events");
-  const previousEventSearch = detailSearch
-    ? toPreviousEventSearch(detailSearch)
-    : undefined;
+  const previousEventSearch = detailSearch ? toPreviousEventSearch(detailSearch) : undefined;
   const relatedEventSearch = buildRelatedEventSearch({
     event,
     mode,
@@ -477,6 +498,15 @@ export function EventDetailSurface({
           >
             <ArrowLeftIcon className="size-4" />
             Back to {detailSearch.previousEventTitle ?? "previous event"}
+          </Link>
+        ) : detailSearch?.returnTo === "collections" && detailSearch.collectionId ? (
+          <Link
+            to="/you/collections/$collectionId"
+            params={{ collectionId: detailSearch.collectionId }}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Back to {detailSearch.collectionName ?? "Collection"}
           </Link>
         ) : (
           <Link
@@ -535,8 +565,11 @@ export function EventDetailSurface({
             ) : null}
 
             {isCreator ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
+              <DeleteConfirmDialog
+                title="Delete event"
+                description="Are you sure you want to delete this event? This action cannot be undone."
+                onConfirm={() => deleteMutation.mutate()}
+                trigger={
                   <IconCircleButton
                     variant="outline"
                     aria-label="Delete"
@@ -549,26 +582,8 @@ export function EventDetailSurface({
                       {deleteMutation.isPending ? "Deleting" : "Delete"}
                     </span>
                   </IconCircleButton>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete event</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this event? This action
-                      cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      onClick={() => deleteMutation.mutate()}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                }
+              />
             ) : null}
 
             <SaveToCollectionButton eventId={event.id} variant="outline" className="mt-0" />

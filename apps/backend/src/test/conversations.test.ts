@@ -141,6 +141,26 @@ describe("[phase:5] [regression:always] Conversations API", () => {
     });
   });
 
+  it("TC-CONV-011: deletes a conversation owned by the authenticated user", async () => {
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation({ id: "conv_1" }) as never,
+    );
+    vi.mocked(mockPrisma.conversation.delete).mockResolvedValue(
+      createConversation({ id: "conv_1" }) as never,
+    );
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/conversations/conv_1", {
+        method: "DELETE",
+      }),
+    );
+
+    expect(res.status).toBe(204);
+    expect(mockPrisma.conversation.delete).toHaveBeenCalledWith({
+      where: { id: "conv_1" },
+    });
+  });
+
   it("TC-CONV-004: returns message history ordered by createdAt ascending", async () => {
     const messages = [
       createMessage({

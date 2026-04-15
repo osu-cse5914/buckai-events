@@ -22,6 +22,8 @@ vi.mock("@tanstack/react-router", () => ({
 const baseUser: PublicProfileData = {
   id: "user-123",
   displayName: "Brutus Buckeye",
+  imageUrl: "https://example.com/avatar.png",
+  pronouns: "he/him",
   major: "Computer Science",
   gradYear: 2025,
   interests: ["sports", "music"],
@@ -39,14 +41,13 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     render(<ProfileView user={baseUser} />);
 
     expect(screen.getByText("Brutus Buckeye")).toBeInTheDocument();
+    expect(screen.getByText(/he\/him/)).toBeInTheDocument();
     expect(screen.getByText(/Computer Science/)).toBeInTheDocument();
     expect(screen.getByText(/Class of 2025/)).toBeInTheDocument();
     expect(screen.getByText("sports")).toBeInTheDocument();
     expect(screen.getByText("music")).toBeInTheDocument();
-    expect(screen.getByText("10")).toBeInTheDocument();
-    expect(screen.getByText("followers")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByText("following")).toBeInTheDocument();
+    expect(screen.getByText(/10 followers/)).toBeInTheDocument();
+    expect(screen.getByText(/5 following/)).toBeInTheDocument();
   });
 
   it("TC-PUB-007: does not render email anywhere", () => {
@@ -75,8 +76,8 @@ describe("[phase:1] [regression:always] Public profile page", () => {
   it("TC-PUB-007: shows singular 'follower' for count of 1", () => {
     render(<ProfileView user={{ ...baseUser, followerCount: 1 }} />);
 
-    expect(screen.getByText("follower")).toBeInTheDocument();
-    expect(screen.queryByText("followers")).not.toBeInTheDocument();
+    expect(screen.getByText(/1 follower/)).toBeInTheDocument();
+    expect(screen.queryByText(/followers/)).not.toBeInTheDocument();
   });
 
   it("TC-PUB-007: shows 'No active events' when list is empty", () => {

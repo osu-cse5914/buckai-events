@@ -94,7 +94,7 @@ Spec: [`conversations`](../../specs/chat/conversations.md)
 
 - **Spec scenario**: —
 - **Type**: Automated + Manual
-- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`, `e2e/ai.spec.ts`
+- **Automated in**: `apps/web/src/routes/_app/ai/-index.test.tsx`, `e2e/ai.spec.ts`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Steps**:
@@ -115,3 +115,14 @@ Spec: [`conversations`](../../specs/chat/conversations.md)
 - **Given**: The title-generation model returns prompt-like instructions instead of a concise title
 - **When**: The system generates the first conversation title
 - **Then**: It falls back to a sanitized title derived from the first user message
+
+## TC-CONV-011: Conversation threads can be deleted
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/conversations.test.ts`, `apps/web/src/routes/_app/ai/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A user owns a saved conversation thread
+- **When**: They confirm deletion from the BuckAI sidebar
+- **Then**: The conversation is deleted and no longer appears in the sidebar

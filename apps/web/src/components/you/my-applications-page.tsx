@@ -40,8 +40,9 @@ export function MyApplicationsPage() {
 
   if (isLoading) {
     return (
-      <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
-        <YouSubpageHeaderSkeleton />
+      <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
+        <YouTabsNav currentTab="applications" />
+        <YouSubpageHeaderSkeleton showBackLink={false} showDescription={false} />
         <ApplicationsListSkeleton count={3} />
       </section>
     );

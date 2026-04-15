@@ -155,7 +155,7 @@ Spec: [`management`](../../specs/collections/management.md)
 
 - **Spec scenario**: S-COL-3
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user is on an event detail page and has at least one collection

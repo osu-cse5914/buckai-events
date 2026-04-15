@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, UserCheckIcon, UserPlusIcon } from "lucide-react";
 import { STATUS_STYLES, STATUS_LABELS } from "@/lib/event-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   FramedListItem,
   FramedListItems,
 } from "@/components/ui/framed-list";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { ProfileOverview } from "@/components/users/profile-overview";
 import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,8 @@ export interface PublicProfileEvent {
 export interface PublicProfileData {
   id: string;
   displayName: string | null;
+  imageUrl?: string | null;
+  pronouns?: string | null;
   major: string | null;
   gradYear: number | null;
   interests: string[];
@@ -72,36 +75,52 @@ export function ProfileView({
   return (
     <ProfileOverview
       title={user.displayName ?? "User"}
-      subtitle={
-        [user.major, user.gradYear ? `Class of ${user.gradYear}` : null]
-          .filter(Boolean)
-          .join(" · ") || undefined
+      metaLine={
+        <>
+          {user.pronouns ? <span>{user.pronouns}</span> : null}
+          {user.pronouns ? <span aria-hidden="true">·</span> : null}
+          <button
+            type="button"
+            className="underline-offset-4 hover:underline disabled:pointer-events-none"
+            onClick={onFollowersClick}
+            disabled={!onFollowersClick}
+          >
+            {user.followerCount} {user.followerCount === 1 ? "follower" : "followers"}
+          </button>
+          <span aria-hidden="true">·</span>
+          <button
+            type="button"
+            className="underline-offset-4 hover:underline disabled:pointer-events-none"
+            onClick={onFollowingClick}
+            disabled={!onFollowingClick}
+          >
+            {user.followingCount} following
+          </button>
+        </>
       }
+      action={
+        <IconCircleButton
+          variant="outline"
+          aria-label={user.isFollowing ? "Unfollow" : "Follow"}
+          title={user.isFollowing ? "Unfollow" : "Follow"}
+          icon={
+            user.isFollowing ? <UserCheckIcon className="size-4" /> : <UserPlusIcon className="size-4" />
+          }
+          disabled={!hasFollowAction || followPending}
+          onClick={user.isFollowing ? onUnfollow : onFollow}
+        >
+          <span className="sr-only">{user.isFollowing ? "Unfollow" : "Follow"}</span>
+        </IconCircleButton>
+      }
+      imageUrl={user.imageUrl ?? null}
       avatarFallback={(user.displayName ?? "?").charAt(0).toUpperCase()}
-      stats={[
+      detailFields={[
+        { label: "Major", value: user.major || "—" },
         {
-          value: user.followerCount,
-          label: user.followerCount === 1 ? "follower" : "followers",
-          onClick: onFollowersClick,
-        },
-        {
-          value: user.followingCount,
-          label: "following",
-          onClick: onFollowingClick,
+          label: "Graduation Year",
+          value: user.gradYear ? `Class of ${user.gradYear}` : "—",
         },
       ]}
-      heroFooter={
-        <div className="space-y-4">
-          <Button
-            variant="outline"
-            disabled={!hasFollowAction || followPending}
-            onClick={user.isFollowing ? onUnfollow : onFollow}
-          >
-            {user.isFollowing ? "Unfollow" : "Follow"}
-          </Button>
-        </div>
-      }
-      detailFields={[]}
       detailFooter={
         user.interests.length > 0 ? (
           <div>
@@ -267,33 +286,43 @@ export function ProfileError() {
 export function ProfileSkeleton() {
   return (
     <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-10 w-48" />
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
-        <div className="rounded-2xl border p-6">
-          <Skeleton className="h-7 w-24" />
-          <Skeleton className="mt-2 h-4 w-40" />
-          <div className="mt-6 grid gap-4">
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-10 w-24" />
+      <div className="flex items-start gap-4 sm:gap-5">
+        <Skeleton className="size-20 rounded-full" />
+        <div className="flex-1 space-y-3">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-4 w-40" />
           </div>
-        </div>
-        <div className="rounded-2xl border p-6">
-          <Skeleton className="h-7 w-32" />
-          <Skeleton className="mt-2 h-4 w-56" />
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-20 w-full sm:col-span-2" />
+          <div className="flex flex-wrap gap-6">
+            <Skeleton className="h-14 w-20" />
+            <Skeleton className="h-14 w-20" />
           </div>
+          <Skeleton className="h-10 w-24" />
         </div>
       </div>
+      <FramedList>
+        <FramedListItems>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="flex flex-col gap-1 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          ))}
+        </FramedListItems>
+        <FramedListInset className="border-t py-6">
+          <Skeleton className="h-4 w-20" />
+          <div className="mt-3 flex gap-2">
+            <Skeleton className="h-6 w-16 rounded-full" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+        </FramedListInset>
+      </FramedList>
       <div className="rounded-2xl border p-6">
         <Skeleton className="h-7 w-20" />
-        <Skeleton className="mt-4 h-16 w-full" />
+        <div className="mt-4 space-y-3">
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+        </div>
       </div>
     </section>
   );

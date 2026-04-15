@@ -15,6 +15,7 @@ import {
 import {
   createConversation,
   createConversationMessage,
+  deleteConversationForUser,
   getConversationForUserOrThrow,
   listConversationMessagesForUser,
   listRecentConversationMessages,
@@ -87,6 +88,18 @@ export function createConversationsRouter({
           offset: result.offset,
         }),
       );
+    })
+    .delete("/:id", validateConversationIdParam, async (c) => {
+      const user = c.get("user");
+      const prisma = getPrisma(c);
+      const { id } = c.req.valid("param");
+
+      await deleteConversationForUser(prisma, {
+        conversationId: id,
+        userId: user.id,
+      });
+
+      return c.body(null, 204);
     })
     .get(
       "/:id/messages",
