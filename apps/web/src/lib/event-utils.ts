@@ -15,9 +15,8 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const TYPE_STYLES: Record<string, string> = {
-  EVENT:
-    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  GIG: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  EVENT: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
+  GIG: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
 };
 
 export const APPLICATION_STATUS_STYLES: Record<string, string> = {
