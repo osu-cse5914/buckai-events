@@ -435,24 +435,6 @@ it("TC-FEED-016: featured discovery does not render a keyword search field", asy
       "href",
       "/sign-in",
     );
-=======
-    const searchInput = await screen.findByRole("searchbox", {
-      name: "Search Featured",
-    });
-    await userEvent.type(searchInput, "career");
-
-    await waitFor(() => {
-      expect(
-        state.mockRecommendationsGet.mock.calls.at(-1)?.[0]?.query?.search,
-      ).toBe("career");
-      expect(state.mockPopularGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
-        "career",
-      );
-      expect(state.mockUpcomingGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
-        "career",
-      );
-    });
->>>>>>> main:apps/web/src/routes/_authenticated/featured/-index.test.tsx
   });
 
   it("TC-FEED-013: shows the fallback banner only from the personalized section state", async () => {

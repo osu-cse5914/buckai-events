@@ -44,12 +44,12 @@ export function FeaturedPage({
   type = "",
   searchQuery = "",
   onTypeChange,
-  onSearchQueryChange,
+  _onSearchQueryChange,
 }: {
   type?: FeaturedFilter;
   searchQuery?: string;
   onTypeChange: (value: FeaturedFilter) => void;
-  onSearchQueryChange: (value: string) => void;
+  _onSearchQueryChange: (value: string) => void;
 }) {
   const [activeLane, setActiveLane] = useState<FeaturedLane>("recommended");
   const api = useApiClient();
