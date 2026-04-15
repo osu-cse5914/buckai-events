@@ -170,16 +170,27 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
 
 function FeaturedHarness({
   initialType = "",
+  initialSearchQuery = "",
 }: {
   initialType?: FeaturedFilter;
+  initialSearchQuery?: string;
 }) {
   const [type, setType] = useState<FeaturedFilter>(initialType);
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
 
-  return <FeaturedPage type={type} onTypeChange={setType} />;
+  return (
+    <FeaturedPage
+      type={type}
+      searchQuery={searchQuery}
+      onTypeChange={setType}
+      onSearchQueryChange={setSearchQuery}
+    />
+  );
 }
 
 async function renderFeaturedPage(options?: {
   initialType?: FeaturedFilter;
+  initialSearchQuery?: string;
 }) {
   const queryClient = createQueryClient();
   return render(
@@ -312,6 +323,43 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
       );
       expect(state.mockUpcomingGet.mock.calls.at(-1)?.[0]?.query?.type).toBe(
         "EVENT",
+      );
+    });
+  });
+
+  it("TC-FEED-016: searches the recommendation sections by keyword", async () => {
+    state.mockRecommendationsGet.mockResolvedValue(
+      makeRecommendationResponse([
+        makeEvent({ id: "evt_rec", title: "Career Prep Night" }),
+      ]),
+    );
+    state.mockPopularGet.mockResolvedValue(
+      makeSectionResponse([
+        makeEvent({ id: "evt_pop", title: "Career Fair" }),
+      ]),
+    );
+    state.mockUpcomingGet.mockResolvedValue(
+      makeSectionResponse([
+        makeEvent({ id: "evt_up", title: "Career Workshop" }),
+      ]),
+    );
+
+    await renderFeaturedPage();
+
+    const searchInput = await screen.findByRole("searchbox", {
+      name: "Search Featured",
+    });
+    await userEvent.type(searchInput, "career");
+
+    await waitFor(() => {
+      expect(
+        state.mockRecommendationsGet.mock.calls.at(-1)?.[0]?.query?.search,
+      ).toBe("career");
+      expect(state.mockPopularGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
+        "career",
+      );
+      expect(state.mockUpcomingGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
+        "career",
       );
     });
   });

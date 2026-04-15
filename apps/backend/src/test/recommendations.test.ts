@@ -326,6 +326,49 @@ describe("[phase:4] [regression:always] GET /api/v1/recommendations", () => {
     });
   });
 
+  it("TC-FEED-016: applies keyword search before pagination", async () => {
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
+      [
+        makeEvent({
+          id: "evt_match",
+          title: "Career Prep Night",
+          description: "Resume help",
+        }),
+        makeEvent({
+          id: "evt_other",
+          title: "Hackathon",
+          description: "A build sprint",
+        }),
+      ] as never,
+    );
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/recommendations?search=career&limit=1"),
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      items: Array<{ id: string }>;
+      meta: { total: number; limit: number; offset: number };
+    };
+    expect(body.items.map((item) => item.id)).toEqual(["evt_match"]);
+    expect(body.meta).toMatchObject({
+      total: 1,
+      limit: 1,
+      offset: 0,
+    });
+    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            { title: { contains: "career", mode: "insensitive" } },
+            { description: { contains: "career", mode: "insensitive" } },
+          ]),
+        }),
+      }),
+    );
+  });
+
   it("TC-FEED-005: exposes fallback mode for a new user feed", async () => {
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(
       { ...CURRENT_USER, interests: [] } as never,
