@@ -1,14 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import {
-  BookmarkIcon,
-  BriefcaseBusinessIcon,
-  PlusSquareIcon,
-} from "lucide-react";
+import { BookmarkIcon, BriefcaseBusinessIcon, PlusSquareIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 
 export function YouHubPage() {
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10">
+    <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-8 py-10")}>
       <div className="flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight">You</h1>
       </div>

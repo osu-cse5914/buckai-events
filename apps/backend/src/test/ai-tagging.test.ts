@@ -1,18 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { AIProviderUnavailableError } from "../lib/ai/router";
-import {
-  EVENT_TAGGING_SYSTEM_PROMPT,
-  generateEventTagging,
-} from "../services/ai-tagging";
+import { EVENT_TAGGING_SYSTEM_PROMPT, generateEventTagging } from "../services/ai-tagging";
 
 describe("[phase:4] [regression:always] AI tagging service", () => {
   it("normalizes structured tagging output to the event schema limits", async () => {
     const generateText = vi.fn().mockResolvedValue({
       output: {
         tags: [
-          " Jazz ",
+          " #Jazz ",
           "MUSIC",
-          "music",
+          "#music",
           "",
           "tag-that-is-way-too-long-to-keep-because-it-exceeds-fifty-characters",
         ],
@@ -94,10 +91,7 @@ describe("[phase:4] [regression:always] AI tagging service", () => {
               },
             }),
             getLanguageModel: () => {
-              throw new AIProviderUnavailableError(
-                "google",
-                "GOOGLE_GENERATIVE_AI_API_KEY",
-              );
+              throw new AIProviderUnavailableError("google", "GOOGLE_GENERATIVE_AI_API_KEY");
             },
           },
         },

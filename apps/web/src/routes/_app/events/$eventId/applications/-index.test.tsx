@@ -1,0 +1,239 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import {
+  buildCurrentUser,
+  buildEventRecord,
+  buildGigApplication,
+  buildPaginatedResponse,
+} from "@/test/factories";
+
+const mockEventGet = vi.fn();
+const mockApplicationsGet = vi.fn();
+const mockApplicationPatch = vi.fn();
+const mockUserGet = vi.fn();
+let mockLoaderData: unknown;
+const mockApiClient = {
+  api: {
+    v1: {
+      events: {
+        ":id": {
+          $get: (...args: unknown[]) => mockEventGet(...args),
+        },
+      },
+      gigs: {
+        ":gigId": {
+          applications: {
+            $get: (...args: unknown[]) => mockApplicationsGet(...args),
+            ":appId": {
+              $patch: (...args: unknown[]) => mockApplicationPatch(...args),
+            },
+          },
+        },
+      },
+      users: {
+        me: {
+          $get: (...args: unknown[]) => mockUserGet(...args),
+        },
+      },
+    },
+  },
+};
+
+vi.mock("@/lib/api", () => ({
+  api: mockApiClient,
+  useApiClient: () => mockApiClient,
+}));
+
+let capturedComponent: React.ComponentType | null = null;
+
+vi.mock("@tanstack/react-router", () => ({
+  createFileRoute: () => (config: { component: React.ComponentType }) => {
+    capturedComponent = config.component;
+    return {
+      component: config.component,
+      useParams: () => ({ eventId: "evt_1" }),
+      useLoaderData: () => mockLoaderData,
+    };
+  },
+  Link: ({
+    children,
+    to,
+    params,
+    ...props
+  }: {
+    children: React.ReactNode;
+    to: string;
+    params?: Record<string, string>;
+  }) => (
+    <a href={params?.eventId ? `/events/${params.eventId}` : to} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+}
+
+function makeEvent(overrides: Record<string, unknown> = {}) {
+  return buildEventRecord({
+    title: "Need a tutor",
+    type: "GIG",
+    creatorId: "user_owner",
+    description: "Tutoring help needed",
+    category: null,
+    locationName: "Thompson Library",
+    startAt: "2026-03-20T14:00:00.000Z",
+    compensationAmount: 20,
+    compensationType: "HOURLY",
+    createdAt: "2026-03-01T00:00:00.000Z",
+    updatedAt: "2026-03-01T00:00:00.000Z",
+    creator: {
+      id: "user_owner",
+      displayName: "Owner",
+      email: "owner@osu.edu",
+    },
+    ...overrides,
+  });
+}
+
+function okJson(data: unknown) {
+  return { ok: true, status: 200, json: () => Promise.resolve(data) };
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  capturedComponent = null;
+  mockLoaderData = undefined;
+  vi.resetModules();
+});
+
+async function renderPage() {
+  await import("./index");
+  if (!capturedComponent) {
+    throw new Error("ManageApplicationsPage component was not captured");
+  }
+  const Component = capturedComponent;
+  const queryClient = createQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <Component />
+    </QueryClientProvider>,
+  );
+}
+
+describe("[phase:2] [regression:always] ManageApplicationsPage", () => {
+  it("TC-APP-018: renders a loading skeleton while gig applications are loading", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" }),
+    };
+    mockApplicationsGet.mockReturnValue(new Promise(() => {}));
+
+    await renderPage();
+
+    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it("TC-APP-012: renders applicant info and actions for pending applications", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" }),
+    };
+    mockEventGet.mockResolvedValue(okJson(makeEvent()));
+    mockUserGet.mockResolvedValue(
+      okJson(buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" })),
+    );
+    mockApplicationsGet.mockResolvedValue(
+      okJson(
+        buildPaginatedResponse(
+          [
+            buildGigApplication({
+              applicant: {
+                id: "user_a",
+                displayName: "Alice",
+                email: "alice@osu.edu",
+              },
+            }),
+          ],
+          {
+            pagination: { total: 1, limit: 20, offset: 0 },
+          },
+        ),
+      ),
+    );
+
+    await renderPage();
+
+    const card = (await screen.findByText("Alice")).closest('[data-slot="card"]') as HTMLElement;
+    expect(within(card).getByText("alice@osu.edu")).toBeInTheDocument();
+    expect(within(card).getByText("I can help")).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Accept" })).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Reject" })).toBeInTheDocument();
+  });
+
+  it("TC-APP-012: updates application status immediately after an owner decision", async () => {
+    mockLoaderData = {
+      access: "ok",
+      event: makeEvent(),
+      currentUser: buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" }),
+    };
+    mockEventGet.mockResolvedValue(okJson(makeEvent()));
+    mockUserGet.mockResolvedValue(
+      okJson(buildCurrentUser({ id: "user_owner", email: "owner@osu.edu" })),
+    );
+    mockApplicationsGet.mockResolvedValue(
+      okJson(
+        buildPaginatedResponse(
+          [
+            buildGigApplication({
+              applicant: {
+                id: "user_a",
+                displayName: "Alice",
+                email: "alice@osu.edu",
+              },
+            }),
+          ],
+          {
+            pagination: { total: 1, limit: 20, offset: 0 },
+          },
+        ),
+      ),
+    );
+    mockApplicationPatch.mockResolvedValue(
+      okJson({
+        id: "app_1",
+        status: "ACCEPTED",
+        message: "I can help",
+        applicant: {
+          id: "user_a",
+          displayName: "Alice",
+          email: "alice@osu.edu",
+        },
+      }),
+    );
+    const user = userEvent.setup();
+
+    await renderPage();
+
+    const card = (await screen.findByText("Alice")).closest('[data-slot="card"]') as HTMLElement;
+    await user.click(within(card).getByRole("button", { name: "Accept" }));
+
+    await vi.waitFor(() => {
+      expect(mockApplicationPatch).toHaveBeenCalledWith({
+        param: { gigId: "evt_1", appId: "app_1" },
+        json: { status: "ACCEPTED" },
+      });
+    });
+    expect(await within(card).findByText("Accepted")).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Accept" })).toBeDisabled();
+    expect(within(card).getByRole("button", { name: "Reject" })).toBeDisabled();
+  });
+});

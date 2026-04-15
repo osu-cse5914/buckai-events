@@ -4,10 +4,7 @@ import type { AppEnv } from "../lib/types";
 import { getPrisma } from "../lib/prisma";
 import { internalError } from "../lib/problem-details";
 import { requireAdmin } from "../middleware/auth";
-import {
-  dispatchDetachedTask,
-  resolveConnectionString,
-} from "../lib/worker-runtime";
+import { dispatchDetachedTask, resolveConnectionString } from "../lib/worker-runtime";
 import { syncExternalEvents } from "../services/external-ingestion";
 import {
   createEmbeddingBackfillJob,
@@ -17,10 +14,7 @@ import {
 
 const validatePipelineRerunJson = validator("json", (value) => {
   const mode =
-    typeof value === "object" &&
-    value !== null &&
-    "mode" in value &&
-    value.mode === "FULL_PIPELINE"
+    typeof value === "object" && value !== null && "mode" in value && value.mode === "FULL_PIPELINE"
       ? "FULL_PIPELINE"
       : "EMBEDDING";
 
@@ -54,9 +48,7 @@ export const admin = new Hono<AppEnv>()
   .get("/ai-pipeline/jobs", requireAdmin, async (c) => {
     try {
       const limitValue = Number(c.req.query("limit") ?? "10");
-      const limit = Number.isFinite(limitValue)
-        ? Math.min(Math.max(limitValue, 1), 25)
-        : 10;
+      const limit = Number.isFinite(limitValue) ? Math.min(Math.max(limitValue, 1), 25) : 10;
       const jobs = await listRecentEventPipelineJobs(getPrisma(c), { limit });
       return c.json(jobs);
     } catch (error) {

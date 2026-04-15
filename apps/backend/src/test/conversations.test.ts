@@ -3,11 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockClerkGetUser = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>,
-    ) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },
@@ -112,14 +109,10 @@ describe("[phase:5] [regression:always] Conversations API", () => {
       }),
     ];
 
-    vi.mocked(mockPrisma.conversation.findMany).mockResolvedValue(
-      conversations as never,
-    );
+    vi.mocked(mockPrisma.conversation.findMany).mockResolvedValue(conversations as never);
     vi.mocked(mockPrisma.conversation.count).mockResolvedValue(3 as never);
 
-    const res = await app.request(
-      makeAuthRequest("/api/v1/conversations?limit=10&offset=5"),
-    );
+    const res = await app.request(makeAuthRequest("/api/v1/conversations?limit=10&offset=5"));
 
     expect(res.status).toBe(200);
     expect(mockPrisma.conversation.findMany).toHaveBeenCalledWith({
@@ -141,6 +134,26 @@ describe("[phase:5] [regression:always] Conversations API", () => {
     });
   });
 
+  it("TC-CONV-011: deletes a conversation owned by the authenticated user", async () => {
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation({ id: "conv_1" }) as never,
+    );
+    vi.mocked(mockPrisma.conversation.delete).mockResolvedValue(
+      createConversation({ id: "conv_1" }) as never,
+    );
+
+    const res = await app.request(
+      makeAuthRequest("/api/v1/conversations/conv_1", {
+        method: "DELETE",
+      }),
+    );
+
+    expect(res.status).toBe(204);
+    expect(mockPrisma.conversation.delete).toHaveBeenCalledWith({
+      where: { id: "conv_1" },
+    });
+  });
+
   it("TC-CONV-004: returns message history ordered by createdAt ascending", async () => {
     const messages = [
       createMessage({
@@ -156,9 +169,7 @@ describe("[phase:5] [regression:always] Conversations API", () => {
       }),
     ];
 
-    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
-      createConversation() as never,
-    );
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(createConversation() as never);
     vi.mocked(mockPrisma.message.findMany).mockResolvedValue(messages as never);
     vi.mocked(mockPrisma.message.count).mockResolvedValue(2 as never);
 
@@ -193,9 +204,7 @@ describe("[phase:5] [regression:always] Conversations API", () => {
       createConversation({ userId: FULL_USER_A.id }) as never,
     );
 
-    const res = await app.request(
-      makeAuthRequest("/api/v1/conversations/conv_1/messages"),
-    );
+    const res = await app.request(makeAuthRequest("/api/v1/conversations/conv_1/messages"));
 
     expect(res.status).toBe(404);
     expect(await res.json()).toMatchObject({

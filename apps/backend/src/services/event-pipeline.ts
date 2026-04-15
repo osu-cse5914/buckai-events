@@ -332,11 +332,7 @@ export async function executeEventPipelineJob(
     where: { id: job.id },
     data: {
       status:
-        failedRuns === 0
-          ? "SUCCEEDED"
-          : failedRuns === job.runs.length
-            ? "FAILED"
-            : "PARTIAL",
+        failedRuns === 0 ? "SUCCEEDED" : failedRuns === job.runs.length ? "FAILED" : "PARTIAL",
       finishedAt: new Date(),
     },
   });

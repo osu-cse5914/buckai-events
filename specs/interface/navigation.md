@@ -9,7 +9,7 @@ The authenticated shell exposes one consistent navigation model across desktop a
 
 From left to right, the desktop header contains:
 
-- `Social OSU` wordmark
+- `BuckAI Events` wordmark
   - Links to `Featured`
 
 - Primary navigation

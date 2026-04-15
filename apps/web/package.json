@@ -1,17 +1,17 @@
 {
   "name": "@social-osu/web",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "generate-routes": "rm -f src/routeTree.gen.ts && tsr generate",
     "prebuild": "bun run generate-routes",
-    "build": "tsc --noEmit && vite build",
+    "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint .",
-    "pretypecheck": "bun run generate-routes",
-    "typecheck": "tsc --noEmit --pretty false",
+    "lint": "vp lint . --react-plugin --deny-warnings --ignore-pattern src/routeTree.gen.ts --ignore-pattern dist",
+    "pretypecheck": "bun run generate-routes && vp fmt src/routeTree.gen.ts",
+    "typecheck": "vp check --no-lint",
     "pretest": "bun run generate-routes",
     "test": "vitest run"
   },
@@ -35,7 +35,6 @@
     "tailwind-merge": "^3.4.1"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@social-osu/backend": "workspace:*",
     "@tailwindcss/vite": "^4.2.0",
     "@tanstack/router-cli": "^1.161.1",
@@ -49,16 +48,11 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-istanbul": "^4.0.18",
-    "eslint": "^10.0.0",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.0",
-    "globals": "^17.3.0",
     "jsdom": "^28.1.0",
     "msw": "^2.12.14",
+    "rolldown-vite": "^7.3.1",
     "tailwindcss": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0",
-    "vite": "^7.3.1",
     "vitest": "^4.0.18",
     "wrangler": "^4.0.0"
   }

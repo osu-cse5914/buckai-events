@@ -120,7 +120,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The Featured recommendation and social queries succeed
@@ -131,7 +131,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The user changes the Featured type filter
@@ -141,7 +141,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The personalized section reports `POPULARITY_FALLBACK`
@@ -151,7 +151,7 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The `Recommended` section has another page
@@ -161,19 +161,40 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: One recommendation tab errors or returns no items while others succeed
 - **Then**: The page keeps rendering healthy tabs and shows a safe tab-level empty or error state
 
-## TC-FEED-016: Featured keyword search narrows recommendation sections
+## TC-FEED-016: Featured discovery omits the keyword search field
 
 - **Spec scenario**: S-FEED-12
 - **Type**: Automated
-- **Automated in**: `apps/backend/src/test/recommendations.test.ts`, `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
-- **Given**: The user enters a keyword on Featured
-- **Then**: `Recommended`, `Popular`, and `Upcoming` refetch with the keyword query
-- **And**: The backend applies the keyword before pagination while preserving recommendation ranking
+- **Given**: A user opens the Featured page
+- **Then**: The page does not render a keyword search field and remains focused on discovery modules and feed filters
+
+## TC-FEED-017: Featured discovery links preserve Featured return context
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A Featured module renders an event link
+- **When**: A user opens that event detail page
+- **Then**: The link carries Featured return context so Back returns to Featured instead of browse pages
+
+## TC-FEED-018: Signed-out Featured users must sign in to load more recommendations
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A signed-out visitor opens Featured and there are more recommended results available
+- **When**: They reach the load-more control
+- **Then**: The page shows a sign-in link instead of fetching the next page automatically

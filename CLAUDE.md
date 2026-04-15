@@ -1,4 +1,4 @@
-# Social OSU — Development Guide
+# BuckAI Events — Development Guide
 
 ## Source of Truth
 

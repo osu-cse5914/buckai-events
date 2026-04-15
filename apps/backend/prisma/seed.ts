@@ -7,7 +7,8 @@ const events = [
   // ── EVENTS from OSU_API ──────────────────────────────────────────
   {
     title: "Spring Career Fair 2026",
-    description: "Connect with over 200 employers from Fortune 500 companies and innovative startups. Bring your resume and dress professionally. Open to all majors and graduation years.",
+    description:
+      "Connect with over 200 employers from Fortune 500 companies and innovative startups. Bring your resume and dress professionally. Open to all majors and graduation years.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-career-fair-spring-2026",
@@ -22,7 +23,8 @@ const events = [
   },
   {
     title: "OSU Symphony Orchestra: Spring Concert",
-    description: "The Ohio State University Symphony Orchestra presents an evening of Tchaikovsky and Rachmaninoff. Featuring piano soloist Dr. Elena Martínez performing Piano Concerto No. 2.",
+    description:
+      "The Ohio State University Symphony Orchestra presents an evening of Tchaikovsky and Rachmaninoff. Featuring piano soloist Dr. Elena Martínez performing Piano Concerto No. 2.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-symphony-spring-2026",
@@ -37,7 +39,8 @@ const events = [
   },
   {
     title: "Buckeye Bash Block Party",
-    description: "Annual spring block party on the Oval featuring food trucks, live DJs, student org booths, and free giveaways. Celebrate the end of midterms with the entire Buckeye community!",
+    description:
+      "Annual spring block party on the Oval featuring food trucks, live DJs, student org booths, and free giveaways. Celebrate the end of midterms with the entire Buckeye community!",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-buckeye-bash-2026",
@@ -52,7 +55,8 @@ const events = [
   },
   {
     title: "Guest Lecture: AI Ethics in Healthcare",
-    description: "Dr. Fei-Fei Li from Stanford discusses the ethical implications of deploying AI systems in clinical settings. Q&A session to follow. Open to all students and faculty.",
+    description:
+      "Dr. Fei-Fei Li from Stanford discusses the ethical implications of deploying AI systems in clinical settings. Q&A session to follow. Open to all students and faculty.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-ai-ethics-lecture-2026",
@@ -67,7 +71,8 @@ const events = [
   },
   {
     title: "Intramural Soccer Tournament Finals",
-    description: "Watch the top intramural soccer teams battle it out for the spring championship. Free admission with BuckID. Concessions available.",
+    description:
+      "Watch the top intramural soccer teams battle it out for the spring championship. Free admission with BuckID. Concessions available.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-im-soccer-finals-2026",
@@ -82,7 +87,8 @@ const events = [
   },
   {
     title: "Hackathon: HackOHI/O 2026",
-    description: "Ohio State's flagship hackathon returns! 36 hours of building, workshops, and mentorship. $10,000+ in prizes. All skill levels welcome — form teams of up to 4.",
+    description:
+      "Ohio State's flagship hackathon returns! 36 hours of building, workshops, and mentorship. $10,000+ in prizes. All skill levels welcome — form teams of up to 4.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-hackohio-2026",
@@ -97,7 +103,8 @@ const events = [
   },
   {
     title: "Study Abroad Info Session: Europe",
-    description: "Learn about OSU's study abroad programs in London, Berlin, Paris, and Barcelona. Hear from students who studied abroad last year. Financial aid and scholarship info provided.",
+    description:
+      "Learn about OSU's study abroad programs in London, Berlin, Paris, and Barcelona. Hear from students who studied abroad last year. Financial aid and scholarship info provided.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-study-abroad-europe-2026",
@@ -112,7 +119,8 @@ const events = [
   },
   {
     title: "OSU Farmer's Market",
-    description: "Weekly farmer's market featuring local produce, baked goods, honey, and handmade crafts from central Ohio vendors. Student org fundraiser booths welcome.",
+    description:
+      "Weekly farmer's market featuring local produce, baked goods, honey, and handmade crafts from central Ohio vendors. Student org fundraiser booths welcome.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-farmers-market-mar-2026",
@@ -127,7 +135,8 @@ const events = [
   },
   {
     title: "Mental Health Awareness Workshop",
-    description: "Interactive workshop covering stress management, mindfulness techniques, and campus mental health resources. Led by OSU Counseling and Consultation Service staff.",
+    description:
+      "Interactive workshop covering stress management, mindfulness techniques, and campus mental health resources. Led by OSU Counseling and Consultation Service staff.",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-mental-health-workshop-2026",
@@ -142,7 +151,8 @@ const events = [
   },
   {
     title: "OSU Dance Marathon",
-    description: "12-hour dance marathon raising money for Nationwide Children's Hospital. Registration fee includes t-shirt and meals. Last year raised over $1.5M!",
+    description:
+      "12-hour dance marathon raising money for Nationwide Children's Hospital. Registration fee includes t-shirt and meals. Last year raised over $1.5M!",
     type: "EVENT" as const,
     source: "OSU_API" as const,
     externalId: "osu-dance-marathon-2026",
@@ -159,7 +169,8 @@ const events = [
   // ── EVENTS from TICKETMASTER ─────────────────────────────────────
   {
     title: "Olivia Rodrigo — GUTS World Tour",
-    description: "Olivia Rodrigo brings her GUTS World Tour to Columbus! General admission floor and reserved seating available. Doors open at 6:30 PM.",
+    description:
+      "Olivia Rodrigo brings her GUTS World Tour to Columbus! General admission floor and reserved seating available. Doors open at 6:30 PM.",
     type: "EVENT" as const,
     source: "TICKETMASTER" as const,
     externalId: "tm-olivia-rodrigo-cbus-2026",
@@ -176,7 +187,8 @@ const events = [
   },
   {
     title: "Columbus Blue Jackets vs. Pittsburgh Penguins",
-    description: "NHL regular season game. Blue Jackets take on division rivals the Pittsburgh Penguins. Student discount available with valid .edu email.",
+    description:
+      "NHL regular season game. Blue Jackets take on division rivals the Pittsburgh Penguins. Student discount available with valid .edu email.",
     type: "EVENT" as const,
     source: "TICKETMASTER" as const,
     externalId: "tm-cbj-pit-apr-2026",
@@ -193,7 +205,8 @@ const events = [
   },
   {
     title: "Columbus Crew vs. FC Cincinnati",
-    description: "MLS Hell is Real Derby! Watch the Crew take on in-state rivals FC Cincinnati at Lower.com Field. Tailgate starts at 4 PM in the Nordecke lot.",
+    description:
+      "MLS Hell is Real Derby! Watch the Crew take on in-state rivals FC Cincinnati at Lower.com Field. Tailgate starts at 4 PM in the Nordecke lot.",
     type: "EVENT" as const,
     source: "TICKETMASTER" as const,
     externalId: "tm-crew-fcc-2026",
@@ -209,7 +222,8 @@ const events = [
   },
   {
     title: "Stand-Up Comedy Night: John Mulaney",
-    description: "John Mulaney performs his latest material at the Palace Theatre. Two shows: 7 PM and 10 PM. Ages 18+.",
+    description:
+      "John Mulaney performs his latest material at the Palace Theatre. Two shows: 7 PM and 10 PM. Ages 18+.",
     type: "EVENT" as const,
     source: "TICKETMASTER" as const,
     externalId: "tm-mulaney-cbus-2026",
@@ -225,7 +239,8 @@ const events = [
   },
   {
     title: "Columbus Food Truck Festival",
-    description: "Over 50 food trucks from across Ohio converge on the Columbus Commons. Live music on two stages. Free admission, pay-as-you-eat.",
+    description:
+      "Over 50 food trucks from across Ohio converge on the Columbus Commons. Live music on two stages. Free admission, pay-as-you-eat.",
     type: "EVENT" as const,
     source: "TICKETMASTER" as const,
     externalId: "tm-food-truck-fest-2026",
@@ -241,7 +256,8 @@ const events = [
 
   {
     title: "Indie Film Screening: Columbus Shorts Fest",
-    description: "A curated collection of short films by independent filmmakers from the Midwest. Post-screening panel discussion with directors. Free popcorn!",
+    description:
+      "A curated collection of short films by independent filmmakers from the Midwest. Post-screening panel discussion with directors. Free popcorn!",
     type: "EVENT" as const,
     source: "TICKETMASTER" as const,
     externalId: "tm-indie-shorts-fest-2026",
@@ -259,7 +275,8 @@ const events = [
   // ── USER-CREATED EVENTS ──────────────────────────────────────────
   {
     title: "CS Study Group — Algorithms Final Review",
-    description: "Group study session for CSE 2331 (Algorithms) final exam. We'll work through past exams and practice problems together. Bring your notes!",
+    description:
+      "Group study session for CSE 2331 (Algorithms) final exam. We'll work through past exams and practice problems together. Bring your notes!",
     type: "EVENT" as const,
     source: "USER" as const,
     category: "academic",
@@ -273,7 +290,8 @@ const events = [
   },
   {
     title: "Pickup Basketball — RPAC Courts",
-    description: "Informal pickup basketball every Wednesday evening. All skill levels welcome. Just show up with your BuckID. We usually run 5v5 full court.",
+    description:
+      "Informal pickup basketball every Wednesday evening. All skill levels welcome. Just show up with your BuckID. We usually run 5v5 full court.",
     type: "EVENT" as const,
     source: "USER" as const,
     category: "sports",
@@ -287,7 +305,8 @@ const events = [
   },
   {
     title: "Board Game Night at Gateway",
-    description: "Weekly board game night! We have Catan, Ticket to Ride, Codenames, Wingspan, and more. Snacks provided. Bring your own games too!",
+    description:
+      "Weekly board game night! We have Catan, Ticket to Ride, Codenames, Wingspan, and more. Snacks provided. Bring your own games too!",
     type: "EVENT" as const,
     source: "USER" as const,
     category: "social",
@@ -301,7 +320,8 @@ const events = [
   },
   {
     title: "Sunrise Yoga on Mirror Lake",
-    description: "Start your morning with a peaceful yoga session by Mirror Lake. Mats provided. All experience levels welcome. Cancelled if raining.",
+    description:
+      "Start your morning with a peaceful yoga session by Mirror Lake. Mats provided. All experience levels welcome. Cancelled if raining.",
     type: "EVENT" as const,
     source: "USER" as const,
     category: "wellness",
@@ -315,7 +335,8 @@ const events = [
   },
   {
     title: "Photography Walk: Spring Blooms on Campus",
-    description: "Join us for a casual photography walk capturing spring flowers around campus. DSLR, mirrorless, or phone cameras all welcome. We'll share our best shots afterward.",
+    description:
+      "Join us for a casual photography walk capturing spring flowers around campus. DSLR, mirrorless, or phone cameras all welcome. We'll share our best shots afterward.",
     type: "EVENT" as const,
     source: "USER" as const,
     category: "arts",
@@ -331,7 +352,8 @@ const events = [
   // ── GIGS (USER-CREATED) ──────────────────────────────────────────
   {
     title: "Python Tutor Needed — Intro to Data Science",
-    description: "Looking for a tutor for CSE 3244 (Intro to Data Science). Need help with pandas, numpy, and scikit-learn basics. Flexible schedule, 2-3 hours per week.",
+    description:
+      "Looking for a tutor for CSE 3244 (Intro to Data Science). Need help with pandas, numpy, and scikit-learn basics. Flexible schedule, 2-3 hours per week.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "tutoring",
@@ -347,7 +369,8 @@ const events = [
   },
   {
     title: "Graphic Designer for Club Flyers",
-    description: "OSU Dance Club needs a graphic designer to create promotional flyers and social media posts for our spring showcase. 5-8 designs total. Must know Figma or Illustrator.",
+    description:
+      "OSU Dance Club needs a graphic designer to create promotional flyers and social media posts for our spring showcase. 5-8 designs total. Must know Figma or Illustrator.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "design",
@@ -361,7 +384,8 @@ const events = [
   },
   {
     title: "Moving Help — Apartment on Lane Ave",
-    description: "Need 2 people to help move furniture from a 2-bedroom apartment to a truck. Should take about 3 hours. Must be able to lift heavy items.",
+    description:
+      "Need 2 people to help move furniture from a 2-bedroom apartment to a truck. Should take about 3 hours. Must be able to lift heavy items.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "labor",
@@ -377,7 +401,8 @@ const events = [
   },
   {
     title: "React Developer for Student Org Website",
-    description: "Buckeye Blockchain Club needs a React developer to build our new website. Includes landing page, member directory, and event calendar. GitHub repo already set up.",
+    description:
+      "Buckeye Blockchain Club needs a React developer to build our new website. Includes landing page, member directory, and event calendar. GitHub repo already set up.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "technology",
@@ -391,7 +416,8 @@ const events = [
   },
   {
     title: "Dog Walker — Clintonville Area",
-    description: "Need someone to walk my golden retriever (friendly, 60 lbs) on MWF afternoons around 2 PM. 30-minute walks. Must be comfortable with large dogs.",
+    description:
+      "Need someone to walk my golden retriever (friendly, 60 lbs) on MWF afternoons around 2 PM. 30-minute walks. Must be comfortable with large dogs.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "pet care",
@@ -407,7 +433,8 @@ const events = [
   },
   {
     title: "Note-Taker for ECON 2001",
-    description: "Looking for a reliable note-taker for Intermediate Microeconomics (ECON 2001, MWF 11:30). Share typed notes within 24 hours of each lecture. ~13 weeks remaining.",
+    description:
+      "Looking for a reliable note-taker for Intermediate Microeconomics (ECON 2001, MWF 11:30). Share typed notes within 24 hours of each lecture. ~13 weeks remaining.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "academic",
@@ -423,7 +450,8 @@ const events = [
   },
   {
     title: "Video Editor — YouTube Channel",
-    description: "OSU gaming YouTube channel (15K subs) looking for a video editor. Need someone familiar with Premiere Pro or DaVinci Resolve. 2-3 videos per week, 10-15 min each.",
+    description:
+      "OSU gaming YouTube channel (15K subs) looking for a video editor. Need someone familiar with Premiere Pro or DaVinci Resolve. 2-3 videos per week, 10-15 min each.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "media",
@@ -437,7 +465,8 @@ const events = [
   },
   {
     title: "Campus Tour Guide — Admitted Students Day",
-    description: "Volunteer to be a campus tour guide for Admitted Students Day! Training provided. Must be enthusiastic about OSU and available for the full day. Lunch and t-shirt included.",
+    description:
+      "Volunteer to be a campus tour guide for Admitted Students Day! Training provided. Must be enthusiastic about OSU and available for the full day. Lunch and t-shirt included.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "volunteer",
@@ -453,7 +482,8 @@ const events = [
   },
   {
     title: "Math Tutor — Calculus II",
-    description: "Struggling with series and integration techniques in MATH 1152. Looking for an experienced tutor for twice-weekly sessions. Must have gotten an A in the course.",
+    description:
+      "Struggling with series and integration techniques in MATH 1152. Looking for an experienced tutor for twice-weekly sessions. Must have gotten an A in the course.",
     type: "GIG" as const,
     source: "USER" as const,
     category: "tutoring",

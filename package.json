@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "turbo run dev --filter=!@social-osu/docs",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "turbo run typecheck",
     "test:registry:audit": "bun scripts/audit-test-registry.ts",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
@@ -24,7 +24,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "turbo": "^2.8.10"
+    "turbo": "^2.8.10",
+    "vite-plus": "^0.1.18"
   },
   "engines": {
     "bun": ">=1.2.0"

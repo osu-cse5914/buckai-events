@@ -17,31 +17,28 @@ import {
   currentUserQueryOptions,
   eventDetailQueryOptions,
   queryKeys,
+  relatedEventsQueryOptions,
   type ApplicationSummary,
 } from "@/lib/queries";
-import type { SearchRouteSearch } from "@/lib/event-route-search";
+import type {
+  BrowseRouteSearch,
+  EventDetailRouteSearch,
+  SearchRouteSearch,
+} from "@/lib/event-route-search";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
+  buildEventMetaLine,
   browsePathForEventType,
   formatDateLong,
   STATUS_LABELS,
-  STATUS_STYLES,
 } from "@/lib/event-utils";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import {
   Dialog,
   DialogContent,
@@ -75,11 +72,133 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 type EventDetailSurfaceProps = {
   eventId: string;
   mode?: "page" | "panel";
-  browsePath?: "/events" | "/gigs" | "/search";
+  browsePath?: "/events" | "/gigs" | "/search" | "/featured" | "/you/collections/$collectionId";
   browseLabel?: string;
-  browseSearch?: SearchRouteSearch;
+  browseSearch?: SearchRouteSearch | BrowseRouteSearch;
+  detailSearch?: EventDetailRouteSearch;
   onDeleteSuccess?: () => void;
 };
+
+function toPreviousEventSearch(search: EventDetailRouteSearch) {
+  return {
+    returnTo: search.returnTo,
+    q: search.q,
+    type: search.type,
+    category: search.category,
+    tag: search.tag,
+    page: search.page,
+    browseType: search.browseType,
+    statusMode: search.statusMode,
+    source: search.source,
+    sort: search.sort,
+    selected: search.selected,
+    collectionId: search.collectionId,
+    collectionName: search.collectionName,
+  } satisfies EventDetailRouteSearch;
+}
+
+function buildRelatedEventSearch({
+  event,
+  mode,
+  detailSearch,
+  browsePath,
+  browseSearch,
+}: {
+  event: { id: string; title: string; type: string };
+  mode: "page" | "panel";
+  detailSearch?: EventDetailRouteSearch;
+  browsePath?: "/events" | "/gigs" | "/search" | "/featured" | "/you/collections/$collectionId";
+  browseSearch?: SearchRouteSearch | BrowseRouteSearch;
+}) {
+  if (mode === "page") {
+    return {
+      ...detailSearch,
+      previousEventId: event.id,
+      previousEventTitle: event.title,
+    } satisfies EventDetailRouteSearch;
+  }
+
+  if (browsePath === "/search") {
+    return {
+      ...(browseSearch as SearchRouteSearch | undefined),
+      returnTo: "search",
+    } satisfies EventDetailRouteSearch;
+  }
+
+  if (browsePath === "/featured") {
+    return {
+      ...(browseSearch as SearchRouteSearch | undefined),
+      returnTo: "featured",
+    } satisfies EventDetailRouteSearch;
+  }
+
+  if (browsePath === "/you/collections/$collectionId") {
+    return {
+      ...(browseSearch as SearchRouteSearch | undefined),
+      returnTo: "collections",
+    } satisfies EventDetailRouteSearch;
+  }
+
+  return {
+    ...(browseSearch as BrowseRouteSearch | undefined),
+    returnTo: "browse",
+    browseType: event.type === "GIG" ? "GIG" : "EVENT",
+    selected: event.id,
+  } satisfies EventDetailRouteSearch;
+}
+
+function buildEventDescription(event: {
+  description: string;
+  source: string;
+  ticketUrl: string | null;
+}) {
+  const trimmedDescription = event.description.trim();
+
+  if (event.source === "TICKETMASTER" && event.ticketUrl) {
+    if (/ticketmaster\.com/i.test(trimmedDescription)) {
+      return trimmedDescription;
+    }
+
+    const ticketmasterLink = `[View on Ticketmaster](${event.ticketUrl})`;
+
+    return trimmedDescription
+      ? `${trimmedDescription}\n\n${ticketmasterLink}`
+      : `More details are available on ${ticketmasterLink} for this event.`;
+  }
+
+  return trimmedDescription || "Description unavailable.";
+}
+
+function normalizeDisplayTag(tag: string): string | null {
+  const normalized = tag.trim().replace(/^#+/, "").trim();
+  return normalized || null;
+}
+
+function buildDisplayTags(tags: string[]) {
+  const seen = new Set<string>();
+  const normalizedTags: string[] = [];
+
+  for (const tag of tags) {
+    const normalized = normalizeDisplayTag(tag);
+    if (!normalized) {
+      continue;
+    }
+
+    const dedupeKey = normalized.toLowerCase();
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+    normalizedTags.push(normalized);
+  }
+
+  return normalizedTags;
+}
+
+function normalizeSearchTag(tag: string) {
+  return tag.trim().replace(/^#+/, "").trim().toLowerCase();
+}
 
 export function EventDetailSurface({
   eventId,
@@ -87,6 +206,7 @@ export function EventDetailSurface({
   browsePath,
   browseLabel,
   browseSearch,
+  detailSearch,
   onDeleteSuccess,
 }: EventDetailSurfaceProps) {
   const api = useApiClient();
@@ -94,9 +214,7 @@ export function EventDetailSurface({
   const queryClient = useQueryClient();
   const isPageMode = mode === "page";
 
-  const { data: event, isLoading, error } = useQuery(
-    eventDetailQueryOptions(api, eventId),
-  );
+  const { data: event, isLoading, error } = useQuery(eventDetailQueryOptions(api, eventId));
   const { data: currentUser } = useQuery(currentUserQueryOptions(api));
 
   const isCreator = !!(
@@ -116,17 +234,19 @@ export function EventDetailSurface({
     ...currentGigApplicationQueryOptions(api, eventId),
     enabled: showGigApplicationSection,
   });
+  const relatedEventsQuery = useQuery({
+    ...relatedEventsQueryOptions(api, eventId, 3),
+    enabled: !!event,
+  });
+  const eventDescription = event ? buildEventDescription(event) : "";
+  const displayTags = event ? buildDisplayTags(event.tags) : [];
+  const relatedEvents = relatedEventsQuery.data?.data ?? [];
   const [statusValue, setStatusValue] = useState("");
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
   const [applyMessage, setApplyMessage] = useState("");
-  const [applyErrorMessage, setApplyErrorMessage] = useState<string | null>(
-    null,
-  );
-  const [applySuccessMessage, setApplySuccessMessage] = useState<string | null>(
-    null,
-  );
-  const [submittedApplication, setSubmittedApplication] =
-    useState<ApplicationSummary | null>(null);
+  const [applyErrorMessage, setApplyErrorMessage] = useState<string | null>(null);
+  const [applySuccessMessage, setApplySuccessMessage] = useState<string | null>(null);
+  const [submittedApplication, setSubmittedApplication] = useState<ApplicationSummary | null>(null);
   const lastRecordedViewEventId = useRef<string | null>(null);
 
   const statusMutation = useMutation({
@@ -168,8 +288,7 @@ export function EventDetailSurface({
       }
 
       const deleteBrowsePath = browsePath ?? browsePathForEventType(event?.type);
-      const deleteBrowseSearch =
-        deleteBrowsePath === "/search" ? browseSearch : undefined;
+      const deleteBrowseSearch = browseSearch;
 
       navigate({
         to: deleteBrowsePath,
@@ -180,12 +299,10 @@ export function EventDetailSurface({
 
   const applyMutation = useMutation({
     mutationFn: async (message: string) => {
-      const postApplication = api.api.v1.gigs[":gigId"].applications.$post as (
-        args: {
-          param: { gigId: string };
-          json: { message: string };
-        },
-      ) => Promise<Response>;
+      const postApplication = api.api.v1.gigs[":gigId"].applications.$post as (args: {
+        param: { gigId: string };
+        json: { message: string };
+      }) => Promise<Response>;
       const res = await postApplication({
         param: { gigId: eventId },
         json: { message },
@@ -219,9 +336,7 @@ export function EventDetailSurface({
     },
     onError: (mutationError) => {
       setApplyErrorMessage(
-        mutationError instanceof Error
-          ? mutationError.message
-          : "Failed to submit application",
+        mutationError instanceof Error ? mutationError.message : "Failed to submit application",
       );
     },
   });
@@ -261,11 +376,33 @@ export function EventDetailSurface({
   if (isLoading) {
     return (
       <section className={surfaceClassName(mode)}>
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="mt-6 h-6 w-32" />
-        <Skeleton className="mt-3 h-8 w-1/2" />
-        <Skeleton className="mt-4 h-4 w-full" />
-        <Skeleton className="mt-2 h-4 w-3/4" />
+        <Skeleton className="h-4 w-32" />
+        <div className="mt-6 flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1 space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-10 w-2/3" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <Skeleton className="size-9 rounded-full" />
+        </div>
+
+        <div className="my-6 h-px bg-border" />
+
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-56" />
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-5 w-36" />
+        </div>
+
+        <div className="my-6 h-px bg-border" />
+
+        <div className="space-y-3">
+          <Skeleton className="h-6 w-28" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
       </section>
     );
   }
@@ -283,8 +420,7 @@ export function EventDetailSurface({
   if (!event) {
     const fallbackBrowsePath = browsePath ?? "/events";
     const fallbackBrowseLabel = browseLabel ?? "Events";
-    const fallbackBrowseSearch =
-      fallbackBrowsePath === "/search" ? browseSearch : undefined;
+    const fallbackBrowseSearch = browseSearch;
     return (
       <section className={surfaceClassName(mode)}>
         <h1 className="text-2xl font-bold">Event not found</h1>
@@ -294,10 +430,7 @@ export function EventDetailSurface({
         <div className="mt-4 flex items-center gap-3">
           {isPageMode ? (
             <Button asChild>
-              <Link
-                to={fallbackBrowsePath}
-                search={fallbackBrowseSearch as never}
-              >
+              <Link to={fallbackBrowsePath} search={fallbackBrowseSearch as never}>
                 Back to {fallbackBrowseLabel}
               </Link>
             </Button>
@@ -313,67 +446,136 @@ export function EventDetailSurface({
   }
 
   const resolvedBrowsePath = browsePath ?? browsePathForEventType(event.type);
-  const resolvedBrowseSearch =
-    resolvedBrowsePath === "/search" ? browseSearch : undefined;
+  const resolvedBrowseSearch = browseSearch;
   const resolvedBrowseLabel =
     browseLabel ??
     (resolvedBrowsePath === "/search"
       ? "Search results"
-      : event.type === "GIG"
-        ? "Gigs"
-        : "Events");
+      : resolvedBrowsePath === "/you/collections/$collectionId"
+        ? (detailSearch?.collectionName ?? "Collection")
+        : resolvedBrowsePath === "/featured"
+          ? "Featured"
+          : event.type === "GIG"
+            ? "Gigs"
+            : "Events");
+  const previousEventSearch = detailSearch ? toPreviousEventSearch(detailSearch) : undefined;
+  const relatedEventSearch = buildRelatedEventSearch({
+    event,
+    mode,
+    detailSearch,
+    browsePath,
+    browseSearch,
+  });
   const validTransitions = VALID_TRANSITIONS[event.status] || [];
-  const currentApplication =
-    submittedApplication ?? applicationsQuery.data ?? null;
+  const currentApplication = submittedApplication ?? applicationsQuery.data ?? null;
   const hasApplied = !!currentApplication;
 
   return (
     <section className={surfaceClassName(mode)}>
       {isPageMode ? (
-        <Link
-          to={resolvedBrowsePath}
-          search={resolvedBrowseSearch as never}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeftIcon className="size-4" />
-          Back to {resolvedBrowseLabel}
-        </Link>
+        detailSearch?.previousEventId ? (
+          <Link
+            to="/events/$eventId"
+            params={{ eventId: detailSearch.previousEventId }}
+            search={previousEventSearch as never}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Back to {detailSearch.previousEventTitle ?? "previous event"}
+          </Link>
+        ) : detailSearch?.returnTo === "collections" && detailSearch.collectionId ? (
+          <Link
+            to="/you/collections/$collectionId"
+            params={{ collectionId: detailSearch.collectionId }}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Back to {detailSearch.collectionName ?? "Collection"}
+          </Link>
+        ) : (
+          <Link
+            to={resolvedBrowsePath}
+            search={resolvedBrowseSearch as never}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Back to {resolvedBrowseLabel}
+          </Link>
+        )
       ) : null}
 
       <div className={cn(isPageMode ? "mt-6" : "")}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              {isPageMode ? (
-                <Badge variant="secondary">
-                  {event.type}
-                </Badge>
-              ) : null}
-              <Badge
-                variant="secondary"
-                className={STATUS_STYLES[event.status] ?? ""}
-              >
-                {STATUS_LABELS[event.status] ?? event.status}
-              </Badge>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              {buildEventMetaLine({
+                type: event.type,
+                source: event.source,
+                category: event.category,
+                status: event.status,
+              })}
+            </p>
 
             <h1 className="mt-3 text-3xl font-bold tracking-tight">{event.title}</h1>
 
-            {event.category ? (
-              <p className="mt-1 text-sm capitalize text-muted-foreground">
-                {event.category}
-              </p>
-            ) : null}
-
-            {event.summary ? (
-              <p className="mt-2 text-muted-foreground">{event.summary}</p>
-            ) : null}
+            {event.summary ? <p className="mt-2 text-muted-foreground">{event.summary}</p> : null}
           </div>
 
-          <SaveToCollectionButton
-            eventId={event.id}
-            className="mt-0.5 size-9 rounded-full border"
-          />
+          <div className="mt-0.5 flex shrink-0 items-center gap-2">
+            {isCreator && event.type === "GIG" ? (
+              <IconCircleButton
+                asChild
+                variant="outline"
+                aria-label="Manage applications"
+                title="Manage applications"
+                icon={<UserIcon className="size-4" />}
+              >
+                <Link to="/events/$eventId/applications" params={{ eventId: event.id }}>
+                  <UserIcon className="size-4" />
+                  <span className="sr-only">Manage applications</span>
+                </Link>
+              </IconCircleButton>
+            ) : null}
+
+            {isCreator ? (
+              <IconCircleButton
+                asChild
+                variant="outline"
+                aria-label="Edit event"
+                title="Edit event"
+                icon={<PencilIcon className="size-4" />}
+              >
+                <Link to="/events/$eventId/edit" params={{ eventId: event.id }}>
+                  <PencilIcon className="size-4" />
+                  <span className="sr-only">Edit event</span>
+                </Link>
+              </IconCircleButton>
+            ) : null}
+
+            {isCreator ? (
+              <DeleteConfirmDialog
+                title="Delete event"
+                description="Are you sure you want to delete this event? This action cannot be undone."
+                onConfirm={() => deleteMutation.mutate()}
+                trigger={
+                  <IconCircleButton
+                    variant="outline"
+                    aria-label="Delete"
+                    title="Delete event"
+                    icon={<TrashIcon className="size-4" />}
+                    className="border-destructive/30 text-destructive hover:text-destructive"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <span className="sr-only">
+                      {deleteMutation.isPending ? "Deleting" : "Delete"}
+                    </span>
+                  </IconCircleButton>
+                }
+              />
+            ) : null}
+
+            <SaveToCollectionButton eventId={event.id} variant="outline" className="mt-0" />
+          </div>
         </div>
       </div>
 
@@ -385,9 +587,7 @@ export function EventDetailSurface({
           <div>
             <p>{formatDateLong(event.startAt)}</p>
             {event.endAt ? (
-              <p className="text-muted-foreground">
-                to {formatDateLong(event.endAt)}
-              </p>
+              <p className="text-muted-foreground">to {formatDateLong(event.endAt)}</p>
             ) : null}
           </div>
         </div>
@@ -400,11 +600,7 @@ export function EventDetailSurface({
         {event.creator ? (
           <div className="flex items-center gap-2 text-sm">
             <UserIcon className="size-4 shrink-0 text-muted-foreground" />
-            <Link
-              to="/users/$id"
-              params={{ id: event.creator.id }}
-              className="hover:underline"
-            >
+            <Link to="/users/$id" params={{ id: event.creator.id }} className="hover:underline">
               {event.creator.displayName ?? event.creator.email}
             </Link>
           </div>
@@ -423,13 +619,47 @@ export function EventDetailSurface({
         ) : null}
       </div>
 
+      {isCreator && validTransitions.length > 0 ? (
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Select
+            value={statusValue || undefined}
+            onValueChange={handleStatusChange}
+            disabled={statusMutation.isPending}
+          >
+            <SelectTrigger className="w-auto">
+              <SelectValue placeholder="Change status..." />
+            </SelectTrigger>
+            <SelectContent>
+              {validTransitions.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {STATUS_LABELS[status] ?? status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {statusMutation.error ? (
+            <p className="text-sm text-destructive">
+              {statusMutation.error instanceof Error
+                ? statusMutation.error.message
+                : "Failed to update status"}
+            </p>
+          ) : null}
+          {deleteMutation.error ? (
+            <p className="text-sm text-destructive">
+              {deleteMutation.error instanceof Error
+                ? deleteMutation.error.message
+                : "Failed to delete event"}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       <Separator className="my-6" />
 
       <div>
         <h2 className="text-lg font-semibold">Description</h2>
-        <MarkdownContent className="mt-2">
-          {event.description}
-        </MarkdownContent>
+        <MarkdownContent className="mt-2">{eventDescription}</MarkdownContent>
       </div>
 
       {event.ticketUrl ? (
@@ -452,9 +682,6 @@ export function EventDetailSurface({
                 Get tickets
               </a>
             </Button>
-            <p className="text-sm text-muted-foreground">
-              Opens the ticket page in a new tab.
-            </p>
           </div>
         </>
       ) : null}
@@ -473,16 +700,11 @@ export function EventDetailSurface({
                 </p>
               </div>
               {canApplyToGig ? (
-                <Dialog
-                  open={isApplyDialogOpen}
-                  onOpenChange={setIsApplyDialogOpen}
-                >
+                <Dialog open={isApplyDialogOpen} onOpenChange={setIsApplyDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
                       disabled={
-                        hasApplied ||
-                        applyMutation.isPending ||
-                        applicationsQuery.isLoading
+                        hasApplied || applyMutation.isPending || applicationsQuery.isLoading
                       }
                     >
                       {hasApplied ? "Applied" : "Apply"}
@@ -492,34 +714,25 @@ export function EventDetailSurface({
                     <DialogHeader>
                       <DialogTitle>Apply to this gig</DialogTitle>
                       <DialogDescription>
-                        Include any context that helps the owner evaluate your
-                        application.
+                        Include any context that helps the owner evaluate your application.
                       </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={handleApplySubmit}>
                       <div className="space-y-2">
-                        <Label htmlFor="application-message">
-                          Message (optional)
-                        </Label>
+                        <Label htmlFor="application-message">Message (optional)</Label>
                         <Textarea
                           id="application-message"
                           value={applyMessage}
-                          onChange={(eventValue) =>
-                            setApplyMessage(eventValue.target.value)
-                          }
+                          onChange={(eventValue) => setApplyMessage(eventValue.target.value)}
                           placeholder="Share relevant experience or availability"
                         />
                       </div>
                       {applyErrorMessage ? (
-                        <p className="text-sm text-destructive">
-                          {applyErrorMessage}
-                        </p>
+                        <p className="text-sm text-destructive">{applyErrorMessage}</p>
                       ) : null}
                       <DialogFooter>
                         <Button type="submit" disabled={applyMutation.isPending}>
-                          {applyMutation.isPending
-                            ? "Submitting..."
-                            : "Submit application"}
+                          {applyMutation.isPending ? "Submitting..." : "Submit application"}
                         </Button>
                       </DialogFooter>
                     </form>
@@ -537,9 +750,7 @@ export function EventDetailSurface({
                   {APPLICATION_STATUS_LABELS[currentApplication.status] ??
                     currentApplication.status}
                 </Badge>
-                <span className="text-muted-foreground">
-                  You have already applied to this gig.
-                </span>
+                <span className="text-muted-foreground">You have already applied to this gig.</span>
               </div>
             ) : null}
             {applySuccessMessage ? (
@@ -556,122 +767,60 @@ export function EventDetailSurface({
         </>
       ) : null}
 
-      {event.tags.length > 0 ? (
+      {displayTags.length > 0 ? (
         <div className="mt-6">
           <h2 className="text-lg font-semibold">Tags</h2>
           <div className="mt-2 flex flex-wrap gap-2">
-            {event.tags.map((tag) => (
-              <Badge key={tag} variant="outline">
-                {tag}
+            {displayTags.map((tag) => (
+              <Badge key={tag} variant="outline" asChild>
+                <Link to="/search" search={{ tag: normalizeSearchTag(tag) }}>
+                  {tag}
+                </Link>
               </Badge>
             ))}
           </div>
         </div>
       ) : null}
 
-      {isCreator ? (
-        <>
-          <Separator className="my-6" />
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Actions</h2>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  to="/events/$eventId/edit"
-                  params={{ eventId: event.id }}
-                >
-                  <PencilIcon className="mr-1 size-4" />
-                  Edit
-                </Link>
-              </Button>
-
-              {event.type === "GIG" ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link
-                    to="/events/$eventId/applications"
-                    params={{ eventId: event.id }}
-                  >
-                    Manage Applications
-                  </Link>
-                </Button>
-              ) : null}
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={deleteMutation.isPending}
-                  >
-                    <TrashIcon className="mr-1 size-4" />
-                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete event</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this event? This action
-                      cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      onClick={() => deleteMutation.mutate()}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              {validTransitions.length > 0 ? (
-                <Select
-                  value={statusValue || undefined}
-                  onValueChange={handleStatusChange}
-                  disabled={statusMutation.isPending}
-                >
-                  <SelectTrigger className="w-auto">
-                    <SelectValue placeholder="Change status..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {validTransitions.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {STATUS_LABELS[status] ?? status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : null}
-            </div>
-
-            {statusMutation.error ? (
-              <p className="text-sm text-destructive">
-                {statusMutation.error instanceof Error
-                  ? statusMutation.error.message
-                  : "Failed to update status"}
-              </p>
-            ) : null}
-            {deleteMutation.error ? (
-              <p className="text-sm text-destructive">
-                {deleteMutation.error instanceof Error
-                  ? deleteMutation.error.message
-                  : "Failed to delete event"}
-              </p>
-            ) : null}
+      {relatedEvents.length > 0 ? (
+        <div className="mt-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">You might also be interested in</h2>
           </div>
-        </>
+          <div className="grid gap-3 md:grid-cols-3">
+            {relatedEvents.map((relatedEvent) => (
+              <Link
+                key={relatedEvent.id}
+                to="/events/$eventId"
+                params={{ eventId: relatedEvent.id }}
+                search={relatedEventSearch as never}
+                className="h-full rounded-xl border p-4 transition-colors hover:bg-muted/30"
+              >
+                <p className="font-medium leading-tight">{relatedEvent.title}</p>
+                {(relatedEvent.summary ?? relatedEvent.category) ? (
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                    {relatedEvent.summary ?? relatedEvent.category}
+                  </p>
+                ) : null}
+                <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarIcon className="size-3.5 shrink-0" />
+                    <span>{formatDateLong(relatedEvent.startAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <MapPinIcon className="size-3.5 shrink-0" />
+                    <span>{relatedEvent.locationName}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       ) : null}
     </section>
   );
 }
 
 function surfaceClassName(mode: "page" | "panel") {
-  return cn(
-    mode === "page"
-      ? "mx-auto max-w-3xl px-6 py-10"
-      : "px-6 py-6 lg:px-8 lg:py-8",
-  );
+  return cn(mode === "page" ? `${STANDARD_PAGE_WIDTH} py-10` : "px-6 py-6 lg:px-8 lg:py-8");
 }

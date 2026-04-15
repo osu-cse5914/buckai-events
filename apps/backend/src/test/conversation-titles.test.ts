@@ -23,7 +23,7 @@ describe("[phase:6] [regression:always] Conversation title generation", () => {
       firstMessageContent: "What fitness events are happening this weekend?",
       generateText: vi.fn().mockResolvedValue({
         text: [
-          "User wants a concise title for a Social OSU conversation",
+          "User wants a concise title for a BuckAI Events conversation",
           "max 5 words no quotes or punctuation decoration",
           "Title should reflect conversation about fitness events",
         ].join(" "),

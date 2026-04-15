@@ -1,28 +1,17 @@
 import type { PrismaClient } from "@prisma/client";
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-} from "../lib/problem-details";
+import { ConflictError, ForbiddenError, NotFoundError } from "../lib/problem-details";
 
 type OwnedCollection = {
   userId: string;
 };
 
-function ensureCollectionOwner(
-  collection: OwnedCollection,
-  ownerId: string,
-  detail: string,
-) {
+function ensureCollectionOwner(collection: OwnedCollection, ownerId: string, detail: string) {
   if (collection.userId !== ownerId) {
     throw new ForbiddenError(detail);
   }
 }
 
-async function getCollectionByIdOrThrow(
-  prisma: PrismaClient,
-  collectionId: string,
-) {
+async function getCollectionByIdOrThrow(prisma: PrismaClient, collectionId: string) {
   const collection = await prisma.collection.findUnique({
     where: { id: collectionId },
   });
@@ -50,10 +39,7 @@ export async function getCollectionForViewer(
     throw new NotFoundError("Collection not found");
   }
 
-  if (
-    collection.userId !== input.viewerId &&
-    collection.visibility !== "PUBLIC"
-  ) {
+  if (collection.userId !== input.viewerId && collection.visibility !== "PUBLIC") {
     throw new NotFoundError("Collection not found");
   }
 
@@ -77,10 +63,7 @@ export async function listCollectionItemsForViewer(
     throw new NotFoundError("Collection not found");
   }
 
-  if (
-    collection.userId !== input.viewerId &&
-    collection.visibility !== "PUBLIC"
-  ) {
+  if (collection.userId !== input.viewerId && collection.visibility !== "PUBLIC") {
     throw new NotFoundError("Collection not found");
   }
 
@@ -151,11 +134,7 @@ export async function deleteOwnedCollection(
     throw new NotFoundError("Collection not found");
   }
 
-  ensureCollectionOwner(
-    collection,
-    input.ownerId,
-    "Only the owner can delete this collection",
-  );
+  ensureCollectionOwner(collection, input.ownerId, "Only the owner can delete this collection");
 
   await prisma.collection.delete({ where: { id: input.collectionId } });
 }
@@ -173,11 +152,7 @@ export async function updateOwnedCollection(
 ) {
   const collection = await getCollectionByIdOrThrow(prisma, input.collectionId);
 
-  ensureCollectionOwner(
-    collection,
-    input.ownerId,
-    "Only the owner can update this collection",
-  );
+  ensureCollectionOwner(collection, input.ownerId, "Only the owner can update this collection");
 
   return prisma.collection.update({
     where: { id: input.collectionId },
@@ -195,11 +170,7 @@ export async function addItemToOwnedCollection(
 ) {
   const collection = await getCollectionByIdOrThrow(prisma, input.collectionId);
 
-  ensureCollectionOwner(
-    collection,
-    input.ownerId,
-    "Only the owner can update this collection",
-  );
+  ensureCollectionOwner(collection, input.ownerId, "Only the owner can update this collection");
 
   const event = await prisma.event.findUnique({
     where: { id: input.eventId },
@@ -255,11 +226,7 @@ export async function removeItemFromOwnedCollection(
 ) {
   const collection = await getCollectionByIdOrThrow(prisma, input.collectionId);
 
-  ensureCollectionOwner(
-    collection,
-    input.ownerId,
-    "Only the owner can update this collection",
-  );
+  ensureCollectionOwner(collection, input.ownerId, "Only the owner can update this collection");
 
   const item = await prisma.collectionItem.findUnique({
     where: {

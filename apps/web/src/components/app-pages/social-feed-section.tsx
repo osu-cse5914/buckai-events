@@ -3,11 +3,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { CalendarIcon, UserPlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  EventsEmptyState,
-  EventsErrorState,
-  EventsListSkeleton,
-} from "@/components/events/events-browser";
+import { EventsEmptyState, EventsErrorState } from "@/components/events/events-browser";
 import { useApiClient } from "@/lib/api";
 import {
   currentUserQueryOptions,
@@ -17,17 +13,21 @@ import {
   type CurrentUser,
   type SocialFeedItem,
 } from "@/lib/queries";
-import {
-  STATUS_LABELS,
-  STATUS_STYLES,
-  TYPE_STYLES,
-  formatDateLong,
-} from "@/lib/event-utils";
+import type { EventDetailRouteSearch } from "@/lib/event-route-search";
+import { STATUS_LABELS, STATUS_STYLES, formatDateLong } from "@/lib/event-utils";
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SocialFeedVariant = "featured" | "page";
 
-export function FollowingSection({ className }: { className?: string }) {
+export function FollowingSection({
+  className,
+  detailSearch,
+}: {
+  className?: string;
+  detailSearch?: EventDetailRouteSearch;
+}) {
   const socialFeed = useSocialFeedSectionData();
 
   return (
@@ -46,7 +46,7 @@ export function FollowingSection({ className }: { className?: string }) {
       </div>
 
       <div className="overflow-hidden rounded-2xl border bg-background">
-        <SocialFeedBody variant="featured" {...socialFeed} />
+        <SocialFeedBody variant="featured" detailSearch={detailSearch} {...socialFeed} />
       </div>
     </section>
   );
@@ -74,10 +74,7 @@ function useSocialFeedSectionData() {
         limit: PAGE_SIZE,
       }),
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce(
-        (count, page) => count + page.data.length,
-        0,
-      );
+      const loaded = allPages.reduce((count, page) => count + page.data.length, 0);
 
       return loaded < lastPage.pagination.total ? loaded : undefined;
     },
@@ -102,6 +99,7 @@ function useSocialFeedSectionData() {
 
 function SocialFeedBody({
   variant,
+  detailSearch,
   currentUser,
   items,
   total,
@@ -113,6 +111,7 @@ function SocialFeedBody({
   fetchNextPage,
 }: {
   variant: SocialFeedVariant;
+  detailSearch?: EventDetailRouteSearch;
   currentUser: CurrentUser | undefined;
   items: SocialFeedItem[];
   total: number;
@@ -124,13 +123,7 @@ function SocialFeedBody({
   fetchNextPage: () => Promise<unknown>;
 }) {
   if (isPending) {
-    return (
-      <EventsListSkeleton
-        rows={variant === "featured" ? 3 : 6}
-        showHeader={false}
-        framed={false}
-      />
-    );
+    return <SocialFeedSkeleton variant={variant} />;
   }
 
   if (isError) {
@@ -138,9 +131,7 @@ function SocialFeedBody({
       <div className="px-4 py-5 sm:px-5">
         <EventsErrorState
           className="mt-0"
-          message={
-            error instanceof Error ? error.message : "Failed to fetch social feed"
-          }
+          message={error instanceof Error ? error.message : "Failed to fetch social feed"}
         />
       </div>
     );
@@ -169,9 +160,7 @@ function SocialFeedBody({
         <EventsEmptyState
           className={cn(
             "mt-0",
-            variant === "page"
-              ? "rounded-3xl border border-dashed bg-muted/40 px-8 py-12"
-              : "",
+            variant === "page" ? "rounded-3xl border border-dashed bg-muted/40 px-8 py-12" : "",
           )}
           title={
             variant === "page"
@@ -200,7 +189,11 @@ function SocialFeedBody({
 
       <div className="divide-y">
         {items.map((item) => (
-          <SocialFeedListItem key={`${item.actor.id}:${item.event.id}`} item={item} />
+          <SocialFeedListItem
+            key={`${item.actor.id}:${item.event.id}`}
+            item={item}
+            detailSearch={detailSearch}
+          />
         ))}
       </div>
 
@@ -224,7 +217,43 @@ function SocialFeedBody({
   );
 }
 
-function SocialFeedListItem({ item }: { item: SocialFeedItem }) {
+function SocialFeedSkeleton({ variant }: { variant: SocialFeedVariant }) {
+  return (
+    <>
+      {variant === "page" ? (
+        <div className="border-b bg-muted/30 px-5 py-4">
+          <Skeleton className="h-4 w-28" />
+        </div>
+      ) : null}
+
+      <div className="divide-y">
+        {Array.from({ length: variant === "featured" ? 3 : 5 }).map((_, index) => (
+          <div key={index} className="px-4 py-4 sm:px-5">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function SocialFeedListItem({
+  item,
+  detailSearch,
+}: {
+  item: SocialFeedItem;
+  detailSearch?: EventDetailRouteSearch;
+}) {
   const actorName = item.actor.displayName ?? "Someone";
   const actionLabel = item.action === "created" ? "created" : "saved";
 
@@ -241,9 +270,7 @@ function SocialFeedListItem({ item }: { item: SocialFeedItem }) {
               <UserPlusIcon className="mr-1 size-3" />
               {actorName} {actionLabel}
             </Badge>
-            <Badge variant="secondary" className={TYPE_STYLES[item.event.type] ?? ""}>
-              {item.event.type}
-            </Badge>
+            <EventTypeBadge type={item.event.type} />
             <Badge variant="secondary" className={STATUS_STYLES[item.event.status] ?? ""}>
               {STATUS_LABELS[item.event.status] ?? item.event.status}
             </Badge>
@@ -252,6 +279,7 @@ function SocialFeedListItem({ item }: { item: SocialFeedItem }) {
           <Link
             to="/events/$eventId"
             params={{ eventId: item.event.id }}
+            search={detailSearch as never}
             className="mt-3 block text-xl font-semibold tracking-tight hover:underline"
           >
             {item.event.title}
@@ -270,23 +298,20 @@ function SocialFeedListItem({ item }: { item: SocialFeedItem }) {
   );
 }
 
-function buildFollowGuidance(
-  major: string | null,
-  interests: string[],
-) {
+function buildFollowGuidance(major: string | null, interests: string[]) {
   const trimmedInterests = interests.filter(Boolean);
 
   if (major && trimmedInterests.length > 0) {
-    return `Follow classmates in ${major} or people who share ${trimmedInterests.join(", ")} to start your feed.`;
+    return "Follow people you know or share interests with to start your feed.";
   }
 
   if (major) {
-    return `Follow classmates in ${major} to start seeing what your community is creating and saving.`;
+    return "Follow people you know to start your feed.";
   }
 
   if (trimmedInterests.length > 0) {
-    return `Follow people who share ${trimmedInterests.join(", ")} to start your feed.`;
+    return "Follow people who share your interests to start your feed.";
   }
 
-  return "Follow classmates and creators you know to start seeing their latest activity here.";
+  return "Follow people to start your feed.";
 }

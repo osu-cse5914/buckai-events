@@ -56,10 +56,7 @@ function ensureGigRecord<TGig extends { type: string }>(
   return gig;
 }
 
-async function getGigOrThrow(
-  prisma: PrismaClient,
-  gigId: string,
-): Promise<GigRecord> {
+async function getGigOrThrow(prisma: PrismaClient, gigId: string): Promise<GigRecord> {
   const gig = await prisma.event.findUnique({
     where: { id: gigId },
     select: {
@@ -89,10 +86,7 @@ export async function createApplication(
   });
 }
 
-export async function listApplications(
-  prisma: PrismaClient,
-  input: GigApplicationsListInput,
-) {
+export async function listApplications(prisma: PrismaClient, input: GigApplicationsListInput) {
   const [data, total] = await Promise.all([
     prisma.application.findMany({
       where: input.where,
@@ -190,9 +184,7 @@ export async function listVisibleApplications(
           });
 
           if (!application) {
-            throw new ForbiddenError(
-              "Only the gig owner or an applicant can view applications",
-            );
+            throw new ForbiddenError("Only the gig owner or an applicant can view applications");
           }
 
           return { gigId: input.gigId, applicantId: input.userId };

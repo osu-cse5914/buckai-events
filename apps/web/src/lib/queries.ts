@@ -6,6 +6,8 @@ export type CurrentUser = {
   email: string;
   role: "USER" | "ADMIN";
   displayName: string | null;
+  imageUrl?: string | null;
+  pronouns?: string | null;
   major: string | null;
   gradYear: number | null;
   interests: string[];
@@ -256,9 +258,7 @@ export type EventsResponse = {
   };
 };
 
-export type RecommendationRankingMode =
-  | "PERSONALIZED"
-  | "POPULARITY_FALLBACK";
+export type RecommendationRankingMode = "PERSONALIZED" | "POPULARITY_FALLBACK";
 
 export type RecommendationsResponse = {
   items: EventListItem[];
@@ -302,6 +302,7 @@ export type EventListFilters = {
   statusMode?: string;
   source?: string;
   category?: string;
+  tag?: string;
   sort?: string;
   userId?: string;
 };
@@ -310,33 +311,23 @@ export type SearchResultsFilters = {
   query?: string;
   type?: string;
   category?: string;
+  tag?: string;
 };
 
 export const queryKeys = {
   profile: ["profile"] as const,
-  conversations: (limit = 50, offset = 0) =>
-    ["conversations", limit, offset] as const,
-  conversationMessages: (
-    conversationId: string,
-    limit = 100,
-    offset = 0,
-  ) => ["conversations", conversationId, "messages", limit, offset] as const,
+  conversations: (limit = 50, offset = 0) => ["conversations", limit, offset] as const,
+  conversationMessages: (conversationId: string, limit = 100, offset = 0) =>
+    ["conversations", conversationId, "messages", limit, offset] as const,
   event: (eventId: string) => ["event", eventId] as const,
   collection: (collectionId: string) => ["collection", collectionId] as const,
-  collectionItemsPrefix: (collectionId: string) =>
-    ["collection", collectionId, "items"] as const,
-  collectionItems: (
-    collectionId: string,
-    page: number,
-    pageSize = PAGE_SIZE,
-  ) => ["collection", collectionId, "items", page, pageSize] as const,
+  collectionItemsPrefix: (collectionId: string) => ["collection", collectionId, "items"] as const,
+  collectionItems: (collectionId: string, page: number, pageSize = PAGE_SIZE) =>
+    ["collection", collectionId, "items", page, pageSize] as const,
   eventsList: (filters: EventListFilters, page: number, pageSize = PAGE_SIZE) =>
     ["events", filters, page, pageSize] as const,
-  searchResults: (
-    filters: SearchResultsFilters,
-    page: number,
-    pageSize = PAGE_SIZE,
-  ) => ["search", filters, page, pageSize] as const,
+  searchResults: (filters: SearchResultsFilters, page: number, pageSize = PAGE_SIZE) =>
+    ["search", filters, page, pageSize] as const,
   infiniteEventsList: (filters: EventListFilters, pageSize = PAGE_SIZE) =>
     ["events", "infinite", filters, pageSize] as const,
   collections: ["collections"] as const,
@@ -349,8 +340,8 @@ export const queryKeys = {
     ["recommendations", "upcoming", type, search, limit] as const,
   myApplications: ["my-applications"] as const,
   gigApplications: (eventId: string) => ["gig-applications", eventId] as const,
-  gigApplicationStatus: (eventId: string) =>
-    ["gig", eventId, "applications", "me"] as const,
+  gigApplicationStatus: (eventId: string) => ["gig", eventId, "applications", "me"] as const,
+  relatedEvents: (eventId: string, limit: number) => ["events", eventId, "related", limit] as const,
 };
 
 export function currentUserQueryOptions(api: ApiClient) {
@@ -379,11 +370,7 @@ export function ownedCollectionsQueryOptions(api: ApiClient) {
   });
 }
 
-export function conversationsQueryOptions(
-  api: ApiClient,
-  limit = 50,
-  offset = 0,
-) {
+export function conversationsQueryOptions(api: ApiClient, limit = 50, offset = 0) {
   return queryOptions<PaginatedResponse<ConversationRecord>>({
     queryKey: queryKeys.conversations(limit, offset),
     queryFn: async () => {
@@ -412,11 +399,10 @@ export function conversationMessagesQueryOptions(
   return queryOptions<PaginatedResponse<ConversationMessage>>({
     queryKey: queryKeys.conversationMessages(conversationId, limit, offset),
     queryFn: async () => {
-      const getConversationMessages =
-        api.api.v1.conversations[":id"].messages.$get as (args: {
-          param: { id: string };
-          query: { limit: string; offset: string };
-        }) => Promise<Response>;
+      const getConversationMessages = api.api.v1.conversations[":id"].messages.$get as (args: {
+        param: { id: string };
+        query: { limit: string; offset: string };
+      }) => Promise<Response>;
       const response = await getConversationMessages({
         param: { id: conversationId },
         query: {
@@ -452,10 +438,29 @@ export function eventDetailQueryOptions(api: ApiClient, eventId: string) {
   });
 }
 
-export function collectionDetailQueryOptions(
-  api: ApiClient,
-  collectionId: string,
-) {
+export function relatedEventsQueryOptions(api: ApiClient, eventId: string, limit = 3) {
+  return queryOptions<EventsResponse>({
+    queryKey: queryKeys.relatedEvents(eventId, limit),
+    queryFn: async () => {
+      const getRelatedEvents = api.api.v1.events[":id"].related.$get as (args: {
+        param: { id: string };
+        query: { limit: string };
+      }) => Promise<Response>;
+      const res = await getRelatedEvents({
+        param: { id: eventId },
+        query: {
+          limit: String(limit),
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to load related events");
+      }
+      return res.json() as Promise<EventsResponse>;
+    },
+  });
+}
+
+export function collectionDetailQueryOptions(api: ApiClient, collectionId: string) {
   return queryOptions<CollectionDetail | null>({
     queryKey: queryKeys.collection(collectionId),
     queryFn: async () => {
@@ -482,11 +487,10 @@ export function collectionItemsQueryOptions(
   return queryOptions<PaginatedResponse<EventListItem>>({
     queryKey: queryKeys.collectionItems(collectionId, page, pageSize),
     queryFn: async () => {
-      const getCollectionItems =
-        api.api.v1.collections[":id"].items.$get as (args: {
-          param: { id: string };
-          query: { limit: string; offset: string };
-        }) => Promise<Response>;
+      const getCollectionItems = api.api.v1.collections[":id"].items.$get as (args: {
+        param: { id: string };
+        query: { limit: string; offset: string };
+      }) => Promise<Response>;
       const res = await getCollectionItems({
         param: { id: collectionId },
         query: {
@@ -543,6 +547,7 @@ export async function fetchEventsList(
   if (filters.statusMode) query.statusMode = filters.statusMode;
   if (filters.source) query.source = filters.source;
   if (filters.category) query.category = filters.category;
+  if (filters.tag) query.tag = filters.tag;
   if (filters.sort) query.sort = filters.sort;
   if (filters.userId) query.user = filters.userId;
 
@@ -568,6 +573,7 @@ export async function fetchSearchResults(
 
     if (filters.type) query.type = filters.type;
     if (filters.category) query.category = filters.category;
+    if (filters.tag) query.tag = filters.tag;
 
     const response = await api.api.v1.events["semantic-search"].$get({
       query,
@@ -584,6 +590,7 @@ export async function fetchSearchResults(
     {
       type: filters.type,
       category: filters.category,
+      tag: filters.tag,
     },
     page,
     pageSize,
@@ -716,11 +723,7 @@ export async function fetchUpcomingRecommendationsPage(
   return response.json() as Promise<RecommendationSectionResponse>;
 }
 
-export function myApplicationsQueryOptions(
-  api: ApiClient,
-  limit = 20,
-  offset = 0,
-) {
+export function myApplicationsQueryOptions(api: ApiClient, limit = 20, offset = 0) {
   return queryOptions<PaginatedResponse<MyApplication>>({
     queryKey: queryKeys.myApplications,
     queryFn: async () => {
@@ -738,10 +741,7 @@ export function myApplicationsQueryOptions(
   });
 }
 
-export function currentGigApplicationQueryOptions(
-  api: ApiClient,
-  eventId: string,
-) {
+export function currentGigApplicationQueryOptions(api: ApiClient, eventId: string) {
   return queryOptions<ApplicationSummary | null>({
     queryKey: queryKeys.gigApplicationStatus(eventId),
     queryFn: async () => {

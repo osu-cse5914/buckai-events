@@ -147,3 +147,25 @@ Spec: [`embeddings`](../../specs/ai/embeddings.md)
 - **Given**: Semantic search finds more matches than fit in one page
 - **When**: A client requests a later page with `offset`
 - **Then**: The endpoint returns the requested page while preserving the total match count in pagination metadata
+
+## TC-EMBED-014: Related-events similarity query excludes the source event and preserves ranking
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/event-embeddings.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An event has an embedding and multiple same-type related events with embeddings
+- **When**: The related-events similarity query runs for that event
+- **Then**: The source event is excluded and the returned events preserve the similarity ranking
+
+## TC-EMBED-015: Related-events endpoint returns paginated public results
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A current event exists and related vector matches are available
+- **When**: A client calls `GET /api/v1/events/:id/related` with `limit`
+- **Then**: The response uses the public `{ data, pagination }` shape and returns related events for the current event

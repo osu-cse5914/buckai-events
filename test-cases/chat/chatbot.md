@@ -132,7 +132,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/ai/-index.test.tsx`
 - **Phase introduced**: 5
 - **Regression**: Phase 5+
 - **Given**: The active conversation has a pending chatbot mutation for an apply, save, or create action
@@ -156,7 +156,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/ai/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/ai/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Phase 6+
 - **Given**: The latest assistant message includes suggested reply candidates
@@ -206,7 +206,7 @@ Spec: [`chatbot`](../../specs/chat/chatbot.md)
 - **Regression**: Phase 6+
 - **Given**: The live chatbot task is configured against the production-style AI route
 - **When**: The model is asked about off-topic weather information under the chatbot system prompt
-- **Then**: It remains scoped to Social OSU behavior instead of accepting the off-topic request
+- **Then**: It remains scoped to BuckAI Events behavior instead of accepting the off-topic request
 
 ## TC-CHAT-019: Live chatbot model treats retrieved prompt-injection text as untrusted
 

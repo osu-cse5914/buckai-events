@@ -1,6 +1,6 @@
-# Social OSU — Spec Index
+# BuckAI Events — Spec Index
 
-Social OSU is an AI-powered campus discovery platform for The Ohio State University students. It aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers personalized recommendations, and provides an agentic LLM chatbot for natural-language event discovery.
+BuckAI Events is an AI-powered campus discovery platform for The Ohio State University students. It aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers personalized recommendations, and provides an agentic LLM chatbot for natural-language event discovery.
 
 **Not in scope**: ticket sales, payment processing, financial transactions.
 

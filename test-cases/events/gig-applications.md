@@ -107,7 +107,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-applications.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-applications.test.tsx`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: The authenticated viewer does not own the gig
@@ -118,7 +118,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/you/applications/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/you/applications/-index.test.tsx`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: The authenticated user has submitted gig applications
@@ -129,7 +129,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/applications/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/applications/-index.test.tsx`
 - **Phase introduced**: 2
 - **Regression**: Always
 - **Given**: The authenticated user owns a gig with pending applications
@@ -173,7 +173,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-applications.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/-applications.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: Gig G has status IN_PROGRESS or COMPLETED
@@ -184,7 +184,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/you/applications/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/you/applications/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The current user's applications request is still loading
@@ -195,7 +195,7 @@ Spec: [`gig-applications`](../../specs/events/gig-applications.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/applications/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/events/$eventId/applications/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The gig owner opens the manage-applications page and the applications request is still loading

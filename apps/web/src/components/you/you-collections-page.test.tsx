@@ -40,10 +40,7 @@ vi.mock("@tanstack/react-router", () => ({
     to: string;
     params?: Record<string, string>;
   }) => (
-    <a
-      href={params?.collectionId ? `/you/collections/${params.collectionId}` : to}
-      {...props}
-    >
+    <a href={params?.collectionId ? `/you/collections/${params.collectionId}` : to} {...props}>
       {children}
     </a>
   ),
@@ -136,9 +133,9 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
     const user = userEvent.setup();
 
     expect(await screen.findByText("Music")).toBeInTheDocument();
-    expect(screen.queryByText("Create Collection")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New collection" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Create Collection" }));
+    await user.click(screen.getByRole("button", { name: "New collection" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "New collection" })).toBeInTheDocument();
     await user.type(screen.getByLabelText("Collection name"), "Must See");
@@ -154,8 +151,9 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
       });
     });
 
-    expect(await screen.findByText("Must See")).toBeInTheDocument();
-    expect(screen.getByText("Public")).toBeInTheDocument();
+    const publicCollectionCard = await screen.findByLabelText("Must See collection");
+    expect(within(publicCollectionCard).getByText(/Public/)).toBeInTheDocument();
+    expect(within(publicCollectionCard).getByText(/0 saved/)).toBeInTheDocument();
   });
 
   it("TC-COL-018: manages existing collections from the Collections page", async () => {
@@ -235,7 +233,8 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
     const user = userEvent.setup();
 
     const collectionCard = await screen.findByLabelText("Music collection");
-    expect(within(collectionCard).getByText("2 saved")).toBeInTheDocument();
+    expect(within(collectionCard).getByText(/Private/)).toBeInTheDocument();
+    expect(within(collectionCard).getByText(/2 saved/)).toBeInTheDocument();
 
     await user.click(within(collectionCard).getByRole("button", { name: "Rename" }));
     const renameInput = within(collectionCard).getByLabelText("Rename collection");
@@ -264,7 +263,9 @@ describe("[phase:6] [regression:always] YouCollectionsPage", () => {
     expect(await screen.findByRole("button", { name: "Make private" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Delete" }));
-    await user.click(screen.getByRole("button", { name: "Delete collection" }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" }),
+    );
 
     await waitFor(() => {
       expect(mockCollectionDelete).toHaveBeenCalledWith({

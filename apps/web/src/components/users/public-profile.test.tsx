@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
+  FollowListDialog,
   ProfileView,
   ProfileNotFound,
   ProfileError,
@@ -10,18 +11,16 @@ import {
 
 // Mock TanStack Router's Link
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    children,
-    to,
-  }: {
-    children: React.ReactNode;
-    to: string;
-  }) => <a href={to}>{children}</a>,
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 
 const baseUser: PublicProfileData = {
   id: "user-123",
   displayName: "Brutus Buckeye",
+  imageUrl: "https://example.com/avatar.png",
+  pronouns: "he/him",
   major: "Computer Science",
   gradYear: 2025,
   interests: ["sports", "music"],
@@ -39,14 +38,13 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     render(<ProfileView user={baseUser} />);
 
     expect(screen.getByText("Brutus Buckeye")).toBeInTheDocument();
-    expect(screen.getByText("Computer Science")).toBeInTheDocument();
-    expect(screen.getByText("Class of 2025")).toBeInTheDocument();
+    expect(screen.getByText(/he\/him/)).toBeInTheDocument();
+    expect(screen.getByText(/Computer Science/)).toBeInTheDocument();
+    expect(screen.getByText(/Class of 2025/)).toBeInTheDocument();
     expect(screen.getByText("sports")).toBeInTheDocument();
     expect(screen.getByText("music")).toBeInTheDocument();
-    expect(screen.getByText("10")).toBeInTheDocument();
-    expect(screen.getByText("followers")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByText("following")).toBeInTheDocument();
+    expect(screen.getByText(/10 followers/)).toBeInTheDocument();
+    expect(screen.getByText(/5 following/)).toBeInTheDocument();
   });
 
   it("TC-PUB-007: does not render email anywhere", () => {
@@ -75,8 +73,8 @@ describe("[phase:1] [regression:always] Public profile page", () => {
   it("TC-PUB-007: shows singular 'follower' for count of 1", () => {
     render(<ProfileView user={{ ...baseUser, followerCount: 1 }} />);
 
-    expect(screen.getByText("follower")).toBeInTheDocument();
-    expect(screen.queryByText("followers")).not.toBeInTheDocument();
+    expect(screen.getByText(/1 follower/)).toBeInTheDocument();
+    expect(screen.queryByText(/followers/)).not.toBeInTheDocument();
   });
 
   it("TC-PUB-007: shows 'No active events' when list is empty", () => {
@@ -118,19 +116,18 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     expect(screen.getByText("In Progress")).toBeInTheDocument();
   });
 
-  it("TC-PUB-007: hides interests section when empty", () => {
+  it("TC-PUB-007: shows an interests row placeholder when empty", () => {
     render(<ProfileView user={{ ...baseUser, interests: [] }} />);
 
-    expect(screen.queryByText("Interests")).not.toBeInTheDocument();
+    expect(screen.getByText("Interests")).toBeInTheDocument();
+    expect(screen.getByText("—")).toBeInTheDocument();
   });
 
   it("TC-PUB-007: renders 404 page for nonexistent user", () => {
     render(<ProfileNotFound />);
 
     expect(screen.getByText("User not found")).toBeInTheDocument();
-    expect(
-      screen.getByText("The user you're looking for doesn't exist."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("The user you're looking for doesn't exist.")).toBeInTheDocument();
     expect(screen.getByText("Go home")).toBeInTheDocument();
   });
 
@@ -145,5 +142,29 @@ describe("[phase:1] [regression:always] Public profile page", () => {
 
     const skeletons = container.querySelectorAll('[data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it("renders avatar rows in follow lists when profile images are available", () => {
+    render(
+      <FollowListDialog
+        open
+        onOpenChange={() => {}}
+        title="Followers"
+        isLoading={false}
+        users={[
+          {
+            id: "user-1",
+            displayName: "Brutus Buckeye",
+            imageUrl: "https://example.com/avatar.png",
+            major: "Computer Science",
+            gradYear: 2025,
+          },
+        ]}
+      />,
+    );
+
+    const avatar = document.querySelector('[data-slot="avatar"]');
+    expect(avatar).not.toBeNull();
+    expect(screen.getByText("Brutus Buckeye")).toBeInTheDocument();
   });
 });

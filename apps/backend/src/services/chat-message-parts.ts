@@ -35,6 +35,4 @@ export type ReplySuggestionsMessagePart = {
   suggestions: string[];
 };
 
-export type ChatMessagePart =
-  | SearchResultsMessagePart
-  | ReplySuggestionsMessagePart;
+export type ChatMessagePart = SearchResultsMessagePart | ReplySuggestionsMessagePart;

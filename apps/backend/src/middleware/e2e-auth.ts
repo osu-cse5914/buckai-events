@@ -18,11 +18,7 @@ export function isE2ETestAuthEnabled(env?: Record<string, string | undefined>) {
 }
 
 export const e2eTestAuth = createMiddleware<AppEnv>(async (c, next) => {
-  if (
-    !isE2ETestAuthEnabled(
-      c.env as unknown as Record<string, string | undefined>,
-    )
-  ) {
+  if (!isE2ETestAuthEnabled(c.env as unknown as Record<string, string | undefined>)) {
     await next();
     return;
   }

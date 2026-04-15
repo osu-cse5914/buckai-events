@@ -2,6 +2,7 @@ import { Hono, type Context } from "hono";
 import { getPrisma } from "../lib/prisma";
 import { paginated } from "../lib/pagination";
 import {
+  validateStrictPaginationQuery,
   parseEventCreateBody,
   parseEventUpdateBody,
   readJsonBody,
@@ -13,6 +14,7 @@ import {
 } from "../lib/validators";
 import type { AppEnv } from "../lib/types";
 import {
+  searchRelatedEventsByEvent,
   searchEventsSemanticallyPaginated,
   type PaginatedSemanticSearchResult,
 } from "../services/event-embeddings";
@@ -46,6 +48,15 @@ type SemanticSearchHandler = (
     category?: string;
     startDate?: Date;
     endDate?: Date;
+  },
+) => Promise<PaginatedSemanticSearchResult>;
+
+type RelatedEventsHandler = (
+  c: Context<AppEnv>,
+  input: {
+    eventId: string;
+    type: string;
+    limit: number;
   },
 ) => Promise<PaginatedSemanticSearchResult>;
 
@@ -83,12 +94,25 @@ async function handleSemanticSearch(
   });
 }
 
+async function handleRelatedEvents(
+  c: Context<AppEnv>,
+  input: {
+    eventId: string;
+    type: string;
+    limit: number;
+  },
+) {
+  return searchRelatedEventsByEvent(getPrisma(c), input);
+}
+
 export function createEventsRouter({
   scheduleEventPipeline: schedulePipeline = scheduleEventPipeline,
-  searchSemanticEvents: searchSemanticEvents = handleSemanticSearch,
+  searchSemanticEvents: semanticSearchHandler = handleSemanticSearch,
+  searchRelatedEvents: relatedEventsHandler = handleRelatedEvents,
 }: {
   scheduleEventPipeline?: EventPipelineScheduler;
   searchSemanticEvents?: SemanticSearchHandler;
+  searchRelatedEvents?: RelatedEventsHandler;
 } = {}) {
   return new Hono<AppEnv>()
     .post("/", async (c) => {
@@ -119,7 +143,7 @@ export function createEventsRouter({
         defaultLimit: 10,
         maxLimit: 25,
       });
-      const results = await searchSemanticEvents(c, {
+      const results = await semanticSearchHandler(c, {
         query: query.query ?? "",
         limit: pagination.limit,
         offset: pagination.offset,
@@ -127,6 +151,29 @@ export function createEventsRouter({
         category: query.category,
         startDate: query.startDate ? new Date(query.startDate) : undefined,
         endDate: query.endDate ? new Date(query.endDate) : undefined,
+      });
+
+      return c.json(
+        paginated(results.data, {
+          total: results.total,
+          limit: results.limit,
+          offset: results.offset,
+        }),
+      );
+    })
+    .get("/:id/related", validateEventIdParam, validateStrictPaginationQuery, async (c) => {
+      const prisma = getPrisma(c);
+      const { id } = c.req.valid("param");
+      const query = c.req.valid("query");
+      const pagination = resolvePaginationQuery(query, {
+        defaultLimit: 3,
+        maxLimit: 6,
+      });
+      const event = await getEventByIdOrThrow(prisma, id);
+      const results = await relatedEventsHandler(c, {
+        eventId: id,
+        type: event.type,
+        limit: pagination.limit,
       });
 
       return c.json(

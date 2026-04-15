@@ -29,6 +29,7 @@ export type PaginationQuery = {
 export type EventListQuery = PaginationQuery & {
   type?: string;
   category?: string;
+  tag?: string;
   startDate?: string;
   endDate?: string;
   source?: string;
@@ -43,6 +44,7 @@ export type SemanticSearchQuery = PaginationQuery & {
   query?: string;
   type?: string;
   category?: string;
+  tag?: string;
   startDate?: string;
   endDate?: string;
 };
@@ -56,10 +58,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isAllowedValue<T extends string>(
-  value: string,
-  allowed: readonly T[],
-): value is T {
+function isAllowedValue<T extends string>(value: string, allowed: readonly T[]): value is T {
   return allowed.includes(value as T);
 }
 
@@ -91,10 +90,8 @@ function parsePaginationInput(
   const offsetValue = Array.isArray(rawOffset) ? rawOffset[0] : rawOffset;
 
   if (strict) {
-    const hasInvalidLimit =
-      limitValue !== undefined && !Number.isFinite(Number(limitValue));
-    const hasInvalidOffset =
-      offsetValue !== undefined && !Number.isFinite(Number(offsetValue));
+    const hasInvalidLimit = limitValue !== undefined && !Number.isFinite(Number(limitValue));
+    const hasInvalidOffset = offsetValue !== undefined && !Number.isFinite(Number(offsetValue));
     if (hasInvalidLimit || hasInvalidOffset) {
       return "invalid";
     }
@@ -108,10 +105,7 @@ function parsePaginationInput(
       Math.max(Number.isFinite(parsedLimit) ? parsedLimit : defaultLimit, 1),
       maxLimit,
     ),
-    offset: Math.max(
-      Number.isFinite(parsedOffset) ? parsedOffset : defaultOffset,
-      0,
-    ),
+    offset: Math.max(Number.isFinite(parsedOffset) ? parsedOffset : defaultOffset, 0),
   };
 }
 
@@ -136,6 +130,7 @@ export function toEventListInput(query: EventListQuery): EventListInput {
     ...resolvePaginationQuery(query),
     type: query.type as EventType | undefined,
     category: query.category,
+    tag: query.tag,
     startDate: query.startDate ? new Date(query.startDate) : undefined,
     endDate: query.endDate ? new Date(query.endDate) : undefined,
     source: query.source as EventSource | undefined,
@@ -184,12 +179,7 @@ export const validateEventIdParam = validator("param", (value, c) => {
 export const validateGigRouteParams = validator("param", (value, c) => {
   const gigId = value.gigId?.trim();
   if (!gigId) {
-    return badRequest(
-      c,
-      "gigId is required",
-      "invalid-param",
-      "Invalid path parameter",
-    );
+    return badRequest(c, "gigId is required", "invalid-param", "Invalid path parameter");
   }
 
   return { gigId };
@@ -199,12 +189,7 @@ export const validateGigApplicationParams = validator("param", (value, c) => {
   const gigId = value.gigId?.trim();
   const appId = value.appId?.trim();
   if (!gigId || !appId) {
-    return badRequest(
-      c,
-      "gigId and appId are required",
-      "invalid-param",
-      "Invalid path parameter",
-    );
+    return badRequest(c, "gigId and appId are required", "invalid-param", "Invalid path parameter");
   }
 
   return { gigId, appId };
@@ -237,10 +222,7 @@ export const validateUserIdParam = validator("param", (value, c) => {
   return { id };
 });
 
-export function parseEventCreateBody(
-  value: unknown,
-  c: Context,
-): EventCreateInput | Response {
+export function parseEventCreateBody(value: unknown, c: Context): EventCreateInput | Response {
   if (!isRecord(value)) {
     return badRequest(
       c,
@@ -304,12 +286,8 @@ export function parseEventCreateBody(
 
     parsedCompensation = {
       amount: typeof compensation.amount === "number" ? compensation.amount : null,
-      currency:
-        typeof compensation.currency === "string" ? compensation.currency : "USD",
-      type:
-        typeof compensationType === "string"
-          ? (compensationType as CompensationType)
-          : null,
+      currency: typeof compensation.currency === "string" ? compensation.currency : "USD",
+      type: typeof compensationType === "string" ? (compensationType as CompensationType) : null,
     };
   }
 
@@ -320,10 +298,8 @@ export function parseEventCreateBody(
     imageUrl: typeof imageUrl === "string" ? imageUrl : null,
     location: {
       name: location.name,
-      latitude:
-        typeof location.latitude === "number" ? location.latitude : null,
-      longitude:
-        typeof location.longitude === "number" ? location.longitude : null,
+      latitude: typeof location.latitude === "number" ? location.latitude : null,
+      longitude: typeof location.longitude === "number" ? location.longitude : null,
     },
     startAt: parsedStartAt,
     endAt: parsedEndAt,
@@ -333,10 +309,7 @@ export function parseEventCreateBody(
 
 export const validateEventCreateJson = validator("json", parseEventCreateBody);
 
-export function parseEventUpdateBody(
-  value: unknown,
-  c: Context,
-): EventUpdateInput | Response {
+export function parseEventUpdateBody(value: unknown, c: Context): EventUpdateInput | Response {
   if (!isRecord(value)) {
     return badRequest(
       c,
@@ -359,27 +332,17 @@ export function parseEventUpdateBody(
     if (value.location.name !== undefined) output.location.name = value.location.name as string;
     if (value.location.latitude !== undefined) {
       output.location.latitude =
-        typeof value.location.latitude === "number"
-          ? value.location.latitude
-          : null;
+        typeof value.location.latitude === "number" ? value.location.latitude : null;
     }
     if (value.location.longitude !== undefined) {
       output.location.longitude =
-        typeof value.location.longitude === "number"
-          ? value.location.longitude
-          : null;
+        typeof value.location.longitude === "number" ? value.location.longitude : null;
     }
   }
 
   if (value.status !== undefined) {
-    if (
-      typeof value.status !== "string" ||
-      !isAllowedValue(value.status, EVENT_STATUSES)
-    ) {
-      return badRequest(
-        c,
-        "status must be OPEN, IN_PROGRESS, COMPLETED, or CANCELLED",
-      );
+    if (typeof value.status !== "string" || !isAllowedValue(value.status, EVENT_STATUSES)) {
+      return badRequest(c, "status must be OPEN, IN_PROGRESS, COMPLETED, or CANCELLED");
     }
     output.status = value.status as EventStatus;
   }
@@ -418,18 +381,14 @@ export function parseEventUpdateBody(
     output.compensation = {};
     if (value.compensation.amount !== undefined) {
       output.compensation.amount =
-        typeof value.compensation.amount === "number"
-          ? value.compensation.amount
-          : null;
+        typeof value.compensation.amount === "number" ? value.compensation.amount : null;
     }
     if (value.compensation.currency !== undefined) {
       output.compensation.currency = value.compensation.currency as string;
     }
     if (compensationType !== undefined) {
       output.compensation.type =
-        typeof compensationType === "string"
-          ? (compensationType as CompensationType)
-          : null;
+        typeof compensationType === "string" ? (compensationType as CompensationType) : null;
     }
   }
 
@@ -487,10 +446,7 @@ export const validateEventListQuery = validator("query", (value, c) => {
   const statusValue = firstQueryValue(value.status);
   if (statusValue !== undefined) {
     if (!isAllowedValue(statusValue, EVENT_STATUSES)) {
-      return badRequest(
-        c,
-        "status must be OPEN, IN_PROGRESS, COMPLETED, or CANCELLED",
-      );
+      return badRequest(c, "status must be OPEN, IN_PROGRESS, COMPLETED, or CANCELLED");
     }
     status = statusValue;
   }
@@ -542,6 +498,11 @@ export const validateEventListQuery = validator("query", (value, c) => {
   const category = firstQueryValue(value.category);
   if (category !== undefined) {
     output.category = category;
+  }
+
+  const tag = firstQueryValue(value.tag);
+  if (tag !== undefined) {
+    output.tag = tag;
   }
 
   const user = firstQueryValue(value.user);
@@ -675,6 +636,11 @@ export const validateSemanticSearchQuery = validator("query", (value, c) => {
     output.category = categoryValue;
   }
 
+  const tagValue = firstQueryValue(value.tag);
+  if (tagValue !== undefined) {
+    output.tag = tagValue;
+  }
+
   const startDateValue = firstQueryValue(value.startDate);
   if (startDateValue !== undefined) {
     if (!parseDateValue(startDateValue)) {
@@ -734,27 +700,14 @@ export function parseGigApplicationBody(value: unknown): GigApplicationInput {
 
 export const validateGigApplicationJson = validator("json", parseGigApplicationBody);
 
-export function parseSendMessageBody(
-  value: unknown,
-  c: Context,
-): { content: string } | Response {
+export function parseSendMessageBody(value: unknown, c: Context): { content: string } | Response {
   if (!isRecord(value) || typeof value.content !== "string") {
-    return badRequest(
-      c,
-      "content is required",
-      "invalid-body",
-      "Invalid request body",
-    );
+    return badRequest(c, "content is required", "invalid-body", "Invalid request body");
   }
 
   const content = value.content.trim();
   if (!content) {
-    return badRequest(
-      c,
-      "content is required",
-      "invalid-body",
-      "Invalid request body",
-    );
+    return badRequest(c, "content is required", "invalid-body", "Invalid request body");
   }
 
   return { content };
@@ -785,15 +738,9 @@ export function parseGigApplicationStatusBody(
   return { status: value.status };
 }
 
-export const validateGigApplicationStatusJson = validator(
-  "json",
-  parseGigApplicationStatusBody,
-);
+export const validateGigApplicationStatusJson = validator("json", parseGigApplicationStatusBody);
 
-export function parseUserPatchBody(
-  value: unknown,
-  c: Context,
-): Record<string, unknown> | Response {
+export function parseUserPatchBody(value: unknown, c: Context): Record<string, unknown> | Response {
   if (!isRecord(value)) {
     return badRequest(
       c,
@@ -817,13 +764,7 @@ export function parseUserPatchBody(
 
 export const validateUserPatchJson = validator("json", parseUserPatchBody);
 
-export const INTERACTION_TYPES = [
-  "VIEW",
-  "SAVE",
-  "CLICK",
-  "APPLY",
-  "DISMISS",
-] as const;
+export const INTERACTION_TYPES = ["VIEW", "SAVE", "CLICK", "APPLY", "DISMISS"] as const;
 
 export function parseInteractionCreateBody(
   value: unknown,
@@ -843,10 +784,7 @@ export function parseInteractionCreateBody(
     return badRequest(c, "eventId is required");
   }
 
-  if (
-    typeof value.action !== "string" ||
-    !isAllowedValue(value.action, INTERACTION_TYPES)
-  ) {
+  if (typeof value.action !== "string" || !isAllowedValue(value.action, INTERACTION_TYPES)) {
     return badRequest(
       c,
       "action must be VIEW, SAVE, CLICK, APPLY, or DISMISS",
@@ -867,12 +805,7 @@ export const validateCollectionItemParams = validator("param", (value, c) => {
   const id = value.id?.trim();
   const eventId = value.eventId?.trim();
   if (!id || !eventId) {
-    return badRequest(
-      c,
-      "id and eventId are required",
-      "invalid-param",
-      "Invalid path parameter",
-    );
+    return badRequest(c, "id and eventId are required", "invalid-param", "Invalid path parameter");
   }
 
   return { id, eventId };

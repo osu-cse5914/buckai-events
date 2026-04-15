@@ -3,11 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockClerkGetUser = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>,
-    ) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },
@@ -223,9 +220,7 @@ describe("[phase:3] [regression:always] GET /api/v1/social/feed", () => {
       ] as never)
       .mockResolvedValueOnce([{ total: 50 }] as never);
 
-    const res = await app.request(
-      makeAuthRequest("/api/v1/social/feed?limit=10&offset=10"),
-    );
+    const res = await app.request(makeAuthRequest("/api/v1/social/feed?limit=10&offset=10"));
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as {

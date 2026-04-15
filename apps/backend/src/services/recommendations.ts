@@ -2,9 +2,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { NotFoundError } from "../lib/problem-details";
 import { CREATOR_SELECT, type EventType } from "./events";
 
-export type RecommendationRankingMode =
-  | "PERSONALIZED"
-  | "POPULARITY_FALLBACK";
+export type RecommendationRankingMode = "PERSONALIZED" | "POPULARITY_FALLBACK";
 
 type RecommendationListInput = {
   userId: string;
@@ -121,15 +119,11 @@ function scorePersonalizedCandidate(
   interests: string[],
 ): number {
   const interestScore =
-    candidate.category !== null && interests.includes(candidate.category)
-      ? INTEREST_WEIGHT
-      : 0;
+    candidate.category !== null && interests.includes(candidate.category) ? INTEREST_WEIGHT : 0;
 
   const popularityScore =
-    Math.min(
-      Math.log1p(candidate.interactions.length) / Math.log1p(POPULARITY_SCALE),
-      1.0,
-    ) * POPULARITY_WEIGHT;
+    Math.min(Math.log1p(candidate.interactions.length) / Math.log1p(POPULARITY_SCALE), 1.0) *
+    POPULARITY_WEIGHT;
 
   return interestScore + popularityScore;
 }
@@ -140,8 +134,7 @@ function compareRecommendationCandidates(
   interests: string[],
 ) {
   const scoreDiff =
-    scorePersonalizedCandidate(right, interests) -
-    scorePersonalizedCandidate(left, interests);
+    scorePersonalizedCandidate(right, interests) - scorePersonalizedCandidate(left, interests);
   if (scoreDiff !== 0) {
     return scoreDiff;
   }
@@ -194,39 +187,38 @@ async function loadRecommendationContext(
 ): Promise<RecommendationContext> {
   const now = input.now ?? new Date();
   const keywordSearch = normalizeKeywordSearch(input.search);
-  const [user, dismissedInteractions, userInteractionCount, rawCandidates] =
-    await Promise.all([
-      prisma.user.findUnique({
-        where: { id: input.userId },
-        select: {
-          id: true,
-          interests: true,
-        },
-      }),
-      prisma.interaction.findMany({
-        where: {
-          userId: input.userId,
-          action: "DISMISS",
-        },
-        select: {
-          eventId: true,
-        },
-      }),
-      prisma.interaction.count({
-        where: {
-          userId: input.userId,
-        },
-      }),
-      prisma.event.findMany({
-        where: {
-          status: { in: ["OPEN", "IN_PROGRESS"] },
-          startAt: { gt: now },
-          ...(input.type ? { type: input.type } : {}),
-          ...buildKeywordSearchWhere(keywordSearch),
-        },
-        include: RECOMMENDATION_EVENT_INCLUDE,
-      }),
-    ]);
+  const [user, dismissedInteractions, userInteractionCount, rawCandidates] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: input.userId },
+      select: {
+        id: true,
+        interests: true,
+      },
+    }),
+    prisma.interaction.findMany({
+      where: {
+        userId: input.userId,
+        action: "DISMISS",
+      },
+      select: {
+        eventId: true,
+      },
+    }),
+    prisma.interaction.count({
+      where: {
+        userId: input.userId,
+      },
+    }),
+    prisma.event.findMany({
+      where: {
+        status: { in: ["OPEN", "IN_PROGRESS"] },
+        startAt: { gt: now },
+        ...(input.type ? { type: input.type } : {}),
+        ...buildKeywordSearchWhere(keywordSearch),
+      },
+      include: RECOMMENDATION_EVENT_INCLUDE,
+    }),
+  ]);
 
   if (!user) {
     throw new NotFoundError("User not found");
@@ -234,9 +226,7 @@ async function loadRecommendationContext(
 
   return {
     user,
-    dismissedEventIds: new Set(
-      dismissedInteractions.map((interaction) => interaction.eventId),
-    ),
+    dismissedEventIds: new Set(dismissedInteractions.map((interaction) => interaction.eventId)),
     userInteractionCount,
     candidates: rawCandidates,
   };
@@ -272,17 +262,13 @@ function paginateRecommendationCandidates(
   };
 }
 
-export async function listRecommendations(
-  prisma: PrismaClient,
-  input: RecommendationListInput,
-) {
+export async function listRecommendations(prisma: PrismaClient, input: RecommendationListInput) {
   const context = await loadRecommendationContext(prisma, input);
   const rankedCandidates = rankRecommendationCandidates(
     context.candidates,
     input,
     context.dismissedEventIds,
-    (left, right) =>
-      compareRecommendationCandidates(left, right, context.user.interests),
+    (left, right) => compareRecommendationCandidates(left, right, context.user.interests),
   );
   const result = paginateRecommendationCandidates(rankedCandidates, input);
   const rankingMode: RecommendationRankingMode =

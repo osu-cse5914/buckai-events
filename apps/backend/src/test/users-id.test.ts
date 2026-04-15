@@ -3,11 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockClerkGetUser = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>
-    ) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },
@@ -71,17 +68,20 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: AUTH_USER.clerkId } as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
 
     // Auth middleware looks up by clerkId; route handler looks up by id
-    vi.mocked(mockPrisma.user.findUnique).mockImplementation(
-      ((args: { where: { clerkId?: string; id?: string } }) => {
-        if (args?.where?.clerkId === AUTH_USER.clerkId)
-          return Promise.resolve(AUTH_USER);
-        if (args?.where?.id === TARGET_USER.id)
-          return Promise.resolve(TARGET_USER);
-        return Promise.resolve(null);
-      }) as never
-    );
+    vi.mocked(mockPrisma.user.findUnique).mockImplementation(((args: {
+      where: { clerkId?: string; id?: string };
+    }) => {
+      if (args?.where?.clerkId === AUTH_USER.clerkId) return Promise.resolve(AUTH_USER);
+      if (args?.where?.id === TARGET_USER.id) return Promise.resolve(TARGET_USER);
+      return Promise.resolve(null);
+    }) as never);
 
     vi.mocked(mockPrisma.event.findMany).mockResolvedValue(MOCK_EVENTS as never);
     vi.mocked(mockPrisma.event.count).mockResolvedValue(2);
@@ -89,15 +89,15 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   });
 
   it("TC-PUB-001: returns public profile fields for another user", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`));
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, unknown>;
     expect(data).toMatchObject({
       id: TARGET_USER.id,
       displayName: TARGET_USER.displayName,
+      imageUrl: "https://example.com/avatar.png",
+      pronouns: "he/him",
       major: TARGET_USER.major,
       gradYear: TARGET_USER.gradYear,
       interests: TARGET_USER.interests,
@@ -109,9 +109,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   });
 
   it("TC-PUB-002: email is not included in public profile", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`));
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, unknown>;
@@ -119,9 +117,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   });
 
   it("TC-PUB-003: only OPEN and IN_PROGRESS events are included", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`));
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, unknown>;
@@ -133,7 +129,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
           creatorId: TARGET_USER.id,
           status: { in: ["OPEN", "IN_PROGRESS"] },
         }),
-      })
+      }),
     );
   });
 
@@ -145,9 +141,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
       createdAt: new Date(),
     } as never);
 
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`));
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, unknown>;
@@ -157,9 +151,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   it("TC-PUB-005: isFollowing is false when authenticated user does not follow target", async () => {
     vi.mocked(mockPrisma.follow.findUnique).mockResolvedValue(null);
 
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`));
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, unknown>;
@@ -167,33 +159,27 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   });
 
   it("TC-PUB-006: returns 404 for nonexistent user", async () => {
-    vi.mocked(mockPrisma.user.findUnique).mockImplementation(
-      ((args: { where: { clerkId?: string; id?: string } }) => {
-        if (args?.where?.clerkId === AUTH_USER.clerkId)
-          return Promise.resolve(AUTH_USER);
-        return Promise.resolve(null);
-      }) as never
-    );
+    vi.mocked(mockPrisma.user.findUnique).mockImplementation(((args: {
+      where: { clerkId?: string; id?: string };
+    }) => {
+      if (args?.where?.clerkId === AUTH_USER.clerkId) return Promise.resolve(AUTH_USER);
+      return Promise.resolve(null);
+    }) as never);
 
-    const res = await app.request(
-      makeAuthRequest("/api/v1/users/nonexistent")
-    );
+    const res = await app.request(makeAuthRequest("/api/v1/users/nonexistent"));
 
     expect(res.status).toBe(404);
   });
 
   it("TC-PUB-006: 404 response uses RFC 7807 Problem Details format", async () => {
-    vi.mocked(mockPrisma.user.findUnique).mockImplementation(
-      ((args: { where: { clerkId?: string; id?: string } }) => {
-        if (args?.where?.clerkId === AUTH_USER.clerkId)
-          return Promise.resolve(AUTH_USER);
-        return Promise.resolve(null);
-      }) as never
-    );
+    vi.mocked(mockPrisma.user.findUnique).mockImplementation(((args: {
+      where: { clerkId?: string; id?: string };
+    }) => {
+      if (args?.where?.clerkId === AUTH_USER.clerkId) return Promise.resolve(AUTH_USER);
+      return Promise.resolve(null);
+    }) as never);
 
-    const res = await app.request(
-      makeAuthRequest("/api/v1/users/nonexistent")
-    );
+    const res = await app.request(makeAuthRequest("/api/v1/users/nonexistent"));
 
     expect(res.status).toBe(404);
     expect(res.headers.get("content-type")).toContain("application/problem+json");
@@ -207,9 +193,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   });
 
   it("excludes clerkId and updatedAt from public profile", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`));
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, unknown>;
@@ -219,7 +203,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
 
   it("respects pagination query params for createdEvents", async () => {
     const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=5&offset=10`)
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=5&offset=10`),
     );
 
     expect(res.status).toBe(200);
@@ -227,7 +211,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
       expect.objectContaining({
         take: 5,
         skip: 10,
-      })
+      }),
     );
     const data = (await res.json()) as Record<string, unknown>;
     const createdEvents = data.createdEvents as { items: unknown[]; meta: Record<string, unknown> };
@@ -235,20 +219,14 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   });
 
   it("caps limit at 100", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=999`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=999`));
 
     expect(res.status).toBe(200);
-    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 100 })
-    );
+    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
   });
 
   it("TC-PUB-008: returns 400 for non-numeric limit", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=abc`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=abc`));
 
     expect(res.status).toBe(400);
     const data = (await res.json()) as Record<string, unknown>;
@@ -260,29 +238,25 @@ describe("[phase:1] [regression:always] GET /api/v1/users/:id", () => {
   });
 
   it("TC-PUB-008: returns 400 for non-numeric offset", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?offset=xyz`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?offset=xyz`));
 
     expect(res.status).toBe(400);
   });
 
   it("TC-PUB-008: returns 400 when both limit and offset are non-numeric", async () => {
     const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=abc&offset=xyz`)
+      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}?limit=abc&offset=xyz`),
     );
 
     expect(res.status).toBe(400);
   });
 
   it("uses defaults when limit and offset are omitted", async () => {
-    const res = await app.request(
-      makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`)
-    );
+    const res = await app.request(makeAuthRequest(`/api/v1/users/${TARGET_USER.id}`));
 
     expect(res.status).toBe(200);
     expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ take: 20, skip: 0 })
+      expect.objectContaining({ take: 20, skip: 0 }),
     );
   });
 });

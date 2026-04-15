@@ -3,11 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockClerkGetUser = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>,
-    ) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },
@@ -64,9 +61,7 @@ describe("[phase:2] [regression:always] GET /api/v1/users/me/applications", () =
       makeApplication(),
     ];
 
-    vi.mocked(mockPrisma.application.findMany).mockResolvedValue(
-      applications as never,
-    );
+    vi.mocked(mockPrisma.application.findMany).mockResolvedValue(applications as never);
     vi.mocked(mockPrisma.application.count).mockResolvedValue(2 as never);
 
     const res = await app.request(

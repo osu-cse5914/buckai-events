@@ -1,8 +1,7 @@
 import type { EventSource, PrismaClient } from "@prisma/client";
 
 const OSU_EVENTS_URL = "https://content.osu.edu/v2/events";
-const TICKETMASTER_EVENTS_URL =
-  "https://app.ticketmaster.com/discovery/v2/events.json";
+const TICKETMASTER_EVENTS_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 const TICKETMASTER_PAGE_SIZE = "200";
 
 type FetchLike = typeof fetch;
@@ -41,6 +40,11 @@ type TicketmasterEventRecord = {
   name: string;
   info?: string | null;
   pleaseNote?: string | null;
+  promoter?: TicketmasterPromoter | null;
+  promoters?: TicketmasterPromoter[] | null;
+  accessibility?: {
+    info?: string | null;
+  } | null;
   url?: string | null;
   dates?: {
     start?: {
@@ -53,6 +57,10 @@ type TicketmasterEventRecord = {
   _embedded?: {
     venues?: TicketmasterVenue[];
   };
+};
+
+type TicketmasterPromoter = {
+  description?: string | null;
 };
 
 type TicketmasterVenue = {
@@ -97,9 +105,7 @@ export type ExternalSyncOptions = {
   ticketmasterApiKey?: string;
   fetchImpl?: FetchLike;
   now?: Date;
-  scheduleEventPipeline?: (
-    input: ExternalEventPipelineScheduleInput,
-  ) => Promise<unknown> | unknown;
+  scheduleEventPipeline?: (input: ExternalEventPipelineScheduleInput) => Promise<unknown> | unknown;
 };
 
 export type ExternalSyncSourceSummary = {
@@ -151,6 +157,16 @@ function normalizeText(...values: Array<string | null | undefined>): string {
   }
 
   return "";
+}
+
+function resolveTicketmasterDescription(event: TicketmasterEventRecord): string {
+  return normalizeText(
+    event.info,
+    event.pleaseNote,
+    event.promoter?.description,
+    event.promoters?.map((promoter) => promoter.description).find(Boolean),
+    event.accessibility?.info,
+  );
 }
 
 async function createSourceHash(payload: Record<string, unknown>): Promise<string> {
@@ -253,7 +269,7 @@ export async function fetchTicketmasterEvents(
         source: "TICKETMASTER" as const,
         externalId: event.id,
         title: event.name.trim(),
-        description: normalizeText(event.info, event.pleaseNote),
+        description: resolveTicketmasterDescription(event),
         ticketUrl: event.url?.trim() || null,
         externalUrl: null,
         locationName: normalizeText(venue?.name, "TBD"),
@@ -328,10 +344,7 @@ async function scheduleExternalEventPipeline(
   try {
     await scheduleEventPipeline(input);
   } catch (error) {
-    console.error(
-      `Failed to schedule external event pipeline for event ${input.eventId}`,
-      error,
-    );
+    console.error(`Failed to schedule external event pipeline for event ${input.eventId}`, error);
   }
 }
 
@@ -443,7 +456,7 @@ export async function syncExternalEvents(
     now = new Date(),
     scheduleEventPipeline,
   }: ExternalSyncOptions,
-) : Promise<ExternalSyncSummary> {
+): Promise<ExternalSyncSummary> {
   const startedAt = new Date();
   const normalizedTicketmasterApiKey = ticketmasterApiKey?.trim();
   const ticketmasterCandidatesPromise = normalizedTicketmasterApiKey

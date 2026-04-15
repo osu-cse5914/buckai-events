@@ -8,11 +8,7 @@ import { createUnified } from "ai-gateway-provider/providers/unified";
 import type { EmbeddingModel, LanguageModel } from "ai";
 import { z } from "zod";
 
-export const AI_PROVIDER_TYPES = [
-  "GOOGLE",
-  "OPENAI_COMPATIBLE",
-  "CF_AI_GATEWAY",
-] as const;
+export const AI_PROVIDER_TYPES = ["GOOGLE", "OPENAI_COMPATIBLE", "CF_AI_GATEWAY"] as const;
 export const AI_MODEL_TYPES = ["GENERATIVE", "EMBEDDING"] as const;
 
 export type AIProviderType = (typeof AI_PROVIDER_TYPES)[number];
@@ -166,14 +162,9 @@ function readEnvValue(env: AIEnvironment, key: string): string | undefined {
   return processValue?.trim() ? processValue.trim() : undefined;
 }
 
-function requireProviderApiKey(
-  provider: AIProviderConfig,
-  env: AIEnvironment,
-): string {
+function requireProviderApiKey(provider: AIProviderConfig, env: AIEnvironment): string {
   if (!provider.apiKeyEnvVar?.trim()) {
-    throw new AIConfigurationError(
-      `Provider "${provider.id}" requires a non-empty apiKeyEnvVar`,
-    );
+    throw new AIConfigurationError(`Provider "${provider.id}" requires a non-empty apiKeyEnvVar`);
   }
 
   const apiKey = readEnvValue(env, provider.apiKeyEnvVar);
@@ -225,9 +216,7 @@ function requireProviderBaseUrl(provider: AIProviderConfig): string {
     return provider.baseUrl.trim();
   }
 
-  throw new AIConfigurationError(
-    `Provider "${provider.id}" requires a non-empty baseUrl`,
-  );
+  throw new AIConfigurationError(`Provider "${provider.id}" requires a non-empty baseUrl`);
 }
 
 function requireProviderAccountId(provider: AIProviderConfig): string {
@@ -235,9 +224,7 @@ function requireProviderAccountId(provider: AIProviderConfig): string {
     return provider.accountId.trim();
   }
 
-  throw new AIConfigurationError(
-    `Provider "${provider.id}" requires a non-empty accountId`,
-  );
+  throw new AIConfigurationError(`Provider "${provider.id}" requires a non-empty accountId`);
 }
 
 function requireProviderGateway(provider: AIProviderConfig): string {
@@ -245,14 +232,10 @@ function requireProviderGateway(provider: AIProviderConfig): string {
     return provider.gateway.trim();
   }
 
-  throw new AIConfigurationError(
-    `Provider "${provider.id}" requires a non-empty gateway`,
-  );
+  throw new AIConfigurationError(`Provider "${provider.id}" requires a non-empty gateway`);
 }
 
-function buildCloudflareAIGatewayCompatBaseUrl(
-  provider: AIProviderConfig,
-): string {
+function buildCloudflareAIGatewayCompatBaseUrl(provider: AIProviderConfig): string {
   const accountId = requireProviderAccountId(provider);
   const gateway = requireProviderGateway(provider);
 
@@ -368,9 +351,7 @@ function resolveCloudflareCustomProviderTarget(
   };
 }
 
-function resolveCloudflareOpenAICompatibleRoute(
-  model: AIModelConfig,
-): {
+function resolveCloudflareOpenAICompatibleRoute(model: AIModelConfig): {
   gatewayProviderId: string;
   gatewayBasePath: string;
 } | null {
@@ -388,9 +369,7 @@ function resolveCloudflareOpenAICompatibleRoute(
   }
 
   if (!gatewayBasePath.startsWith("/")) {
-    throw new AIConfigurationError(
-      `Model "${model.id}" gatewayBasePath must start with "/"`,
-    );
+    throw new AIConfigurationError(`Model "${model.id}" gatewayBasePath must start with "/"`);
   }
 
   return {
@@ -404,17 +383,12 @@ function createCloudflareCustomProviderLanguageModel(
   model: AIModelConfig,
   env: AIEnvironment,
 ): LanguageModel | null {
-  const customProviderTarget = resolveCloudflareCustomProviderTarget(
-    provider,
-    model,
-  );
+  const customProviderTarget = resolveCloudflareCustomProviderTarget(provider, model);
   if (!customProviderTarget) {
     return null;
   }
 
-  return new OpenAICompatibleChatLanguageModel(
-    customProviderTarget.providerModelId,
-    {
+  return new OpenAICompatibleChatLanguageModel(customProviderTarget.providerModelId, {
     provider: `${provider.id}.chat`,
     headers: () => buildCloudflareAIGatewayHeaders(provider, env),
     url: () =>
@@ -423,8 +397,7 @@ function createCloudflareCustomProviderLanguageModel(
         customProviderTarget.gatewayProviderId,
         customProviderTarget.chatCompletionsPath,
       ),
-    },
-  );
+  });
 }
 
 function validateIndexedIds<T extends { id: string }>(
@@ -433,9 +406,7 @@ function validateIndexedIds<T extends { id: string }>(
 ) {
   for (const [key, value] of Object.entries(values)) {
     if (key !== value.id) {
-      throw new AIConfigurationError(
-        `AI ${type} key "${key}" must match id "${value.id}"`,
-      );
+      throw new AIConfigurationError(`AI ${type} key "${key}" must match id "${value.id}"`);
     }
   }
 }
@@ -450,9 +421,7 @@ export function validateAIConfig(config: AIConfig): AIConfig {
       provider.type === "OPENAI_COMPATIBLE" &&
       (!provider.baseUrl || provider.baseUrl.trim().length === 0)
     ) {
-      throw new AIConfigurationError(
-        `Provider "${provider.id}" requires a non-empty baseUrl`,
-      );
+      throw new AIConfigurationError(`Provider "${provider.id}" requires a non-empty baseUrl`);
     }
 
     if (
@@ -481,8 +450,7 @@ export function validateAIConfig(config: AIConfig): AIConfig {
 
     if (
       provider.customProviderId &&
-      (!provider.chatCompletionsPath ||
-        provider.chatCompletionsPath.trim().length === 0)
+      (!provider.chatCompletionsPath || provider.chatCompletionsPath.trim().length === 0)
     ) {
       throw new AIConfigurationError(
         `Provider "${provider.id}" requires chatCompletionsPath when customProviderId is set`,
@@ -580,9 +548,7 @@ const defaultAdapters: AIProviderAdapters = {
       const headers = resolveProviderHeaders(provider, env);
       const openaiCompatible = createOpenAICompatible({
         name: provider.id,
-        apiKey: provider.apiKeyEnvVar
-          ? requireProviderApiKey(provider, env)
-          : undefined,
+        apiKey: provider.apiKeyEnvVar ? requireProviderApiKey(provider, env) : undefined,
         baseURL: requireProviderBaseUrl(provider),
         headers,
       });
@@ -593,9 +559,7 @@ const defaultAdapters: AIProviderAdapters = {
       const headers = resolveProviderHeaders(provider, env);
       const openaiCompatible = createOpenAICompatible({
         name: provider.id,
-        apiKey: provider.apiKeyEnvVar
-          ? requireProviderApiKey(provider, env)
-          : undefined,
+        apiKey: provider.apiKeyEnvVar ? requireProviderApiKey(provider, env) : undefined,
         baseURL: requireProviderBaseUrl(provider),
         headers,
       });
@@ -605,11 +569,7 @@ const defaultAdapters: AIProviderAdapters = {
   },
   CF_AI_GATEWAY: {
     languageModel(provider, model, env) {
-      const customProviderModel = createCloudflareCustomProviderLanguageModel(
-        provider,
-        model,
-        env,
-      );
+      const customProviderModel = createCloudflareCustomProviderLanguageModel(provider, model, env);
       if (customProviderModel) {
         return customProviderModel;
       }
@@ -662,9 +622,7 @@ export function createAIModelRouter({
 
     const model = resolvedConfig.models[task.modelId];
     if (!model) {
-      throw new AIConfigurationError(
-        `Task "${taskId}" references unknown model "${task.modelId}"`,
-      );
+      throw new AIConfigurationError(`Task "${taskId}" references unknown model "${task.modelId}"`);
     }
 
     const provider = resolvedConfig.providers[model.providerId];
@@ -680,9 +638,7 @@ export function createAIModelRouter({
   function getLanguageModel(taskId: AITaskId): LanguageModel {
     const resolved = resolveTask(taskId);
     if (resolved.model.type !== "GENERATIVE") {
-      throw new AIConfigurationError(
-        `Task "${taskId}" is configured with a non-generative model`,
-      );
+      throw new AIConfigurationError(`Task "${taskId}" is configured with a non-generative model`);
     }
 
     const adapter = adapters[resolved.provider.type]?.languageModel;
@@ -698,9 +654,7 @@ export function createAIModelRouter({
   function getEmbeddingModel(taskId: AITaskId): EmbeddingModel {
     const resolved = resolveTask(taskId);
     if (resolved.model.type !== "EMBEDDING") {
-      throw new AIConfigurationError(
-        `Task "${taskId}" is configured with a non-embedding model`,
-      );
+      throw new AIConfigurationError(`Task "${taskId}" is configured with a non-embedding model`);
     }
 
     const adapter = adapters[resolved.provider.type]?.embeddingModel;

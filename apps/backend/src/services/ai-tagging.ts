@@ -1,10 +1,6 @@
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import {
-  createAIModelRouter,
-  type AIEnvironment,
-  type ResolvedAITask,
-} from "../lib/ai/router";
+import { createAIModelRouter, type AIEnvironment, type ResolvedAITask } from "../lib/ai/router";
 
 export type EventTaggingInput = {
   title: string;
@@ -31,7 +27,7 @@ const taggingOutputSchema = z.object({
 });
 
 export const EVENT_TAGGING_SYSTEM_PROMPT = [
-  "You generate structured discovery metadata for Social OSU events.",
+  "You generate structured discovery metadata for BuckAI Events events.",
   "Use only the provided event details.",
   "Return concise, student-facing tags, a category, and a short summary.",
   "Do not invent facts or add unsupported details.",
@@ -46,7 +42,7 @@ function buildTaggingPrompt(input: EventTaggingInput) {
 }
 
 function normalizeTag(value: string): string | null {
-  const normalized = value.trim().toLowerCase().replace(/\s+/g, "-");
+  const normalized = value.trim().replace(/^#+/, "").trim().toLowerCase().replace(/\s+/g, "-");
   if (!normalized || normalized.length > 50) {
     return null;
   }

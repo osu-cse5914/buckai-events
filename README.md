@@ -1,6 +1,6 @@
-# Social OSU
+# BuckAI Events
 
-Social OSU is an AI-powered campus discovery platform for The Ohio State University students. It aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers personalized recommendations, and provides an agentic LLM chatbot for natural-language event discovery.
+BuckAI Events is an AI-powered campus discovery platform for The Ohio State University students. It aggregates on-campus and off-campus events, supports a student-only gig marketplace, delivers personalized recommendations, and provides an agentic LLM chatbot for natural-language event discovery.
 
 ## Docs
 
@@ -18,7 +18,7 @@ All REST endpoints are prefixed with `/api/v1`.
 
 ## Project Management
 
-Social OSU shipped across 7 historical phases. That phase breakdown remains in the roadmap for context, but the active workflow is issue- and PR-based rather than milestone-regression based.
+BuckAI Events shipped across 7 historical phases. That phase breakdown remains in the roadmap for context, but the active workflow is issue- and PR-based rather than milestone-regression based.
 
 | Phase | Focus |
 |-------|-------|

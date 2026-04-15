@@ -123,17 +123,17 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 - **When**: They navigate to `/sign-up`
 - **Then**: The Clerk sign-up widget is visible (no 404)
 
-## TC-AUTH-011: Shared authenticated shell redirects signed-out visitors
+## TC-AUTH-011: Shared shell allows public discovery routes while redirecting private ones
 
 - **Spec scenario**: S-AUTH-7
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/-app-pages.test.tsx`, `e2e/navigation.spec.ts`
+- **Automated in**: `apps/web/src/routes/_app/-app-pages.test.tsx`, `e2e/navigation.spec.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: A visitor is not signed in
-- **When**: They navigate into the authenticated client route tree
-- **Then**: The shared shell guard redirects them to `/sign-in`
-- **And**: Child routes do not need to redefine their own auth redirect
+- **When**: They navigate to a public discovery route like `/featured`
+- **Then**: The shared shell does not redirect them away
+- **And**: When they navigate to a private route like `/search`, the shell redirects them to `/sign-in`
 
 ## TC-AUTH-012: E2E auth header is ignored when test auth is disabled
 

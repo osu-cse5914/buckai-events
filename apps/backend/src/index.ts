@@ -37,11 +37,7 @@ const worker = {
   },
 
   // Cloudflare Workers cron trigger — run scheduled jobs by cron expression
-  async scheduled(
-    event: ScheduledController,
-    env: WorkerBindings,
-    ctx: ExecutionContext,
-  ) {
+  async scheduled(event: ScheduledController, env: WorkerBindings, ctx: ExecutionContext) {
     if (event.cron === AUTO_COMPLETE_CRON) {
       ctx.waitUntil(runWithPrisma(env.DATABASE_URL, autoCompleteEvents));
       return;

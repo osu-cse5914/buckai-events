@@ -7,11 +7,7 @@ import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { buildAuthUser, buildEvent } from "./factories";
 import { createMockPrisma } from "./helpers/prisma";
 import { registerApiErrorHandlers } from "../app";
-import {
-  createEventsRouter,
-  events,
-  isValidStatusTransition,
-} from "../routes/events";
+import { createEventsRouter, events, isValidStatusTransition } from "../routes/events";
 
 // --- Test data ---
 
@@ -58,6 +54,29 @@ function createSemanticSearchTestApp({
     "/events",
     createEventsRouter({
       searchSemanticEvents,
+    }),
+  );
+  return app;
+}
+
+function createRelatedEventsTestApp({
+  user = USER_A,
+  searchRelatedEvents,
+}: {
+  user?: typeof USER_A;
+  searchRelatedEvents: NonNullable<Parameters<typeof createEventsRouter>[0]>["searchRelatedEvents"];
+}) {
+  const app = new Hono();
+  registerApiErrorHandlers(app);
+  app.use("/*", async (c, next) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c as any).set("user", user);
+    await next();
+  });
+  app.route(
+    "/events",
+    createEventsRouter({
+      searchRelatedEvents,
     }),
   );
   return app;
@@ -376,6 +395,22 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       );
     });
 
+    it("TC-EVT-045: filters events by tag including legacy hash-prefixed values", async () => {
+      vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+      vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
+
+      const res = await createTestApp().request("/events?tag=music");
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tags: { hasSome: ["music", "#music", "##music", "###music"] },
+          }),
+        }),
+      );
+    });
+
     it("filters events by creator user", async () => {
       vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
@@ -451,19 +486,26 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
   });
 
   describe("[phase:6] [regression:always] GET /events browse defaults", () => {
-    it("TC-EVT-030: supports grouped active filtering and configurable start-time sorting", async () => {
+    it("TC-EVT-030: supports grouped active filtering, excludes stale open rows, and configurable start-time sorting", async () => {
       vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
 
-      const res = await createTestApp().request(
-        "/events?statusMode=ACTIVE&sort=START_DESC",
-      );
+      const res = await createTestApp().request("/events?statusMode=ACTIVE&sort=START_DESC");
 
       expect(res.status).toBe(200);
       expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             status: { in: ["OPEN", "IN_PROGRESS"] },
+            AND: [
+              {
+                OR: [
+                  { endAt: { gte: expect.any(Date) } },
+                  { endAt: null, startAt: { gte: expect.any(Date) } },
+                  { status: "IN_PROGRESS", endAt: null },
+                ],
+              },
+            ],
           }),
           orderBy: { startAt: "desc" },
         }),
@@ -517,6 +559,59 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
         total: 9,
         limit: 10,
         offset: 20,
+      });
+    });
+  });
+
+  describe("[phase:6] [regression:always] GET /events/:id/related", () => {
+    it("TC-EMBED-015: returns paginated related-event results for the current event", async () => {
+      const searchRelatedEvents = vi.fn().mockResolvedValue({
+        data: [
+          makeEvent({
+            id: "evt_related_1",
+            title: "Late Night Jam Session",
+            creator: {
+              id: USER_A.id,
+              displayName: null,
+              email: USER_A.email,
+            },
+          }),
+        ],
+        total: 2,
+        limit: 2,
+        offset: 0,
+      });
+      vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
+        makeEvent({ id: "evt_source" }) as never,
+      );
+
+      const res = await createRelatedEventsTestApp({
+        searchRelatedEvents,
+      }).request("/events/evt_source/related?limit=2");
+
+      expect(res.status).toBe(200);
+      expect(searchRelatedEvents).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          eventId: "evt_source",
+          type: "EVENT",
+          limit: 2,
+        }),
+      );
+      const body = (await res.json()) as {
+        data: Array<{ id: string; title: string }>;
+        pagination: { total: number; limit: number; offset: number };
+      };
+      expect(body.data).toEqual([
+        expect.objectContaining({
+          id: "evt_related_1",
+          title: "Late Night Jam Session",
+        }),
+      ]);
+      expect(body.pagination).toEqual({
+        total: 2,
+        limit: 2,
+        offset: 0,
       });
     });
   });

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  ArrowDownWideNarrowIcon,
-  ArrowUpNarrowWideIcon,
-  PlusIcon,
-} from "lucide-react";
+import { useAuth } from "@clerk/clerk-react";
+import { ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { SPLIT_VIEWER_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 import { defaultBrowseFiltersForType } from "@/lib/event-route-search";
 import {
   Select,
@@ -52,9 +52,7 @@ export function BrowsePage({
   const resolvedFilters = filters ?? defaultFilters;
   const itemLabel = browseType === "GIG" ? "gigs" : "events";
   const isSoonestFirst = resolvedFilters.sort === "START_ASC";
-  const SortIcon = isSoonestFirst
-    ? ArrowUpNarrowWideIcon
-    : ArrowDownWideNarrowIcon;
+  const SortIcon = isSoonestFirst ? ArrowUpNarrowWideIcon : ArrowDownWideNarrowIcon;
   const statusOptions =
     browseType === "GIG"
       ? [
@@ -73,51 +71,38 @@ export function BrowsePage({
           { value: "ALL", label: "All statuses" },
         ];
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useInfiniteEventsQuery(
-    {
+  const { isSignedIn } = useAuth();
+  const { data, isLoading, isError, error, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useInfiniteEventsQuery({
       type: browseType,
       statusMode: resolvedFilters.statusMode,
       source: resolvedFilters.source || undefined,
       sort: resolvedFilters.sort,
-    },
-  );
-  const events = useMemo(
-    () => {
-      const uniqueEvents = [];
-      const seenEventIds = new Set<string>();
+    });
+  const events = useMemo(() => {
+    const uniqueEvents = [];
+    const seenEventIds = new Set<string>();
 
-      for (const pageData of data?.pages ?? []) {
-        for (const event of pageData.data) {
-          if (seenEventIds.has(event.id)) {
-            continue;
-          }
-
-          seenEventIds.add(event.id);
-          uniqueEvents.push(event);
+    for (const pageData of data?.pages ?? []) {
+      for (const event of pageData.data) {
+        if (seenEventIds.has(event.id)) {
+          continue;
         }
-      }
 
-      return uniqueEvents;
-    },
-    [data],
-  );
+        seenEventIds.add(event.id);
+        uniqueEvents.push(event);
+      }
+    }
+
+    return uniqueEvents;
+  }, [data]);
   const totalCount = data?.pages[0]?.pagination.total ?? 0;
 
   const hasActiveFilters =
     resolvedFilters.statusMode !== defaultFilters.statusMode ||
     resolvedFilters.source !== defaultFilters.source ||
     resolvedFilters.sort !== defaultFilters.sort;
-  const hasSelectedEvent = Boolean(
-    events.some((event) => event.id === selectedEventId),
-  );
+  const hasSelectedEvent = Boolean(events.some((event) => event.id === selectedEventId));
 
   useEffect(() => {
     if (!selectedEventId || isLoading || hasSelectedEvent || !data) {
@@ -125,16 +110,10 @@ export function BrowsePage({
     }
 
     onClearSelectedEvent();
-  }, [
-    data,
-    hasSelectedEvent,
-    isLoading,
-    onClearSelectedEvent,
-    selectedEventId,
-  ]);
+  }, [data, hasSelectedEvent, isLoading, onClearSelectedEvent, selectedEventId]);
 
   useEffect(() => {
-    if (!loadMoreRef.current || !hasNextPage) {
+    if (!loadMoreRef.current || !hasNextPage || !isSignedIn) {
       return;
     }
 
@@ -148,32 +127,34 @@ export function BrowsePage({
 
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isSignedIn]);
 
   return (
-    <section className="flex w-full flex-col gap-8 px-6 py-10 lg:h-screen lg:min-h-0 lg:gap-6 lg:overflow-hidden lg:py-6">
+    <section
+      className={cn(
+        SPLIT_VIEWER_PAGE_WIDTH,
+        "flex flex-col gap-8 py-10 lg:h-screen lg:min-h-0 lg:gap-6 lg:overflow-hidden lg:py-6",
+      )}
+    >
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <Button
-          size="icon"
+        <IconCircleButton
           asChild
+          icon={<PlusIcon className="size-5" />}
+          className="rounded-xl"
           aria-label={browseType === "GIG" ? "Create gig" : "Create event"}
         >
-          <Link
-            to="/events/new"
-            search={browseType === "GIG" ? { type: "GIG" } : undefined}
-          >
+          <Link to="/events/new" search={browseType === "GIG" ? { type: "GIG" } : undefined}>
             <PlusIcon className="size-5" />
+            <span className="sr-only">{browseType === "GIG" ? "Create gig" : "Create event"}</span>
           </Link>
-        </Button>
+        </IconCircleButton>
       </div>
 
       {isLoading ? <EventsBrowseSkeleton /> : null}
       {isError ? (
         <EventsErrorState
-          message={
-            error instanceof Error ? error.message : "Failed to fetch events"
-          }
+          message={error instanceof Error ? error.message : "Failed to fetch events"}
         />
       ) : null}
       {events.length > 0 || data ? (
@@ -197,9 +178,7 @@ export function BrowsePage({
                 <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-3">
                   <Select
                     value={resolvedFilters.statusMode}
-                    onValueChange={(value) =>
-                      onFilterChange("statusMode", value)
-                    }
+                    onValueChange={(value) => onFilterChange("statusMode", value)}
                   >
                     <SelectTrigger className="min-w-0 w-full">
                       <SelectValue placeholder="Status" />
@@ -235,19 +214,10 @@ export function BrowsePage({
                     variant="outline"
                     size="icon"
                     className="shrink-0 justify-self-end"
-                    aria-label={
-                      isSoonestFirst
-                        ? "Sort by latest first"
-                        : "Sort by soonest first"
-                    }
-                    title={
-                      isSoonestFirst ? "Soonest first" : "Latest first"
-                    }
+                    aria-label={isSoonestFirst ? "Sort by latest first" : "Sort by soonest first"}
+                    title={isSoonestFirst ? "Soonest first" : "Latest first"}
                     onClick={() =>
-                      onFilterChange(
-                        "sort",
-                        isSoonestFirst ? "START_DESC" : "START_ASC",
-                      )
+                      onFilterChange("sort", isSoonestFirst ? "START_DESC" : "START_ASC")
                     }
                   >
                     <SortIcon className="size-4" />
@@ -281,9 +251,17 @@ export function BrowsePage({
                     ref={loadMoreRef}
                     className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5"
                   >
-                    {isFetchingNextPage
-                      ? `Loading more ${itemLabel}...`
-                      : "Scroll to load more"}
+                    {isSignedIn ? (
+                      isFetchingNextPage ? (
+                        `Loading more ${itemLabel}...`
+                      ) : (
+                        "Scroll to load more"
+                      )
+                    ) : (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/sign-in">Sign in to load more</Link>
+                      </Button>
+                    )}
                   </div>
                 ) : events.length > 0 ? (
                   <div className="border-t px-4 py-4 text-center text-sm text-muted-foreground sm:px-5">
@@ -300,15 +278,19 @@ export function BrowsePage({
                   mode="panel"
                   browsePath={browseType === "GIG" ? "/gigs" : "/events"}
                   browseLabel={title}
+                  browseSearch={{
+                    statusMode: resolvedFilters.statusMode as never,
+                    source: resolvedFilters.source || undefined,
+                    sort: resolvedFilters.sort as never,
+                    selected: selectedEventId,
+                  }}
                   onDeleteSuccess={onClearSelectedEvent}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center px-8 py-12 text-center">
                   <div>
                     <p className="text-lg font-medium">
-                      {events.length > 0
-                        ? "Choose a listing"
-                        : `No ${itemLabel} to preview`}
+                      {events.length > 0 ? "Choose a listing" : `No ${itemLabel} to preview`}
                     </p>
                     <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                       {events.length > 0

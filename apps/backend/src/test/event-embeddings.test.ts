@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockPrisma } from "./helpers/prisma";
 import {
   generateEventEmbedding,
+  searchRelatedEventsByEvent,
   searchEventsSemantically,
   searchEventsSemanticallyPaginated,
 } from "../services/event-embeddings";
@@ -178,6 +179,7 @@ describe("[phase:4] [regression:always] Event semantic search", () => {
       limit: 10,
       type: "EVENT",
       category: "music",
+      tag: "live-music",
       startDate: new Date("2026-04-01T00:00:00Z"),
       endDate: new Date("2026-04-02T00:00:00Z"),
       embedQuery,
@@ -190,6 +192,7 @@ describe("[phase:4] [regression:always] Event semantic search", () => {
     expect(sql.values).toEqual(
       expect.arrayContaining([
         "music",
+        "live-music",
         "EVENT",
         "2026-04-01T00:00:00.000Z",
         "2026-04-02T00:00:00.000Z",
@@ -205,40 +208,38 @@ describe("[phase:4] [regression:always] Event semantic search", () => {
         totalCount: 7,
       },
     ] as never);
-    vi.mocked(mockPrisma.event.findMany).mockResolvedValue(
-      [
-        {
-          id: "evt_offset",
-          title: "Campus Jazz Night",
-          description: "Live music at the Union",
-          summary: null,
-          type: "EVENT",
-          source: "USER",
-          status: "OPEN",
-          category: "music",
-          tags: ["jazz"],
-          imageUrl: null,
-          ticketUrl: null,
-          externalUrl: null,
-          locationName: "Ohio Union",
-          locationLatitude: null,
-          locationLongitude: null,
-          startAt: new Date("2026-04-01T09:00:00Z"),
-          endAt: null,
-          compensationAmount: null,
-          compensationCurrency: "USD",
-          compensationType: null,
-          creatorId: "user_a",
-          createdAt: new Date("2026-03-31T12:00:00Z"),
-          updatedAt: new Date("2026-03-31T12:00:00Z"),
-          creator: {
-            id: "user_a",
-            displayName: "Alice",
-            email: "alice@osu.edu",
-          },
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([
+      {
+        id: "evt_offset",
+        title: "Campus Jazz Night",
+        description: "Live music at the Union",
+        summary: null,
+        type: "EVENT",
+        source: "USER",
+        status: "OPEN",
+        category: "music",
+        tags: ["jazz"],
+        imageUrl: null,
+        ticketUrl: null,
+        externalUrl: null,
+        locationName: "Ohio Union",
+        locationLatitude: null,
+        locationLongitude: null,
+        startAt: new Date("2026-04-01T09:00:00Z"),
+        endAt: null,
+        compensationAmount: null,
+        compensationCurrency: "USD",
+        compensationType: null,
+        creatorId: "user_a",
+        createdAt: new Date("2026-03-31T12:00:00Z"),
+        updatedAt: new Date("2026-03-31T12:00:00Z"),
+        creator: {
+          id: "user_a",
+          displayName: "Alice",
+          email: "alice@osu.edu",
         },
-      ] as never,
-    );
+      },
+    ] as never);
 
     const result = await searchEventsSemanticallyPaginated(mockPrisma, {
       query: "live music events",
@@ -261,5 +262,98 @@ describe("[phase:4] [regression:always] Event semantic search", () => {
       values?: unknown[];
     };
     expect(sql.values).toEqual(expect.arrayContaining([2, 4]));
+  });
+
+  it("TC-EMBED-014: returns same-type related events ranked by vector similarity and excludes the source event", async () => {
+    vi.mocked(mockPrisma.$queryRaw).mockResolvedValue([
+      {
+        id: "evt_related_1",
+        totalCount: 2,
+      },
+      {
+        id: "evt_related_2",
+        totalCount: 2,
+      },
+    ] as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([
+      {
+        id: "evt_related_2",
+        title: "Campus Open Mic",
+        description: "Student showcase",
+        summary: null,
+        type: "EVENT",
+        source: "USER",
+        status: "OPEN",
+        category: "music",
+        tags: ["music"],
+        imageUrl: null,
+        ticketUrl: null,
+        externalUrl: null,
+        locationName: "Ohio Union",
+        locationLatitude: null,
+        locationLongitude: null,
+        startAt: new Date("2026-04-05T19:00:00Z"),
+        endAt: null,
+        compensationAmount: null,
+        compensationCurrency: "USD",
+        compensationType: null,
+        creatorId: "user_b",
+        createdAt: new Date("2026-03-31T12:00:00Z"),
+        updatedAt: new Date("2026-03-31T12:00:00Z"),
+        creator: {
+          id: "user_b",
+          displayName: "Bob",
+          email: "bob@osu.edu",
+        },
+      },
+      {
+        id: "evt_related_1",
+        title: "Late Night Jam Session",
+        description: "Improvised music set",
+        summary: "An improv set with student musicians.",
+        type: "EVENT",
+        source: "USER",
+        status: "OPEN",
+        category: "music",
+        tags: ["jazz"],
+        imageUrl: null,
+        ticketUrl: null,
+        externalUrl: null,
+        locationName: "Thompson Library",
+        locationLatitude: null,
+        locationLongitude: null,
+        startAt: new Date("2026-04-04T21:00:00Z"),
+        endAt: null,
+        compensationAmount: null,
+        compensationCurrency: "USD",
+        compensationType: null,
+        creatorId: "user_a",
+        createdAt: new Date("2026-03-31T12:00:00Z"),
+        updatedAt: new Date("2026-03-31T12:00:00Z"),
+        creator: {
+          id: "user_a",
+          displayName: "Alice",
+          email: "alice@osu.edu",
+        },
+      },
+    ] as never);
+
+    const result = await searchRelatedEventsByEvent(mockPrisma, {
+      eventId: "evt_source",
+      type: "EVENT",
+      limit: 3,
+    });
+
+    expect(result).toMatchObject({
+      total: 2,
+      limit: 3,
+      offset: 0,
+    });
+    expect(result.data.map((event) => event.id)).toEqual(["evt_related_1", "evt_related_2"]);
+
+    const sql = vi.mocked(mockPrisma.$queryRaw).mock.calls[0]?.[0] as {
+      values?: unknown[];
+    };
+    expect(sql.values).toEqual(expect.arrayContaining(["evt_source", "EVENT"]));
   });
 });

@@ -1,43 +1,25 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarIcon, MapPinIcon, TrashIcon } from "lucide-react";
+import { TrashIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
+import { CollectionMetaText } from "@/components/collections/collection-visibility-badge";
 import {
   collectionDetailQueryOptions,
   collectionItemsQueryOptions,
   currentUserQueryOptions,
   queryKeys,
-  type EventListItem,
 } from "@/lib/queries";
-import {
-  STATUS_LABELS,
-  STATUS_STYLES,
-  TYPE_STYLES,
-  formatDate,
-} from "@/lib/event-utils";
-import {
-  EventsEmptyState,
-  EventsPagination,
-} from "@/components/events/events-browser";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { EventsList, EventsEmptyState, EventsPagination } from "@/components/events/events-browser";
 import { Skeleton } from "@/components/ui/skeleton";
+import { YouSubpageHeader, YouSubpageHeaderSkeleton } from "@/components/you/you-subpage-header";
 import {
-  YouSubpageHeader,
-  YouSubpageHeaderSkeleton,
-} from "@/components/you/you-subpage-header";
-
-const COLLECTION_VISIBILITY_STYLES: Record<"PRIVATE" | "PUBLIC", string> = {
-  PRIVATE: "bg-slate-100 text-slate-700",
-  PUBLIC: "bg-emerald-100 text-emerald-700",
-};
+  FramedList,
+  FramedListFooter,
+  FramedListInset,
+  FramedListItems,
+} from "@/components/ui/framed-list";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 
 function readCountLabel(count: number) {
   return `${count} saved item${count === 1 ? "" : "s"}`;
@@ -45,88 +27,17 @@ function readCountLabel(count: number) {
 
 async function readErrorMessage(res: Response, fallback: string) {
   try {
-    const body = await res.json() as { detail?: string };
+    const body = (await res.json()) as { detail?: string };
     return body.detail || fallback;
   } catch {
     return fallback;
   }
 }
 
-function CollectionEventCard({
-  event,
-  isOwner,
-  isRemoving,
-  onRemove,
-}: {
-  event: EventListItem;
-  isOwner: boolean;
-  isRemoving: boolean;
-  onRemove: (eventId: string) => void;
-}) {
-  return (
-    <Card aria-label={`${event.title} saved event`} className="gap-4">
-      <CardHeader className="gap-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className={TYPE_STYLES[event.type] ?? ""}>
-                {event.type}
-              </Badge>
-              <Badge
-                variant="secondary"
-                className={STATUS_STYLES[event.status] ?? ""}
-              >
-                {STATUS_LABELS[event.status] ?? event.status}
-              </Badge>
-            </div>
-
-            <CardTitle>
-              <Link
-                to="/events/$eventId"
-                params={{ eventId: event.id }}
-                className="hover:underline"
-              >
-                {event.title}
-              </Link>
-            </CardTitle>
-          </div>
-
-          {isOwner ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onRemove(event.id)}
-              disabled={isRemoving}
-            >
-              <TrashIcon className="size-4" />
-              Remove from collection
-            </Button>
-          ) : null}
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-3 text-sm text-muted-foreground">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5">
-            <CalendarIcon className="size-4" />
-            {formatDate(event.startAt)}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <MapPinIcon className="size-4" />
-            {event.locationName}
-          </span>
-        </div>
-        <p>{event.summary || event.description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
 function CollectionDetailPageSkeleton() {
   return (
     <section
-      className="mx-auto max-w-5xl px-6 py-10"
+      className={`${STANDARD_PAGE_WIDTH} py-10`}
       aria-busy="true"
       aria-label="Collection detail loading"
     >
@@ -134,64 +45,47 @@ function CollectionDetailPageSkeleton() {
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <Skeleton className="h-6 w-36 rounded-full" />
-        <Skeleton className="h-5 w-24" />
       </div>
 
-      <div className="mt-8 space-y-4">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <Card key={index} className="gap-4">
-            <CardHeader className="gap-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Skeleton className="h-6 w-16 rounded-full" />
-                    <Skeleton className="h-6 w-14 rounded-full" />
+      <div className="mt-8">
+        <FramedList>
+          <FramedListItems>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="px-4 py-4 sm:px-5">
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-6 w-64 max-w-full" />
+                    <Skeleton className="h-4 w-56" />
+                    <Skeleton className="h-4 w-40" />
                   </div>
-                  <CardTitle>
-                    <Skeleton className="h-8 w-64 max-w-full" />
-                  </CardTitle>
+
+                  <Skeleton className="size-8 rounded-full" />
                 </div>
-
-                <Skeleton className="h-8 w-44 rounded-md" />
               </div>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-4 w-52" />
+            ))}
+          </FramedListItems>
+          <FramedListFooter>
+            <div className="flex items-center justify-between gap-4">
+              <Skeleton className="h-4 w-32" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-9 w-9 rounded-md" />
+                <Skeleton className="h-9 w-9 rounded-md" />
+                <Skeleton className="h-9 w-9 rounded-md" />
               </div>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-4 w-2/3" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="mt-6 flex items-center justify-between gap-4">
-        <Skeleton className="h-4 w-32" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-9 w-9 rounded-md" />
-          <Skeleton className="h-9 w-9 rounded-md" />
-          <Skeleton className="h-9 w-9 rounded-md" />
-        </div>
+            </div>
+          </FramedListFooter>
+        </FramedList>
       </div>
     </section>
   );
 }
 
-export function YouCollectionDetailPage({
-  collectionId,
-}: {
-  collectionId: string;
-}) {
+export function YouCollectionDetailPage({ collectionId }: { collectionId: string }) {
   const api = useApiClient();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const { data: currentUser, isLoading: isLoadingUser } = useQuery(
-    currentUserQueryOptions(api),
-  );
+  const { data: currentUser, isLoading: isLoadingUser } = useQuery(currentUserQueryOptions(api));
   const {
     data: collection,
     isLoading: isLoadingCollection,
@@ -208,17 +102,13 @@ export function YouCollectionDetailPage({
 
   const removeMutation = useMutation({
     mutationFn: async (eventId: string) => {
-      const deleteCollectionItem =
-        api.api.v1.collections[":id"].items[":eventId"].$delete as (args: {
-          param: { id: string; eventId: string };
-        }) => Promise<Response>;
+      const deleteCollectionItem = api.api.v1.collections[":id"].items[":eventId"]
+        .$delete as (args: { param: { id: string; eventId: string } }) => Promise<Response>;
       const res = await deleteCollectionItem({
         param: { id: collectionId, eventId },
       });
       if (!res.ok) {
-        throw new Error(
-          await readErrorMessage(res, "Failed to remove item from collection"),
-        );
+        throw new Error(await readErrorMessage(res, "Failed to remove item from collection"));
       }
       return eventId;
     },
@@ -239,11 +129,9 @@ export function YouCollectionDetailPage({
 
   if (collectionError) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          {collectionError instanceof Error
-            ? collectionError.message
-            : "Failed to load collection"}
+          {collectionError instanceof Error ? collectionError.message : "Failed to load collection"}
         </div>
       </section>
     );
@@ -251,7 +139,7 @@ export function YouCollectionDetailPage({
 
   if (!collection) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           Collection not found.
         </div>
@@ -263,66 +151,78 @@ export function YouCollectionDetailPage({
   const isOwner = currentUser?.id === collection.userId;
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
+    <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
       <YouSubpageHeader
         title={collection.name}
         backTo="/you/collections"
         backLabel="Back to Collections"
-        description={
-          isOwner
-            ? "Review the events and gigs you saved here."
-            : "This public collection is visible in read-only mode."
-        }
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Badge
-          variant="secondary"
-          className={COLLECTION_VISIBILITY_STYLES[collection.visibility]}
-        >
-          {collection.visibility === "PUBLIC"
-            ? "Public collection"
-            : "Private collection"}
-        </Badge>
-        <span className="text-sm text-muted-foreground">
-          {readCountLabel(totalItems)}
-        </span>
+        <CollectionMetaText
+          visibility={collection.visibility}
+          countLabel={readCountLabel(totalItems)}
+        />
       </div>
 
       {itemsError ? (
         <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          {itemsError instanceof Error
-            ? itemsError.message
-            : "Failed to load saved items"}
+          {itemsError instanceof Error ? itemsError.message : "Failed to load saved items"}
         </div>
       ) : null}
 
-      {itemsPage && itemsPage.data.length === 0 ? (
-        <EventsEmptyState
-          title="No saved items yet"
-          description="Save an event or gig to see it in this collection."
-        />
-      ) : null}
-
-      {itemsPage && itemsPage.data.length > 0 ? (
-        <>
-          <div className="mt-8 grid gap-4">
-            {itemsPage.data.map((event) => (
-              <CollectionEventCard
-                key={event.id}
-                event={event}
-                isOwner={Boolean(isOwner)}
-                isRemoving={removeMutation.isPending}
-                onRemove={(eventId) => removeMutation.mutate(eventId)}
+      {itemsPage ? (
+        <div className="mt-8">
+          <FramedList>
+            {itemsPage.data.length === 0 ? (
+              <FramedListInset>
+                <EventsEmptyState
+                  title="No saved items yet"
+                  description="Save an event or gig to see it in this collection."
+                  className="mt-0"
+                />
+              </FramedListInset>
+            ) : (
+              <EventsList
+                events={itemsPage.data}
+                showSaveAction={false}
+                detailSearch={{
+                  returnTo: "collections",
+                  collectionId,
+                  collectionName: collection.name,
+                }}
+                getItemAriaLabel={(event) => `${event.title} saved event`}
+                renderRightAccessory={(event) =>
+                  isOwner ? (
+                    <IconCircleButton
+                      type="button"
+                      variant="ghost"
+                      aria-label="Remove from collection"
+                      title="Remove from collection"
+                      icon={<TrashIcon className="size-4" />}
+                      className="size-8 shadow-none"
+                      onClick={() => removeMutation.mutate(event.id)}
+                      disabled={removeMutation.isPending}
+                    >
+                      <span className="sr-only">Remove from collection</span>
+                    </IconCircleButton>
+                  ) : null
+                }
               />
-            ))}
-          </div>
-          <EventsPagination
-            page={page}
-            total={itemsPage.pagination.total}
-            onPageChange={setPage}
-          />
-        </>
+            )}
+
+            {itemsPage.pagination.total > itemsPage.pagination.limit ? (
+              <FramedListFooter>
+                <EventsPagination
+                  page={page}
+                  total={itemsPage.pagination.total}
+                  onPageChange={setPage}
+                  className="mt-0"
+                />
+              </FramedListFooter>
+            ) : null}
+          </FramedList>
+        </div>
       ) : null}
     </section>
   );

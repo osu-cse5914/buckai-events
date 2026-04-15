@@ -4,11 +4,8 @@ const mockClerkGetUser = vi.fn();
 const mockSyncExternalEvents = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>
-    ) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },

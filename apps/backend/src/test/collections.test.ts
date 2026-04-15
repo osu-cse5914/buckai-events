@@ -50,11 +50,7 @@ function listCollections(app: Hono) {
   return app.request("/collections");
 }
 
-function patchCollection(
-  app: Hono,
-  id: string,
-  body: Record<string, unknown>,
-) {
+function patchCollection(app: Hono, id: string, body: Record<string, unknown>) {
   return app.request(`/collections/${id}`, {
     method: "PATCH",
     headers: {
@@ -64,11 +60,7 @@ function patchCollection(
   });
 }
 
-function addCollectionItem(
-  app: Hono,
-  id: string,
-  body: Record<string, unknown>,
-) {
+function addCollectionItem(app: Hono, id: string, body: Record<string, unknown>) {
   return app.request(`/collections/${id}/items`, {
     method: "POST",
     headers: {
@@ -84,11 +76,7 @@ function removeCollectionItem(app: Hono, id: string, eventId: string) {
   });
 }
 
-function listCollectionItems(
-  app: Hono,
-  id: string,
-  query?: { limit?: number; offset?: number },
-) {
+function listCollectionItems(app: Hono, id: string, query?: { limit?: number; offset?: number }) {
   const params = new URLSearchParams();
   if (query?.limit !== undefined) {
     params.set("limit", String(query.limit));
@@ -98,9 +86,7 @@ function listCollectionItems(
   }
 
   const search = params.toString();
-  return app.request(
-    `/collections/${id}/items${search ? `?${search}` : ""}`,
-  );
+  return app.request(`/collections/${id}/items${search ? `?${search}` : ""}`);
 }
 
 function toJsonValue<T>(value: T): T {
@@ -124,9 +110,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       userId: USER_A.id,
       name: "Music Events",
     });
-    vi.mocked(mockPrisma.collection.create).mockResolvedValue(
-      createdCollection as never,
-    );
+    vi.mocked(mockPrisma.collection.create).mockResolvedValue(createdCollection as never);
 
     const res = await createCollection(createTestApp(USER_A), {
       name: "Music Events",
@@ -150,9 +134,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       name: "Must See",
       visibility: "PUBLIC",
     });
-    vi.mocked(mockPrisma.collection.create).mockResolvedValue(
-      createdCollection as never,
-    );
+    vi.mocked(mockPrisma.collection.create).mockResolvedValue(createdCollection as never);
 
     const res = await createCollection(createTestApp(USER_A), {
       name: "Must See",
@@ -195,9 +177,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
         _count: { items: 0 },
       }),
     ];
-    vi.mocked(mockPrisma.collection.findMany).mockResolvedValue(
-      collectionsResult as never,
-    );
+    vi.mocked(mockPrisma.collection.findMany).mockResolvedValue(collectionsResult as never);
 
     const res = await listCollections(createTestApp(USER_A));
 
@@ -272,16 +252,10 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       collectionId: "col1",
       eventId: "evt1",
     };
-    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
-      collection as never,
-    );
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(collection as never);
     vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(event as never);
-    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(
-      null as never,
-    );
-    vi.mocked(mockPrisma.collectionItem.create).mockResolvedValue(
-      createdItem as never,
-    );
+    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(null as never);
+    vi.mocked(mockPrisma.collectionItem.create).mockResolvedValue(createdItem as never);
     vi.mocked(mockPrisma.interaction.create).mockResolvedValue({} as never);
 
     const res = await addCollectionItem(createTestApp(USER_A), "col1", {
@@ -311,19 +285,13 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       userId: USER_A.id,
       visibility: "PRIVATE",
     };
-    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
-      collection as never,
-    );
-    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-      { id: "evt1" } as never,
-    );
-    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(
-      {
-        id: "item1",
-        collectionId: "col1",
-        eventId: "evt1",
-      } as never,
-    );
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(collection as never);
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue({ id: "evt1" } as never);
+    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue({
+      id: "item1",
+      collectionId: "col1",
+      eventId: "evt1",
+    } as never);
 
     const res = await addCollectionItem(createTestApp(USER_A), "col1", {
       eventId: "evt1",
@@ -346,9 +314,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       userId: USER_B.id,
       visibility: "PRIVATE",
     };
-    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
-      collection as never,
-    );
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(collection as never);
 
     const res = await addCollectionItem(createTestApp(USER_A), "col1", {
       eventId: "evt1",
@@ -375,12 +341,8 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       collectionId: "col1",
       eventId: "evt1",
     };
-    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
-      collection as never,
-    );
-    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(
-      item as never,
-    );
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(collection as never);
+    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(item as never);
     vi.mocked(mockPrisma.collectionItem.delete).mockResolvedValue(item as never);
 
     const res = await removeCollectionItem(createTestApp(USER_A), "col1", "evt1");
@@ -404,12 +366,8 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       userId: USER_A.id,
       visibility: "PRIVATE",
     };
-    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(
-      collection as never,
-    );
-    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(
-      null as never,
-    );
+    vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(collection as never);
+    vi.mocked(mockPrisma.collectionItem.findUnique).mockResolvedValue(null as never);
 
     const res = await removeCollectionItem(createTestApp(USER_A), "col1", "evt1");
 
@@ -429,9 +387,7 @@ describe("[phase:2] [regression:always] Collection management API", () => {
       id: "col1",
       userId: USER_A.id,
       visibility: "PUBLIC",
-      items: [
-        { id: "ci1", event: { id: "evt1", title: "Hackathon" } },
-      ],
+      items: [{ id: "ci1", event: { id: "evt1", title: "Hackathon" } }],
     };
     vi.mocked(mockPrisma.collection.findUnique).mockResolvedValue(col as never);
 
@@ -541,19 +497,17 @@ describe("[phase:6] [regression:always] Collection items API", () => {
       userId: USER_A.id,
       visibility: "PRIVATE",
     } as never);
-    vi.mocked(mockPrisma.collectionItem.findMany).mockResolvedValue(
-      [
-        {
-          id: "item2",
-          collectionId: "col1",
-          eventId: "evt2",
-          event: {
-            id: "evt2",
-            title: "Open Mic",
-          },
+    vi.mocked(mockPrisma.collectionItem.findMany).mockResolvedValue([
+      {
+        id: "item2",
+        collectionId: "col1",
+        eventId: "evt2",
+        event: {
+          id: "evt2",
+          title: "Open Mic",
         },
-      ] as never,
-    );
+      },
+    ] as never);
     vi.mocked(mockPrisma.collectionItem.count).mockResolvedValue(3 as never);
 
     const res = await listCollectionItems(createTestApp(USER_A), "col1", {

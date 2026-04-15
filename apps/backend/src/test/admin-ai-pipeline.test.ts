@@ -6,11 +6,8 @@ const mockCreateEventPipelineJob = vi.fn();
 const mockCreateEmbeddingBackfillJob = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>,
-    ) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },
@@ -19,12 +16,9 @@ vi.mock("@hono/clerk-auth", () => ({
 
 vi.mock("../lib/prisma");
 vi.mock("../services/event-pipeline", () => ({
-  listRecentEventPipelineJobs: (...args: unknown[]) =>
-    mockListRecentEventPipelineJobs(...args),
-  createEventPipelineJob: (...args: unknown[]) =>
-    mockCreateEventPipelineJob(...args),
-  createEmbeddingBackfillJob: (...args: unknown[]) =>
-    mockCreateEmbeddingBackfillJob(...args),
+  listRecentEventPipelineJobs: (...args: unknown[]) => mockListRecentEventPipelineJobs(...args),
+  createEventPipelineJob: (...args: unknown[]) => mockCreateEventPipelineJob(...args),
+  createEmbeddingBackfillJob: (...args: unknown[]) => mockCreateEmbeddingBackfillJob(...args),
 }));
 
 import { getAuth } from "@hono/clerk-auth";

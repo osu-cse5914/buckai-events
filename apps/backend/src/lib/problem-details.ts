@@ -37,11 +37,7 @@ export class ProblemError extends Error {
 }
 
 export class BadRequestError extends ProblemError {
-  constructor(
-    detail: string,
-    type = "invalid-request",
-    title = "Invalid request",
-  ) {
+  constructor(detail: string, type = "invalid-request", title = "Invalid request") {
     super({ status: 400, detail, type, title });
   }
 }
@@ -88,17 +84,10 @@ function getProblemType(type: string | undefined, status: ProblemStatus): string
     }
   }
 
-  return type.startsWith("http")
-    ? type
-    : `https://social-osu.app/problems/${type}`;
+  return type.startsWith("http") ? type : `https://social-osu.app/problems/${type}`;
 }
 
-export function toProblemDetails({
-  status,
-  detail,
-  title,
-  type,
-}: ProblemOptions): ProblemDetails {
+export function toProblemDetails({ status, detail, title, type }: ProblemOptions): ProblemDetails {
   return {
     type: getProblemType(type, status),
     title: title ?? DEFAULT_TITLES[status],
@@ -134,10 +123,7 @@ export function badRequest(
   return problem(c, { status: 400, detail, type, title });
 }
 
-export function unauthorized(
-  c: Context,
-  detail = "Authentication is required",
-): Response {
+export function unauthorized(c: Context, detail = "Authentication is required"): Response {
   return problem(c, { status: 401, detail, type: "unauthorized" });
 }
 

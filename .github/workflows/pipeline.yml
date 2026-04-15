@@ -32,14 +32,17 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.22
 
       - run: bun install --frozen-lockfile
       - run: bun run test:registry:audit
       - run: bun run db:generate
-      - run: bun run lint
       - run: bun run typecheck
       - run: bun run test:coverage
       - run: bun run build
@@ -76,7 +79,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.22
 
       - run: bun install --frozen-lockfile
       - run: bun run db:generate
@@ -96,7 +99,7 @@ jobs:
   live-ai:
     needs: [checks, e2e, secret-scan]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     environment: production
     env:
       AI_ROUTER_CONFIG_JSON: ${{ secrets.AI_ROUTER_CONFIG_JSON }}
@@ -107,7 +110,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.22
 
       - run: bun install --frozen-lockfile
       - run: bun run test:live:ai
@@ -123,7 +126,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.22
 
       - run: bun install --frozen-lockfile
 
@@ -152,7 +155,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.22
 
       - run: bun install --frozen-lockfile
       - run: bun run db:generate

@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildApplicationWithApplicant,
-  buildConversation,
-  buildEvent,
-} from "./index";
+import { buildApplicationWithApplicant, buildConversation, buildEvent } from "./index";
 
 describe("[phase:6] [regression:always] Backend test factories", () => {
   it("buildEvent applies nested and top-level overrides without mutating defaults", () => {

@@ -1,16 +1,7 @@
 import type { MouseEvent, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQuery,
-} from "@tanstack/react-query";
-import {
-  CalendarIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  MapPinIcon,
-} from "lucide-react";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, MapPinIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
 import {
   fetchEventsList,
@@ -23,25 +14,10 @@ import {
   searchResultsQueryOptions,
   type SearchResultsFilters,
 } from "@/lib/queries";
-import {
-  STATUS_LABELS,
-  STATUS_STYLES,
-  TYPE_STYLES,
-  formatDate,
-  formatEventAttribution,
-} from "@/lib/event-utils";
+import { buildEventMetaLine, formatDate } from "@/lib/event-utils";
 import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -86,58 +62,13 @@ export function useInfiniteEventsQuery(
     queryKey: queryKeys.infiniteEventsList(filters, pageSize),
     enabled,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      fetchEventsList(api, filters, pageParam as number, pageSize),
+    queryFn: ({ pageParam }) => fetchEventsList(api, filters, pageParam as number, pageSize),
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce(
-        (count, currentPage) => count + currentPage.data.length,
-        0,
-      );
+      const loaded = allPages.reduce((count, currentPage) => count + currentPage.data.length, 0);
 
       return loaded < lastPage.pagination.total ? allPages.length : undefined;
     },
   });
-}
-
-export function EventsLoadingGrid({ className }: { className?: string } = {}) {
-  return (
-    <div className={cn("mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
-      {Array.from({ length: 6 }).map((_, index) => (
-        <Card key={index}>
-          <CardHeader>
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="mt-2 h-4 w-1/2" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="mt-2 h-4 w-2/3" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-export function EventsCollectionSkeleton({
-  showPagination = false,
-}: {
-  showPagination?: boolean;
-}) {
-  return (
-    <div className="mt-8 space-y-6">
-      <EventsLoadingGrid />
-      {showPagination ? (
-        <div className="flex items-center justify-between gap-4">
-          <Skeleton className="h-4 w-32" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 export function EventsListSkeleton({
@@ -155,10 +86,7 @@ export function EventsListSkeleton({
 }) {
   return (
     <div
-      className={cn(
-        framed ? "overflow-hidden rounded-2xl border bg-background" : "",
-        className,
-      )}
+      className={cn(framed ? "overflow-hidden rounded-2xl border bg-background" : "", className)}
     >
       {showHeader ? (
         <div className="border-b px-4 py-4 sm:px-5">
@@ -231,10 +159,7 @@ export function EventsBrowseSkeleton() {
 
         <div className="lg:min-h-0 lg:flex-1 lg:overflow-hidden">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div
-              key={index}
-              className="border-b px-4 py-4 sm:px-5"
-            >
+            <div key={index} className="border-b px-4 py-4 sm:px-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-2">
                   <Skeleton className="h-4 w-28" />
@@ -291,13 +216,7 @@ export function EventsBrowseSkeleton() {
   );
 }
 
-export function EventsErrorState({
-  message,
-  className,
-}: {
-  message: string;
-  className?: string;
-}) {
+export function EventsErrorState({ message, className }: { message: string; className?: string }) {
   return (
     <div
       className={cn(
@@ -322,12 +241,7 @@ export function EventsEmptyState({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "mt-8 flex flex-col items-center gap-2 px-2 py-4 text-center",
-        className,
-      )}
-    >
+    <div className={cn("mt-8 flex flex-col items-center gap-2 px-2 py-4 text-center", className)}>
       <p className="text-lg font-medium">{title}</p>
       <p className="max-w-xl text-sm text-muted-foreground">{description}</p>
       {action ? <div className="mt-2">{action}</div> : null}
@@ -335,101 +249,32 @@ export function EventsEmptyState({
   );
 }
 
-export function EventsGrid({
-  events,
-  showTypeBadge = true,
-  className,
-}: {
-  events: EventListItem[];
-  showTypeBadge?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={cn("mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
-      {events.map((event) => (
-        <Link
-          key={event.id}
-          to="/events/$eventId"
-          params={{ eventId: event.id }}
-          className="group"
-        >
-          <Card className="h-full transition-shadow group-hover:shadow-md">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                {showTypeBadge ? (
-                  <Badge
-                    variant="secondary"
-                    className={TYPE_STYLES[event.type] ?? ""}
-                  >
-                    {event.type}
-                  </Badge>
-                ) : null}
-                <Badge
-                  variant="secondary"
-                  className={STATUS_STYLES[event.status] ?? ""}
-                >
-                  {STATUS_LABELS[event.status] ?? event.status}
-                </Badge>
-              </div>
-              <CardTitle className="mt-2 line-clamp-2 pb-0.5 leading-tight group-hover:underline">
-                {event.title}
-              </CardTitle>
-              {event.category ? (
-                <CardDescription className="capitalize">
-                  {event.category}
-                </CardDescription>
-              ) : null}
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <CalendarIcon className="size-3.5 shrink-0" />
-                <span>{formatDate(event.startAt)}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <MapPinIcon className="size-3.5 shrink-0" />
-                <span className="truncate">{event.locationName}</span>
-              </div>
-              {event.type === "GIG" && event.compensationAmount != null ? (
-                <p className="font-medium text-foreground">
-                  ${event.compensationAmount}
-                  {event.compensationType === "HOURLY" ? "/hr" : " fixed"}
-                </p>
-              ) : null}
-            </CardContent>
-            <CardFooter className="text-xs text-muted-foreground">
-              {formatEventAttribution(event)}
-            </CardFooter>
-          </Card>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 export function EventsList({
   events,
   selectedEventId,
-  showTypeBadge = true,
+  showSaveAction = true,
   detailSearch,
+  getItemAriaLabel,
+  renderRightAccessory,
   onSelectEvent,
 }: {
   events: EventListItem[];
   selectedEventId?: string;
-  showTypeBadge?: boolean;
+  showSaveAction?: boolean;
   detailSearch?: EventDetailRouteSearch;
+  getItemAriaLabel?: (event: EventListItem) => string;
+  renderRightAccessory?: (event: EventListItem) => ReactNode;
   onSelectEvent?: (eventId: string) => void;
 }) {
   return (
     <div className="divide-y">
       {events.map((event) => {
         const isSelected = selectedEventId === event.id;
-        const showClosedBadge =
-          event.status === "COMPLETED" || event.status === "CANCELLED";
 
         return (
           <article
             key={event.id}
-            aria-label={`${event.title} listing`}
+            aria-label={getItemAriaLabel?.(event) ?? `${event.title} listing`}
             className={cn(
               "border-l-2 border-transparent transition-colors hover:bg-muted/30",
               isSelected ? "border-l-primary bg-muted/30" : "",
@@ -457,7 +302,12 @@ export function EventsList({
               >
                 <div className="min-w-0 space-y-1">
                   <p className="truncate text-sm text-muted-foreground">
-                    {formatEventAttribution(event)}
+                    {buildEventMetaLine({
+                      type: event.type,
+                      source: event.source,
+                      category: event.category,
+                      status: event.status,
+                    })}
                   </p>
                   <h2 className="line-clamp-2 text-base font-semibold leading-tight">
                     {event.title}
@@ -470,9 +320,6 @@ export function EventsList({
                       ${event.compensationAmount}
                       {event.compensationType === "HOURLY" ? "/hr" : " fixed"}
                     </span>
-                  ) : null}
-                  {event.category ? (
-                    <span className="capitalize">{event.category}</span>
                   ) : null}
                   <span className="inline-flex items-center gap-1.5">
                     <MapPinIcon className="size-3.5 shrink-0" />
@@ -487,20 +334,8 @@ export function EventsList({
               </Link>
 
               <div className="flex shrink-0 items-start gap-2">
-                {showTypeBadge ? (
-                  <Badge
-                    variant="secondary"
-                    className={TYPE_STYLES[event.type] ?? ""}
-                  >
-                    {event.type}
-                  </Badge>
-                ) : null}
-                {showClosedBadge ? (
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-                    Closed
-                  </Badge>
-                ) : null}
-                <SaveToCollectionButton eventId={event.id} />
+                {renderRightAccessory ? renderRightAccessory(event) : null}
+                {showSaveAction ? <SaveToCollectionButton eventId={event.id} /> : null}
               </div>
             </div>
           </article>
@@ -530,8 +365,7 @@ export function EventsPagination({
   return (
     <div className={cn("mt-8 flex items-center justify-between", className)}>
       <p className="text-sm text-muted-foreground">
-        Showing {page * PAGE_SIZE + 1}–
-        {Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+        Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
       </p>
       <div className="flex items-center gap-1">
         <Button

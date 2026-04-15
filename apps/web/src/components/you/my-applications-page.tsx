@@ -13,18 +13,18 @@ import {
   type PaginatedResponse,
 } from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ApplicationsListSkeleton } from "@/components/events/applications-list-skeleton";
+import { EventsErrorState } from "@/components/events/events-browser";
 import {
-  YouSubpageHeader,
-  YouSubpageHeaderSkeleton,
-} from "@/components/you/you-subpage-header";
+  FramedList,
+  FramedListInset,
+  FramedListItem,
+  FramedListItems,
+} from "@/components/ui/framed-list";
+import { YouSubpageHeader, YouSubpageHeaderSkeleton } from "@/components/you/you-subpage-header";
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 
 function useMyApplications() {
   const api = useApiClient();
@@ -33,11 +33,13 @@ function useMyApplications() {
 
 export function MyApplicationsPage() {
   const { data, isLoading, error } = useMyApplications();
+  const applications = data?.data ?? [];
 
   if (isLoading) {
     return (
-      <section className="mx-auto max-w-4xl px-6 py-10">
-        <YouSubpageHeaderSkeleton />
+      <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
+        <YouTabsNav currentTab="applications" />
+        <YouSubpageHeaderSkeleton showBackLink={false} showDescription={false} />
         <ApplicationsListSkeleton count={3} />
       </section>
     );
@@ -45,76 +47,87 @@ export function MyApplicationsPage() {
 
   if (error) {
     return (
-      <section className="mx-auto max-w-4xl px-6 py-10">
-        <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Failed to load applications"}
-        </div>
+      <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
+        <EventsErrorState
+          message={error instanceof Error ? error.message : "Failed to load applications"}
+          className="mt-0"
+        />
       </section>
     );
   }
 
   return (
-    <section className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10">
+    <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
       <YouTabsNav currentTab="applications" />
 
       <YouSubpageHeader
         title="Applications"
-        description="Track the gigs you have applied to and their latest status."
         showBackLink={false}
+        action={
+          applications.length > 0 ? (
+            <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium">
+              {applications.length} total
+            </Badge>
+          ) : undefined
+        }
       />
 
-      {data && data.data.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-dashed p-8 text-center">
-          <p className="text-lg font-medium">No applications yet</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Apply to a gig to see it here.
-          </p>
-        </div>
-      ) : (
-        <div className="mt-8 grid gap-4">
-          {data?.data.map((application) => (
-            <Card key={application.id}>
-              <CardHeader className="gap-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <CardTitle>
-                      <Link
-                        to="/events/$eventId"
-                        params={{ eventId: application.gig.id }}
-                        className="hover:underline"
-                      >
+      <FramedList>
+        {applications.length === 0 ? (
+          <FramedListInset>
+            <p className="text-lg font-medium text-center">No applications yet</p>
+            <p className="mt-2 text-sm text-center text-muted-foreground">
+              Apply to a gig to see it here.
+            </p>
+          </FramedListInset>
+        ) : (
+          <FramedListItems>
+            {applications.map((application) => (
+              <FramedListItem key={application.id}>
+                <div className="flex items-start gap-3">
+                  <Link
+                    to="/events/$eventId"
+                    params={{ eventId: application.gig.id }}
+                    className="min-w-0 flex-1"
+                  >
+                    <div className="min-w-0 space-y-1.5">
+                      <p className="truncate text-sm text-muted-foreground">Gig application</p>
+                      <h2 className="line-clamp-2 text-base font-semibold leading-tight">
                         {application.gig.title}
-                      </Link>
-                    </CardTitle>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                      </h2>
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                       <span className="inline-flex items-center gap-1.5">
-                        <CalendarIcon className="size-4" />
-                        {formatDate(application.gig.startAt)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <MapPinIcon className="size-4" />
-                        {application.gig.locationName}
+                        <MapPinIcon className="size-3.5 shrink-0" />
+                        <span className="truncate">{application.gig.locationName}</span>
                       </span>
                     </div>
+
+                    <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <CalendarIcon className="size-3.5 shrink-0" />
+                      <span>{formatDate(application.gig.startAt)}</span>
+                    </div>
+
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {application.message || "No message provided."}
+                    </p>
+                  </Link>
+
+                  <div className="flex shrink-0 items-start gap-2">
+                    <Badge
+                      variant="secondary"
+                      className={APPLICATION_STATUS_STYLES[application.status]}
+                    >
+                      {APPLICATION_STATUS_LABELS[application.status] ?? application.status}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className={APPLICATION_STATUS_STYLES[application.status]}
-                  >
-                    {APPLICATION_STATUS_LABELS[application.status] ??
-                      application.status}
-                  </Badge>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {application.message || "No message provided."}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </FramedListItem>
+            ))}
+          </FramedListItems>
+        )}
+      </FramedList>
     </section>
   );
 }

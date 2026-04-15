@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockPrisma } from "./helpers/prisma";
-import {
-  buildEventPipelineRun,
-  buildEventWithEmbedding,
-} from "./factories";
+import { buildEventPipelineRun, buildEventWithEmbedding } from "./factories";
 import { createEventEmbeddingTextHash } from "../services/event-embeddings";
 import {
   createEmbeddingBackfillJob,

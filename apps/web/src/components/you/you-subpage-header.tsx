@@ -38,9 +38,7 @@ export function YouSubpageHeader({
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {description ? (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          ) : null}
+          {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
         </div>
       </div>
 
@@ -51,17 +49,21 @@ export function YouSubpageHeader({
 
 export function YouSubpageHeaderSkeleton({
   action,
+  showBackLink = true,
+  showDescription = true,
 }: {
   action?: ReactNode;
+  showBackLink?: boolean;
+  showDescription?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="space-y-3">
-        <Skeleton className="h-8 w-28 rounded-md" />
+        {showBackLink ? <Skeleton className="h-8 w-28 rounded-md" /> : null}
 
         <div className="space-y-2">
           <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-72 max-w-full" />
+          {showDescription ? <Skeleton className="h-4 w-72 max-w-full" /> : null}
         </div>
       </div>
 

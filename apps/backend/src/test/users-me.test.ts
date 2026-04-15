@@ -3,11 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockClerkGetUser = vi.fn();
 
 vi.mock("@hono/clerk-auth", () => ({
-  clerkMiddleware: () =>
-    async (
-      c: { set: (key: string, value: unknown) => void },
-      next: () => Promise<void>
-    ) => {
+  clerkMiddleware:
+    () => async (c: { set: (key: string, value: unknown) => void }, next: () => Promise<void>) => {
       c.set("clerk", { users: { getUser: mockClerkGetUser } });
       await next();
     },
@@ -45,6 +42,11 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
   });
 
   it("TC-USER-001: returns the authenticated user's full profile", async () => {
@@ -56,6 +58,8 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
       id: FULL_USER.id,
       email: FULL_USER.email,
       displayName: FULL_USER.displayName,
+      imageUrl: "https://example.com/avatar.png",
+      pronouns: "he/him",
       major: FULL_USER.major,
       gradYear: FULL_USER.gradYear,
       interests: FULL_USER.interests,
@@ -82,7 +86,7 @@ describe("[phase:1] [regression:always] GET /api/v1/users/me", () => {
     // Auth middleware finds user, but a second lookup by id returns null
     vi.mocked(mockPrisma.user.findUnique)
       .mockResolvedValueOnce(FULL_USER as never) // auth middleware
-      .mockResolvedValueOnce(null);              // route handler
+      .mockResolvedValueOnce(null); // route handler
 
     const res = await app.request(makeAuthRequest("/api/v1/users/me"));
 
@@ -98,6 +102,11 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
   });
 
   it("TC-USER-002: updates displayName and refreshes updatedAt", async () => {
@@ -112,7 +121,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify({ displayName: "New Brutus" }),
-      })
+      }),
     );
 
     expect(res.status).toBe(200);
@@ -130,7 +139,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify({ interests: newInterests }),
-      })
+      }),
     );
 
     expect(res.status).toBe(200);
@@ -146,7 +155,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify({ major: "ECE" }),
-      })
+      }),
     );
 
     expect(res.status).toBe(200);
@@ -158,9 +167,12 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       expect.objectContaining({
         where: { id: FULL_USER.id },
         data: expect.objectContaining({ major: "ECE" }),
-      })
+      }),
     );
-    const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<string, unknown>;
+    const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(updateCall.data).not.toHaveProperty("displayName");
   });
 
@@ -171,7 +183,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify({ email: "new@osu.edu" }),
-      })
+      }),
     );
 
     expect(res.status).toBe(200);
@@ -179,7 +191,10 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
     expect(data.email).toBe(FULL_USER.email);
     // Verify email was NOT passed to prisma update
     if (vi.mocked(mockPrisma.user.update).mock.calls.length > 0) {
-      const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<string, unknown>;
+      const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<
+        string,
+        unknown
+      >;
       expect(updateCall.data).not.toHaveProperty("email");
     }
   });
@@ -198,11 +213,14 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
           email: "hacked@osu.edu",
           role: "ADMIN",
         }),
-      })
+      }),
     );
 
     expect(res.status).toBe(200);
-    const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<string, unknown>;
+    const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     const updateData = updateCall.data as Record<string, unknown>;
     expect(updateData).toEqual({ displayName: "Updated" });
     expect(updateData).not.toHaveProperty("id");
@@ -218,7 +236,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify({ displayName: "X" }),
-      })
+      }),
     );
 
     expect(res.status).toBe(401);
@@ -235,7 +253,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify(null),
-      })
+      }),
     );
 
     expect(res.status).toBe(400);
@@ -252,7 +270,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify(42),
-      })
+      }),
     );
 
     expect(res.status).toBe(400);
@@ -263,7 +281,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify("hello"),
-      })
+      }),
     );
 
     expect(res.status).toBe(400);
@@ -274,7 +292,7 @@ describe("[phase:1] [regression:always] PATCH /api/v1/users/me", () => {
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify([1, 2, 3]),
-      })
+      }),
     );
 
     expect(res.status).toBe(400);
@@ -289,6 +307,11 @@ describe("[phase:6] [regression:always] GET /api/v1/users/me role contract", () 
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
     vi.mocked(getAuth).mockReturnValue({ userId: FULL_USER.clerkId } as never);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue(FULL_USER as never);
+    mockClerkGetUser.mockResolvedValue({
+      imageUrl: "https://example.com/avatar.png",
+      publicMetadata: { pronouns: "he/him" },
+      unsafeMetadata: {},
+    });
   });
 
   it("TC-USER-009: includes the authenticated user's persisted role", async () => {
@@ -317,14 +340,17 @@ describe("[phase:6] [regression:always] PATCH /api/v1/users/me immutable role", 
       makeAuthRequest("/api/v1/users/me", {
         method: "PATCH",
         body: JSON.stringify({ role: "ADMIN" }),
-      })
+      }),
     );
 
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, unknown>;
     expect(data.role).toBe("USER");
     if (vi.mocked(mockPrisma.user.update).mock.calls.length > 0) {
-      const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<string, unknown>;
+      const updateCall = vi.mocked(mockPrisma.user.update).mock.calls[0][0] as Record<
+        string,
+        unknown
+      >;
       expect(updateCall.data).not.toHaveProperty("role");
     }
   });

@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/clerk-react";
 import { FollowingSection } from "@/components/app-pages/social-feed-section";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PillTabButton, PillTabs } from "@/components/ui/pill-tabs";
 import {
   EventsEmptyState,
   EventsErrorState,
@@ -18,6 +20,7 @@ import {
   PAGE_SIZE,
   queryKeys,
 } from "@/lib/queries";
+import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { cn } from "@/lib/utils";
 
 type FeaturedFilter = "" | "EVENT" | "GIG";
@@ -41,23 +44,20 @@ export function FeaturedPage({
   type = "",
   searchQuery = "",
   onTypeChange,
-  onSearchQueryChange,
+  _onSearchQueryChange,
 }: {
   type?: FeaturedFilter;
   searchQuery?: string;
   onTypeChange: (value: FeaturedFilter) => void;
-  onSearchQueryChange: (value: string) => void;
+  _onSearchQueryChange: (value: string) => void;
 }) {
   const [activeLane, setActiveLane] = useState<FeaturedLane>("recommended");
   const api = useApiClient();
+  const { isSignedIn } = useAuth();
   const normalizedType = type || "ALL";
   const normalizedSearchQuery = searchQuery.trim();
   const recommendedQuery = useInfiniteQuery({
-    queryKey: queryKeys.recommendationsFeed(
-      normalizedType,
-      normalizedSearchQuery,
-      PAGE_SIZE,
-    ),
+    queryKey: queryKeys.recommendationsFeed(normalizedType, "", PAGE_SIZE),
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       fetchRecommendationsPage(api, {
@@ -72,11 +72,7 @@ export function FeaturedPage({
     },
   });
   const popularQuery = useQuery({
-    queryKey: queryKeys.recommendationsPopular(
-      normalizedType,
-      normalizedSearchQuery,
-      FEATURED_PREVIEW_LIMIT,
-    ),
+    queryKey: queryKeys.recommendationsPopular(normalizedType, "", FEATURED_PREVIEW_LIMIT),
     queryFn: () =>
       fetchPopularRecommendationsPage(api, {
         type: type || undefined,
@@ -85,11 +81,7 @@ export function FeaturedPage({
       }),
   });
   const upcomingQuery = useQuery({
-    queryKey: queryKeys.recommendationsUpcoming(
-      normalizedType,
-      normalizedSearchQuery,
-      FEATURED_PREVIEW_LIMIT,
-    ),
+    queryKey: queryKeys.recommendationsUpcoming(normalizedType, "", FEATURED_PREVIEW_LIMIT),
     queryFn: () =>
       fetchUpcomingRecommendationsPage(api, {
         type: type || undefined,
@@ -102,84 +94,65 @@ export function FeaturedPage({
   const recommendedItems = recommendedPages.flatMap((page) => page.items);
   const recommendedMeta = recommendedPages[0]?.meta;
   const rankingMode = recommendedMeta?.rankingMode;
+  const detailSearch = {
+    returnTo: "featured" as const,
+    type: type || undefined,
+  };
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="w-full max-w-xl space-y-1.5">
-            <label
-              htmlFor="featured-keyword-search"
-              className="text-sm font-medium"
-            >
-              Search Featured
-            </label>
-            <Input
-              id="featured-keyword-search"
-              type="search"
-              value={searchQuery}
-              placeholder="Search recommended events and gigs"
-              onChange={(event) => onSearchQueryChange(event.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Searches Recommended, Popular, and Upcoming by keyword.
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <PillTabs
+            role="tablist"
+            aria-label="Featured sections"
+            className="animate-in fade-in-0 slide-in-from-bottom-4 flex flex-wrap gap-2 duration-700"
+          >
+            {LANE_OPTIONS.map((lane) => {
+              const isActive = activeLane === lane.value;
 
-          <div className="flex flex-wrap gap-2">
+              return (
+                <PillTabButton
+                  key={lane.value}
+                  active={isActive}
+                  role="tab"
+                  type="button"
+                  aria-selected={isActive}
+                  aria-controls={`featured-panel-${lane.value}`}
+                  id={`featured-tab-${lane.value}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveLane(lane.value)}
+                >
+                  {lane.label}
+                </PillTabButton>
+              );
+            })}
+          </PillTabs>
+          <div aria-hidden="true" className="h-6 w-px bg-border" />
+          <PillTabs>
             {FILTER_OPTIONS.map((option) => (
-              <Button
+              <PillTabButton
                 key={option.value || "ALL"}
-                variant={type === option.value ? "default" : "outline"}
-                size="sm"
-                className="rounded-full px-4"
+                active={type === option.value}
                 onClick={() => onTypeChange(option.value)}
               >
                 {option.label}
-              </Button>
+              </PillTabButton>
             ))}
-          </div>
+          </PillTabs>
         </div>
       </div>
 
       {rankingMode === "POPULARITY_FALLBACK" ? (
         <div className="mx-auto w-full max-w-3xl animate-in fade-in-0 slide-in-from-bottom-3 duration-700">
           <div className="rounded-2xl border border-dashed bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-            Showing popular upcoming picks while your interests and activity build
-            a more personalized feed.
+            Showing popular upcoming picks while your interests and activity build a more
+            personalized feed.
           </div>
         </div>
       ) : null}
 
       <div className="space-y-4">
-        <div
-          role="tablist"
-          aria-label="Featured sections"
-          className="animate-in fade-in-0 slide-in-from-bottom-4 flex flex-wrap gap-2 duration-700"
-        >
-          {LANE_OPTIONS.map((lane) => {
-            const isActive = activeLane === lane.value;
-
-            return (
-              <Button
-                key={lane.value}
-                role="tab"
-                type="button"
-                aria-selected={isActive}
-                aria-controls={`featured-panel-${lane.value}`}
-                id={`featured-tab-${lane.value}`}
-                tabIndex={isActive ? 0 : -1}
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                className="rounded-full px-4"
-                onClick={() => setActiveLane(lane.value)}
-              >
-                {lane.label}
-              </Button>
-            );
-          })}
-        </div>
-
         <div
           id="featured-panel-recommended"
           role="tabpanel"
@@ -217,9 +190,7 @@ export function FeaturedPage({
                 <EventsEmptyState
                   className="mt-0"
                   title={
-                    normalizedSearchQuery
-                      ? "No matching recommendations"
-                      : "No recommendations yet"
+                    normalizedSearchQuery ? "No matching recommendations" : "No recommendations yet"
                   }
                   description={
                     normalizedSearchQuery
@@ -231,7 +202,7 @@ export function FeaturedPage({
             ) : null}
             {recommendedItems.length > 0 ? (
               <>
-                <EventsList events={recommendedItems} />
+                <EventsList events={recommendedItems} detailSearch={detailSearch} />
                 <div className="flex items-center justify-between gap-4 border-t px-4 py-4 sm:px-5">
                   <p className="text-sm text-muted-foreground">
                     Showing {recommendedItems.length} of{" "}
@@ -240,12 +211,19 @@ export function FeaturedPage({
                   {recommendedQuery.hasNextPage ? (
                     <Button
                       variant="outline"
-                      onClick={() => recommendedQuery.fetchNextPage()}
-                      disabled={recommendedQuery.isFetchingNextPage}
+                      onClick={() => (isSignedIn ? recommendedQuery.fetchNextPage() : undefined)}
+                      disabled={isSignedIn && recommendedQuery.isFetchingNextPage}
+                      asChild={!isSignedIn}
                     >
-                      {recommendedQuery.isFetchingNextPage
-                        ? "Loading..."
-                        : "Load more"}
+                      {isSignedIn ? (
+                        recommendedQuery.isFetchingNextPage ? (
+                          "Loading..."
+                        ) : (
+                          "Load more"
+                        )
+                      ) : (
+                        <Link to="/sign-in">Sign in to load more</Link>
+                      )}
                     </Button>
                   ) : null}
                 </div>
@@ -261,7 +239,31 @@ export function FeaturedPage({
           hidden={activeLane !== "following"}
           className={cn(activeLane === "following" ? "block" : "hidden")}
         >
-          <FollowingSection className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700" />
+          {isSignedIn ? (
+            <FollowingSection
+              className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700"
+              detailSearch={detailSearch}
+            />
+          ) : (
+            <FeaturedSection
+              title="Following"
+              description="Recent activity from people you follow."
+              className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700"
+            >
+              <FeaturedSectionInset>
+                <EventsEmptyState
+                  className="mt-0"
+                  title="Sign in to see your following feed"
+                  description="Follow classmates and creators, then come back here to track their latest activity."
+                  action={
+                    <Button asChild>
+                      <Link to="/sign-in">Sign in</Link>
+                    </Button>
+                  }
+                />
+              </FeaturedSectionInset>
+            </FeaturedSection>
+          )}
         </div>
 
         <div
@@ -279,13 +281,12 @@ export function FeaturedPage({
           >
             <FeaturedPreviewSectionState
               items={popularQuery.data?.items ?? []}
+              detailSearch={detailSearch}
               isPending={popularQuery.isPending}
               isError={popularQuery.isError}
               error={popularQuery.error}
               emptyTitle={
-                normalizedSearchQuery
-                  ? "No matching popular picks"
-                  : "No popular picks right now"
+                normalizedSearchQuery ? "No matching popular picks" : "No popular picks right now"
               }
               emptyDescription={
                 normalizedSearchQuery
@@ -312,13 +313,12 @@ export function FeaturedPage({
           >
             <FeaturedPreviewSectionState
               items={upcomingQuery.data?.items ?? []}
+              detailSearch={detailSearch}
               isPending={upcomingQuery.isPending}
               isError={upcomingQuery.isError}
               error={upcomingQuery.error}
               emptyTitle={
-                normalizedSearchQuery
-                  ? "No matching upcoming picks"
-                  : "No upcoming picks right now"
+                normalizedSearchQuery ? "No matching upcoming picks" : "No upcoming picks right now"
               }
               emptyDescription={
                 normalizedSearchQuery
@@ -355,9 +355,7 @@ function FeaturedSection({
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
 
-        {summary ? (
-          <p className="text-sm text-muted-foreground">{summary}</p>
-        ) : null}
+        {summary ? <p className="text-sm text-muted-foreground">{summary}</p> : null}
       </div>
 
       <div className="overflow-hidden rounded-2xl border bg-background">
@@ -373,6 +371,7 @@ function FeaturedSectionInset({ children }: { children: ReactNode }) {
 
 function FeaturedPreviewSectionState({
   items,
+  detailSearch,
   isPending,
   isError,
   error,
@@ -381,6 +380,7 @@ function FeaturedPreviewSectionState({
   errorMessage,
 }: {
   items: Parameters<typeof EventsList>[0]["events"];
+  detailSearch?: EventDetailRouteSearch;
   isPending: boolean;
   isError: boolean;
   error: Error | null;
@@ -389,13 +389,7 @@ function FeaturedPreviewSectionState({
   errorMessage: string;
 }) {
   if (isPending) {
-    return (
-      <EventsListSkeleton
-        rows={FEATURED_PREVIEW_LIMIT}
-        showHeader={false}
-        framed={false}
-      />
-    );
+    return <EventsListSkeleton rows={FEATURED_PREVIEW_LIMIT} showHeader={false} framed={false} />;
   }
 
   if (isError) {
@@ -412,14 +406,10 @@ function FeaturedPreviewSectionState({
   if (items.length === 0) {
     return (
       <FeaturedSectionInset>
-        <EventsEmptyState
-          className="mt-0"
-          title={emptyTitle}
-          description={emptyDescription}
-        />
+        <EventsEmptyState className="mt-0" title={emptyTitle} description={emptyDescription} />
       </FeaturedSectionInset>
     );
   }
 
-  return <EventsList events={items} />;
+  return <EventsList events={items} detailSearch={detailSearch} />;
 }

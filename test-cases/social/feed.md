@@ -120,7 +120,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/-app-pages.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/-app-pages.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The authenticated app shell is rendered
@@ -131,7 +131,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-1, S-SFEED-2, S-SFEED-4
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/social/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/social/-index.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The social feed API returns feed items
@@ -142,7 +142,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-6
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/social/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/social/-index.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The social feed API has more items than the initial page
@@ -153,7 +153,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: S-SFEED-5
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/social/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/social/-index.test.tsx`
 - **Phase introduced**: 3
 - **Regression**: Always
 - **Given**: The social feed API returns no items
@@ -164,7 +164,7 @@ Spec: [`feed`](../../specs/social/feed.md)
 
 - **Spec scenario**: —
 - **Type**: Automated
-- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_app/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
 - **Given**: The social feed API returns recent activity from followed users

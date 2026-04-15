@@ -99,11 +99,7 @@ function stubExternalFetch({
 }) {
   const fetchMock = vi.fn(async (input: string | URL | Request) => {
     const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
 
     if (url.includes("content.osu.edu")) {
       return jsonResponse({
@@ -117,11 +113,10 @@ function stubExternalFetch({
     if (url.includes("ticketmaster")) {
       const pageParam = new URL(url).searchParams.get("page");
       const pageIndex = Number(pageParam ?? "0");
-      const payload =
-        (ticketmasterPages[pageIndex] as Record<string, unknown> | undefined) ?? {
-          _embedded: { events: [] },
-          page: { totalPages: 1, number: 0 },
-        };
+      const payload = (ticketmasterPages[pageIndex] as Record<string, unknown> | undefined) ?? {
+        _embedded: { events: [] },
+        page: { totalPages: 1, number: 0 },
+      };
 
       return jsonResponse(payload);
     }
@@ -200,9 +195,7 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
       osuEvents: [makeOsuEvent({ itemHash: "def456", content: "Updated body copy" })],
     });
 
-    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-      makeStoredExternalEvent() as never,
-    );
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeStoredExternalEvent() as never);
     vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
     vi.mocked(mockPrisma.event.update).mockResolvedValue(
       makeStoredExternalEvent({ sourceHash: "def456" }) as never,
@@ -290,9 +283,7 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
       osuEvents: [makeOsuEvent({ itemHash: "abc123" })],
     });
 
-    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(
-      makeStoredExternalEvent() as never,
-    );
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(makeStoredExternalEvent() as never);
     vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
 
     await syncExternalEvents(mockPrisma, {
@@ -347,11 +338,57 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
     );
   });
 
+  it("TC-ING-016: falls back to Ticketmaster promoter text when info is missing", async () => {
+    stubExternalFetch({
+      ticketmasterPages: [
+        {
+          _embedded: {
+            events: [
+              makeTicketmasterEvent({
+                info: null,
+                pleaseNote: null,
+                promoter: {
+                  description: "NHL REGULAR SEASON / NTL / USA",
+                },
+              }),
+            ],
+          },
+          page: {
+            totalPages: 1,
+            number: 0,
+          },
+        },
+      ],
+    });
+
+    vi.mocked(mockPrisma.event.findUnique).mockResolvedValue(null as never);
+    vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(
+      makeStoredExternalEvent({
+        source: "TICKETMASTER",
+        externalId: "tm_67890",
+        description: "NHL REGULAR SEASON / NTL / USA",
+      }) as never,
+    );
+
+    await syncExternalEvents(mockPrisma, {
+      ticketmasterApiKey: "ticketmaster_test_key",
+    });
+
+    expect(mockPrisma.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          source: "TICKETMASTER",
+          externalId: "tm_67890",
+          description: "NHL REGULAR SEASON / NTL / USA",
+        }),
+      }),
+    );
+  });
+
   // S-ING-6 → TC-ING-007
   it("TC-ING-007: still creates the external event when AI pipeline scheduling fails", async () => {
-    const scheduleEventPipeline = vi
-      .fn()
-      .mockRejectedValue(new Error("AI unavailable"));
+    const scheduleEventPipeline = vi.fn().mockRejectedValue(new Error("AI unavailable"));
 
     stubExternalFetch({
       osuEvents: [makeOsuEvent()],
@@ -590,7 +627,6 @@ describe("[phase:4] [regression:always] External event ingestion", () => {
       }),
     );
   });
-
 });
 
 describe("[phase:6] [regression:always] External event ingestion summaries", () => {
@@ -635,9 +671,7 @@ describe("[phase:6] [regression:always] External event ingestion summaries", () 
     vi.mocked(mockPrisma.event.findMany)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([] as never);
-    vi.mocked(mockPrisma.event.create).mockResolvedValue(
-      makeStoredExternalEvent() as never,
-    );
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(makeStoredExternalEvent() as never);
     vi.mocked(mockPrisma.event.update).mockResolvedValue(
       makeStoredExternalEvent({
         id: "evt_tm_existing",
@@ -670,9 +704,7 @@ describe("[phase:6] [regression:always] External event ingestion summaries", () 
     vi.mocked(mockPrisma.event.findMany)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([] as never);
-    vi.mocked(mockPrisma.event.create).mockResolvedValue(
-      makeStoredExternalEvent() as never,
-    );
+    vi.mocked(mockPrisma.event.create).mockResolvedValue(makeStoredExternalEvent() as never);
 
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 

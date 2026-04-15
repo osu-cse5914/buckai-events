@@ -89,9 +89,7 @@ export type SocialFeedItem = {
 
 export { type FixtureOverrides } from "./utils";
 
-export function buildUser(
-  overrides: FixtureOverrides<User> = {},
-): User {
+export function buildUser(overrides: FixtureOverrides<User> = {}): User {
   return mergeFixture<User>(
     {
       id: "user_1",
@@ -111,9 +109,7 @@ export function buildUser(
   );
 }
 
-export function buildAuthUser(
-  overrides: FixtureOverrides<AuthUser> = {},
-): AuthUser {
+export function buildAuthUser(overrides: FixtureOverrides<AuthUser> = {}): AuthUser {
   const user = buildUser(overrides);
   return {
     id: user.id,
@@ -122,9 +118,7 @@ export function buildAuthUser(
   };
 }
 
-export function buildInteraction(
-  overrides: FixtureOverrides<Interaction> = {},
-): Interaction {
+export function buildInteraction(overrides: FixtureOverrides<Interaction> = {}): Interaction {
   return mergeFixture<Interaction>(
     {
       id: "int_1",
@@ -137,9 +131,7 @@ export function buildInteraction(
   );
 }
 
-export function buildEvent(
-  overrides: FixtureOverrides<Event> = {},
-): Event {
+export function buildEvent(overrides: FixtureOverrides<Event> = {}): Event {
   return mergeFixture<Event>(
     {
       id: "evt_1",
@@ -212,9 +204,7 @@ export function buildEventWithEmbedding(
   );
 }
 
-export function buildApplication(
-  overrides: FixtureOverrides<Application> = {},
-): Application {
+export function buildApplication(overrides: FixtureOverrides<Application> = {}): Application {
   return mergeFixture<Application>(
     {
       id: "app_1",
@@ -263,9 +253,7 @@ export function buildApplicationWithGig(
   );
 }
 
-export function buildCollection(
-  overrides: FixtureOverrides<Collection> = {},
-): Collection {
+export function buildCollection(overrides: FixtureOverrides<Collection> = {}): Collection {
   return mergeFixture<Collection>(
     {
       id: "col_1",
@@ -319,9 +307,7 @@ export function buildCollectionItemWithEvent(
   );
 }
 
-export function buildConversation(
-  overrides: FixtureOverrides<Conversation> = {},
-): Conversation {
+export function buildConversation(overrides: FixtureOverrides<Conversation> = {}): Conversation {
   return mergeFixture<Conversation>(
     {
       id: "conv_1",
@@ -336,9 +322,7 @@ export function buildConversation(
   );
 }
 
-export function buildMessage(
-  overrides: FixtureOverrides<Message> = {},
-): Message {
+export function buildMessage(overrides: FixtureOverrides<Message> = {}): Message {
   return mergeFixture<Message>(
     {
       id: "msg_1",
@@ -352,9 +336,7 @@ export function buildMessage(
   );
 }
 
-export function buildFollow(
-  overrides: FixtureOverrides<Follow> = {},
-): Follow {
+export function buildFollow(overrides: FixtureOverrides<Follow> = {}): Follow {
   return mergeFixture<Follow>(
     {
       id: "follow_1",
