@@ -365,6 +365,7 @@ export function YouCollectionsPage() {
       <YouSubpageHeader
         title="Collections"
         description="Manage the collections that organize your saved listings."
+        showBackLink={false}
         action={(
           <Sheet open={isCreateOpen} onOpenChange={handleCreateOpenChange}>
             <SheetTrigger asChild>

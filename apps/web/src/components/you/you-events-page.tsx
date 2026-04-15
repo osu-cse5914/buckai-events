@@ -74,6 +74,7 @@ export function YouEventsPage() {
       <YouSubpageHeader
         title="Your Events"
         description="Manage the events and gigs you created."
+        showBackLink={false}
       />
 
       {isError ? (

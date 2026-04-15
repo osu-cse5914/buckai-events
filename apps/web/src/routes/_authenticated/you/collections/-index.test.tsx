@@ -77,14 +77,10 @@ async function renderCollectionsPage() {
 }
 
 describe("[phase:6] [regression:always] YouCollectionsPage", () => {
-  it("TC-PAGES-019: shows navigation back to the You hub", async () => {
+  it("TC-PAGES-019: shows navigation across the You workspace tabs", async () => {
     await renderCollectionsPage();
 
     expect(await screen.findByRole("heading", { name: "Collections" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to You" })).toHaveAttribute(
-      "href",
-      "/you",
-    );
     expect(screen.getByRole("link", { name: "Applications" })).toHaveAttribute(
       "href",
       "/you/applications",

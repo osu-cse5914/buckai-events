@@ -122,10 +122,6 @@ describe("[phase:2] [regression:always] MyApplicationsPage", () => {
       "href",
       "/events/gig_1",
     );
-    expect(screen.getByRole("link", { name: "Back to You" })).toHaveAttribute(
-      "href",
-      "/you",
-    );
     expect(screen.getByRole("link", { name: "Applications" })).toHaveAttribute(
       "href",
       "/you/applications",

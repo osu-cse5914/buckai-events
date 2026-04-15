@@ -101,10 +101,6 @@ describe("[phase:6] [regression:always] YouEventsPage", () => {
     await renderYouEventsPage();
     await screen.findByText("No events yet");
 
-    expect(screen.getByRole("link", { name: "Back to You" })).toHaveAttribute(
-      "href",
-      "/you",
-    );
     expect(screen.getByRole("link", { name: "Applications" })).toHaveAttribute(
       "href",
       "/you/applications",

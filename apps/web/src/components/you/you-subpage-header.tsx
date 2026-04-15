@@ -8,29 +8,33 @@ export function YouSubpageHeader({
   title,
   description,
   action,
+  showBackLink = true,
   backTo = "/you",
   backLabel = "Back to You",
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  showBackLink?: boolean;
   backTo?: "/you" | "/you/collections";
   backLabel?: string;
 }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="space-y-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="-ml-3 w-fit px-3 text-muted-foreground"
-        >
-          <Link to={backTo}>
-            <ArrowLeftIcon className="size-4" />
-            {backLabel}
-          </Link>
-        </Button>
+        {showBackLink ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="-ml-3 w-fit px-3 text-muted-foreground"
+          >
+            <Link to={backTo}>
+              <ArrowLeftIcon className="size-4" />
+              {backLabel}
+            </Link>
+          </Button>
+        ) : null}
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>

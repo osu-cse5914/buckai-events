@@ -60,6 +60,7 @@ export function MyApplicationsPage() {
       <YouSubpageHeader
         title="Applications"
         description="Track the gigs you have applied to and their latest status."
+        showBackLink={false}
       />
 
       {data && data.data.length === 0 ? (
