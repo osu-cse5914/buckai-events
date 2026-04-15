@@ -99,7 +99,7 @@ jobs:
   live-ai:
     needs: [checks, e2e, secret-scan]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     environment: production
     env:
       AI_ROUTER_CONFIG_JSON: ${{ secrets.AI_ROUTER_CONFIG_JSON }}

@@ -34,6 +34,9 @@ function readClerkProfileExtras(clerkUser?: {
 
 async function loadClerkProfileExtras(c: { get: (key: string) => any }, clerkId: string) {
   const clerk = c.get("clerk");
+  if (!clerk || !clerkId) {
+    return { imageUrl: null, pronouns: null };
+  }
   const clerkUser = await clerk.users.getUser(clerkId);
   return readClerkProfileExtras(clerkUser);
 }
@@ -52,7 +55,8 @@ async function enrichUsersWithClerkImages(
 
   return Promise.all(
     users.map(async (user) => {
-      const clerkUser = user.clerkId ? await clerk.users.getUser(user.clerkId) : undefined;
+      const clerkUser =
+        clerk && user.clerkId ? await clerk.users.getUser(user.clerkId) : undefined;
       const extras = readClerkProfileExtras(clerkUser);
 
       return {
