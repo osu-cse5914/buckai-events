@@ -451,7 +451,7 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
   });
 
   describe("[phase:6] [regression:always] GET /events browse defaults", () => {
-    it("TC-EVT-030: supports grouped active filtering and configurable start-time sorting", async () => {
+    it("TC-EVT-030: supports grouped active filtering, excludes stale open rows, and configurable start-time sorting", async () => {
       vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
 
@@ -464,6 +464,15 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
         expect.objectContaining({
           where: expect.objectContaining({
             status: { in: ["OPEN", "IN_PROGRESS"] },
+            AND: [
+              {
+                OR: [
+                  { endAt: { gte: expect.any(Date) } },
+                  { endAt: null, startAt: { gte: expect.any(Date) } },
+                  { status: "IN_PROGRESS", endAt: null },
+                ],
+              },
+            ],
           }),
           orderBy: { startAt: "desc" },
         }),

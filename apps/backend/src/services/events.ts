@@ -164,6 +164,8 @@ export async function listEvents(
   input: EventListInput,
 ) {
   const where: Record<string, unknown> = {};
+  const andClauses: Record<string, unknown>[] = [];
+  const now = new Date();
 
   if (input.type) where.type = input.type;
   if (input.category) where.category = input.category;
@@ -172,6 +174,13 @@ export async function listEvents(
     where.status = input.status;
   } else if (input.statusMode === "ACTIVE") {
     where.status = { in: ["OPEN", "IN_PROGRESS"] };
+    andClauses.push({
+      OR: [
+        { endAt: { gte: now } },
+        { endAt: null, startAt: { gte: now } },
+        { status: "IN_PROGRESS", endAt: null },
+      ],
+    });
   } else if (input.statusMode && input.statusMode !== "ALL") {
     where.status = input.statusMode;
   }
@@ -193,6 +202,10 @@ export async function listEvents(
       { title: { contains: input.search, mode: "insensitive" } },
       { description: { contains: input.search, mode: "insensitive" } },
     ];
+  }
+
+  if (andClauses.length > 0) {
+    where.AND = andClauses;
   }
 
   const orderDirection = input.sort === "START_DESC" ? "desc" : "asc";

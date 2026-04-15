@@ -332,9 +332,9 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Automated in**: `apps/backend/src/test/events.test.ts`
 - **Phase introduced**: 6
 - **Regression**: Always
-- **Given**: Events exist across OPEN, IN_PROGRESS, COMPLETED, and CANCELLED statuses with different start times
+- **Given**: Events exist across OPEN, IN_PROGRESS, COMPLETED, and CANCELLED statuses, including stale OPEN rows whose `endAt` is past or whose `startAt` is past with no `endAt`, with different start times
 - **When**: A user sends `GET /events?statusMode=ACTIVE&sort=START_DESC`
-- **Then**: The response filters to OPEN and IN_PROGRESS events and orders them by latest start time first
+- **Then**: The response filters to OPEN and IN_PROGRESS events that are still upcoming or currently in progress and orders them by latest start time first
 
 ## TC-EVT-031: Events browse defaults to active status and soonest-first ordering
 
