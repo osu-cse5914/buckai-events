@@ -49,6 +49,7 @@ export type SemanticSearchQuery = PaginationQuery & {
 
 export type RecommendationsQuery = PaginationQuery & {
   type?: string;
+  search?: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -148,12 +149,14 @@ export function toEventListInput(query: EventListQuery): EventListInput {
 
 export function toRecommendationsListInput(query: RecommendationsQuery): {
   type?: EventType;
+  search?: string;
   limit: number;
   offset: number;
 } {
   return {
     ...resolvePaginationQuery(query),
     type: query.type as EventType | undefined,
+    search: query.search,
   };
 }
 
@@ -617,6 +620,11 @@ export const validateRecommendationsQuery = validator("query", (value, c) => {
       return badRequest(c, "type must be EVENT or GIG");
     }
     output.type = typeValue;
+  }
+
+  const searchValue = firstQueryValue(value.search)?.trim();
+  if (searchValue) {
+    output.search = searchValue;
   }
 
   return output;

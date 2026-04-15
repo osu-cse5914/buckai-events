@@ -21,6 +21,7 @@ export const recommendations = new Hono<AppEnv>()
     const result = await listPopularRecommendations(prisma, {
       userId,
       type: query.type,
+      search: query.search,
       limit: query.limit,
       offset: query.offset,
     });
@@ -41,6 +42,7 @@ export const recommendations = new Hono<AppEnv>()
     const result = await listUpcomingRecommendations(prisma, {
       userId,
       type: query.type,
+      search: query.search,
       limit: query.limit,
       offset: query.offset,
     });
@@ -61,6 +63,7 @@ export const recommendations = new Hono<AppEnv>()
     const result = await listRecommendations(prisma, {
       userId,
       type: query.type,
+      search: query.search,
       limit: query.limit,
       offset: query.offset,
     });

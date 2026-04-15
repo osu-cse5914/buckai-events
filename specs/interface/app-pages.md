@@ -58,9 +58,10 @@ It contains:
 
 - A recommendation-ranked feed of events and gigs
 - Recommendation framing such as "because you liked", interest alignment, or similar personalization cues
-- Discovery modules such as `Recommended`, `Popular`, and `Upcoming` when the product needs multiple feed groupings
-- Feed-level filters that refine recommended content without turning the page into the exhaustive browse surface
-- Quick actions such as save, apply, or open detail
+  - Discovery modules such as `Recommended`, `Popular`, and `Upcoming` when the product needs multiple feed groupings
+  - Feed-level filters that refine recommended content without turning the page into the exhaustive browse surface
+  - A keyword search control that narrows recommendation sections in place without invoking semantic search
+  - Quick actions such as save, apply, or open detail
 
 It does not contain:
 
@@ -149,6 +150,7 @@ It does not contain:
   - Recommendation reasons or personalization labels
   - Discovery modules such as recommended, popular, and upcoming
   - Feed filters scoped to discovery
+  - Keyword search scoped to the recommendation modules on the page
   - Quick actions that launch overlays or navigate to detail pages
 
 #### Catalog Page
