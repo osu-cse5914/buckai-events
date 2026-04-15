@@ -169,4 +169,4 @@ Spec: [`feed`](../../specs/social/feed.md)
 - **Regression**: Always
 - **Given**: The social feed API returns recent activity from followed users
 - **When**: The authenticated user opens Featured
-- **Then**: The page renders a `Following` section with actor attribution and event titles
+- **Then**: The page renders a `Following` tab and shows a `Following` section with actor attribution and event titles when selected

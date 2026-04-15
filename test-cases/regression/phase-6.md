@@ -19,11 +19,11 @@ All automated cases from Phase 0 through Phase 5, plus:
 - **TC-FEED-008**: Upcoming recommendations endpoint ordering
 - **TC-FEED-009**: Section endpoints respect type filters
 - **TC-FEED-010**: Section endpoints exclude dismissed and ineligible items
-- **TC-FEED-011**: Featured page renders the sectioned layout
+- **TC-FEED-011**: Featured page renders the tabbed layout
 - **TC-FEED-012**: Featured filter updates all sections
 - **TC-FEED-013**: Featured fallback banner is scoped to recommendations
 - **TC-FEED-014**: Featured load more paginates only recommended results
-- **TC-FEED-015**: Featured sections handle partial empty and error states
+- **TC-FEED-015**: Featured tabs handle partial empty and error states
 - **TC-EMBED-012**: Semantic search endpoint returns paginated public results
 - **TC-EMBED-013**: Semantic search pagination preserves total count
 - **TC-PAGES-012**: Search forwards active queries to semantic search and resets pagination on submit

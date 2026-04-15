@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { FollowingSection } from "@/components/app-pages/social-feed-section";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type FeaturedFilter = "" | "EVENT" | "GIG";
+type FeaturedLane = "recommended" | "following" | "popular" | "upcoming";
 const FEATURED_PREVIEW_LIMIT = 3;
 
 const FILTER_OPTIONS = [
@@ -27,6 +29,13 @@ const FILTER_OPTIONS = [
   { value: "GIG", label: "Gigs" },
 ] as const satisfies ReadonlyArray<{ value: FeaturedFilter; label: string }>;
 
+const LANE_OPTIONS = [
+  { value: "recommended", label: "Recommended" },
+  { value: "following", label: "Following" },
+  { value: "popular", label: "Popular" },
+  { value: "upcoming", label: "Upcoming" },
+] as const satisfies ReadonlyArray<{ value: FeaturedLane; label: string }>;
+
 export function FeaturedPage({
   type = "",
   onTypeChange,
@@ -34,6 +43,7 @@ export function FeaturedPage({
   type?: FeaturedFilter;
   onTypeChange: (value: FeaturedFilter) => void;
 }) {
+  const [activeLane, setActiveLane] = useState<FeaturedLane>("recommended");
   const api = useApiClient();
   const normalizedType = type || "ALL";
   const recommendedQuery = useInfiniteQuery({
@@ -105,98 +115,160 @@ export function FeaturedPage({
         </div>
       ) : null}
 
-      <div className="space-y-6">
-        <FeaturedSection
-          title="Recommended"
-          description="Ranked for your interests and recent activity."
-          summary={`Showing ${recommendedItems.length} of ${
-            recommendedMeta?.total ?? recommendedItems.length
-          }`}
-          className="animate-in fade-in-0 slide-in-from-bottom-4 duration-700"
+      <div className="space-y-4">
+        <div
+          role="tablist"
+          aria-label="Featured sections"
+          className="animate-in fade-in-0 slide-in-from-bottom-4 flex flex-wrap gap-2 duration-700"
         >
-          {recommendedQuery.isPending ? (
-            <EventsListSkeleton showHeader={false} framed={false} />
-          ) : null}
-          {recommendedQuery.isError ? (
-            <FeaturedSectionInset>
-              <EventsErrorState
-                className="mt-0"
-                message={
-                  recommendedQuery.error instanceof Error
-                    ? recommendedQuery.error.message
-                    : "Failed to fetch recommendations"
-                }
-              />
-            </FeaturedSectionInset>
-          ) : null}
-          {!recommendedQuery.isPending &&
-          !recommendedQuery.isError &&
-          recommendedItems.length === 0 ? (
-            <FeaturedSectionInset>
-              <EventsEmptyState
-                className="mt-0"
-                title="No recommendations yet"
-                description="Check back soon for upcoming events and gigs."
-              />
-            </FeaturedSectionInset>
-          ) : null}
-          {recommendedItems.length > 0 ? (
-            <>
-              <EventsList events={recommendedItems} />
-              <div className="flex items-center justify-between gap-4 border-t px-4 py-4 sm:px-5">
-                <p className="text-sm text-muted-foreground">
-                  Showing {recommendedItems.length} of{" "}
-                  {recommendedMeta?.total ?? recommendedItems.length}
-                </p>
-                {recommendedQuery.hasNextPage ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => recommendedQuery.fetchNextPage()}
-                    disabled={recommendedQuery.isFetchingNextPage}
-                  >
-                    {recommendedQuery.isFetchingNextPage ? "Loading..." : "Load more"}
-                  </Button>
-                ) : null}
-              </div>
-            </>
-          ) : null}
-        </FeaturedSection>
+          {LANE_OPTIONS.map((lane) => {
+            const isActive = activeLane === lane.value;
 
-        <FollowingSection className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700" />
+            return (
+              <Button
+                key={lane.value}
+                role="tab"
+                type="button"
+                aria-selected={isActive}
+                aria-controls={`featured-panel-${lane.value}`}
+                id={`featured-tab-${lane.value}`}
+                tabIndex={isActive ? 0 : -1}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                className="rounded-full px-4"
+                onClick={() => setActiveLane(lane.value)}
+              >
+                {lane.label}
+              </Button>
+            );
+          })}
+        </div>
 
-        <FeaturedSection
-          title="Popular"
-          description="What is drawing the most attention right now."
-          summary={popularQuery.data ? `${popularQuery.data.items.length} picks` : undefined}
-          className="animate-in fade-in-0 slide-in-from-bottom-6 duration-700"
+        <div
+          id="featured-panel-recommended"
+          role="tabpanel"
+          aria-labelledby="featured-tab-recommended"
+          hidden={activeLane !== "recommended"}
+          className={cn(activeLane === "recommended" ? "block" : "hidden")}
         >
-          <FeaturedPreviewSectionState
-            items={popularQuery.data?.items ?? []}
-            isPending={popularQuery.isPending}
-            isError={popularQuery.isError}
-            error={popularQuery.error}
-            emptyTitle="No popular picks right now"
-            emptyDescription="Fresh activity will surface here as attention builds."
-            errorMessage="Failed to fetch popular recommendations"
-          />
-        </FeaturedSection>
+          <FeaturedSection
+            title="Recommended"
+            description="Ranked for your interests and recent activity."
+            summary={`Showing ${recommendedItems.length} of ${
+              recommendedMeta?.total ?? recommendedItems.length
+            }`}
+            className="animate-in fade-in-0 slide-in-from-bottom-4 duration-700"
+          >
+            {recommendedQuery.isPending ? (
+              <EventsListSkeleton showHeader={false} framed={false} />
+            ) : null}
+            {recommendedQuery.isError ? (
+              <FeaturedSectionInset>
+                <EventsErrorState
+                  className="mt-0"
+                  message={
+                    recommendedQuery.error instanceof Error
+                      ? recommendedQuery.error.message
+                      : "Failed to fetch recommendations"
+                  }
+                />
+              </FeaturedSectionInset>
+            ) : null}
+            {!recommendedQuery.isPending &&
+            !recommendedQuery.isError &&
+            recommendedItems.length === 0 ? (
+              <FeaturedSectionInset>
+                <EventsEmptyState
+                  className="mt-0"
+                  title="No recommendations yet"
+                  description="Check back soon for upcoming events and gigs."
+                />
+              </FeaturedSectionInset>
+            ) : null}
+            {recommendedItems.length > 0 ? (
+              <>
+                <EventsList events={recommendedItems} />
+                <div className="flex items-center justify-between gap-4 border-t px-4 py-4 sm:px-5">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {recommendedItems.length} of{" "}
+                    {recommendedMeta?.total ?? recommendedItems.length}
+                  </p>
+                  {recommendedQuery.hasNextPage ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => recommendedQuery.fetchNextPage()}
+                      disabled={recommendedQuery.isFetchingNextPage}
+                    >
+                      {recommendedQuery.isFetchingNextPage
+                        ? "Loading..."
+                        : "Load more"}
+                    </Button>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+          </FeaturedSection>
+        </div>
 
-        <FeaturedSection
-          title="Upcoming"
-          description="The nearest openings and events worth scanning next."
-          summary={upcomingQuery.data ? `${upcomingQuery.data.items.length} picks` : undefined}
-          className="animate-in fade-in-0 slide-in-from-bottom-7 duration-700"
+        <div
+          id="featured-panel-following"
+          role="tabpanel"
+          aria-labelledby="featured-tab-following"
+          hidden={activeLane !== "following"}
+          className={cn(activeLane === "following" ? "block" : "hidden")}
         >
-          <FeaturedPreviewSectionState
-            items={upcomingQuery.data?.items ?? []}
-            isPending={upcomingQuery.isPending}
-            isError={upcomingQuery.isError}
-            error={upcomingQuery.error}
-            emptyTitle="No upcoming picks right now"
-            emptyDescription="Newly scheduled listings will appear here as they open up."
-            errorMessage="Failed to fetch upcoming recommendations"
-          />
-        </FeaturedSection>
+          <FollowingSection className="animate-in fade-in-0 slide-in-from-bottom-5 duration-700" />
+        </div>
+
+        <div
+          id="featured-panel-popular"
+          role="tabpanel"
+          aria-labelledby="featured-tab-popular"
+          hidden={activeLane !== "popular"}
+          className={cn(activeLane === "popular" ? "block" : "hidden")}
+        >
+          <FeaturedSection
+            title="Popular"
+            description="What is drawing the most attention right now."
+            summary={popularQuery.data ? `${popularQuery.data.items.length} picks` : undefined}
+            className="animate-in fade-in-0 slide-in-from-bottom-6 duration-700"
+          >
+            <FeaturedPreviewSectionState
+              items={popularQuery.data?.items ?? []}
+              isPending={popularQuery.isPending}
+              isError={popularQuery.isError}
+              error={popularQuery.error}
+              emptyTitle="No popular picks right now"
+              emptyDescription="Fresh activity will surface here as attention builds."
+              errorMessage="Failed to fetch popular recommendations"
+            />
+          </FeaturedSection>
+        </div>
+
+        <div
+          id="featured-panel-upcoming"
+          role="tabpanel"
+          aria-labelledby="featured-tab-upcoming"
+          hidden={activeLane !== "upcoming"}
+          className={cn(activeLane === "upcoming" ? "block" : "hidden")}
+        >
+          <FeaturedSection
+            title="Upcoming"
+            description="The nearest openings and events worth scanning next."
+            summary={upcomingQuery.data ? `${upcomingQuery.data.items.length} picks` : undefined}
+            className="animate-in fade-in-0 slide-in-from-bottom-7 duration-700"
+          >
+            <FeaturedPreviewSectionState
+              items={upcomingQuery.data?.items ?? []}
+              isPending={upcomingQuery.isPending}
+              isError={upcomingQuery.isError}
+              error={upcomingQuery.error}
+              emptyTitle="No upcoming picks right now"
+              emptyDescription="Newly scheduled listings will appear here as they open up."
+              errorMessage="Failed to fetch upcoming recommendations"
+            />
+          </FeaturedSection>
+        </div>
       </div>
     </section>
   );

@@ -210,7 +210,7 @@ beforeEach(() => {
 });
 
 describe("[phase:6] [regression:always] FeaturedPage", () => {
-  it("TC-FEED-011: renders the sectioned Featured layout", async () => {
+  it("TC-FEED-011: renders the tabbed Featured layout", async () => {
     state.mockRecommendationsGet.mockResolvedValue(
       makeRecommendationResponse([makeEvent({ id: "evt_rec", title: "Recommended Show" })]),
     );
@@ -238,16 +238,18 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
 
     await renderFeaturedPage();
 
-    expect(await screen.findByRole("heading", { name: "Recommended" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Following" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Popular" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Upcoming" })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(document.body).toHaveTextContent("Recommended Show");
-      expect(document.body).toHaveTextContent("Following Show");
-      expect(document.body).toHaveTextContent("Popular Show");
-      expect(document.body).toHaveTextContent("Upcoming Show");
-    });
+    expect(
+      await screen.findByRole("tab", { name: "Recommended" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Following" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Popular" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Upcoming" })).toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: "Recommended" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Following" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Popular" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Upcoming" })).not.toBeInTheDocument();
+    expect(await screen.findByText("Recommended Show")).toBeInTheDocument();
   });
 
   it("TC-SFEED-015: shows followed-user activity inside the Featured Following section", async () => {
@@ -272,6 +274,8 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
     );
 
     await renderFeaturedPage();
+
+    await userEvent.click(screen.getByRole("tab", { name: "Following" }));
 
     const followingSection = await screen.findByRole("heading", { name: "Following" });
     const sectionContainer = followingSection.closest("section");
@@ -382,9 +386,10 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
 
     expect(await screen.findByText("Recommended Show")).toBeInTheDocument();
 
-    const popularSection = screen
-      .getByRole("heading", { name: "Popular" })
-      .closest("section");
+    await userEvent.click(screen.getByRole("tab", { name: "Popular" }));
+    const popularSection = screen.getByRole("heading", { name: "Popular" }).closest("section");
+
+    await userEvent.click(screen.getByRole("tab", { name: "Upcoming" }));
     const upcomingSection = screen
       .getByRole("heading", { name: "Upcoming" })
       .closest("section");

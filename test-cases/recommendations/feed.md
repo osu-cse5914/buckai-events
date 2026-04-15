@@ -68,12 +68,13 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 - **Steps**:
   1. Sign in as a user with interests set
   2. Navigate to the recommendations/home page
-  3. Verify the page renders the `Recommended`, `Popular`, and `Upcoming` sections
+  3. Verify the page renders a secondary Featured tab bar with `Recommended`, `Following`, `Popular`, and `Upcoming`
   4. Verify the `Recommended` section appears in a personalized order
-  5. Toggle between "All", "Events", and "Gigs" filters
-  6. Verify all three sections update with the active filter
-  7. Use `Load more` in the `Recommended` section only
-- **Expected**: The sectioned Featured page renders correctly, filtering applies across all sections, and only the `Recommended` section paginates
+  5. Switch tabs and verify each tab shows only its own lane content
+  6. Toggle between "All", "Events", and "Gigs" filters
+  7. Verify recommendation tabs update with the active filter
+  8. Use `Load more` in the `Recommended` tab only
+- **Expected**: The tabbed Featured page renders correctly, recommendation tabs update for the selected type filter, and only the `Recommended` tab paginates
 
 ## TC-FEED-007: Popular recommendations endpoint ordering
 
@@ -115,15 +116,16 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 - **Given**: User A has dismissed an item and some items are past or closed
 - **Then**: `popular` and `upcoming` exclude dismissed, past, and non-open/non-in-progress items
 
-## TC-FEED-011: Featured page renders the sectioned layout
+## TC-FEED-011: Featured page renders the tabbed layout
 
 - **Spec scenario**: —
 - **Type**: Automated
 - **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
-- **Given**: The recommendations section queries succeed
-- **Then**: The page renders `Recommended`, `Popular`, and `Upcoming` sections with the shared Featured framing
+- **Given**: The Featured recommendation and social queries succeed
+- **Then**: The page renders a Featured secondary tab bar with `Recommended`, `Following`, `Popular`, and `Upcoming`
+- **And**: The default active tab is `Recommended`
 
 ## TC-FEED-012: Featured filter updates all sections
 
@@ -155,12 +157,12 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 - **Given**: The `Recommended` section has another page
 - **Then**: `Load more` appends only `Recommended` items and does not page `Popular` or `Upcoming`
 
-## TC-FEED-015: Featured sections handle partial empty and error states
+## TC-FEED-015: Featured tabs handle partial empty and error states
 
 - **Spec scenario**: —
 - **Type**: Automated
 - **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
-- **Given**: One section errors or returns no items while others succeed
-- **Then**: The page keeps rendering the remaining sections and shows a safe section-level empty or error state
+- **Given**: One recommendation tab errors or returns no items while others succeed
+- **Then**: The page keeps rendering healthy tabs and shows a safe tab-level empty or error state
