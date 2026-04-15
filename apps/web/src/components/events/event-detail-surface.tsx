@@ -25,6 +25,7 @@ import type {
   EventDetailRouteSearch,
   SearchRouteSearch,
 } from "@/lib/event-route-search";
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_STYLES,
@@ -483,9 +484,7 @@ export function EventDetailSurface({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               {isPageMode ? (
-                <Badge variant="secondary">
-                  {event.type}
-                </Badge>
+                <EventTypeBadge type={event.type} />
               ) : null}
               <Badge
                 variant="secondary"

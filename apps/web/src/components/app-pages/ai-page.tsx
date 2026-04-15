@@ -16,7 +16,8 @@ import {
   type ConversationReplySuggestionsPart,
   type ConversationSearchResultsPart,
 } from "@/lib/queries";
-import { formatDate, TYPE_STYLES } from "@/lib/event-utils";
+import { formatDate } from "@/lib/event-utils";
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -173,12 +174,7 @@ function SearchResultsCards({
                 <CardContent className="space-y-3 px-4 py-4">
                   <div className="flex flex-wrap items-center gap-2">
                     {item.type ? (
-                      <Badge
-                        variant="secondary"
-                        className={TYPE_STYLES[item.type] ?? ""}
-                      >
-                        {item.type}
-                      </Badge>
+                      <EventTypeBadge type={item.type} />
                     ) : null}
                     {item.category ? (
                       <Badge variant="outline" className="capitalize">

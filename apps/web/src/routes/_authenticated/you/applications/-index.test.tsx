@@ -118,7 +118,7 @@ describe("[phase:2] [regression:always] MyApplicationsPage", () => {
     expect(screen.getByText("Happy to help")).toBeInTheDocument();
     expect(screen.getByText("Pending")).toBeInTheDocument();
     expect(screen.getByText("Accepted")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Need a tutor" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Need a tutor/i })).toHaveAttribute(
       "href",
       "/events/gig_1",
     );

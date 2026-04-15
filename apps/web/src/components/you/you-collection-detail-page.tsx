@@ -1,26 +1,19 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarIcon, MapPinIcon, TrashIcon } from "lucide-react";
+import { TrashIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
+import { CollectionVisibilityBadge } from "@/components/collections/collection-visibility-badge";
 import {
   collectionDetailQueryOptions,
   collectionItemsQueryOptions,
   currentUserQueryOptions,
   queryKeys,
-  type EventListItem,
 } from "@/lib/queries";
 import {
-  STATUS_LABELS,
-  STATUS_STYLES,
-  TYPE_STYLES,
-  formatDate,
-} from "@/lib/event-utils";
-import {
+  EventsList,
   EventsEmptyState,
   EventsPagination,
 } from "@/components/events/events-browser";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,11 +26,12 @@ import {
   YouSubpageHeader,
   YouSubpageHeaderSkeleton,
 } from "@/components/you/you-subpage-header";
-
-const COLLECTION_VISIBILITY_STYLES: Record<"PRIVATE" | "PUBLIC", string> = {
-  PRIVATE: "bg-slate-100 text-slate-700",
-  PUBLIC: "bg-emerald-100 text-emerald-700",
-};
+import {
+  FramedList,
+  FramedListFooter,
+  FramedListInset,
+} from "@/components/ui/framed-list";
+import { IconLabelButton } from "@/components/ui/icon-label-button";
 
 function readCountLabel(count: number) {
   return `${count} saved item${count === 1 ? "" : "s"}`;
@@ -50,77 +44,6 @@ async function readErrorMessage(res: Response, fallback: string) {
   } catch {
     return fallback;
   }
-}
-
-function CollectionEventCard({
-  event,
-  isOwner,
-  isRemoving,
-  onRemove,
-}: {
-  event: EventListItem;
-  isOwner: boolean;
-  isRemoving: boolean;
-  onRemove: (eventId: string) => void;
-}) {
-  return (
-    <Card aria-label={`${event.title} saved event`} className="gap-4">
-      <CardHeader className="gap-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className={TYPE_STYLES[event.type] ?? ""}>
-                {event.type}
-              </Badge>
-              <Badge
-                variant="secondary"
-                className={STATUS_STYLES[event.status] ?? ""}
-              >
-                {STATUS_LABELS[event.status] ?? event.status}
-              </Badge>
-            </div>
-
-            <CardTitle>
-              <Link
-                to="/events/$eventId"
-                params={{ eventId: event.id }}
-                className="hover:underline"
-              >
-                {event.title}
-              </Link>
-            </CardTitle>
-          </div>
-
-          {isOwner ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onRemove(event.id)}
-              disabled={isRemoving}
-            >
-              <TrashIcon className="size-4" />
-              Remove from collection
-            </Button>
-          ) : null}
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-3 text-sm text-muted-foreground">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5">
-            <CalendarIcon className="size-4" />
-            {formatDate(event.startAt)}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <MapPinIcon className="size-4" />
-            {event.locationName}
-          </span>
-        </div>
-        <p>{event.summary || event.description}</p>
-      </CardContent>
-    </Card>
-  );
 }
 
 function CollectionDetailPageSkeleton() {
@@ -276,14 +199,7 @@ export function YouCollectionDetailPage({
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Badge
-          variant="secondary"
-          className={COLLECTION_VISIBILITY_STYLES[collection.visibility]}
-        >
-          {collection.visibility === "PUBLIC"
-            ? "Public collection"
-            : "Private collection"}
-        </Badge>
+        <CollectionVisibilityBadge visibility={collection.visibility} />
         <span className="text-sm text-muted-foreground">
           {readCountLabel(totalItems)}
         </span>
@@ -297,32 +213,50 @@ export function YouCollectionDetailPage({
         </div>
       ) : null}
 
-      {itemsPage && itemsPage.data.length === 0 ? (
-        <EventsEmptyState
-          title="No saved items yet"
-          description="Save an event or gig to see it in this collection."
-        />
-      ) : null}
-
-      {itemsPage && itemsPage.data.length > 0 ? (
-        <>
-          <div className="mt-8 grid gap-4">
-            {itemsPage.data.map((event) => (
-              <CollectionEventCard
-                key={event.id}
-                event={event}
-                isOwner={Boolean(isOwner)}
-                isRemoving={removeMutation.isPending}
-                onRemove={(eventId) => removeMutation.mutate(eventId)}
+      {itemsPage ? (
+        <div className="mt-8">
+          <FramedList>
+            {itemsPage.data.length === 0 ? (
+              <FramedListInset>
+                <EventsEmptyState
+                  title="No saved items yet"
+                  description="Save an event or gig to see it in this collection."
+                  className="mt-0"
+                />
+              </FramedListInset>
+            ) : (
+              <EventsList
+                events={itemsPage.data}
+                showSaveAction={false}
+                getItemAriaLabel={(event) => `${event.title} saved event`}
+                renderRightAccessory={(event) =>
+                  isOwner ? (
+                    <IconLabelButton
+                      type="button"
+                      variant="outline"
+                      icon={<TrashIcon className="size-4" />}
+                      onClick={() => removeMutation.mutate(event.id)}
+                      disabled={removeMutation.isPending}
+                    >
+                      Remove from collection
+                    </IconLabelButton>
+                  ) : null
+                }
               />
-            ))}
-          </div>
-          <EventsPagination
-            page={page}
-            total={itemsPage.pagination.total}
-            onPageChange={setPage}
-          />
-        </>
+            )}
+
+            {itemsPage.pagination.total > itemsPage.pagination.limit ? (
+              <FramedListFooter>
+                <EventsPagination
+                  page={page}
+                  total={itemsPage.pagination.total}
+                  onPageChange={setPage}
+                  className="mt-0"
+                />
+              </FramedListFooter>
+            ) : null}
+          </FramedList>
+        </div>
       ) : null}
     </section>
   );

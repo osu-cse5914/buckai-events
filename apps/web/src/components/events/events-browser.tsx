@@ -26,12 +26,12 @@ import {
 import {
   STATUS_LABELS,
   STATUS_STYLES,
-  TYPE_STYLES,
   formatDate,
   formatEventAttribution,
 } from "@/lib/event-utils";
 import type { EventDetailRouteSearch } from "@/lib/event-route-search";
 import { SaveToCollectionButton } from "@/components/collections/save-to-collection-button";
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -357,12 +357,7 @@ export function EventsGrid({
             <CardHeader>
               <div className="flex items-center gap-2">
                 {showTypeBadge ? (
-                  <Badge
-                    variant="secondary"
-                    className={TYPE_STYLES[event.type] ?? ""}
-                  >
-                    {event.type}
-                  </Badge>
+                  <EventTypeBadge type={event.type} />
                 ) : null}
                 <Badge
                   variant="secondary"
@@ -410,13 +405,19 @@ export function EventsList({
   events,
   selectedEventId,
   showTypeBadge = true,
+  showSaveAction = true,
   detailSearch,
+  getItemAriaLabel,
+  renderRightAccessory,
   onSelectEvent,
 }: {
   events: EventListItem[];
   selectedEventId?: string;
   showTypeBadge?: boolean;
+  showSaveAction?: boolean;
   detailSearch?: EventDetailRouteSearch;
+  getItemAriaLabel?: (event: EventListItem) => string;
+  renderRightAccessory?: (event: EventListItem) => ReactNode;
   onSelectEvent?: (eventId: string) => void;
 }) {
   return (
@@ -429,7 +430,7 @@ export function EventsList({
         return (
           <article
             key={event.id}
-            aria-label={`${event.title} listing`}
+            aria-label={getItemAriaLabel?.(event) ?? `${event.title} listing`}
             className={cn(
               "border-l-2 border-transparent transition-colors hover:bg-muted/30",
               isSelected ? "border-l-primary bg-muted/30" : "",
@@ -488,19 +489,15 @@ export function EventsList({
 
               <div className="flex shrink-0 items-start gap-2">
                 {showTypeBadge ? (
-                  <Badge
-                    variant="secondary"
-                    className={TYPE_STYLES[event.type] ?? ""}
-                  >
-                    {event.type}
-                  </Badge>
+                  <EventTypeBadge type={event.type} />
                 ) : null}
                 {showClosedBadge ? (
                   <Badge variant="secondary" className="bg-slate-100 text-slate-700">
                     Closed
                   </Badge>
                 ) : null}
-                <SaveToCollectionButton eventId={event.id} />
+                {renderRightAccessory ? renderRightAccessory(event) : null}
+                {showSaveAction ? <SaveToCollectionButton eventId={event.id} /> : null}
               </div>
             </div>
           </article>

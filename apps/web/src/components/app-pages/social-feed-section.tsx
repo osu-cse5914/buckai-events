@@ -20,9 +20,9 @@ import {
 import {
   STATUS_LABELS,
   STATUS_STYLES,
-  TYPE_STYLES,
   formatDateLong,
 } from "@/lib/event-utils";
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { cn } from "@/lib/utils";
 
 type SocialFeedVariant = "featured" | "page";
@@ -241,9 +241,7 @@ function SocialFeedListItem({ item }: { item: SocialFeedItem }) {
               <UserPlusIcon className="mr-1 size-3" />
               {actorName} {actionLabel}
             </Badge>
-            <Badge variant="secondary" className={TYPE_STYLES[item.event.type] ?? ""}>
-              {item.event.type}
-            </Badge>
+            <EventTypeBadge type={item.event.type} />
             <Badge variant="secondary" className={STATUS_STYLES[item.event.status] ?? ""}>
               {STATUS_LABELS[item.event.status] ?? item.event.status}
             </Badge>

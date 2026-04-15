@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { PillTabButton, PillTabs } from "@/components/ui/pill-tabs";
 
 const YOU_TABS = [
   { value: "applications", label: "Applications", to: "/you/applications" as const },
@@ -12,24 +11,24 @@ export type YouTabValue = (typeof YOU_TABS)[number]["value"];
 
 export function YouTabsNav({ currentTab }: { currentTab: YouTabValue }) {
   return (
-    <nav aria-label="You sections" className="flex flex-wrap gap-2">
+    <nav aria-label="You sections">
+      <PillTabs>
       {YOU_TABS.map((tab) => {
         const isActive = tab.value === currentTab;
 
         return (
-          <Button
+          <PillTabButton
             key={tab.value}
-            variant={isActive ? "default" : "outline"}
-            size="sm"
+            active={isActive}
             asChild
-            className={cn("rounded-full px-4", isActive && "pointer-events-none")}
           >
             <Link to={tab.to} aria-current={isActive ? "page" : undefined}>
               {tab.label}
             </Link>
-          </Button>
+          </PillTabButton>
         );
       })}
+      </PillTabs>
     </nav>
   );
 }

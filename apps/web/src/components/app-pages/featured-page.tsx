@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { FollowingSection } from "@/components/app-pages/social-feed-section";
 import { Button } from "@/components/ui/button";
+import { PillTabButton, PillTabs } from "@/components/ui/pill-tabs";
 import {
   EventsEmptyState,
   EventsErrorState,
@@ -98,7 +99,7 @@ export function FeaturedPage({
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
         <div className="flex flex-wrap items-center gap-3">
-          <div
+          <PillTabs
             role="tablist"
             aria-label="Featured sections"
             className="animate-in fade-in-0 slide-in-from-bottom-4 flex flex-wrap gap-2 duration-700"
@@ -107,38 +108,34 @@ export function FeaturedPage({
               const isActive = activeLane === lane.value;
 
               return (
-                <Button
+                <PillTabButton
                   key={lane.value}
+                  active={isActive}
                   role="tab"
                   type="button"
                   aria-selected={isActive}
                   aria-controls={`featured-panel-${lane.value}`}
                   id={`featured-tab-${lane.value}`}
                   tabIndex={isActive ? 0 : -1}
-                  variant={isActive ? "default" : "outline"}
-                  size="sm"
-                  className="rounded-full px-4"
                   onClick={() => setActiveLane(lane.value)}
                 >
                   {lane.label}
-                </Button>
+                </PillTabButton>
               );
             })}
-          </div>
+          </PillTabs>
           <div aria-hidden="true" className="h-6 w-px bg-border" />
-          <div className="flex flex-wrap gap-2">
+          <PillTabs>
             {FILTER_OPTIONS.map((option) => (
-              <Button
+              <PillTabButton
                 key={option.value || "ALL"}
-                variant={type === option.value ? "default" : "outline"}
-                size="sm"
-                className="rounded-full px-4"
+                active={type === option.value}
                 onClick={() => onTypeChange(option.value)}
               >
                 {option.label}
-              </Button>
+              </PillTabButton>
             ))}
-          </div>
+          </PillTabs>
         </div>
       </div>
 

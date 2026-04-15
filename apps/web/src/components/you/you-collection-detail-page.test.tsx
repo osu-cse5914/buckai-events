@@ -310,7 +310,7 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
       "href",
       "/you/collections",
     );
-    expect(screen.getByText("Public collection")).toBeInTheDocument();
+    expect(screen.getByText("Public")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove from collection" })).not.toBeInTheDocument();
   });
 });

@@ -10,10 +10,15 @@ import {
   EventsCollectionSkeleton,
   EventsEmptyState,
   EventsErrorState,
-  EventsGrid,
+  EventsList,
   EventsPagination,
   useEventsQuery,
 } from "@/components/events/events-browser";
+import {
+  FramedList,
+  FramedListFooter,
+  FramedListInset,
+} from "@/components/ui/framed-list";
 import {
   YouSubpageHeader,
   YouSubpageHeaderSkeleton,
@@ -74,13 +79,12 @@ export function YouEventsPage() {
 
       <YouSubpageHeader
         title="Your Events"
-        description="Manage the events and gigs you created."
         showBackLink={false}
-        action={
+        action={(data?.pagination.total ?? 0) > 0 ? (
           <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium">
             {data?.pagination.total ?? 0} total
           </Badge>
-        }
+        ) : undefined}
       />
 
       {isError ? (
@@ -92,34 +96,31 @@ export function YouEventsPage() {
         />
       ) : null}
       {data ? (
-        <div className="overflow-hidden rounded-2xl border bg-background">
-          <div className="border-b px-6 py-5 sm:px-8">
-            <p className="text-sm text-muted-foreground">Owned listings</p>
-            <h2 className="mt-1 text-xl font-semibold tracking-tight">Created events and gigs</h2>
-          </div>
-
+        <FramedList>
           {data.data.length === 0 ? (
-            <div className="px-6 py-10 sm:px-8">
+            <FramedListInset>
               <EventsEmptyState
                 title="No events yet"
                 description="Create an event to see it here."
                 className="mt-0"
               />
-            </div>
+            </FramedListInset>
           ) : (
             <>
-              <EventsGrid events={data.data} className="mt-0 px-6 py-6 sm:px-8" />
-              <div className="border-t px-6 py-5 sm:px-8">
+              <EventsList events={data.data} showSaveAction={false} />
+              {data.pagination.total > data.pagination.limit ? (
+                <FramedListFooter>
                 <EventsPagination
                   page={page}
                   total={data.pagination.total}
                   onPageChange={setPage}
                   className="mt-0"
                 />
-              </div>
+                </FramedListFooter>
+              ) : null}
             </>
           )}
-        </div>
+        </FramedList>
       ) : null}
     </section>
   );
