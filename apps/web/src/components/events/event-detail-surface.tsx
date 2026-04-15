@@ -93,6 +93,7 @@ function toPreviousEventSearch(search: EventDetailRouteSearch) {
     q: search.q,
     type: search.type,
     category: search.category,
+    tag: search.tag,
     page: search.page,
     browseType: search.browseType,
     statusMode: search.statusMode,
@@ -185,6 +186,10 @@ function buildDisplayTags(tags: string[]) {
   }
 
   return normalizedTags;
+}
+
+function normalizeSearchTag(tag: string) {
+  return tag.trim().replace(/^#+/, "").trim().toLowerCase();
 }
 
 export function EventDetailSurface({
@@ -691,8 +696,13 @@ export function EventDetailSurface({
           <h2 className="text-lg font-semibold">Tags</h2>
           <div className="mt-2 flex flex-wrap gap-2">
             {displayTags.map((tag) => (
-              <Badge key={tag} variant="outline">
-                {tag}
+              <Badge key={tag} variant="outline" asChild>
+                <Link
+                  to="/search"
+                  search={{ tag: normalizeSearchTag(tag) }}
+                >
+                  {tag}
+                </Link>
               </Badge>
             ))}
           </div>

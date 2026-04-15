@@ -19,6 +19,7 @@ export type SemanticSearchInput = {
   limit: number;
   type?: string;
   category?: string;
+  tag?: string;
   startDate?: Date;
   endDate?: Date;
   minCompensation?: number;
@@ -165,6 +166,15 @@ function buildSemanticSearchWhereClauses(input: Omit<SemanticSearchInput, "limit
   }
   if (input.category) {
     whereClauses.push(Prisma.sql`e.category = ${input.category}`);
+  }
+  if (input.tag) {
+    whereClauses.push(Prisma.sql`
+      EXISTS (
+        SELECT 1
+        FROM unnest(e.tags) AS tag_value(tag)
+        WHERE lower(regexp_replace(tag_value.tag, '^#+', '')) = lower(${input.tag})
+      )
+    `);
   }
   if (input.startDate) {
     whereClauses.push(

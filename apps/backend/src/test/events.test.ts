@@ -401,6 +401,22 @@ describe("[phase:1] [regression:always] Event CRUD API", () => {
       );
     });
 
+    it("TC-EVT-045: filters events by tag including legacy hash-prefixed values", async () => {
+      vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
+      vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);
+
+      const res = await createTestApp().request("/events?tag=music");
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tags: { hasSome: ["music", "#music", "##music", "###music"] },
+          }),
+        }),
+      );
+    });
+
     it("filters events by creator user", async () => {
       vi.mocked(mockPrisma.event.findMany).mockResolvedValue([] as never);
       vi.mocked(mockPrisma.event.count).mockResolvedValue(0 as never);

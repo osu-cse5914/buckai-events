@@ -179,6 +179,7 @@ describe("[phase:4] [regression:always] Event semantic search", () => {
       limit: 10,
       type: "EVENT",
       category: "music",
+      tag: "live-music",
       startDate: new Date("2026-04-01T00:00:00Z"),
       endDate: new Date("2026-04-02T00:00:00Z"),
       embedQuery,
@@ -191,6 +192,7 @@ describe("[phase:4] [regression:always] Event semantic search", () => {
     expect(sql.values).toEqual(
       expect.arrayContaining([
         "music",
+        "live-music",
         "EVENT",
         "2026-04-01T00:00:00.000Z",
         "2026-04-02T00:00:00.000Z",

@@ -302,6 +302,7 @@ export type EventListFilters = {
   statusMode?: string;
   source?: string;
   category?: string;
+  tag?: string;
   sort?: string;
   userId?: string;
 };
@@ -310,6 +311,7 @@ export type SearchResultsFilters = {
   query?: string;
   type?: string;
   category?: string;
+  tag?: string;
 };
 
 export const queryKeys = {
@@ -571,6 +573,7 @@ export async function fetchEventsList(
   if (filters.statusMode) query.statusMode = filters.statusMode;
   if (filters.source) query.source = filters.source;
   if (filters.category) query.category = filters.category;
+  if (filters.tag) query.tag = filters.tag;
   if (filters.sort) query.sort = filters.sort;
   if (filters.userId) query.user = filters.userId;
 
@@ -596,6 +599,7 @@ export async function fetchSearchResults(
 
     if (filters.type) query.type = filters.type;
     if (filters.category) query.category = filters.category;
+    if (filters.tag) query.tag = filters.tag;
 
     const response = await api.api.v1.events["semantic-search"].$get({
       query,
@@ -609,12 +613,13 @@ export async function fetchSearchResults(
 
   return fetchEventsList(
     api,
-    {
-      type: filters.type,
-      category: filters.category,
-    },
-    page,
-    pageSize,
+      {
+        type: filters.type,
+        category: filters.category,
+        tag: filters.tag,
+      },
+      page,
+      pageSize,
   );
 }
 

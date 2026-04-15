@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/search/")({
         query: deps.q,
         type: deps.type,
         category: deps.category,
+        tag: deps.tag,
       },
       page: toPageIndex(deps.page ?? 1),
       enabled: hasStartedEventSearch(deps),
@@ -35,6 +36,7 @@ function SearchRoute() {
       search={search.q ?? ""}
       type={search.type ?? ""}
       category={search.category ?? ""}
+      tag={search.tag ?? ""}
       page={toPageIndex(search.page ?? 1)}
       onSearchSubmit={(value) =>
         navigate({
@@ -42,6 +44,7 @@ function SearchRoute() {
             q: value.search || undefined,
             type: value.type || undefined,
             category: value.category || undefined,
+            tag: value.tag || undefined,
             page: undefined,
           }),
         })

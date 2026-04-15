@@ -114,7 +114,7 @@ describe("[phase:6] [regression:always] SearchRoute loader", () => {
     expect(
       queryClient.getQueryData(
         queryKeys.searchResults(
-          { query: "robotics", type: "EVENT", category: undefined },
+          { query: "robotics", type: "EVENT", category: undefined, tag: undefined },
           1,
           PAGE_SIZE,
         ),
@@ -175,13 +175,97 @@ describe("[phase:6] [regression:always] SearchRoute loader", () => {
     expect(
       queryClient.getQueryData(
         queryKeys.searchResults(
-          { query: undefined, type: "EVENT", category: "music" },
+          { query: undefined, type: "EVENT", category: "music", tag: undefined },
           0,
           PAGE_SIZE,
         ),
       ),
     ).toMatchObject({
       data: [{ id: "evt_music", title: "Music Mixer" }],
+    });
+  });
+
+  it("TC-PAGES-027: primes the structured-events cache when a tag filter is active", async () => {
+    const eventRequests: URL[] = [];
+
+    server.use(
+      http.get(`${TEST_API_BASE_URL}/api/v1/events`, ({ request }) => {
+        eventRequests.push(new URL(request.url));
+        return HttpResponse.json(
+          makeEventsResponse([makeEventListItem({ id: "evt_tag", title: "Tag Match" })]),
+        );
+      }),
+    );
+
+    await import("./index");
+
+    if (!capturedValidateSearch || !capturedLoaderDeps || !capturedLoader) {
+      throw new Error("Search route config was not captured");
+    }
+
+    const queryClient = createTestQueryClient();
+    const api = createTestApiClient();
+    const search = capturedValidateSearch({ tag: "music" });
+    const deps = capturedLoaderDeps({ search });
+
+    await capturedLoader({
+      context: { api, queryClient },
+      deps,
+    });
+
+    expect(search).toEqual({ tag: "music" });
+    expect(eventRequests).toHaveLength(1);
+    expect(eventRequests[0]?.searchParams.get("tag")).toBe("music");
+    expect(
+      queryClient.getQueryData(
+        queryKeys.searchResults(
+          { query: undefined, type: undefined, category: undefined, tag: "music" },
+          0,
+          PAGE_SIZE,
+        ),
+      ),
+    ).toMatchObject({
+      data: [{ id: "evt_tag", title: "Tag Match" }],
+    });
+  });
+
+  it("TC-PAGES-028: route validation converts tag query syntax into a tag filter", async () => {
+    await import("./index");
+
+    if (!capturedValidateSearch || !capturedLoaderDeps) {
+      throw new Error("Search route config was not captured");
+    }
+
+    const search = capturedValidateSearch({ q: " tag: group-fitness " });
+    const deps = capturedLoaderDeps({ search });
+
+    expect(search).toEqual({ tag: "group-fitness" });
+    expect(deps).toEqual({ tag: "group-fitness" });
+  });
+
+  it("TC-PAGES-031: route validation converts multiple inline filters into structured search state", async () => {
+    await import("./index");
+
+    if (!capturedValidateSearch || !capturedLoaderDeps) {
+      throw new Error("Search route config was not captured");
+    }
+
+    const search = capturedValidateSearch({
+      q: "pickup type:gig category:fitness tag:group-fitness",
+    });
+    const deps = capturedLoaderDeps({ search });
+
+    expect(search).toEqual({
+      q: "pickup",
+      type: "GIG",
+      category: "fitness",
+      tag: "group-fitness",
+    });
+    expect(deps).toEqual({
+      q: "pickup",
+      type: "GIG",
+      category: "fitness",
+      tag: "group-fitness",
     });
   });
 });

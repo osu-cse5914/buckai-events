@@ -489,3 +489,25 @@ Spec: [`lifecycle`](../../specs/events/lifecycle.md)
 - **Given**: A user is viewing an event in the browse preview panel with an item selected
 - **When**: They open a related event from that panel
 - **Then**: The related-event link carries the browse selection and filters so Back returns to the selected listing
+
+## TC-EVT-045: Event list filters by tag
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/events.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A tag filter is provided to the events list endpoint
+- **When**: A client calls `GET /api/v1/events?tag=music`
+- **Then**: The response filters to events whose tags include that tag, including legacy hash-prefixed stored variants
+
+## TC-EVT-046: Event detail tags link to tag-filtered search results
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/web/src/routes/_authenticated/events/$eventId/-index.test.tsx`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An event detail displays one or more tags
+- **When**: A user clicks a tag badge
+- **Then**: The app navigates to Search with that normalized tag applied as a filter

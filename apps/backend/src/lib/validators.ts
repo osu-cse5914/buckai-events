@@ -29,6 +29,7 @@ export type PaginationQuery = {
 export type EventListQuery = PaginationQuery & {
   type?: string;
   category?: string;
+  tag?: string;
   startDate?: string;
   endDate?: string;
   source?: string;
@@ -43,6 +44,7 @@ export type SemanticSearchQuery = PaginationQuery & {
   query?: string;
   type?: string;
   category?: string;
+  tag?: string;
   startDate?: string;
   endDate?: string;
 };
@@ -136,6 +138,7 @@ export function toEventListInput(query: EventListQuery): EventListInput {
     ...resolvePaginationQuery(query),
     type: query.type as EventType | undefined,
     category: query.category,
+    tag: query.tag,
     startDate: query.startDate ? new Date(query.startDate) : undefined,
     endDate: query.endDate ? new Date(query.endDate) : undefined,
     source: query.source as EventSource | undefined,
@@ -544,6 +547,11 @@ export const validateEventListQuery = validator("query", (value, c) => {
     output.category = category;
   }
 
+  const tag = firstQueryValue(value.tag);
+  if (tag !== undefined) {
+    output.tag = tag;
+  }
+
   const user = firstQueryValue(value.user);
   if (user !== undefined) {
     output.user = user;
@@ -673,6 +681,11 @@ export const validateSemanticSearchQuery = validator("query", (value, c) => {
   const categoryValue = firstQueryValue(value.category);
   if (categoryValue !== undefined) {
     output.category = categoryValue;
+  }
+
+  const tagValue = firstQueryValue(value.tag);
+  if (tagValue !== undefined) {
+    output.tag = tagValue;
   }
 
   const startDateValue = firstQueryValue(value.startDate);

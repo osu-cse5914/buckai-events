@@ -248,6 +248,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       q: "hackathon",
       type: "EVENT",
       category: "music",
+      tag: "live-music",
       page: 3,
     };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
@@ -259,7 +260,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       await screen.findByRole("link", { name: "Back to Search results" }),
     ).toHaveAttribute(
       "href",
-      "/search?q=hackathon&type=EVENT&category=music&page=3",
+      "/search?q=hackathon&type=EVENT&category=music&tag=live-music&page=3",
     );
   });
 
@@ -269,6 +270,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       q: "hackathon",
       type: "EVENT",
       category: "music",
+      tag: "live-music",
       page: 3,
       previousEventId: "evt_prev",
       previousEventTitle: "Campus Jazz Night",
@@ -282,7 +284,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       await screen.findByRole("link", { name: "Back to Campus Jazz Night" }),
     ).toHaveAttribute(
       "href",
-      "/events/evt_prev?returnTo=search&q=hackathon&type=EVENT&category=music&page=3",
+      "/events/evt_prev?returnTo=search&q=hackathon&type=EVENT&category=music&tag=live-music&page=3",
     );
   });
 
@@ -392,8 +394,26 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
 
     await renderPage();
 
-    expect(await screen.findByText("coding")).toBeInTheDocument();
-    expect(screen.getByText("hackathon")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "coding" })).toHaveAttribute(
+      "href",
+      "/search?tag=coding",
+    );
+    expect(screen.getByRole("link", { name: "hackathon" })).toHaveAttribute(
+      "href",
+      "/search?tag=hackathon",
+    );
+  });
+
+  it("TC-EVT-046: tag badges link to tag-filtered search results", async () => {
+    mockEventGet.mockResolvedValue(okJson(makeEvent({ tags: ["#Coding"] })));
+    mockUserGet.mockResolvedValue(okJson(mockCreatorUser));
+
+    await renderPage();
+
+    expect(await screen.findByRole("link", { name: "Coding" })).toHaveAttribute(
+      "href",
+      "/search?tag=coding",
+    );
   });
 
   it("TC-EVT-040: strips leading hash prefixes from displayed tags", async () => {
@@ -421,6 +441,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       q: "hackathon",
       type: "EVENT",
       category: "music",
+      tag: "live-music",
       page: 3,
     };
     mockEventGet.mockResolvedValue(okJson(makeEvent()));
@@ -458,7 +479,7 @@ describe("[phase:1] [regression:always] EventDetailPage", () => {
       screen.getByRole("link", { name: /Late Night Jam Session/i }),
     ).toHaveAttribute(
       "href",
-      "/events/evt_related_1?returnTo=search&q=hackathon&type=EVENT&category=music&page=3&previousEventId=evt_1&previousEventTitle=Hackathon",
+      "/events/evt_related_1?returnTo=search&q=hackathon&type=EVENT&category=music&tag=live-music&page=3&previousEventId=evt_1&previousEventTitle=Hackathon",
     );
     expect(screen.getByText("Campus Open Mic")).toBeInTheDocument();
   });

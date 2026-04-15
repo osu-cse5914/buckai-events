@@ -66,6 +66,7 @@ export type EventCreateInput = {
 export type EventListInput = {
   type?: EventType;
   category?: string;
+  tag?: string;
   startDate?: Date;
   endDate?: Date;
   source?: EventSource;
@@ -77,6 +78,16 @@ export type EventListInput = {
   limit: number;
   offset: number;
 };
+
+function buildTagMatchVariants(tag: string) {
+  const normalized = tag.trim().replace(/^#+/, "").trim().toLowerCase();
+
+  if (!normalized) {
+    return [];
+  }
+
+  return [normalized, `#${normalized}`, `##${normalized}`, `###${normalized}`];
+}
 
 export type EventUpdateInput = {
   title?: string;
@@ -166,9 +177,11 @@ export async function listEvents(
   const where: Record<string, unknown> = {};
   const andClauses: Record<string, unknown>[] = [];
   const now = new Date();
+  const tagVariants = input.tag ? buildTagMatchVariants(input.tag) : [];
 
   if (input.type) where.type = input.type;
   if (input.category) where.category = input.category;
+  if (tagVariants.length > 0) where.tags = { hasSome: tagVariants };
   if (input.source) where.source = input.source;
   if (input.status) {
     where.status = input.status;

@@ -27,12 +27,13 @@ function EventDetailPage() {
         : "Events"
       : undefined;
   const browseSearch = returnsToSearch
-    ? {
-        q: search.q,
-        type: search.type,
-        category: search.category,
-        page: search.page,
-      }
+      ? {
+          q: search.q,
+          type: search.type,
+          category: search.category,
+          tag: search.tag,
+          page: search.page,
+        }
     : returnsToBrowse
       ? {
           statusMode: search.statusMode,
