@@ -73,6 +73,18 @@ function AiConversationSkeleton() {
   );
 }
 
+function ThinkingBubble() {
+  return (
+    <div className="mr-auto flex max-w-[85%] sm:max-w-2xl">
+      <div className="flex items-center gap-1.5 rounded-2xl border bg-muted/30 px-4 py-3">
+        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.32s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.16s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
 async function readErrorMessage(res: Response, fallback: string) {
   try {
     const body = (await res.json()) as { detail?: string };
@@ -461,7 +473,17 @@ export function AiPage({
             pending: true,
           },
         ]
-      : []),
+      : isSending && !streamingAssistantMessage
+        ? [
+            {
+              id: "thinking-bubble",
+              role: "ASSISTANT" as const,
+              content: "",
+              parts: null,
+              pending: true,
+            },
+          ]
+        : []),
     ...(assistantNotice
       ? [
           {
@@ -813,7 +835,9 @@ export function AiPage({
                         message.pending && "opacity-80",
                       )}
                     >
-                      {message.content ? (
+                      {message.id === "thinking-bubble" ? (
+                        <ThinkingBubble />
+                      ) : message.content ? (
                         <article className="w-fit max-w-full rounded-2xl border bg-muted/30 px-4 py-3 text-sm text-foreground">
                           <MarkdownContent className="text-sm [&_p]:whitespace-pre-line">
                             {message.content}
@@ -887,11 +911,7 @@ export function AiPage({
                     title="Send"
                     disabled={!draft.trim() || isSending || Boolean(pendingAction)}
                   >
-                    {isSending ? (
-                      <LoaderCircleIcon className="size-4 animate-spin" />
-                    ) : (
-                      <SendHorizontalIcon className="size-4" />
-                    )}
+                    <SendHorizontalIcon className="size-4" />
                   </Button>
                 </div>
               </form>
