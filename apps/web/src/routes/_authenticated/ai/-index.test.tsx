@@ -121,6 +121,15 @@ function sseResponse(chunks: string[]) {
   );
 }
 
+function expectChatRequestHeaders(value: unknown) {
+  expect(value).toEqual(
+    expect.objectContaining({
+      "x-user-locale": expect.any(String),
+      "x-user-timezone": expect.any(String),
+    }),
+  );
+}
+
 function createControlledSseResponse() {
   let release!: () => void;
   const released = new Promise<void>((resolve) => {
@@ -402,11 +411,15 @@ describe("[phase:5] [regression:always] AI Route", () => {
     });
     route.rerenderRoute(getNextSearchFromNavigateCall());
     await waitFor(() => {
-      expect(state.messagesPost).toHaveBeenCalledWith({
-        param: { id: "conv_new" },
-        json: { content: "find music tonight" },
-      });
+      expect(state.messagesPost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          param: { id: "conv_new" },
+          json: { content: "find music tonight" },
+          header: expect.any(Object),
+        }),
+      );
     });
+    expectChatRequestHeaders(state.messagesPost.mock.calls.at(-1)?.[0]?.header);
     expect(
       await screen.findByText("Group Fitness Classes", { selector: "strong" }),
     ).toBeInTheDocument();
@@ -581,11 +594,15 @@ describe("[phase:5] [regression:always] AI Route", () => {
     await user.click(screen.getByRole("button", { name: "Confirm" }));
 
     await waitFor(() => {
-      expect(state.messagesPost).toHaveBeenCalledWith({
-        param: { id: "conv_apply" },
-        json: { content: "Confirm" },
-      });
+      expect(state.messagesPost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          param: { id: "conv_apply" },
+          json: { content: "Confirm" },
+          header: expect.any(Object),
+        }),
+      );
     });
+    expectChatRequestHeaders(state.messagesPost.mock.calls.at(-1)?.[0]?.header);
     await waitFor(() => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     });
@@ -655,11 +672,15 @@ describe("[phase:5] [regression:always] AI Route", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     await waitFor(() => {
-      expect(state.messagesPost).toHaveBeenCalledWith({
-        param: { id: "conv_save" },
-        json: { content: "Cancel" },
-      });
+      expect(state.messagesPost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          param: { id: "conv_save" },
+          json: { content: "Cancel" },
+          header: expect.any(Object),
+        }),
+      );
     });
+    expectChatRequestHeaders(state.messagesPost.mock.calls.at(-1)?.[0]?.header);
     await waitFor(() => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     });
@@ -781,10 +802,14 @@ describe("[phase:6] [regression:always] AI prompt carryover", () => {
     );
 
     await waitFor(() => {
-      expect(state.messagesPost).toHaveBeenCalledWith({
-        param: { id: "conv_suggestions" },
-        json: { content: "Only free music events" },
-      });
+      expect(state.messagesPost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          param: { id: "conv_suggestions" },
+          json: { content: "Only free music events" },
+          header: expect.any(Object),
+        }),
+      );
     });
+    expectChatRequestHeaders(state.messagesPost.mock.calls.at(-1)?.[0]?.header);
   });
 });

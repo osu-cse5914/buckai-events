@@ -8,6 +8,7 @@ import { getPrismaClient, getPrisma } from "../lib/prisma";
 import { registerApiErrorHandlers } from "../app";
 import {
   CHATBOT_SYSTEM_PROMPT,
+  buildChatbotSystemPrompt,
   createSseTextResponse,
 } from "../services/chatbot";
 import { createConversationsRouter } from "../routes/conversations";
@@ -130,10 +131,14 @@ function createTestApp({
   return app;
 }
 
-function postMessage(app: Hono, content: string) {
+function postMessage(
+  app: Hono,
+  content: string,
+  headers?: Record<string, string>,
+) {
   return app.request("/conversations/conv_1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify({ content }),
   });
 }
@@ -158,6 +163,26 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     expect(CHATBOT_SYSTEM_PROMPT).toContain("events, gigs, and campus activities");
     expect(CHATBOT_SYSTEM_PROMPT).toContain("decline");
     expect(CHATBOT_SYSTEM_PROMPT).toContain("confirm");
+  });
+
+  it("injects the current date into the chatbot system prompt", () => {
+    const prompt = buildChatbotSystemPrompt({
+      currentDate: NOW,
+      timezone: "America/New_York",
+      locale: "en-US",
+    });
+
+    expect(prompt).toContain(CHATBOT_SYSTEM_PROMPT);
+    expect(prompt).toContain("Today's date is 2026-04-01.");
+    expect(prompt).toContain("User timezone: America/New_York.");
+    expect(prompt).toContain("User locale: en-US.");
+  });
+
+  it("falls back to default timezone and locale when prompt context is missing", () => {
+    const prompt = buildChatbotSystemPrompt({ currentDate: NOW });
+
+    expect(prompt).toContain("User timezone: UTC.");
+    expect(prompt).toContain("User locale: en-US.");
   });
 
   it("TC-CHAT-006: declines off-topic prompts without invoking event tools", async () => {
@@ -185,7 +210,14 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       .mockResolvedValueOnce(assistantMessage as never);
     vi.mocked(mockPrisma.message.findMany).mockResolvedValue([userMessage] as never);
 
-    const res = await postMessage(createTestApp({ streamText }), userMessage.content);
+    const res = await postMessage(
+      createTestApp({ streamText }),
+      userMessage.content,
+      {
+        "X-User-Timezone": "America/New_York",
+        "X-User-Locale": "en-US",
+      },
+    );
 
     expect(res.status).toBe(200);
     expect(decodeSseText(await res.text())).toBe(
@@ -245,6 +277,9 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     };
     const streamText = createStreamTextStub(async ({ system, tools, messages }) => {
       expect(system).toContain("Ohio State University");
+      expect(system).toContain("Today's date is 2026-04-01.");
+      expect(system).toContain("User timezone: America/New_York.");
+      expect(system).toContain("User locale: en-US.");
       expect(messages).toEqual([
         { role: "user", content: userMessage.content },
       ]);
@@ -278,7 +313,14 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     vi.mocked(mockPrisma.event.findMany).mockResolvedValue([event] as never);
     vi.mocked(mockPrisma.event.count).mockResolvedValue(1 as never);
 
-    const res = await postMessage(createTestApp({ streamText }), userMessage.content);
+    const res = await postMessage(
+      createTestApp({ streamText }),
+      userMessage.content,
+      {
+        "X-User-Timezone": "America/New_York",
+        "X-User-Locale": "en-US",
+      },
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/event-stream");

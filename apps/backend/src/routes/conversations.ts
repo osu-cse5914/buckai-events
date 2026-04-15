@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { paginated } from "../lib/pagination";
 import { getPrisma } from "../lib/prisma";
 import { generateConversationTitle } from "../services/conversation-titles";
@@ -39,6 +39,20 @@ type ConversationsRouteOptions = {
   >[0]["resolveChatbotModel"];
   currentDate?: () => Date;
 };
+
+function readRequestHeader(c: Context<AppEnv>, name: string) {
+  return c.req.raw.headers.get(name)?.trim() || undefined;
+}
+
+function resolveRequestLocale(c: Context<AppEnv>) {
+  const explicitLocale = readRequestHeader(c, "x-user-locale");
+  if (explicitLocale) {
+    return explicitLocale;
+  }
+
+  const acceptLanguage = readRequestHeader(c, "accept-language");
+  return acceptLanguage?.split(",")[0]?.trim() || undefined;
+}
 
 export function createConversationsRouter({
   streamText,
@@ -172,6 +186,8 @@ export function createConversationsRouter({
           conversationId: id,
           env: c.env as unknown as Record<string, string | undefined>,
           currentDate: currentDate(),
+          timezone: readRequestHeader(c, "x-user-timezone"),
+          locale: resolveRequestLocale(c),
           streamText,
           searchSemanticEvents,
           resolveChatbotModel,

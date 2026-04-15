@@ -60,6 +60,32 @@ export const CHATBOT_SYSTEM_PROMPT = [
   "Keep responses concise and student-facing.",
 ].join(" ");
 
+const DEFAULT_CHATBOT_TIMEZONE = "UTC";
+const DEFAULT_CHATBOT_LOCALE = "en-US";
+
+function formatPromptDate(currentDate: Date) {
+  return currentDate.toISOString().slice(0, 10);
+}
+
+function normalizePromptContextValue(value: string | undefined, fallback: string) {
+  const normalized = value?.trim();
+  return normalized ? normalized : fallback;
+}
+
+export function buildChatbotSystemPrompt(input: {
+  currentDate: Date;
+  timezone?: string;
+  locale?: string;
+}) {
+  const timezone = normalizePromptContextValue(
+    input.timezone,
+    DEFAULT_CHATBOT_TIMEZONE,
+  );
+  const locale = normalizePromptContextValue(input.locale, DEFAULT_CHATBOT_LOCALE);
+
+  return `${CHATBOT_SYSTEM_PROMPT} Today's date is ${formatPromptDate(input.currentDate)}. User timezone: ${timezone}. User locale: ${locale}.`;
+}
+
 export const CHATBOT_FAILURE_MESSAGE =
   "I'm having trouble connecting right now. Please try again in a moment.";
 
@@ -1031,6 +1057,8 @@ export function createChatbotStreamResponse(
     conversationId: string;
     env?: AIEnvironment;
     currentDate: Date;
+    timezone?: string;
+    locale?: string;
     streamText?: StreamTextLike;
     searchSemanticEvents?: SearchSemanticEventsLike;
     resolveChatbotModel?: ResolveChatbotModelLike;
@@ -1056,7 +1084,11 @@ export function createChatbotStreamResponse(
 
   const result = streamTextImpl({
     model: resolvedModel.model,
-    system: CHATBOT_SYSTEM_PROMPT,
+    system: buildChatbotSystemPrompt({
+      currentDate: input.currentDate,
+      timezone: input.timezone,
+      locale: input.locale,
+    }),
     messages: toModelMessages(input.messages),
     tools: createChatbotTools({
       prisma: input.prisma,

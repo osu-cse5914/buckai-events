@@ -117,6 +117,19 @@ function normalizeAssistantText(value: string) {
   return value.replace(/\r\n/g, "\n").trim();
 }
 
+function getChatRequestHeaders() {
+  const timezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone?.trim() || "UTC";
+  const locale =
+    (typeof navigator !== "undefined" ? navigator.language : undefined)?.trim() ||
+    "en-US";
+
+  return {
+    "x-user-timezone": timezone,
+    "x-user-locale": locale,
+  };
+}
+
 function formatCompensation(
   compensation: ConversationSearchResultsPart["items"][number]["compensation"],
 ) {
@@ -551,10 +564,12 @@ export function AiPage({
         api.api.v1.conversations[":id"].messages.$post as (args: {
           param: { id: string };
           json: { content: string };
+          header: Record<string, string>;
         }) => Promise<Response>;
       const response = await sendConversationMessage({
         param: { id: targetConversationId },
         json: { content: trimmedContent },
+        header: getChatRequestHeaders(),
       });
 
       if (!response.ok) {
