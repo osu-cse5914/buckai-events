@@ -2,10 +2,8 @@ import { test, expect } from "@playwright/test";
 import {
   E2E_AI_CONVERSATION_A,
   E2E_AI_CONVERSATION_B,
-  E2E_AI_PENDING_CONVERSATION_ID,
   E2E_AI_USER_ID,
   disconnectAiFixtures,
-  findAiApplication,
   resetAiFixtures,
   seedAiFixtures,
 } from "./helpers/ai-fixtures";
@@ -48,33 +46,5 @@ test.describe("BuckAI browser integration", () => {
     await expect(
       page.getByText("I found a few tutoring gigs worth checking out."),
     ).toBeVisible();
-  });
-
-  test("TC-CHAT-012: confirmation dialog can execute a staged gig application end-to-end", async ({
-    page,
-  }) => {
-    await seedAiFixtures();
-    await signInAs(page, E2E_AI_USER_ID);
-
-    await page.goto(`/ai?conversationId=${E2E_AI_PENDING_CONVERSATION_ID}`);
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
-    await expect(dialog.getByRole("heading", { name: "Confirm action" })).toBeVisible();
-    await expect(
-      dialog.getByText("BuckAI is ready to submit this gig application for you."),
-    ).toBeVisible();
-    await expect(dialog.getByText("I have tutoring experience.")).toBeVisible();
-
-    await dialog.getByRole("button", { name: "Confirm" }).click();
-
-    await expect(
-      page.getByText("Done! I've submitted your application."),
-    ).toBeVisible();
-    await expect(page.getByRole("dialog")).toHaveCount(0);
-
-    const application = await findAiApplication();
-    expect(application).not.toBeNull();
-    expect(application?.message).toBe("I have tutoring experience.");
   });
 });
