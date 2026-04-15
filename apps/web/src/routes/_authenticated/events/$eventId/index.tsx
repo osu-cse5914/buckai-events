@@ -11,23 +11,45 @@ function EventDetailPage() {
   const { eventId } = Route.useParams();
   const search = Route.useSearch();
   const returnsToSearch = search.returnTo === "search";
+  const returnsToBrowse = search.returnTo === "browse";
+  const browsePath = returnsToSearch
+    ? "/search"
+    : returnsToBrowse
+      ? search.browseType === "GIG"
+        ? "/gigs"
+        : "/events"
+      : undefined;
+  const browseLabel = returnsToSearch
+    ? "Search results"
+    : returnsToBrowse
+      ? search.browseType === "GIG"
+        ? "Gigs"
+        : "Events"
+      : undefined;
+  const browseSearch = returnsToSearch
+    ? {
+        q: search.q,
+        type: search.type,
+        category: search.category,
+        page: search.page,
+      }
+    : returnsToBrowse
+      ? {
+          statusMode: search.statusMode,
+          source: search.source,
+          sort: search.sort,
+          selected: search.selected,
+        }
+      : undefined;
 
   return (
     <EventDetailSurface
       eventId={eventId}
       mode="page"
-      browsePath={returnsToSearch ? "/search" : undefined}
-      browseLabel={returnsToSearch ? "Search results" : undefined}
-      browseSearch={
-        returnsToSearch
-          ? {
-              q: search.q,
-              type: search.type,
-              category: search.category,
-              page: search.page,
-            }
-          : undefined
-      }
+      browsePath={browsePath}
+      browseLabel={browseLabel}
+      browseSearch={browseSearch}
+      detailSearch={search}
     />
   );
 }
