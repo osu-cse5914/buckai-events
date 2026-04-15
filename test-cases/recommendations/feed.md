@@ -167,13 +167,12 @@ Status: Planned. `GET /recommendations` is not mounted in the current shipped AP
 - **Given**: One recommendation tab errors or returns no items while others succeed
 - **Then**: The page keeps rendering healthy tabs and shows a safe tab-level empty or error state
 
-## TC-FEED-016: Featured keyword search narrows recommendation sections
+## TC-FEED-016: Featured discovery omits the keyword search field
 
 - **Spec scenario**: S-FEED-12
 - **Type**: Automated
-- **Automated in**: `apps/backend/src/test/recommendations.test.ts`, `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
+- **Automated in**: `apps/web/src/routes/_authenticated/featured/-index.test.tsx`
 - **Phase introduced**: 6
 - **Regression**: Always
-- **Given**: The user enters a keyword on Featured
-- **Then**: `Recommended`, `Popular`, and `Upcoming` refetch with the keyword query
-- **And**: The backend applies the keyword before pagination while preserving recommendation ranking
+- **Given**: A user opens the Featured page
+- **Then**: The page does not render a keyword search field and remains focused on discovery modules and feed filters

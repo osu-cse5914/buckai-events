@@ -12,15 +12,12 @@ function FeaturedRoute() {
   const search = Route.useSearch();
   const navigateFeaturedSearch = (next: {
     type?: typeof search.type | "";
-    q?: string;
   }) => {
     const nextType = "type" in next ? next.type : search.type;
-    const nextQuery = "q" in next ? next.q : search.q;
 
     return navigate({
       search: {
         ...(nextType ? { type: nextType } : {}),
-        ...(nextQuery?.trim() ? { q: nextQuery.trim() } : {}),
       },
       replace: true,
     });
@@ -29,9 +26,7 @@ function FeaturedRoute() {
   return (
     <FeaturedPage
       type={search.type ?? ""}
-      searchQuery={search.q ?? ""}
       onTypeChange={(value) => navigateFeaturedSearch({ type: value })}
-      onSearchQueryChange={(value) => navigateFeaturedSearch({ q: value })}
     />
   );
 }

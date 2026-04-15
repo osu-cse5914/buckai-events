@@ -34,7 +34,6 @@ export type BrowseRouteSearch = {
 
 export type FeaturedRouteSearch = {
   type?: (typeof EVENT_TYPES)[number];
-  q?: string;
 };
 
 export type SearchRouteSearch = {

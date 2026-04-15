@@ -170,27 +170,21 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
 
 function FeaturedHarness({
   initialType = "",
-  initialSearchQuery = "",
 }: {
   initialType?: FeaturedFilter;
-  initialSearchQuery?: string;
 }) {
   const [type, setType] = useState<FeaturedFilter>(initialType);
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
 
   return (
     <FeaturedPage
       type={type}
-      searchQuery={searchQuery}
       onTypeChange={setType}
-      onSearchQueryChange={setSearchQuery}
     />
   );
 }
 
 async function renderFeaturedPage(options?: {
   initialType?: FeaturedFilter;
-  initialSearchQuery?: string;
 }) {
   const queryClient = createQueryClient();
   return render(
@@ -327,7 +321,7 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
     });
   });
 
-  it("TC-FEED-016: searches the recommendation sections by keyword", async () => {
+  it("TC-FEED-016: featured discovery does not render a keyword search field", async () => {
     state.mockRecommendationsGet.mockResolvedValue(
       makeRecommendationResponse([
         makeEvent({ id: "evt_rec", title: "Career Prep Night" }),
@@ -346,22 +340,7 @@ describe("[phase:6] [regression:always] FeaturedPage", () => {
 
     await renderFeaturedPage();
 
-    const searchInput = await screen.findByRole("searchbox", {
-      name: "Search Featured",
-    });
-    await userEvent.type(searchInput, "career");
-
-    await waitFor(() => {
-      expect(
-        state.mockRecommendationsGet.mock.calls.at(-1)?.[0]?.query?.search,
-      ).toBe("career");
-      expect(state.mockPopularGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
-        "career",
-      );
-      expect(state.mockUpcomingGet.mock.calls.at(-1)?.[0]?.query?.search).toBe(
-        "career",
-      );
-    });
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
   });
 
   it("TC-FEED-013: shows the fallback banner only from the personalized section state", async () => {

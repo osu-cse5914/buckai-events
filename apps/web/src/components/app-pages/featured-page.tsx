@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { FollowingSection } from "@/components/app-pages/social-feed-section";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   EventsEmptyState,
   EventsErrorState,
@@ -39,30 +38,24 @@ const LANE_OPTIONS = [
 
 export function FeaturedPage({
   type = "",
-  searchQuery = "",
   onTypeChange,
-  onSearchQueryChange,
 }: {
   type?: FeaturedFilter;
-  searchQuery?: string;
   onTypeChange: (value: FeaturedFilter) => void;
-  onSearchQueryChange: (value: string) => void;
 }) {
   const [activeLane, setActiveLane] = useState<FeaturedLane>("recommended");
   const api = useApiClient();
   const normalizedType = type || "ALL";
-  const normalizedSearchQuery = searchQuery.trim();
   const recommendedQuery = useInfiniteQuery({
     queryKey: queryKeys.recommendationsFeed(
       normalizedType,
-      normalizedSearchQuery,
+      "",
       PAGE_SIZE,
     ),
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       fetchRecommendationsPage(api, {
         type: type || undefined,
-        search: normalizedSearchQuery || undefined,
         offset: pageParam,
         limit: PAGE_SIZE,
       }),
@@ -74,26 +67,24 @@ export function FeaturedPage({
   const popularQuery = useQuery({
     queryKey: queryKeys.recommendationsPopular(
       normalizedType,
-      normalizedSearchQuery,
+      "",
       FEATURED_PREVIEW_LIMIT,
     ),
     queryFn: () =>
       fetchPopularRecommendationsPage(api, {
         type: type || undefined,
-        search: normalizedSearchQuery || undefined,
         limit: FEATURED_PREVIEW_LIMIT,
       }),
   });
   const upcomingQuery = useQuery({
     queryKey: queryKeys.recommendationsUpcoming(
       normalizedType,
-      normalizedSearchQuery,
+      "",
       FEATURED_PREVIEW_LIMIT,
     ),
     queryFn: () =>
       fetchUpcomingRecommendationsPage(api, {
         type: type || undefined,
-        search: normalizedSearchQuery || undefined,
         limit: FEATURED_PREVIEW_LIMIT,
       }),
   });
@@ -106,26 +97,35 @@ export function FeaturedPage({
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
       <div className="animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="w-full max-w-xl space-y-1.5">
-            <label
-              htmlFor="featured-keyword-search"
-              className="text-sm font-medium"
-            >
-              Search Featured
-            </label>
-            <Input
-              id="featured-keyword-search"
-              type="search"
-              value={searchQuery}
-              placeholder="Search recommended events and gigs"
-              onChange={(event) => onSearchQueryChange(event.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Searches Recommended, Popular, and Upcoming by keyword.
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            role="tablist"
+            aria-label="Featured sections"
+            className="animate-in fade-in-0 slide-in-from-bottom-4 flex flex-wrap gap-2 duration-700"
+          >
+            {LANE_OPTIONS.map((lane) => {
+              const isActive = activeLane === lane.value;
 
+              return (
+                <Button
+                  key={lane.value}
+                  role="tab"
+                  type="button"
+                  aria-selected={isActive}
+                  aria-controls={`featured-panel-${lane.value}`}
+                  id={`featured-tab-${lane.value}`}
+                  tabIndex={isActive ? 0 : -1}
+                  variant={isActive ? "default" : "outline"}
+                  size="sm"
+                  className="rounded-full px-4"
+                  onClick={() => setActiveLane(lane.value)}
+                >
+                  {lane.label}
+                </Button>
+              );
+            })}
+          </div>
+          <div aria-hidden="true" className="h-6 w-px bg-border" />
           <div className="flex flex-wrap gap-2">
             {FILTER_OPTIONS.map((option) => (
               <Button
@@ -152,34 +152,6 @@ export function FeaturedPage({
       ) : null}
 
       <div className="space-y-4">
-        <div
-          role="tablist"
-          aria-label="Featured sections"
-          className="animate-in fade-in-0 slide-in-from-bottom-4 flex flex-wrap gap-2 duration-700"
-        >
-          {LANE_OPTIONS.map((lane) => {
-            const isActive = activeLane === lane.value;
-
-            return (
-              <Button
-                key={lane.value}
-                role="tab"
-                type="button"
-                aria-selected={isActive}
-                aria-controls={`featured-panel-${lane.value}`}
-                id={`featured-tab-${lane.value}`}
-                tabIndex={isActive ? 0 : -1}
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                className="rounded-full px-4"
-                onClick={() => setActiveLane(lane.value)}
-              >
-                {lane.label}
-              </Button>
-            );
-          })}
-        </div>
-
         <div
           id="featured-panel-recommended"
           role="tabpanel"
@@ -216,16 +188,8 @@ export function FeaturedPage({
               <FeaturedSectionInset>
                 <EventsEmptyState
                   className="mt-0"
-                  title={
-                    normalizedSearchQuery
-                      ? "No matching recommendations"
-                      : "No recommendations yet"
-                  }
-                  description={
-                    normalizedSearchQuery
-                      ? "Try a different keyword or clear the search."
-                      : "Check back soon for upcoming events and gigs."
-                  }
+                  title="No recommendations yet"
+                  description="Check back soon for upcoming events and gigs."
                 />
               </FeaturedSectionInset>
             ) : null}
@@ -282,16 +246,8 @@ export function FeaturedPage({
               isPending={popularQuery.isPending}
               isError={popularQuery.isError}
               error={popularQuery.error}
-              emptyTitle={
-                normalizedSearchQuery
-                  ? "No matching popular picks"
-                  : "No popular picks right now"
-              }
-              emptyDescription={
-                normalizedSearchQuery
-                  ? "Try a different keyword or clear the search."
-                  : "Fresh activity will surface here as attention builds."
-              }
+              emptyTitle="No popular picks right now"
+              emptyDescription="Fresh activity will surface here as attention builds."
               errorMessage="Failed to fetch popular recommendations"
             />
           </FeaturedSection>
@@ -315,16 +271,8 @@ export function FeaturedPage({
               isPending={upcomingQuery.isPending}
               isError={upcomingQuery.isError}
               error={upcomingQuery.error}
-              emptyTitle={
-                normalizedSearchQuery
-                  ? "No matching upcoming picks"
-                  : "No upcoming picks right now"
-              }
-              emptyDescription={
-                normalizedSearchQuery
-                  ? "Try a different keyword or clear the search."
-                  : "Newly scheduled listings will appear here as they open up."
-              }
+              emptyTitle="No upcoming picks right now"
+              emptyDescription="Newly scheduled listings will appear here as they open up."
               errorMessage="Failed to fetch upcoming recommendations"
             />
           </FeaturedSection>
