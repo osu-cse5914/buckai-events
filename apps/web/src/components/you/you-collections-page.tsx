@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GlobeIcon, LockIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
-import { CollectionVisibilityBadge } from "@/components/collections/collection-visibility-badge";
+import { CollectionMetaText } from "@/components/collections/collection-visibility-badge";
 import {
   ownedCollectionsQueryOptions,
   queryKeys,
@@ -464,10 +464,10 @@ export function YouCollectionsPage() {
                   <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <CollectionVisibilityBadge visibility={collection.visibility} />
-                        <span className="text-sm text-muted-foreground">
-                          {readSavedCount(collection._count.items)}
-                        </span>
+                        <CollectionMetaText
+                          visibility={collection.visibility}
+                          countLabel={readSavedCount(collection._count.items)}
+                        />
                       </div>
 
                       <h2 className="line-clamp-2 text-base font-semibold leading-tight">
@@ -484,10 +484,11 @@ export function YouCollectionsPage() {
                     <div className="flex shrink-0 flex-wrap justify-end gap-2">
                       <IconCircleButton
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         aria-label="Rename"
                         title="Rename"
                         icon={<PencilIcon className="size-4" />}
+                        className="size-8 shadow-none"
                         onClick={() => beginRename(collection)}
                         disabled={isMutating}
                       >
@@ -495,7 +496,7 @@ export function YouCollectionsPage() {
                       </IconCircleButton>
                       <IconCircleButton
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         aria-label={nextVisibility === "PUBLIC" ? "Make public" : "Make private"}
                         title={nextVisibility === "PUBLIC" ? "Make public" : "Make private"}
                         icon={
@@ -505,6 +506,7 @@ export function YouCollectionsPage() {
                             <LockIcon className="size-4" />
                           )
                         }
+                        className="size-8 shadow-none"
                         onClick={() =>
                           visibilityMutation.mutate({
                             collectionId: collection.id,
@@ -521,12 +523,12 @@ export function YouCollectionsPage() {
                         <AlertDialogTrigger asChild>
                           <IconCircleButton
                             type="button"
-                            variant="outline"
+                            variant="ghost"
                             aria-label="Delete"
                             title="Delete"
                             icon={<TrashIcon className="size-4" />}
                             className={cn(
-                              "border-destructive/30 text-destructive hover:text-destructive",
+                              "size-8 shadow-none text-destructive hover:text-destructive",
                             )}
                             disabled={isMutating}
                           >

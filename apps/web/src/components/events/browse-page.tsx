@@ -158,7 +158,7 @@ export function BrowsePage({
         <IconCircleButton
           asChild
           icon={<PlusIcon className="size-5" />}
-          className="rounded-2xl"
+          className="rounded-xl"
           aria-label={browseType === "GIG" ? "Create gig" : "Create event"}
         >
           <Link

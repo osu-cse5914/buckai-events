@@ -12,7 +12,7 @@ export function IconLabelButton({
 }) {
   return (
     <Button
-      className={cn("h-11 rounded-2xl px-4", className)}
+      className={cn("h-11 rounded-xl px-4", className)}
       {...props}
     >
       {icon}

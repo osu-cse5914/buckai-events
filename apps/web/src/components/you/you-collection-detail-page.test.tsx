@@ -238,7 +238,7 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
       "href",
       "/you/collections",
     );
-    expect(screen.getByText("2 saved items")).toBeInTheDocument();
+    expect(screen.getByText("Private · 2 saved items")).toBeInTheDocument();
 
     const card = screen.getByLabelText("Hackathon saved event");
     await user.click(within(card).getByRole("button", { name: "Remove from collection" }));
@@ -249,7 +249,7 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
       });
     });
 
-    expect(await screen.findByText("1 saved item")).toBeInTheDocument();
+    expect(await screen.findByText("Private · 1 saved item")).toBeInTheDocument();
     expect(screen.queryByLabelText("Hackathon saved event")).not.toBeInTheDocument();
   });
 
@@ -310,7 +310,7 @@ describe("[phase:6] [regression:always] YouCollectionDetailPage", () => {
       "href",
       "/you/collections",
     );
-    expect(screen.getByText("Public")).toBeInTheDocument();
+    expect(screen.getByText("Public · 1 saved item")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove from collection" })).not.toBeInTheDocument();
   });
 });

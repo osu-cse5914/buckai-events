@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TrashIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
-import { CollectionVisibilityBadge } from "@/components/collections/collection-visibility-badge";
+import { CollectionMetaText } from "@/components/collections/collection-visibility-badge";
 import {
   collectionDetailQueryOptions,
   collectionItemsQueryOptions,
@@ -192,18 +192,13 @@ export function YouCollectionDetailPage({
         title={collection.name}
         backTo="/you/collections"
         backLabel="Back to Collections"
-        description={
-          isOwner
-            ? "Review the events and gigs you saved here."
-            : "This public collection is visible in read-only mode."
-        }
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <CollectionVisibilityBadge visibility={collection.visibility} />
-        <span className="text-sm text-muted-foreground">
-          {readCountLabel(totalItems)}
-        </span>
+        <CollectionMetaText
+          visibility={collection.visibility}
+          countLabel={readCountLabel(totalItems)}
+        />
       </div>
 
       {itemsError ? (
