@@ -22,6 +22,7 @@ import {
   FollowListDialog,
   type FollowUser,
 } from "@/components/users/public-profile";
+import { ProfileOverview } from "@/components/users/profile-overview";
 
 export const Route = createFileRoute("/_authenticated/profile/")({
   component: ProfilePage,
@@ -127,23 +128,19 @@ export function ProfilePage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1.5">
-          <p className="text-sm text-muted-foreground">Account profile</p>
-          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Update the details people see across Social OSU and keep your academic info current for collaboration and discovery.
-          </p>
-        </div>
-        {!isEditing && (
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-            Edit
-          </Button>
-        )}
-      </div>
-
+    <>
       {isEditing ? (
+        <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1.5">
+              <p className="text-sm text-muted-foreground">Account profile</p>
+              <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+              <p className="max-w-2xl text-sm text-muted-foreground">
+                Update the details people see across Social OSU and keep your academic info current for collaboration and discovery.
+              </p>
+            </div>
+          </div>
+
         <Card className="gap-4 overflow-hidden rounded-2xl border bg-background py-0">
           <CardHeader className="border-b px-6 py-6 sm:px-8">
             <CardTitle>Edit profile</CardTitle>
@@ -155,11 +152,49 @@ export function ProfilePage() {
             <ProfileEditForm user={user} onCancel={() => setIsEditing(false)} onSaved={() => setIsEditing(false)} />
           </CardContent>
         </Card>
+        </section>
       ) : (
-        <ProfileDisplay
-          user={user}
-          onFollowersClick={() => setFollowersOpen(true)}
-          onFollowingClick={() => setFollowingOpen(true)}
+        <ProfileOverview
+          eyebrow="Account profile"
+          title="Profile"
+          description="Update the details people see across Social OSU and keep your academic info current for collaboration and discovery."
+          action={
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+              Edit
+            </Button>
+          }
+          communityTitle="Community"
+          communityDescription="Your visibility and connections across Social OSU."
+          stats={[
+            {
+              value: user.followerCount,
+              label: user.followerCount === 1 ? "follower" : "followers",
+              onClick: () => setFollowersOpen(true),
+            },
+            {
+              value: user.followingCount,
+              label: "following",
+              onClick: () => setFollowingOpen(true),
+            },
+          ]}
+          communityFooter={
+            <p className="text-sm text-muted-foreground">
+              These details appear across your Social OSU profile and help others recognize your interests and background.
+            </p>
+          }
+          detailTitle="Profile details"
+          detailDescription="Keep your academic details and interests current so your profile stays useful to others."
+          detailFields={[
+            { label: "Email", value: user.email },
+            { label: "Display Name", value: user.displayName || "—" },
+            { label: "Major", value: user.major || "—" },
+            { label: "Graduation Year", value: user.gradYear?.toString() || "—" },
+            {
+              label: "Interests",
+              value: user.interests.length > 0 ? user.interests.join(", ") : "—",
+              className: "sm:col-span-2",
+            },
+          ]}
         />
       )}
       <FollowListDialog
@@ -176,96 +211,7 @@ export function ProfilePage() {
         users={followingQuery.data?.data ?? []}
         isLoading={followingQuery.isLoading}
       />
-    </section>
-  );
-}
-
-function ProfileDisplay({
-  user,
-  onFollowersClick,
-  onFollowingClick,
-}: {
-  user: CurrentUser;
-  onFollowersClick?: () => void;
-  onFollowingClick?: () => void;
-}) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
-      <Card className="gap-4">
-        <CardHeader>
-          <CardTitle>Community</CardTitle>
-          <CardDescription>Your visibility and connections across Social OSU.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <button
-              type="button"
-              className="text-left"
-              onClick={onFollowersClick}
-            >
-              <p className="text-2xl font-bold">{user.followerCount}</p>
-              <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-                {user.followerCount === 1 ? "follower" : "followers"}
-              </p>
-            </button>
-            <button
-              type="button"
-              className="text-left"
-              onClick={onFollowingClick}
-            >
-              <p className="text-2xl font-bold">{user.followingCount}</p>
-              <p className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-                following
-              </p>
-            </button>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Visibility</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              These details appear across your Social OSU profile and help others recognize your interests and background.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="gap-4">
-        <CardHeader>
-          <CardTitle>Profile details</CardTitle>
-          <CardDescription>
-            Keep your academic details and interests current so your profile stays useful to others.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 sm:grid-cols-2">
-          <Field label="Email" value={user.email} />
-          <Field label="Display Name" value={user.displayName} />
-          <Field label="Major" value={user.major} />
-          <Field label="Graduation Year" value={user.gradYear?.toString()} />
-          <Field
-            label="Interests"
-            value={user.interests.length > 0 ? user.interests.join(", ") : null}
-            className="sm:col-span-2"
-          />
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  className,
-}: {
-  label: string;
-  value: string | null | undefined;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="mt-2 text-sm sm:text-base">{value || "—"}</p>
-    </div>
+    </>
   );
 }
 

@@ -1,23 +1,22 @@
 import { Link } from "@tanstack/react-router";
-import { UsersIcon, CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { STATUS_STYLES, STATUS_LABELS } from "@/lib/event-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  FramedList,
+  FramedListInset,
+  FramedListItem,
+  FramedListItems,
+} from "@/components/ui/framed-list";
+import { ProfileOverview } from "@/components/users/profile-overview";
 
 export interface PublicProfileEvent {
   id: string;
@@ -69,66 +68,46 @@ export function ProfileView({
   const hasFollowAction = !!onFollow || !!onUnfollow;
 
   return (
-    <section className="mx-auto max-w-3xl px-6 py-10">
-      <div className="flex flex-col gap-6">
-        {/* Profile header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {user.displayName}
-          </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            {user.major && <span>{user.major}</span>}
-            {user.gradYear && <span>Class of {user.gradYear}</span>}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="flex gap-6">
-          <button
-            className="flex items-center gap-1.5 text-sm disabled:pointer-events-none"
-            onClick={onFollowersClick}
-            disabled={!onFollowersClick}
-            type="button"
-          >
-            <UsersIcon className="size-4 text-muted-foreground" />
-            <span className="font-semibold">{user.followerCount}</span>
-            <span className={onFollowersClick ? "underline-offset-4 hover:underline" : "text-muted-foreground"}>
-              {user.followerCount === 1 ? "follower" : "followers"}
-            </span>
-          </button>
-          <button
-            className="flex items-center gap-1.5 text-sm disabled:pointer-events-none"
-            onClick={onFollowingClick}
-            disabled={!onFollowingClick}
-            type="button"
-          >
-            <span className="font-semibold">{user.followingCount}</span>
-            <span className={onFollowingClick ? "underline-offset-4 hover:underline" : "text-muted-foreground"}>
-              following
-            </span>
-          </button>
-        </div>
-
-        {/* Follow button */}
-        <div>
-          <Button
-            variant="outline"
-            disabled={!hasFollowAction || followPending}
-            onClick={user.isFollowing ? onUnfollow : onFollow}
-          >
-            {user.isFollowing ? "Unfollow" : "Follow"}
-          </Button>
-        </div>
-
-        <Separator />
-
-        {/* Interests */}
-        {user.interests.length > 0 && (
+    <ProfileOverview
+      eyebrow="Public profile"
+      title={user.displayName ?? "User"}
+      communityTitle="Community"
+      communityDescription="Follower and following counts on Social OSU."
+      stats={[
+        {
+          value: user.followerCount,
+          label: user.followerCount === 1 ? "follower" : "followers",
+          onClick: onFollowersClick,
+        },
+        {
+          value: user.followingCount,
+          label: "following",
+          onClick: onFollowingClick,
+        },
+      ]}
+      communityFooter={
+        <Button
+          variant="outline"
+          disabled={!hasFollowAction || followPending}
+          onClick={user.isFollowing ? onUnfollow : onFollow}
+        >
+          {user.isFollowing ? "Unfollow" : "Follow"}
+        </Button>
+      }
+      detailTitle="Profile details"
+      detailDescription="Academic background and shared interests visible on this public profile."
+      detailFields={[
+        { label: "Major", value: user.major || "—" },
+        {
+          label: "Graduation Year",
+          value: user.gradYear ? `Class of ${user.gradYear}` : "—",
+        },
+      ]}
+      detailFooter={
+        user.interests.length > 0 ? (
           <div>
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              Interests
-            </h2>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <p className="text-sm font-medium text-muted-foreground">Interests</p>
+            <div className="mt-3 flex flex-wrap gap-2">
               {user.interests.map((interest) => (
                 <Badge key={interest} variant="secondary">
                   {interest}
@@ -136,35 +115,37 @@ export function ProfileView({
               ))}
             </div>
           </div>
-        )}
+        ) : undefined
+      }
+      extraSection={
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold tracking-tight">Events</h2>
+          <FramedList>
+            {user.createdEvents.items.length === 0 ? (
+              <FramedListInset>
+                <p className="text-sm text-center text-muted-foreground">
+                  No active events.
+                </p>
+              </FramedListInset>
+            ) : (
+              <FramedListItems>
+                {user.createdEvents.items.map((event) => (
+                  <FramedListItem key={event.id}>
+                    <Link
+                      to="/events/$eventId"
+                      params={{ eventId: event.id }}
+                      className="block min-w-0"
+                    >
+                      <div className="min-w-0 space-y-1.5">
+                        <h3 className="line-clamp-2 text-base font-semibold leading-tight hover:underline">
+                          {event.title}
+                        </h3>
+                      </div>
 
-        {/* Created events */}
-        <div>
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            Events
-          </h2>
-          {user.createdEvents.items.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              No active events.
-            </p>
-          ) : (
-            <div className="mt-3 grid gap-3">
-              {user.createdEvents.items.map((event) => (
-                <Link
-                  key={event.id}
-                  to="/events/$eventId"
-                  params={{ eventId: event.id }}
-                  className="group"
-                >
-                  <Card className="transition-shadow group-hover:shadow-md">
-                    <CardHeader>
-                      <CardTitle className="text-base group-hover:underline">
-                        {event.title}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-4">
-                        <span className="flex items-center gap-1">
-                          <CalendarIcon className="size-3.5" />
-                          {new Date(event.createdAt).toLocaleDateString()}
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <CalendarIcon className="size-3.5 shrink-0" />
+                          <span>{new Date(event.createdAt).toLocaleDateString()}</span>
                         </span>
                         <Badge
                           variant="secondary"
@@ -172,23 +153,22 @@ export function ProfileView({
                         >
                           {STATUS_LABELS[event.status] ?? event.status}
                         </Badge>
-                      </CardDescription>
-                    </CardHeader>
-                    {event.description && (
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                      </div>
+
+                      {event.description ? (
+                        <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
                           {event.description}
                         </p>
-                      </CardContent>
-                    )}
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
+                      ) : null}
+                    </Link>
+                  </FramedListItem>
+                ))}
+              </FramedListItems>
+            )}
+          </FramedList>
+        </section>
+      }
+    />
   );
 }
 
@@ -257,7 +237,7 @@ export function FollowListDialog({
 
 export function ProfileNotFound() {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-10 text-center">
+    <section className="mx-auto max-w-5xl px-6 py-10 text-center">
       <h1 className="text-2xl font-bold tracking-tight">User not found</h1>
       <p className="mt-2 text-muted-foreground">
         The user you're looking for doesn't exist.
@@ -271,7 +251,7 @@ export function ProfileNotFound() {
 
 export function ProfileError() {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-10 text-center">
+    <section className="mx-auto max-w-5xl px-6 py-10 text-center">
       <h1 className="text-2xl font-bold tracking-tight">
         Something went wrong
       </h1>
@@ -287,29 +267,34 @@ export function ProfileError() {
 
 export function ProfileSkeleton() {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-10">
-      <div className="flex flex-col gap-6">
-        <div>
-          <Skeleton className="h-9 w-48" />
-          <Skeleton className="mt-2 h-5 w-32" />
-        </div>
-        <div className="flex gap-6">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-24" />
-        </div>
-        <Skeleton className="h-9 w-20" />
-        <Separator />
-        <div>
-          <Skeleton className="h-4 w-16" />
-          <div className="mt-2 flex gap-2">
-            <Skeleton className="h-6 w-16 rounded-full" />
-            <Skeleton className="h-6 w-20 rounded-full" />
+    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-10 w-48" />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+        <div className="rounded-2xl border p-6">
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="mt-2 h-4 w-40" />
+          <div className="mt-6 grid gap-4">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-10 w-24" />
           </div>
         </div>
-        <div>
-          <Skeleton className="h-4 w-14" />
-          <Skeleton className="mt-3 h-24 w-full rounded-xl" />
+        <div className="rounded-2xl border p-6">
+          <Skeleton className="h-7 w-32" />
+          <Skeleton className="mt-2 h-4 w-56" />
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-20 w-full sm:col-span-2" />
+          </div>
         </div>
+      </div>
+      <div className="rounded-2xl border p-6">
+        <Skeleton className="h-7 w-20" />
+        <Skeleton className="mt-4 h-16 w-full" />
       </div>
     </section>
   );
