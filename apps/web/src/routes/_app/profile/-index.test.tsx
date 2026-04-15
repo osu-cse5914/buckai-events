@@ -104,7 +104,9 @@ describe("ProfilePage", () => {
     expect(screen.getByText("brutus@osu.edu")).toBeInTheDocument();
     expect(screen.getByText("Computer Science")).toBeInTheDocument();
     expect(screen.getByText("2026")).toBeInTheDocument();
-    expect(screen.getByText("music, sports, tech")).toBeInTheDocument();
+    expect(screen.getByText("music")).toBeInTheDocument();
+    expect(screen.getByText("sports")).toBeInTheDocument();
+    expect(screen.getByText("tech")).toBeInTheDocument();
     expect(screen.getByText(/10 followers/)).toBeInTheDocument();
     expect(screen.getByText(/5 following/)).toBeInTheDocument();
   });

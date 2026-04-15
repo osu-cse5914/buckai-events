@@ -120,21 +120,22 @@ export function ProfileView({
           label: "Graduation Year",
           value: user.gradYear ? `Class of ${user.gradYear}` : "—",
         },
+        {
+          label: "Interests",
+          value:
+            user.interests.length > 0 ? (
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                {user.interests.map((interest) => (
+                  <Badge key={interest} variant="secondary">
+                    {interest}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              "—"
+            ),
+        },
       ]}
-      detailFooter={
-        user.interests.length > 0 ? (
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Interests</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {user.interests.map((interest) => (
-                <Badge key={interest} variant="secondary">
-                  {interest}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        ) : null
-      }
       extraSection={
         <section className="space-y-3">
           <h2 className="text-xl font-semibold tracking-tight">Events</h2>

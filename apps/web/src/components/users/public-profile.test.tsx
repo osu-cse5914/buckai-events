@@ -119,10 +119,11 @@ describe("[phase:1] [regression:always] Public profile page", () => {
     expect(screen.getByText("In Progress")).toBeInTheDocument();
   });
 
-  it("TC-PUB-007: hides interests section when empty", () => {
+  it("TC-PUB-007: shows an interests row placeholder when empty", () => {
     render(<ProfileView user={{ ...baseUser, interests: [] }} />);
 
-    expect(screen.queryByText("Interests")).not.toBeInTheDocument();
+    expect(screen.getByText("Interests")).toBeInTheDocument();
+    expect(screen.getByText("—")).toBeInTheDocument();
   });
 
   it("TC-PUB-007: renders 404 page for nonexistent user", () => {

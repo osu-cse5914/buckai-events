@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-react";
 import { PencilIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -187,7 +188,18 @@ export function ProfilePage() {
             { label: "Graduation Year", value: user.gradYear?.toString() || "—" },
             {
               label: "Interests",
-              value: user.interests.length > 0 ? user.interests.join(", ") : "—",
+              value:
+                user.interests.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    {user.interests.map((interest) => (
+                      <Badge key={interest} variant="secondary">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  "—"
+                ),
             },
           ]}
         />
