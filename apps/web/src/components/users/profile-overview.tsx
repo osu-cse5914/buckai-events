@@ -29,6 +29,7 @@ export function ProfileOverview({
   imageUrl,
   avatarFallback,
   stats,
+  heroFooter,
   detailFields,
   detailFooter,
   extraSection,
@@ -39,15 +40,16 @@ export function ProfileOverview({
   imageUrl?: string | null;
   avatarFallback: string;
   stats: ProfileOverviewStat[];
+  heroFooter?: ReactNode;
   detailFields: ProfileOverviewField[];
   detailFooter?: ReactNode;
   extraSection?: ReactNode;
 }) {
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Avatar size="lg" className="size-16">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4 sm:gap-5">
+          <Avatar size="lg" className="size-20">
             {imageUrl ? <AvatarImage src={imageUrl} alt={title} /> : null}
             <AvatarFallback>{avatarFallback}</AvatarFallback>
           </Avatar>
@@ -62,7 +64,7 @@ export function ProfileOverview({
               ) : null}
             </div>
 
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap items-center gap-6">
               {stats.map((stat) => (
                 <button
                   key={stat.label}
@@ -78,6 +80,8 @@ export function ProfileOverview({
                 </button>
               ))}
             </div>
+
+            {heroFooter ? <div>{heroFooter}</div> : null}
           </div>
         </div>
 

@@ -88,8 +88,7 @@ export function ProfileView({
           onClick: onFollowingClick,
         },
       ]}
-      detailFields={[]}
-      detailFooter={
+      heroFooter={
         <div className="space-y-4">
           <Button
             variant="outline"
@@ -98,8 +97,11 @@ export function ProfileView({
           >
             {user.isFollowing ? "Unfollow" : "Follow"}
           </Button>
-
-          {user.interests.length > 0 ? (
+        </div>
+      }
+      detailFields={[]}
+      detailFooter={
+        user.interests.length > 0 ? (
           <div>
             <p className="text-sm font-medium text-muted-foreground">Interests</p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -110,8 +112,7 @@ export function ProfileView({
               ))}
             </div>
           </div>
-          ) : null}
-        </div>
+        ) : null
       }
       extraSection={
         <section className="space-y-3">

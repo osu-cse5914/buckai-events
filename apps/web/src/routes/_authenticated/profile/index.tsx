@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-react";
+import { PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +24,7 @@ import {
   FollowListDialog,
   type FollowUser,
 } from "@/components/users/public-profile";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { ProfileOverview } from "@/components/users/profile-overview";
 
 export const Route = createFileRoute("/_authenticated/profile/")({
@@ -147,11 +149,7 @@ export function ProfilePage() {
       ) : (
         <ProfileOverview
           title={user.displayName ?? "Your profile"}
-          action={
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-              Edit
-            </Button>
-          }
+          action={<IconCircleButton variant="outline" aria-label="Edit profile" title="Edit profile" icon={<PencilIcon className="size-4" />} onClick={() => setIsEditing(true)}><span className="sr-only">Edit profile</span></IconCircleButton>}
           imageUrl={clerkUser?.imageUrl ?? null}
           avatarFallback={(user.displayName ?? user.email).charAt(0).toUpperCase()}
           stats={[

@@ -120,7 +120,7 @@ describe("ProfilePage", () => {
     });
 
     // Click Edit
-    await user.click(screen.getByRole("button", { name: "Edit" }));
+    await user.click(screen.getByRole("button", { name: "Edit profile" }));
 
     // Change displayName
     const displayNameInput = screen.getByLabelText("Display Name");
@@ -160,7 +160,7 @@ describe("ProfilePage", () => {
     });
 
     // Click Edit
-    await user.click(screen.getByRole("button", { name: "Edit" }));
+    await user.click(screen.getByRole("button", { name: "Edit profile" }));
 
     // Change displayName
     const displayNameInput = screen.getByLabelText("Display Name");
@@ -188,7 +188,7 @@ describe("ProfilePage", () => {
       expect(screen.getByText("Brutus Buckeye")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: "Edit" }));
+    await user.click(screen.getByRole("button", { name: "Edit profile" }));
 
     expect(screen.getByLabelText("Display Name")).toHaveValue("Brutus Buckeye");
     expect(screen.getByLabelText("Major")).toHaveValue("Computer Science");
@@ -224,7 +224,7 @@ describe("ProfilePage", () => {
       expect(screen.getByText("Brutus Buckeye")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: "Edit" }));
+    await user.click(screen.getByRole("button", { name: "Edit profile" }));
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
