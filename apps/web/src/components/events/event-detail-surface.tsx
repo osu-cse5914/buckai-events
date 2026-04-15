@@ -34,6 +34,7 @@ import {
   STATUS_LABELS,
   STATUS_STYLES,
 } from "@/lib/event-utils";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -848,7 +849,7 @@ export function EventDetailSurface({
 function surfaceClassName(mode: "page" | "panel") {
   return cn(
     mode === "page"
-      ? "mx-auto max-w-3xl px-6 py-10"
+      ? `${STANDARD_PAGE_WIDTH} py-10`
       : "px-6 py-6 lg:px-8 lg:py-8",
   );
 }

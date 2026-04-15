@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { SPLIT_VIEWER_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 import { defaultBrowseFiltersForType } from "@/lib/event-route-search";
 import {
   Select,
@@ -152,7 +154,12 @@ export function BrowsePage({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <section className="flex w-full flex-col gap-8 px-6 py-10 lg:h-screen lg:min-h-0 lg:gap-6 lg:overflow-hidden lg:py-6">
+    <section
+      className={cn(
+        SPLIT_VIEWER_PAGE_WIDTH,
+        "flex flex-col gap-8 py-10 lg:h-screen lg:min-h-0 lg:gap-6 lg:overflow-hidden lg:py-6",
+      )}
+    >
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         <IconCircleButton

@@ -26,6 +26,8 @@ import {
   YouSubpageHeaderSkeleton,
 } from "@/components/you/you-subpage-header";
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 
 function useMyApplications() {
   const api = useApiClient();
@@ -38,7 +40,7 @@ export function MyApplicationsPage() {
 
   if (isLoading) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
         <YouSubpageHeaderSkeleton />
         <ApplicationsListSkeleton count={3} />
       </section>
@@ -47,7 +49,7 @@ export function MyApplicationsPage() {
 
   if (error) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
         <EventsErrorState
           message={
             error instanceof Error ? error.message : "Failed to load applications"
@@ -59,7 +61,7 @@ export function MyApplicationsPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
       <YouTabsNav currentTab="applications" />
 
       <YouSubpageHeader

@@ -53,6 +53,7 @@ import {
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { IconLabelButton } from "@/components/ui/icon-label-button";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 
 function readSavedCount(count: number) {
   return `${count} saved`;
@@ -331,7 +332,7 @@ export function YouCollectionsPage() {
 
   if (error) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           {error instanceof Error ? error.message : "Failed to load collections"}
         </div>
@@ -347,7 +348,7 @@ export function YouCollectionsPage() {
     deleteMutation.isPending;
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <section className={`${STANDARD_PAGE_WIDTH} flex flex-col gap-6 py-10`}>
       <YouTabsNav currentTab="collections" />
 
       <YouSubpageHeader

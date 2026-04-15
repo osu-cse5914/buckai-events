@@ -295,16 +295,16 @@ function buildFollowGuidance(
   const trimmedInterests = interests.filter(Boolean);
 
   if (major && trimmedInterests.length > 0) {
-    return `Follow classmates in ${major} or people who share ${trimmedInterests.join(", ")} to start your feed.`;
+    return "Follow people you know or share interests with to start your feed.";
   }
 
   if (major) {
-    return `Follow classmates in ${major} to start seeing what your community is creating and saving.`;
+    return "Follow people you know to start your feed.";
   }
 
   if (trimmedInterests.length > 0) {
-    return `Follow people who share ${trimmedInterests.join(", ")} to start your feed.`;
+    return "Follow people who share your interests to start your feed.";
   }
 
-  return "Follow classmates and creators you know to start seeing their latest activity here.";
+  return "Follow people to start your feed.";
 }

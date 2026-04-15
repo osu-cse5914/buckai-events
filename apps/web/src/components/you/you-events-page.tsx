@@ -23,6 +23,8 @@ import {
   YouSubpageHeaderSkeleton,
 } from "@/components/you/you-subpage-header";
 import { YouTabsNav } from "@/components/you/you-tabs-nav";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 
 function useCurrentUser() {
   const api = useApiClient();
@@ -51,7 +53,7 @@ export function YouEventsPage() {
 
   if (isLoadingUser || isLoadingEvents) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
         <YouSubpageHeaderSkeleton />
         <EventsListSkeleton showPagination />
       </section>
@@ -60,7 +62,7 @@ export function YouEventsPage() {
 
   if (userError) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={cn(STANDARD_PAGE_WIDTH, "py-10")}>
         <EventsErrorState
           message={
             userError instanceof Error
@@ -73,7 +75,7 @@ export function YouEventsPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
       <YouTabsNav currentTab="events" />
 
       <YouSubpageHeader

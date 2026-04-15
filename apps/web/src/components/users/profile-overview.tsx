@@ -9,6 +9,8 @@ import {
   FramedListInset,
   FramedListItems,
 } from "@/components/ui/framed-list";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 
 type ProfileOverviewStat = {
   value: number;
@@ -46,7 +48,7 @@ export function ProfileOverview({
   extraSection?: ReactNode;
 }) {
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4 sm:gap-5">
           <Avatar size="lg" className="size-20">

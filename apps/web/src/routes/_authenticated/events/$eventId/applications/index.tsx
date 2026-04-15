@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import { useApiClient } from "@/lib/api";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 import { loadOwnedEventRouteData } from "@/lib/route-loaders";
 import {
   gigApplicationsQueryOptions,
@@ -88,7 +89,7 @@ function ManageApplicationsPage() {
 
   if (access === "not-found" || !event) {
     return (
-      <section className="mx-auto max-w-4xl px-6 py-10">
+      <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           Failed to load applications
         </div>
@@ -98,7 +99,7 @@ function ManageApplicationsPage() {
 
   if (access !== "ok") {
     return (
-      <section className="mx-auto max-w-4xl px-6 py-10">
+      <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           Only the gig owner can manage applications.
         </div>
@@ -107,7 +108,7 @@ function ManageApplicationsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-10">
+    <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
       <Link
         to="/events/$eventId"
         params={{ eventId }}

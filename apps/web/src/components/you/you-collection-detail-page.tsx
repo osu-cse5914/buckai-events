@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/framed-list";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { IconLabelButton } from "@/components/ui/icon-label-button";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
 
 function readCountLabel(count: number) {
   return `${count} saved item${count === 1 ? "" : "s"}`;
@@ -49,11 +50,11 @@ async function readErrorMessage(res: Response, fallback: string) {
 
 function CollectionDetailPageSkeleton() {
   return (
-    <section
-      className="mx-auto max-w-5xl px-6 py-10"
-      aria-busy="true"
-      aria-label="Collection detail loading"
-    >
+      <section
+        className={`${STANDARD_PAGE_WIDTH} py-10`}
+        aria-busy="true"
+        aria-label="Collection detail loading"
+      >
       <YouSubpageHeaderSkeleton />
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -163,7 +164,7 @@ export function YouCollectionDetailPage({
 
   if (collectionError) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           {collectionError instanceof Error
             ? collectionError.message
@@ -175,7 +176,7 @@ export function YouCollectionDetailPage({
 
   if (!collection) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           Collection not found.
         </div>
@@ -187,7 +188,7 @@ export function YouCollectionDetailPage({
   const isOwner = currentUser?.id === collection.userId;
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
+    <section className={`${STANDARD_PAGE_WIDTH} py-10`}>
       <YouSubpageHeader
         title={collection.name}
         backTo="/you/collections"

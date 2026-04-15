@@ -17,6 +17,8 @@ import {
   FramedListItems,
 } from "@/components/ui/framed-list";
 import { ProfileOverview } from "@/components/users/profile-overview";
+import { STANDARD_PAGE_WIDTH } from "@/lib/page-layout";
+import { cn } from "@/lib/utils";
 
 export interface PublicProfileEvent {
   id: string;
@@ -234,7 +236,7 @@ export function FollowListDialog({
 
 export function ProfileNotFound() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10 text-center">
+    <section className={cn(STANDARD_PAGE_WIDTH, "py-10 text-center")}>
       <h1 className="text-2xl font-bold tracking-tight">User not found</h1>
       <p className="mt-2 text-muted-foreground">
         The user you're looking for doesn't exist.
@@ -248,7 +250,7 @@ export function ProfileNotFound() {
 
 export function ProfileError() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10 text-center">
+    <section className={cn(STANDARD_PAGE_WIDTH, "py-10 text-center")}>
       <h1 className="text-2xl font-bold tracking-tight">
         Something went wrong
       </h1>
@@ -264,7 +266,7 @@ export function ProfileError() {
 
 export function ProfileSkeleton() {
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <section className={cn(STANDARD_PAGE_WIDTH, "flex flex-col gap-6 py-10")}>
       <div className="space-y-2">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-10 w-48" />
