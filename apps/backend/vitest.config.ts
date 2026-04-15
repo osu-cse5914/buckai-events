@@ -8,6 +8,14 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     exclude: ["src/test/runtime/**", "src/test/live/**"],
     setupFiles: ["./setupTests.ts"],
+    server: {
+      deps: {
+        // zod ≥3.25 (the v4 migration release) exports `z` as a namespace object
+        // via `import * as z`. Vite's SSR transform can't resolve that re-export,
+        // so we force-inline it so Vite bundles and transforms it correctly.
+        inline: ["zod"],
+      },
+    },
     coverage: {
       provider: "istanbul",
       reporter: ["text", "lcov"],
