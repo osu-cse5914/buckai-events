@@ -184,7 +184,6 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
     expect(prompt).toContain("User timezone: UTC.");
     expect(prompt).toContain("User locale: en-US.");
   });
-
   it("TC-CHAT-006: declines off-topic prompts without invoking event tools", async () => {
     const userMessage = createMessage({
       id: "msg_user_6",
@@ -1031,6 +1030,76 @@ describe("[phase:5] [regression:always] Chatbot tools and prompt", () => {
       "I'm having trouble connecting right now. Please try again in a moment.",
     );
     expect(mockPrisma.message.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("[phase:6] [regression:always] Chatbot security hardening", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation() as never,
+    );
+    vi.mocked(mockPrisma.conversation.update).mockResolvedValue(
+      createConversation() as never,
+    );
+  });
+
+  it("TC-CHAT-016: keeps the chatbot prompt scoped and treats retrieved content as untrusted", () => {
+    expect(CHATBOT_SYSTEM_PROMPT).toContain("Ohio State University");
+    expect(CHATBOT_SYSTEM_PROMPT).toContain("events, gigs, and campus activities");
+    expect(CHATBOT_SYSTEM_PROMPT).toContain("decline");
+    expect(CHATBOT_SYSTEM_PROMPT).toContain("confirm");
+    expect(CHATBOT_SYSTEM_PROMPT).toContain("untrusted data");
+  });
+
+  it("TC-CHAT-017: ambiguous confirmation text does not execute a pending mutation", async () => {
+    vi.mocked(mockPrisma.conversation.findUnique).mockResolvedValue(
+      createConversation({
+        pendingAction: {
+          id: "pending_apply_2",
+          toolName: "applyToGig",
+          summary: "Apply to Calculus Tutor",
+          args: {
+            gigId: "gig_apply_1",
+            message: "I have tutoring experience.",
+          },
+        },
+      }) as never,
+    );
+    vi.mocked(mockPrisma.message.create)
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_user_17",
+          role: "USER",
+          content: "yes please",
+        }) as never,
+      )
+      .mockResolvedValueOnce(
+        createMessage({
+          id: "msg_assistant_17",
+          role: "ASSISTANT",
+          content: "Please confirm or cancel the pending action before we continue.",
+        }) as never,
+      );
+
+    const res = await postMessage(createTestApp(), "yes please");
+
+    expect(res.status).toBe(200);
+    expect(decodeSseText(await res.text())).toBe(
+      "Please confirm or cancel the pending action before we continue.",
+    );
+    expect(mockPrisma.application.create).not.toHaveBeenCalled();
+    expect(mockPrisma.conversation.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          pendingAction: Prisma.DbNull,
+        }),
+      }),
+    );
   });
 });
 

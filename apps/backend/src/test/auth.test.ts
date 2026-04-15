@@ -18,6 +18,7 @@ vi.mock("../lib/prisma");
 import { getAuth } from "@hono/clerk-auth";
 import { getPrisma, getPrismaClient } from "../lib/prisma";
 import { createMockPrisma } from "./helpers/prisma";
+import { E2E_TEST_AUTH_HEADER, e2eTestAuth } from "../middleware/e2e-auth";
 import { requireAuth } from "../middleware/auth";
 
 type TestEnv = {
@@ -36,10 +37,24 @@ function createTestApp() {
   return app;
 }
 
+function createE2ETestApp() {
+  const app = new Hono<TestEnv>();
+  app.use("/*", async (c, next) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c as any).set("clerk", { users: { getUser: mockClerkGetUser } });
+    await next();
+  });
+  app.use("/*", e2eTestAuth);
+  app.use("/*", requireAuth);
+  app.get("/test", (c) => c.json({ user: c.get("user") }));
+  return app;
+}
+
 describe("[phase:0] [regression:always] requireAuth middleware", () => {
   const mockPrisma = createMockPrisma();
 
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
     vi.mocked(getPrisma).mockReturnValue(mockPrisma);
   });
@@ -75,6 +90,7 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         detail: "Authentication is required",
       });
     });
+
   });
 
   // S-AUTH-4 → TC-AUTH-004: Valid JWT on API request
@@ -265,5 +281,34 @@ describe("[phase:0] [regression:always] requireAuth middleware", () => {
         detail: "No email associated with account",
       });
     });
+  });
+});
+
+describe("[phase:6] [regression:always] E2E auth isolation", () => {
+  const mockPrisma = createMockPrisma();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getPrismaClient).mockReturnValue(mockPrisma);
+    vi.mocked(getPrisma).mockReturnValue(mockPrisma);
+  });
+
+  it("TC-AUTH-012: ignores the E2E auth header when E2E test auth is disabled", async () => {
+    vi.mocked(getAuth).mockReturnValue(undefined as never);
+
+    const res = await createE2ETestApp().request("/test", {
+      headers: {
+        [E2E_TEST_AUTH_HEADER]: "user_e2e_only",
+      },
+    });
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({
+      type: expect.stringContaining("unauthorized"),
+      title: "Unauthorized",
+      status: 401,
+      detail: "Authentication is required",
+    });
+    expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
   });
 });

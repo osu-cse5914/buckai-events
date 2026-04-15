@@ -73,6 +73,48 @@ describe("[phase:6] [regression:always] Admin AI pipeline endpoints", () => {
     expect(mockListRecentEventPipelineJobs).not.toHaveBeenCalled();
   });
 
+  it("TC-AUTHZ-015: returns 403 for a non-admin user when rerunning the AI pipeline", async () => {
+    vi.mocked(mockPrisma.user.findUnique).mockResolvedValue({
+      ...BASE_USER,
+      role: "USER",
+    } as never);
+
+    const res = await app.request(
+      "/api/v1/admin/ai-pipeline/events/evt_1/rerun",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer test-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mode: "FULL_PIPELINE" }),
+      },
+      TEST_ENV as never,
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockCreateEventPipelineJob).not.toHaveBeenCalled();
+  });
+
+  it("TC-AUTHZ-016: returns 403 for a non-admin user when starting an embedding backfill", async () => {
+    vi.mocked(mockPrisma.user.findUnique).mockResolvedValue({
+      ...BASE_USER,
+      role: "USER",
+    } as never);
+
+    const res = await app.request(
+      "/api/v1/admin/ai-pipeline/backfill",
+      {
+        method: "POST",
+        headers: { Authorization: "Bearer test-token" },
+      },
+      TEST_ENV as never,
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockCreateEmbeddingBackfillJob).not.toHaveBeenCalled();
+  });
+
   it("TC-DBG-016: returns recent pipeline jobs for an admin user", async () => {
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue({
       ...BASE_USER,

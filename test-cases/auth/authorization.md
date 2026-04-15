@@ -157,3 +157,27 @@ Spec: [`authorization`](../../specs/auth/authorization.md)
 - **Given**: An authenticated user with role `ADMIN`
 - **When**: The user sends `POST /admin/external-ingestion/sync`
 - **Then**: The API responds with 200 OK and invokes the external sync service once
+
+## TC-AUTHZ-015: Non-admin cannot rerun the AI pipeline
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/admin-ai-pipeline.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An authenticated user with role `USER`
+- **When**: The user sends `POST /admin/ai-pipeline/events/:id/rerun`
+- **Then**: The API responds with 403 Forbidden
+- **And**: No rerun job is created
+
+## TC-AUTHZ-016: Non-admin cannot start embedding backfill
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/admin-ai-pipeline.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: An authenticated user with role `USER`
+- **When**: The user sends `POST /admin/ai-pipeline/backfill`
+- **Then**: The API responds with 403 Forbidden
+- **And**: No backfill job is created

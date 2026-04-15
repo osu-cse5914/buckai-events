@@ -134,3 +134,15 @@ Spec: [`authentication`](../../specs/auth/authentication.md)
 - **When**: They navigate into the authenticated client route tree
 - **Then**: The shared shell guard redirects them to `/sign-in`
 - **And**: Child routes do not need to redefine their own auth redirect
+
+## TC-AUTH-012: E2E auth header is ignored when test auth is disabled
+
+- **Spec scenario**: —
+- **Type**: Automated
+- **Automated in**: `apps/backend/src/test/auth.test.ts`
+- **Phase introduced**: 6
+- **Regression**: Always
+- **Given**: A request includes the `x-social-osu-e2e-user-id` header but E2E test auth is disabled
+- **When**: The request reaches protected API middleware without a valid Clerk JWT
+- **Then**: The API still responds with 401 Unauthorized
+- **And**: The E2E header does not authenticate the request by itself
